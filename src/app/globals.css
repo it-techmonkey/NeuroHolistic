@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --accent: #8B7CF7;
+  --accent-secondary: #22c55e;
+  
+  /* Color palette */
+  --primary: #8B7CF7;
+  --primary-dark: #6342c0;
+  --primary-light: #a678ff;
+  
+  --secondary: #22c55e;
+  --secondary-dark: #16a34a;
+  
+  /* Neutral */
+  --neutral-50: #f9fafb;
+  --neutral-100: #f3f4f6;
+  --neutral-900: #111827;
+  
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #8B7CF7 0%, #6342c0 100%);
+  --gradient-dark: linear-gradient(135deg, #2a1c4e 0%, #111827 100%);
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Selection style */
+::selection {
+  background-color: var(--primary);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--neutral-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
