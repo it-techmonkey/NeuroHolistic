@@ -30,7 +30,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
               <div className="relative w-full aspect-[16/10] flex-shrink-0">
                 <Image
                   src={retreat.image}
-                  alt=""
+                  alt={`${retreat.title} retreat image`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

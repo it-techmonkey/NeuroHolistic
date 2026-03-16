@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Section from "@/components/ui/Section";
 import { H2, Body } from "@/components/ui/Typography";
+import BookNowButton from "@/components/booking/BookNowButton";
 
 export default function CorporateCTA() {
   return (
@@ -14,15 +15,14 @@ export default function CorporateCTA() {
           performance within your teams.
         </Body>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/book"
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary-500 text-white font-semibold text-base hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/25"
+          <BookNowButton
+            className="inline-flex items-center justify-center px-8 py-4 rounded-[10px] bg-[#0B0F2B] text-white font-semibold text-base hover:bg-[#11174A] transition-all hover:-translate-y-[1px] shadow-[0_10px_24px_rgba(11,15,43,0.18)]"
           >
             Schedule a Consultation
-          </Link>
+          </BookNowButton>
           <Link
-            href="/contact"
-            className="inline-flex items-center justify-center px-8 py-4 rounded-xl border-2 border-primary-500 text-primary-600 font-semibold text-base hover:bg-primary-50 transition-all"
+            href="mailto:corporate@neuroholistic.com"
+            className="inline-flex items-center justify-center px-8 py-4 rounded-[10px] border border-[#CBD5E1] text-[#0F172A] font-semibold text-base hover:bg-[#F8FAFC] transition-all"
           >
             Contact Us
           </Link>

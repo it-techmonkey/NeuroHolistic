@@ -7,7 +7,7 @@ export default function ProfessionalOutcome() {
       <div className="absolute inset-0">
         <Image
           src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80"
-          alt=""
+          alt="Academy practitioners in a professional training setting"
           fill
           className="object-cover scale-105"
           sizes="100vw"

@@ -1,30 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #111827;
-  --accent: #8B7CF7;
-  --accent-secondary: #22c55e;
-  
-  /* Color palette */
-  --primary: #8B7CF7;
-  --primary-dark: #6342c0;
-  --primary-light: #a678ff;
-  
-  --secondary: #22c55e;
-  --secondary-dark: #16a34a;
-  
-  /* Neutral */
-  --neutral-50: #f9fafb;
-  --neutral-100: #f3f4f6;
-  --neutral-900: #111827;
-  
-  /* Gradients */
-  --gradient-hero: linear-gradient(135deg, #8B7CF7 0%, #6342c0 100%);
-  --gradient-dark: linear-gradient(135deg, #2a1c4e 0%, #111827 100%);
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --text-secondary: #475569;
+
+  --primary: #0b0f2b;
+  --primary-strong: #11174a;
+  --accent: #8b8bff;
+  --accent-soft: #a6a6ff;
+
+  --surface: #ffffff;
+  --surface-muted: #f4f6f9;
+
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 18px 40px rgba(15, 23, 42, 0.1);
+
+  --radius-card: 20px;
+  --radius-button: 10px;
 }
 
 * {
+  box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -36,14 +33,15 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
 }
 
 /* Selection style */
 ::selection {
-  background-color: var(--primary);
+  background-color: var(--accent);
   color: white;
 }
 
@@ -53,20 +51,59 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--neutral-100);
+  background: #e2e8f0;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: #94a3b8;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+  background: #64748b;
 }
 
 /* Focus visible for accessibility */
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.7;
+}
+
+.section-shell {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.surface-card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.label-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent);
 }

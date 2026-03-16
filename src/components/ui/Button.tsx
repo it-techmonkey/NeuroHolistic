@@ -13,21 +13,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles = {
   primary:
-    "bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 disabled:bg-neutral-300 disabled:text-neutral-500",
+    "bg-[#0B0F2B] text-white hover:bg-[#11174A] active:bg-[#11174A] disabled:bg-slate-300 disabled:text-slate-500 shadow-[0_10px_24px_rgba(11,15,43,0.18)]",
   secondary:
-    "bg-secondary-500 text-white hover:bg-secondary-600 active:bg-secondary-700 disabled:bg-neutral-300 disabled:text-neutral-500",
+    "bg-[#2B2F55] text-white hover:bg-[#1F2345] active:bg-[#1F2345] disabled:bg-slate-300 disabled:text-slate-500",
   outline:
-    "border-2 border-primary-500 text-primary-500 hover:bg-primary-50 active:bg-primary-100 disabled:border-neutral-300 disabled:text-neutral-300",
+    "border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F8FAFC] active:bg-[#F1F5F9] disabled:border-slate-300 disabled:text-slate-300",
   ghost:
-    "text-primary-500 hover:bg-primary-50 active:bg-primary-100 disabled:text-neutral-300",
+    "text-[#11174A] hover:bg-[#EEF2FF] active:bg-[#E2E8F0] disabled:text-slate-300",
   danger:
-    "bg-error text-white hover:bg-red-600 active:bg-red-700 disabled:bg-neutral-300 disabled:text-neutral-500",
+    "bg-red-500 text-white hover:bg-red-600 active:bg-red-700 disabled:bg-slate-300 disabled:text-slate-500",
 };
 
 const sizeStyles = {
-  sm: "px-3 py-2 text-sm font-medium rounded-md",
-  md: "px-4 py-2.5 text-base font-medium rounded-lg",
-  lg: "px-6 py-3 text-lg font-semibold rounded-lg",
+  sm: "px-3.5 py-2 text-sm font-medium rounded-[10px]",
+  md: "px-[22px] py-[14px] text-[15px] font-medium rounded-[10px]",
+  lg: "px-7 py-3.5 text-base font-semibold rounded-[10px]",
 };
 
 export default function Button({
@@ -45,7 +45,7 @@ export default function Button({
 }: ButtonProps) {
   const buttonVariant = destructive ? "danger" : variant;
   const baseStyles =
-    "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8B8BFF] disabled:cursor-not-allowed hover:translate-y-[-1px]";
   const widthStyles = fullWidth ? "w-full" : "";
   const combinedClassName = `${baseStyles} ${variantStyles[buttonVariant]} ${sizeStyles[size]} ${widthStyles} ${className}`;
 

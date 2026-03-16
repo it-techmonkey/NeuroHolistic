@@ -1,11 +1,14 @@
 export default function Philosophy() {
   return (
-    <section className="py-20 md:py-28 bg-slate-100">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-slate-900 tracking-tight mb-8">
+    <section className="py-24 md:py-32 bg-[#F4F6F9]">
+      <div className="max-w-[900px] mx-auto px-6 md:px-10 text-center">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.15em] text-[#8B8BFF] mb-4">
+          Philosophy
+        </p>
+        <h2 className="text-3xl md:text-[42px] lg:text-[48px] font-semibold text-slate-900 tracking-tight mb-8 leading-[1.15]">
           True transformation does not come from managing symptoms.
         </h2>
-        <p className="text-lg md:text-xl text-slate-600 leading-relaxed">
+        <p className="text-[17px] md:text-[19px] text-slate-600 leading-[1.8]">
           It begins when the internal system returns to balance and coherence.
           The NeuroHolistic Method™ restores alignment across the nervous system,
           cognition, and emotional processes, creating the conditions for deep
