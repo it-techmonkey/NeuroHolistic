@@ -20,34 +20,9 @@ type BookingModalContextType = {
 const BookingModalContext = createContext<BookingModalContextType | null>(null);
 
 function VisualImage() {
-  const visualSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 1400'>
-  <defs>
-    <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
-      <stop offset='0%' stop-color='#0B0F2B'/>
-      <stop offset='55%' stop-color='#11174A'/>
-      <stop offset='100%' stop-color='#1A2166'/>
-    </linearGradient>
-    <radialGradient id='haloA' cx='28%' cy='22%' r='42%'>
-      <stop offset='0%' stop-color='rgba(166,166,255,0.55)'/>
-      <stop offset='100%' stop-color='rgba(166,166,255,0)'/>
-    </radialGradient>
-    <radialGradient id='haloB' cx='78%' cy='72%' r='44%'>
-      <stop offset='0%' stop-color='rgba(139,139,255,0.48)'/>
-      <stop offset='100%' stop-color='rgba(139,139,255,0)'/>
-    </radialGradient>
-  </defs>
-  <rect width='1200' height='1400' fill='url(#bg)'/>
-  <ellipse cx='340' cy='280' rx='320' ry='240' fill='url(#haloA)'/>
-  <ellipse cx='860' cy='980' rx='300' ry='280' fill='url(#haloB)'/>
-  <circle cx='640' cy='620' r='230' fill='none' stroke='rgba(255,255,255,0.18)' stroke-width='3'/>
-  <circle cx='640' cy='620' r='175' fill='none' stroke='rgba(255,255,255,0.15)' stroke-width='2.5'/>
-  <circle cx='640' cy='620' r='114' fill='none' stroke='rgba(255,255,255,0.13)' stroke-width='2'/>
-  <circle cx='640' cy='620' r='64' fill='rgba(198,205,255,0.65)'/>
-</svg>`;
-
   return (
     <img
-      src={`data:image/svg+xml,${encodeURIComponent(visualSvg)}`}
+      src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=1400&q=80"
       alt="Neuroscience wellness visual"
       className="h-full w-full object-cover"
     />
