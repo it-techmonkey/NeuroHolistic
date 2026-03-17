@@ -36,7 +36,7 @@ export default function MethodVision() {
               {/* Internal Image Frame */}
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[1.5rem] bg-[#F1F5F9]">
                 <Image
-                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1200&q=80"
+                  src="/images/dummy-user.svg"
                   alt="Two people in a supportive environment"
                   fill
                   className="object-cover grayscale-[10%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"

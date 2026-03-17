@@ -16,7 +16,7 @@ const FEATURED = {
   slug: "dr-fawzia-yassmina",
   name: "Dr. Fawzia Yassmina",
   title: "Founder & Creator of the NeuroHolistic Method™",
-  image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1400&q=80",
+  image: "/images/dummy-user.svg",
 };
 
 const MEMBERS: Member[] = [
@@ -24,37 +24,37 @@ const MEMBERS: Member[] = [
     slug: "mariam-al-kaisi",
     name: "Mariam Al Kaisi",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
   {
     slug: "noura-youssef",
     name: "Noura Youssef",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
   {
     slug: "zekra-khayata",
     name: "Zekra Khayata",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
   {
     slug: "reem-mobayed",
     name: "Reem Mobayed",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
   {
     slug: "fawares-azaar",
     name: "Fawares Azaar",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
   {
     slug: "joud-charafeddin",
     name: "Joud Charafeddin",
     title: "Certified Practitioner",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1400&q=80",
+    image: "/images/dummy-user.svg",
   },
 ];
 

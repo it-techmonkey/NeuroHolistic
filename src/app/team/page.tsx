@@ -18,7 +18,7 @@ export default function TeamPage() {
           </>
         }
         description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."
-        imageSrc="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80"
+        imageSrc="/images/dummy-user.svg"
         imageAlt="NeuroHolistic Faculty and Research Environment"
         metaTags={["Certified", "Applied Practice", "Board Oversight"]}
       />

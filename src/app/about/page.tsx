@@ -144,7 +144,7 @@ export default function AboutPage() {
             <div className="lg:col-span-7">
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] md:aspect-[16/10] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0">
-                  <Image src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80" alt="Dr. Fawzia Yassmina" fill className="object-cover" />
+                  <Image src="/images/dummy-user.svg" alt="Dr. Fawzia Yassmina" fill className="object-cover" />
                 </div>
               </div>
             </div>

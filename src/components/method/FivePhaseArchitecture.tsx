@@ -8,7 +8,7 @@ const PHASES = [
   { number: "02", title: "Repatterning", desc: "Reorganizing deep neural patterns that have kept the system locked in old adaptations.", img: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&q=80" },
   { number: "03", title: "Integration", desc: "Stabilizing new neural pathways so that regulation becomes the default state.", img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&q=80" },
   { number: "04", title: "Regulation", desc: "Strengthening the nervous system's capacity for self-regulation and resilience.", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80" },
-  { number: "05", title: "Expansion", desc: "Embedding transformation into identity, supporting the expansion of human potential.", img: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80" },
+  { number: "05", title: "Expansion", desc: "Embedding transformation into identity, supporting the expansion of human potential.", img: "/images/dummy-user.svg" },
 ];
 
 export default function FivePhaseArchitecture() {

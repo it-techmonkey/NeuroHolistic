@@ -9,7 +9,7 @@ export default function ProfessionalOutcome() {
       {/* ── Background Detail ── */}
       <div className="absolute inset-0 opacity-20 grayscale pointer-events-none">
         <Image
-          src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80"
+          src="/images/dummy-user.svg"
           alt="Practitioner Training"
           fill
           className="object-cover"

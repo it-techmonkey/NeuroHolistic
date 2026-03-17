@@ -64,7 +64,7 @@ export default function WhyItMatters() {
               {/* Sharp Edge Image Frame */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 md:aspect-[16/11]">
                 <Image
-                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1400&q=80"
+                  src="/images/dummy-user.svg"
                   alt="Coaching or therapy session"
                   fill
                   className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"

@@ -36,7 +36,7 @@ export const MOCK_EVENTS: EventItem[] = [
     time: "6:00 PM – 8:00 PM (GST)",
     location: "Online",
     type: "Online Session",
-    image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80",
+    image: "/images/dummy-user.svg",
     slug: "online-nervous-system-basics",
   },
 ];
