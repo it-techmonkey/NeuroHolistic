@@ -1,6 +1,6 @@
-import Section from "@/components/ui/Section";
-import { Card, CardBody } from "@/components/ui/Card";
-import { H2, BodySmall } from "@/components/ui/Typography";
+"use client";
+
+import { motion } from "framer-motion";
 
 const EXPERIENCES = [
   {
@@ -31,30 +31,71 @@ const EXPERIENCES = [
 
 export default function RetreatExperience() {
   return (
-    <Section padding="xl" background="light">
-      <H2 className="text-neutral-900 mb-12 text-center">What You&apos;ll Experience</H2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-        {EXPERIENCES.map((item) => (
-          <Card
-            key={item.title}
-            className="rounded-xl border border-neutral-100 shadow-md hover:shadow-lg transition-all duration-300"
-            shadow="none"
-            hoverable
+    <section className="bg-white py-24 md:py-32 lg:py-40">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        
+        {/* ── Editorial Header ── */}
+        <div className="mb-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-6 flex items-center gap-3"
           >
-            <CardBody className="p-6 md:p-8">
-              <div className="w-12 h-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center text-2xl font-bold mb-5">
-                {item.icon}
+            <div className="h-px w-6 bg-[#CBD5E1]" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-[#94A3B8]">
+              The Immersive Process
+            </span>
+          </motion.div>
+
+          <motion.h2 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="max-w-[800px] text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]"
+          >
+            What you will <span className="italic text-[#64748B] font-normal">experience.</span>
+          </motion.h2>
+        </div>
+
+        {/* ── Architectural Grid ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-[#E2E8F0]">
+          {EXPERIENCES.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className={`group flex flex-col p-8 md:p-10 border-b border-[#E2E8F0] ${
+                i % 4 !== 3 ? "lg:border-r" : ""
+              } ${
+                i % 2 !== 1 ? "md:border-r lg:border-r" : "md:border-r-0 lg:border-r"
+              } lg:last:border-r-0 transition-colors hover:bg-[#FAFBFF]`}
+            >
+              {/* Monospaced Index */}
+              <div className="mb-10 flex items-center justify-between">
+                <span className="font-mono text-[12px] text-[#CBD5E1] group-hover:text-[#6366F1] transition-colors">
+                  0{i + 1}
+                </span>
+                <span className="text-[20px] text-[#6366F1] opacity-40 group-hover:opacity-100 transition-opacity">
+                  {item.icon}
+                </span>
               </div>
-              <h3 className="text-lg font-semibold text-neutral-900 mb-3">
+
+              <h3 className="mb-4 text-[20px] font-semibold tracking-tight text-[#0F172A]">
                 {item.title}
               </h3>
-              <BodySmall className="text-neutral-600">
+              
+              <p className="text-[15px] leading-[1.7] text-[#64748B]">
                 {item.description}
-              </BodySmall>
-            </CardBody>
-          </Card>
-        ))}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
       </div>
-    </Section>
+    </section>
   );
 }

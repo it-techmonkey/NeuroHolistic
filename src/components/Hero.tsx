@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import BookNowButton from "@/components/booking/BookNowButton";
 
@@ -9,54 +10,45 @@ export default function Hero() {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(120deg,#0B0F2B_0%,#11174A_100%)]"
+      className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(135deg,#0B1028_0%,#0A132B_48%,#060710_100%)]"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 right-[-120px] h-[420px] w-[420px] rounded-full bg-[#8B8BFF]/12 blur-3xl" />
-        <div className="absolute -bottom-20 left-[-80px] h-[360px] w-[360px] rounded-full bg-[#A6A6FF]/10 blur-3xl" />
+        <div className="absolute right-[-120px] top-[8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(152,170,255,0.18)_0%,rgba(6,7,16,0)_62%)] blur-[10px]" />
+        <div className="hero-noise-texture absolute inset-0 opacity-[0.045]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-6 pb-20 pt-40 md:px-10 md:pb-24 md:pt-44">
+      <div className="relative z-10 mx-auto max-w-[1200px] top-20 px-6 pb-20 pt-40 md:px-10 md:pb-24 md:pt-44">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.8 }}
-            className="max-w-[560px]"
+            className="max-w-[650px]"
           >
             <h1
-              className="text-[40px] font-normal leading-[1.1] tracking-[-1px] text-white sm:text-[54px] lg:text-[64px]"
+              className="max-w-[22ch] leading-[1.05] tracking-[-0.035em] text-[#EAF0FF]"
               style={{ fontFamily: "Inter, Satoshi, 'Neue Montreal', -apple-system, sans-serif" }}
             >
-              <span className="font-normal">Restore the System</span>
-              <br />
-              <span className="italic">Transform</span>
-              <span className="font-bold"> Your Life.</span>
+              <span className="block whitespace-nowrap text-[36px] font-normal text-[#E2E9FF] sm:text-[66px] lg:text-[55px]">
+                Restore the System.
+              </span>
+              <span className="block whitespace-nowrap text-[36px] italic text-white sm:text-[60px] lg:text-[55px]">
+                Begin Your Reset.
+              </span>
             </h1>
-            <p className="mt-6 max-w-[520px] text-[18px] leading-relaxed text-[#C7C9E0] opacity-80">
-              A neuroscience-led method for restoring your internal system, creating calmer
-              states, clearer cognition, and measurable personal transformation.
+            <p className="mt-10 max-w-[60ch] text-[17px] leading-[1.85] text-[#C3CBE8] sm:text-[18px] lg:text-[17.5px]">
+              The NeuroHolistic Method™ is a science-based approach that restores balance within the human system, supporting deep, long-lasting transformation.
             </p>
-            <div className="mt-7 grid max-w-[440px] grid-cols-2 gap-3 text-white/80 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 backdrop-blur-sm">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">Method</p>
-                <p className="mt-1 text-sm font-semibold text-white">5 Phases</p>
-              </div>
-              <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 backdrop-blur-sm">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">Format</p>
-                <p className="mt-1 text-sm font-semibold text-white">1:1 + Group</p>
-              </div>
-              <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 backdrop-blur-sm col-span-2 sm:col-span-1">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">Outcome</p>
-                <p className="mt-1 text-sm font-semibold text-white">System Reset</p>
-              </div>
-            </div>
-            <div className="mt-8 md:mt-10">
-              <BookNowButton
-                className="inline-flex items-center justify-center rounded-[10px] bg-white px-6 py-3.5 text-[16px] font-semibold text-black transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_10px_36px_rgba(166,166,255,0.24)]"
-              >
-                Book Now
+            <div className="mt-12 flex flex-wrap items-center gap-3 md:gap-4">
+              <BookNowButton className="inline-flex items-center justify-center rounded-[12px] bg-white px-6 py-3.5 text-[15px] font-semibold tracking-[0.01em] text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF]">
+                Begin Your Reset
               </BookNowButton>
+              <Link
+                href="/method"
+                className="inline-flex items-center justify-center rounded-[12px] border border-white/22 bg-transparent px-5 py-3.5 text-[15px] font-medium text-white/88 transition-all duration-300 hover:border-white/35 hover:text-white"
+              >
+                Explore the Method
+              </Link>
             </div>
           </motion.div>
 
@@ -74,106 +66,133 @@ export default function Hero() {
   );
 }
 
-function NeuralGraphic() {
-  const nodeOffsets = [
-    { x: "24%", y: "16%", delay: 0.2 },
-    { x: "78%", y: "24%", delay: 0.8 },
-    { x: "18%", y: "68%", delay: 1.2 },
-    { x: "72%", y: "76%", delay: 1.7 },
-    { x: "48%", y: "10%", delay: 2.1 },
-  ];
 
+export function NeuralGraphic() {
   return (
-    <motion.div
-      animate={{ y: [0, -10, 0] }}
-      transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
-      className="relative h-[320px] w-[320px] md:h-[460px] md:w-[460px]"
-    >
-      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(166,166,255,0.22)_0%,rgba(139,139,255,0.08)_45%,rgba(17,23,74,0)_78%)] blur-xl" />
+    <div className="relative h-[400px] w-[400px] md:h-[550px] md:w-[550px] flex items-center justify-center">
+      
+      {/* 1. Multi-Layered Ambient Glow - More Sophisticated Blend */}
+      <motion.div
+        animate={{ 
+          scale: [1, 1.15, 1],
+          opacity: [0.35, 0.6, 0.35] 
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute h-[340px] w-[340px] rounded-full bg-[radial-gradient(circle,rgba(61,90,255,0.2)_0%,rgba(148,80,255,0.15)_40%,rgba(6,7,16,0)_70%)] blur-[110px]"
+      />
+      <motion.div
+        animate={{ 
+          scale: [1.05, 0.95, 1.05],
+          opacity: [0.15, 0.3, 0.15] 
+        }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute h-[280px] w-[280px] rounded-full bg-[radial-gradient(circle,rgba(61,200,255,0.1)_0%,rgba(6,7,16,0)_80%)] blur-[90px]"
+      />
 
-      <motion.svg
-        viewBox="0 0 500 500"
-        className="absolute inset-0 h-full w-full"
-        fill="none"
-        initial={{ opacity: 0.2 }}
-        animate={{ opacity: [0.35, 0.6, 0.35] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      >
+      <svg className="absolute h-full w-full" viewBox="0 0 500 500">
         <defs>
-          <radialGradient id="sphereGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-            <stop offset="35%" stopColor="#A6A6FF" stopOpacity="0.86" />
-            <stop offset="100%" stopColor="#8B8BFF" stopOpacity="0.42" />
-          </radialGradient>
+          {/* Enhanced Gooey Filter - Critical for organic movement */}
+          <filter id="goo" colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur" />
+            <feColorMatrix 
+              in="blur" 
+              mode="matrix" 
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -8" 
+              result="goo" 
+            />
+            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+          </filter>
         </defs>
 
-        <motion.g
-          style={{ transformOrigin: "250px 250px" }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
-        >
-          <circle cx="250" cy="250" r="186" stroke="rgba(166,166,255,0.34)" strokeWidth="1.2" />
-          <circle cx="250" cy="64" r="4" fill="#A6A6FF" />
-          <circle cx="428" cy="250" r="3.2" fill="#A6A6FF" />
-        </motion.g>
+        {/* 2. The Morphing System Core - Procedural Bio-Digital Harmony */}
+        <g filter="url(#goo)">
+          {[...Array(6)].map((_, i) => (
+            <motion.circle
+              key={`blob-${i}`}
+              cx="250"
+              cy="250"
+              r={42 + i * 5}
+              fill="rgba(234,240,255,0.85)"
+              animate={{
+                x: [0, Math.sin(i * 1.5) * 55, 0],
+                y: [0, Math.cos(i * 1.5) * 55, 0],
+                scale: [1, 1.25, 0.9, 1],
+              }}
+              transition={{
+                duration: 8 + i,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              style={{ opacity: 0.85 }}
+            />
+          ))}
+        </g>
 
-        <motion.g
-          style={{ transformOrigin: "250px 250px" }}
-          animate={{ rotate: -360 }}
-          transition={{ duration: 34, repeat: Infinity, ease: "linear" }}
-        >
-          <ellipse
-            cx="250"
-            cy="250"
-            rx="142"
-            ry="174"
-            stroke="rgba(139,139,255,0.28)"
-            strokeWidth="1"
+        {/* 3. Geometric Precision Rings - Subtly connecting bio to digital */}
+        <g className="opacity-15">
+          {/* Subtle Outer Dash */}
+          <circle cx="250" cy="250" r="195" stroke="white" strokeWidth="0.5" strokeDasharray="6 12" />
+          
+          {/* Detailed Inner Arc with Glowing Tracer */}
+          <circle cx="250" cy="250" r="195" stroke="#94A3B8" strokeWidth="1" strokeDasharray="1 100" strokeLinecap="round" />
+          <motion.circle 
+            cx="250" cy="250" r="195" 
+            stroke="#94A3B8" strokeWidth="1" 
+            strokeDasharray="1 100" 
+            strokeLinecap="round"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+            style={{ transformOrigin: 'center' }}
           />
-          <circle cx="250" cy="76" r="3.2" fill="#8B8BFF" />
-          <circle cx="122" cy="366" r="3" fill="#8B8BFF" />
-        </motion.g>
+          
+          {/* Very Faint Network Overlay */}
+          <circle cx="250" cy="250" r="150" stroke="white" strokeWidth="0.25" opacity="0.1" />
+        </g>
+      </svg>
 
-        <motion.g
-          style={{ transformOrigin: "250px 250px" }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-        >
-          <ellipse
-            cx="250"
-            cy="250"
-            rx="114"
-            ry="150"
-            stroke="rgba(166,166,255,0.2)"
-            strokeWidth="1"
-          />
-          <circle cx="350" cy="122" r="2.8" fill="#C7C9E0" />
-          <circle cx="154" cy="368" r="2.8" fill="#C7C9E0" />
-        </motion.g>
+      {/* 4. Glassmorphic UI Elements - Sleeker & More Functional */}
+      
+      {/* Top Right: System Status */}
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-14 right-2 md:right-10 backdrop-blur-2xl bg-white/5 border border-white/12 p-3.5 rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.3)]"
+      >
+        <div className="flex gap-2.5 items-center">
+          <div className="relative h-4 w-4">
+            <div className="absolute inset-0 h-4 w-4 rounded-full bg-cyan-400 opacity-20 animate-pulse-slow" />
+            <div className="absolute inset-1 h-2 w-2 rounded-full bg-cyan-300" />
+          </div>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-white/70 font-medium">Status</span>
+        </div>
+        <div className="text-white text-[15px] mt-2 font-light tracking-tight leading-tight">System Restored</div>
+      </motion.div>
 
-        <motion.circle
-          cx="250"
-          cy="250"
-          r="52"
-          fill="url(#sphereGlow)"
-          animate={{ r: [48, 56, 48], opacity: [0.85, 1, 0.85] }}
-          transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <circle cx="250" cy="250" r="78" fill="rgba(166,166,255,0.16)" />
-      </motion.svg>
-
-      {nodeOffsets.map((node) => (
-        <motion.span
-          key={`${node.x}-${node.y}`}
-          className="absolute block h-2 w-2 rounded-full bg-[#C7C9E0] shadow-[0_0_14px_rgba(166,166,255,0.7)]"
-          style={{ left: node.x, top: node.y }}
-          initial={{ opacity: 0.2 }}
-          animate={{ opacity: [0.2, 0.9, 0.2], scale: [0.9, 1.15, 0.9] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: node.delay }}
-        />
-      ))}
-
-      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0)_58%)]" />
-    </motion.div>
+      {/* Bottom Left: Neural Balance */}
+      <motion.div
+        animate={{ y: [0, 12, 0] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-22 left-2 md:left-6 backdrop-blur-2xl bg-white/5 border border-white/12 p-4 rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.3)]"
+      >
+        <div className="text-[11px] uppercase tracking-[0.2em] text-white/70 font-medium mb-3">Neural Balance</div>
+        <div className="flex items-end gap-1 h-6">
+          {[0.5, 0.8, 1, 0.7, 0.9, 0.6].map((h, i) => (
+            <motion.div
+              key={i}
+              className="w-2 bg-gradient-to-t from-blue-500/80 to-blue-400 rounded-t-sm"
+              animate={{ 
+                height: [`${h * 100}%`, `${(1 - h) * 100}%`, `${h * 100}%`],
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{ 
+                duration: 2.2 + i * 0.25, 
+                repeat: Infinity, 
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+        </div>
+      </motion.div>
+    </div>
   );
 }

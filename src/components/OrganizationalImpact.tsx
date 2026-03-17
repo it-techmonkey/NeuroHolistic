@@ -1,5 +1,6 @@
-import Section from "@/components/ui/Section";
-import { H2, Body, BodySmall } from "@/components/ui/Typography";
+"use client";
+
+import { motion } from "framer-motion";
 
 const IMPACTS = [
   {
@@ -31,29 +32,95 @@ const IMPACTS = [
 
 export default function OrganizationalImpact() {
   return (
-    <Section padding="xl" background="dark" className="!bg-slate-900">
-      <div className="text-center max-w-3xl mx-auto mb-14">
-        <H2 className="text-white mb-4">Impact Across the Organization</H2>
-        <Body className="text-slate-300">
-          Organizations implementing regulation-informed wellbeing frameworks
-          observe improvements across multiple operational areas.
-        </Body>
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {IMPACTS.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 p-6 md:p-8 hover:bg-white/15 transition-all duration-300"
-          >
-            <h3 className="text-lg font-semibold text-white mb-3">
-              {item.title}
-            </h3>
-            <BodySmall className="text-slate-300">
-              {item.description}
-            </BodySmall>
+    <section className="bg-[#0F172A] py-24 md:py-32 lg:py-40 border-t border-white/5">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        
+        {/* ── Editorial Header ── */}
+        <div className="mb-20 grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-7">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mb-8 flex items-center gap-4"
+            >
+              <div className="h-px w-8 bg-white/20" />
+              <span className="font-mono text-[11px] tracking-[0.4em] text-[#8B8BFF] uppercase">
+                Impact // Metrics
+              </span>
+            </motion.div>
+
+            <motion.h2 
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-[34px] font-light leading-[1.1] tracking-tight text-white md:text-[52px]"
+            >
+              Measurable impact across <br />
+              <span className="italic text-slate-400 font-normal">the organization.</span>
+            </motion.h2>
           </div>
-        ))}
+          
+          <div className="lg:col-span-5 flex items-end">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-[17px] leading-[1.8] text-slate-400 max-w-[420px]"
+            >
+              Organizations implementing regulation-informed frameworks observe fundamental improvements in systemic resilience.
+            </motion.p>
+          </div>
+        </div>
+
+        {/* ── The Impact Matrix ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-white/10">
+          {IMPACTS.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.8 }}
+              className={`group flex flex-col p-8 md:p-10 border-b border-white/10 ${
+                (i + 1) % 3 !== 0 ? "lg:border-r" : ""
+              } ${
+                (i + 1) % 2 !== 0 ? "md:border-r lg:border-r" : "md:border-r-0 lg:border-r"
+              } lg:last:border-r-0 transition-colors hover:bg-white/[0.02]`}
+            >
+              {/* Monospaced Registry Number */}
+              <div className="mb-12">
+                <span className="font-mono text-[12px] text-white/20 group-hover:text-[#8B8BFF] transition-colors">
+                  [ 0{i + 1} ]
+                </span>
+              </div>
+
+              <h3 className="mb-4 text-[20px] font-semibold tracking-tight text-white leading-snug">
+                {item.title}
+              </h3>
+              
+              <p className="text-[15px] leading-[1.7] text-slate-400">
+                {item.description}
+              </p>
+
+              {/* Minimal Accent */}
+              <div className="mt-auto pt-10">
+                <div className="h-px w-6 bg-white/10 transition-all group-hover:w-full group-hover:bg-[#8B8BFF]" />
+              </div>
+            </motion.div>
+          ))}
+          
+          {/* Fill the empty grid spot on desktop to maintain the matrix lines */}
+          <div className="hidden lg:flex p-10 border-b border-white/10 items-center justify-center">
+             <span className="font-mono text-[10px] uppercase tracking-widest text-white/5">
+               NeuroHolistic Institute // Standards
+             </span>
+          </div>
+        </div>
+
       </div>
-    </Section>
+    </section>
   );
 }

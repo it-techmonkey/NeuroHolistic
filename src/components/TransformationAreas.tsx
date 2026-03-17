@@ -1,68 +1,170 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
+
+/* ─── Standard, Clean UI Icons (Lucide-style) ───────────────────────────── */
+
+function HealthIcon() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
+
+function MindIcon() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+  );
+}
+
+function RelIcon() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function PotentialIcon() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v8" />
+      <path d="m4.93 10.93 1.41 1.41" />
+      <path d="M2 18h2" />
+      <path d="m20 18h2" />
+      <path d="m19.07 10.93-1.41 1.41" />
+      <path d="M22 22H2" />
+      <path d="m8 6 4-4 4 4" />
+      <path d="M16 18a4 4 0 0 0-8 0" />
+    </svg>
+  );
+}
+
+/* ─── Data ───────────────────────────────────────────────────────────────── */
 
 const AREAS = [
   {
-    title: "Health",
-    description:
-      "When the nervous system returns to balance, the body shifts out of chronic stress and into regulation.",
-    icon: "◆",
+    title: "Health & Physiology",
+    description: "When the nervous system returns to balance, the body shifts out of chronic stress and into profound physical regulation.",
+    Icon: HealthIcon,
     href: "/programs#health",
   },
   {
-    title: "Mind",
-    description:
-      "As neural patterns reorganize, mental clarity increases and emotional reactivity decreases.",
-    icon: "◇",
+    title: "Cognitive Clarity",
+    description: "As neural patterns reorganize, mental fog lifts. Experience sharper focus and significantly decreased emotional reactivity.",
+    Icon: MindIcon,
     href: "/programs#mind",
   },
   {
-    title: "Relationships",
-    description:
-      "Internal coherence changes how we relate to others—communication, boundaries, and connection deepen.",
-    icon: "○",
+    title: "Relational Depth",
+    description: "Internal coherence fundamentally changes how we relate to others—communication, boundaries, and authentic connection deepen.",
+    Icon: RelIcon,
     href: "/programs#relationships",
   },
   {
     title: "Human Potential",
-    description:
-      "When internal systems align, energy becomes available for creativity, purpose, and meaningful growth.",
-    icon: "△",
+    description: "When internal systems align, blocked energy becomes freely available for creativity, purpose, and meaningful life growth.",
+    Icon: PotentialIcon,
     href: "/programs#potential",
   },
 ];
 
+/* ─── Main Component ─────────────────────────────────────────────────────── */
+
 export default function TransformationAreas() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
+  };
+
   return (
-    <section className="py-20 md:py-28 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-16">
-          Where Transformation Takes Shape
-        </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {AREAS.map((area) => (
-            <div
-              key={area.title}
-              className="rounded-2xl bg-white p-6 md:p-8 shadow-md border border-slate-100 hover:shadow-xl hover:border-indigo-100 transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-bold mb-5">
-                {area.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-3">
-                {area.title}
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                {area.description}
-              </p>
-              <Link
+    <section className="w-full bg-[#FAFBFF] py-24 md:py-32">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="mx-auto max-w-[1200px] px-6 md:px-12"
+      >
+        {/* Header Section */}
+        <div className="mb-16 flex flex-col items-center text-center md:mb-20">
+          <motion.div variants={itemVariants} className="mb-5">
+            <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
+              Areas of Focus
+            </span>
+          </motion.div>
+
+          <motion.h2 
+            variants={itemVariants} 
+            className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
+          >
+            Where Transformation Takes Shape.
+          </motion.h2>
+
+          <motion.p 
+            variants={itemVariants} 
+            className="max-w-[600px] text-[17px] leading-[1.7] text-[#475569]"
+          >
+            Each area reflects a different dimension of systemic restoration. Together they create a coherent pathway for meaningful and lasting change.
+          </motion.p>
+        </div>
+
+        {/* Clean Bento Grid */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+          {AREAS.map((area, index) => (
+            <motion.div key={index} variants={itemVariants} className="h-full">
+              <Link 
                 href={area.href}
-                className="text-indigo-600 font-semibold text-sm hover:text-indigo-700 hover:underline"
+                className="group flex h-full flex-col justify-between rounded-[24px] border border-[#E2E8F0] bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#CBD5E1] hover:shadow-[0_20px_40px_-15px_rgba(15,23,42,0.08)] md:p-10"
               >
-                Explore More
+                <div>
+                  {/* Icon Container: Clean & Simple */}
+                  <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8FAFC] text-[#64748B] transition-colors duration-300 group-hover:bg-[#EEF2FF] group-hover:text-[#6366F1]">
+                    <area.Icon />
+                  </div>
+                  
+                  {/* Text Content */}
+                  <h3 className="mb-3 text-[20px] font-semibold text-[#0F172A]">
+                    {area.title}
+                  </h3>
+                  <p className="text-[15.5px] leading-[1.65] text-[#475569]">
+                    {area.description}
+                  </p>
+                </div>
+
+                {/* Subtle Action Link */}
+                <div className="mt-8 flex items-center gap-2 text-[14px] font-medium text-[#6366F1] opacity-0 transition-all duration-300 group-hover:opacity-100">
+                  Explore Dimension
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </div>
               </Link>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

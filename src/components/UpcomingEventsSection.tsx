@@ -1,24 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Section from "@/components/ui/Section";
-import { H2 } from "@/components/ui/Typography";
-import FeaturedEvent from "./FeaturedEvent";
-import EventCard from "./EventCard";
-import EventFilters from "./EventFilters";
-import type { EventFiltersState } from "./EventFilters";
-import EventsEmptyState from "./EventsEmptyState";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import type { EventItem } from "./events/types";
 
-function extractDateOptions(events: EventItem[]): { value: string; label: string }[] {
+/* ─── Filter Logic (Keeping your existing logic) ─────────────────────────── */
+function extractDateOptions(events: EventItem[]) {
   const seen = new Set<string>();
-  const options: { value: string; label: string }[] = [{ value: "all", label: "All dates" }];
+  const options = [{ value: "all", label: "All dates" }];
   for (const e of events) {
     const match = e.date.match(/([A-Za-z]+)\s+\d+/);
     if (match) {
       const month = match[1];
-      const yearMatch = e.date.match(/\d{4}/);
-      const year = yearMatch ? yearMatch[0] : "";
+      const year = e.date.match(/\d{4}/)?.[0] || "";
       const key = `${month} ${year}`;
       if (key && !seen.has(key)) {
         seen.add(key);
@@ -26,90 +21,147 @@ function extractDateOptions(events: EventItem[]): { value: string; label: string
       }
     }
   }
-  return options.sort((a, b) => {
-    if (a.value === "all") return -1;
-    if (b.value === "all") return 1;
-    return a.label.localeCompare(b.label);
-  });
+  return options;
 }
 
-function filterEvents(
-  events: EventItem[],
-  filters: EventFiltersState
-): EventItem[] {
-  return events.filter((e) => {
-    if (filters.type !== "all" && e.type !== filters.type) return false;
-    if (filters.date !== "all") {
-      const match = e.date.match(/([A-Za-z]+)\s+\d+/);
-      const yearMatch = e.date.match(/\d{4}/);
-      const month = match ? match[1] : "";
-      const year = yearMatch ? yearMatch[0] : "";
-      if (`${month} ${year}` !== filters.date) return false;
-    }
-    return true;
-  });
-}
+export default function UpcomingEventsSection({ events }: { events: EventItem[] }) {
+  const [filters, setFilters] = useState({ type: "all", date: "all" });
 
-interface UpcomingEventsSectionProps {
-  events: EventItem[];
-}
-
-export default function UpcomingEventsSection({ events }: UpcomingEventsSectionProps) {
-  const [filters, setFilters] = useState<EventFiltersState>({
-    type: "all",
-    date: "all",
-  });
+  const filtered = useMemo(() => {
+    return events.filter((e) => {
+      if (filters.type !== "all" && e.type !== filters.type) return false;
+      if (filters.date !== "all") {
+        const month = e.date.match(/([A-Za-z]+)\s+\d+/)?.[1] || "";
+        const year = e.date.match(/\d{4}/)?.[0] || "";
+        if (`${month} ${year}` !== filters.date) return false;
+      }
+      return true;
+    });
+  }, [events, filters]);
 
   const dateOptions = useMemo(() => extractDateOptions(events), [events]);
-  const filtered = useMemo(
-    () => filterEvents(events, filters),
-    [events, filters]
-  );
-
-  const [featured, ...rest] = filtered;
 
   return (
-    <Section padding="xl" background="white">
-      <H2 className="text-neutral-900 mb-10">Upcoming Events</H2>
-
-      {filtered.length === 0 ? (
-        <EventsEmptyState />
-      ) : (
-        <>
-          {featured && (
-            <div className="mb-10">
-              <FeaturedEvent event={featured} />
+    <section className="bg-white py-24 md:py-32 lg:py-40">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        
+        {/* ── Architectural Header ── */}
+        <header className="mb-20 flex flex-col items-start justify-between gap-12 border-b border-[#E2E8F0] pb-12 lg:flex-row lg:items-end">
+          <div className="max-w-[600px]">
+            <div className="mb-6 flex items-center gap-4">
+              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
+                Registry // 2024—2025
+              </span>
             </div>
-          )}
+            <h2 className="text-[42px] font-light leading-[1.05] tracking-tight text-[#0F172A] md:text-[56px]">
+              Upcoming <span className="italic text-[#64748B]">Events.</span>
+            </h2>
+          </div>
 
-          {rest.length > 0 && (
-            <>
-              <div className="mb-8">
-                <EventFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  dateOptions={dateOptions}
-                />
-              </div>
-              <div className="space-y-6">
-                {rest.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
-            </>
-          )}
-
-          {rest.length === 0 && featured && (
-            <div className="mb-8">
-              <EventFilters
-                filters={filters}
-                onFiltersChange={setFilters}
-                dateOptions={dateOptions}
-              />
+          {/* Minimalist Filters (No bubbles, just hairlines) */}
+          <div className="flex flex-wrap gap-8">
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Type</span>
+              <select 
+                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                className="bg-transparent text-[14px] font-semibold text-[#0F172A] outline-none cursor-pointer border-b border-[#E2E8F0] pb-1 hover:border-[#0F172A] transition-colors"
+              >
+                <option value="all">All Disciplines</option>
+                <option value="Workshop">Workshops</option>
+                <option value="Retreat">Retreats</option>
+                <option value="Session">Live Sessions</option>
+              </select>
             </div>
-          )}
-        </>
-      )}
-    </Section>
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Timeline</span>
+              <select 
+                onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
+                className="bg-transparent text-[14px] font-semibold text-[#0F172A] outline-none cursor-pointer border-b border-[#E2E8F0] pb-1 hover:border-[#0F172A] transition-colors"
+              >
+                {dateOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+          </div>
+        </header>
+
+        {/* ── The Dossier List ── */}
+        <div className="flex flex-col">
+          <AnimatePresence mode="popLayout">
+            {filtered.length > 0 ? (
+              filtered.map((event, i) => (
+                <EventRow key={event.id} event={event} index={i} />
+              ))
+            ) : (
+              <motion.p 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                className="py-20 text-center font-mono text-[13px] text-[#94A3B8]"
+              >
+                [ No results found in current registry ]
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+/* ─── Individual Event Row (Non-AI Card) ────────────────────────────────── */
+
+function EventRow({ event, index }: { event: EventItem; index: number }) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative border-b border-[#E2E8F0] py-10 transition-colors hover:bg-[#FAFBFF] md:py-14"
+    >
+      <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-12 md:gap-4">
+        
+        {/* Index & Category */}
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-[12px] text-[#94A3B8]">0{index + 1}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1]">
+              {event.type}
+            </span>
+          </div>
+        </div>
+
+        {/* Title & Description */}
+        <div className="md:col-span-5">
+          <h3 className="mb-4 text-[24px] font-semibold tracking-tight text-[#0F172A] md:text-[28px]">
+            {event.title}
+          </h3>
+          <p className="max-w-[400px] text-[15px] leading-relaxed text-[#64748B]">
+            {event.description}
+          </p>
+        </div>
+
+        {/* Meta Info */}
+        <div className="md:col-span-3">
+          <div className="flex flex-col gap-1 border-l border-[#E2E8F0] pl-6">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Date // Location</span>
+            <span className="text-[15px] font-medium text-[#0F172A]">{event.date}</span>
+            <span className="text-[14px] text-[#64748B]">{event.location}</span>
+          </div>
+        </div>
+
+        {/* Action */}
+        <div className="flex items-center md:col-span-2 md:justify-end">
+          <Link
+            href={`/events/${event.id}`}
+            className="inline-flex h-12 items-center justify-center border border-[#0F172A] px-6 text-[13px] font-bold uppercase tracking-widest text-[#0F172A] transition-all hover:bg-[#0F172A] hover:text-white"
+          >
+            Register
+          </Link>
+        </div>
+        
+      </div>
+    </motion.div>
   );
 }

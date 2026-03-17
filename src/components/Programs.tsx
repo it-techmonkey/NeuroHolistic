@@ -1,25 +1,26 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 /* ─── SVG Icons ──────────────────────────────────────────────────────────── */
 
-function PersonIcon() {
+function PersonIcon({ className }: { className?: string }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      className={className}>
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   );
 }
 
-function GroupIcon() {
+function GroupIcon({ className }: { className?: string }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      className={className}>
       <circle cx="9" cy="8" r="3.5" />
       <circle cx="17" cy="9" r="2.5" />
       <path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6" />
@@ -34,10 +35,10 @@ const PROGRAMS = [
   {
     id: "private",
     Icon: PersonIcon,
-    title: "Private",
+    title: "Private Sessions",
     description:
       "A personalized transformational journey tailored to your unique history, patterns, and goals. Through one-on-one sessions, the NeuroHolistic Method™ is applied with precision to restore systemic balance and support deep, lasting change.",
-    cta: "Explore Private Sessions →",
+    cta: "Explore Private Sessions",
     href: "/programs/private",
   },
   {
@@ -46,13 +47,68 @@ const PROGRAMS = [
     title: "Group Program",
     description:
       "A structured transformational experience conducted within a guided group setting. Participants move through the NeuroHolistic Method™ together, benefiting from shared insight, collective momentum, and a supportive environment for integration.",
-    cta: "Explore the Group Program →",
+    cta: "Explore the Group Program",
     href: "/programs/group",
   },
 ];
 
-/* ─── Ease curve ─────────────────────────────────────────────────────────── */
-const ease = [0.22, 1, 0.36, 1] as const;
+/* ─── Main section ───────────────────────────────────────────────────────── */
+
+export default function Programs() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } },
+  };
+
+  return (
+    <section className="relative w-full bg-[#070913] py-24 overflow-hidden md:py-32">
+      {/* Deep Background Illumination */}
+      <div className="pointer-events-none absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
+      <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(61,90,255,0.05)_0%,transparent_70%)] blur-3xl" />
+
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
+      >
+        {/* ── Section header ── */}
+        <div className="mb-16 flex flex-col items-center text-center md:mb-24">
+          <motion.div variants={itemVariants} className="mb-6 flex items-center justify-center gap-4">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#8B8BFF]/50" />
+            <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#8B8BFF]">
+              Pathways
+            </span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#8B8BFF]/50" />
+          </motion.div>
+
+          <motion.h2
+            variants={itemVariants}
+            className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[46px]"
+          >
+            Choose Your <span className="italic text-[#A5B4FC]">Path.</span>
+          </motion.h2>
+        </div>
+
+        {/* ── Cards Grid ── */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+          {PROGRAMS.map((program, i) => (
+            <ProgramCard key={program.id} program={program} index={i} />
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
 
 /* ─── Card component ─────────────────────────────────────────────────────── */
 
@@ -64,194 +120,43 @@ function ProgramCard({
   index: number;
 }) {
   const { Icon } = program;
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.65, delay: index * 0.14, ease }}
-      whileHover={{ y: -6, scale: 1.015 }}
-      className="group"
-      style={{ transition: "box-shadow 0.3s ease" }}
-    >
-      {/* Glass card */}
-      <div
-        className="relative h-full flex flex-col rounded-[20px] overflow-hidden"
-        style={{
-          padding: "40px",
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLElement;
-          el.style.borderColor = "rgba(139,139,255,0.22)";
-          el.style.boxShadow =
-            "0 24px 60px -12px rgba(107,107,255,0.18), 0 0 0 1px rgba(139,139,255,0.12)";
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLElement;
-          el.style.borderColor = "rgba(255,255,255,0.08)";
-          el.style.boxShadow = "none";
-        }}
-      >
-        {/* Radial glow top-left on hover */}
-        <div
-          className="absolute inset-0 rounded-[20px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% -10%, rgba(139,139,255,0.13) 0%, transparent 55%)",
-          }}
-        />
-
-        {/* Icon pill */}
-        <div
-          className="relative z-10 inline-flex items-center justify-center w-12 h-12 rounded-[12px] text-white"
-          style={{
-            background: "linear-gradient(135deg, #8B8BFF 0%, #6B6BFF 100%)",
-            boxShadow: "0 0 16px rgba(139,139,255,0.35)",
-            transition: "box-shadow 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow =
-              "0 0 30px rgba(139,139,255,0.6)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow =
-              "0 0 16px rgba(139,139,255,0.35)";
-          }}
-        >
-          <Icon />
-        </div>
-
-        {/* Title */}
-        <h3
-          className="relative z-10 text-white font-semibold tracking-tight"
-          style={{ fontSize: "22px", marginTop: "20px" }}
-        >
-          {program.title}
-        </h3>
-
-        {/* Description */}
-        <p
-          className="relative z-10 leading-relaxed flex-1"
-          style={{
-            fontSize: "16px",
-            color: "#C7C9E0",
-            marginTop: "16px",
-            marginBottom: "24px",
-            lineHeight: "1.7",
-          }}
-        >
-          {program.description}
-        </p>
-
-        {/* CTA button */}
-        <Link
-          href={program.href}
-          className="relative z-10 self-start inline-flex items-center gap-2 text-white text-sm font-medium rounded-[10px]"
-          style={{
-            padding: "12px 20px",
-            border: "1px solid rgba(255,255,255,0.20)",
-            transition: "background 0.25s ease, border-color 0.25s ease",
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLElement;
-            el.style.background = "rgba(255,255,255,0.08)";
-            el.style.borderColor = "rgba(255,255,255,0.32)";
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLElement;
-            el.style.background = "transparent";
-            el.style.borderColor = "rgba(255,255,255,0.20)";
-          }}
-        >
-          {program.cta}
-        </Link>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Main section ───────────────────────────────────────────────────────── */
-
-export default function Programs() {
-  const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.25 });
-
-  return (
-    <section
-      ref={ref}
-      style={{
-        background: "linear-gradient(180deg, #0B0F2B 0%, #11174A 100%)",
-        padding: "120px 0",
+      variants={{
+        hidden: { opacity: 0, y: 30 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } },
       }}
+      className="group relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0B0F1F] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-white/20 hover:shadow-[0_32px_64px_-15px_rgba(99,102,241,0.12)] md:p-12"
     >
-      <div className="mx-auto px-6 md:px-10" style={{ maxWidth: "1200px" }}>
+      {/* Top Gradient Highlight on Hover */}
+      <div className="absolute left-0 top-0 h-1.5 w-full scale-x-0 bg-gradient-to-r from-[#6366F1] to-[#8B8BFF] transition-transform duration-500 group-hover:scale-x-100 origin-left" />
 
-        {/* ── Section header ── */}
-        <div className="flex flex-col items-center text-center" style={{ marginBottom: "64px" }}>
+      {/* Subtle Inner Glow on Hover */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.06)_0%,transparent_50%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
 
-          {/* Label line */}
-          <motion.div
-            className="flex items-center gap-4 mb-5"
-            initial={{ opacity: 0, y: 12 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, ease }}
-          >
-            <span
-              style={{
-                display: "block",
-                width: "40px",
-                height: "1px",
-                background: "linear-gradient(to right, transparent, rgba(139,139,255,0.5))",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "12px",
-                color: "#8B8BFF",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                fontWeight: 500,
-              }}
-            >
-              Programs
-            </span>
-            <span
-              style={{
-                display: "block",
-                width: "40px",
-                height: "1px",
-                background: "linear-gradient(to left, transparent, rgba(139,139,255,0.5))",
-              }}
-            />
-          </motion.div>
-
-          {/* Title */}
-          <motion.h2
-            className="text-white font-semibold tracking-tight"
-            style={{ fontSize: "clamp(34px, 5vw, 48px)" }}
-            initial={{ opacity: 0, y: 18 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.65, delay: 0.1, ease }}
-          >
-            Choose Your Path
-          </motion.h2>
-        </div>
-
-        {/* ── Cards ── */}
-        <div
-          className="grid grid-cols-1 md:grid-cols-2"
-          style={{ gap: "40px" }}
-        >
-          {PROGRAMS.map((program, i) => (
-            <ProgramCard key={program.id} program={program} index={i} />
-          ))}
-        </div>
+      {/* Icon Pill */}
+      <div className="relative z-10 mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/5 bg-white/5 text-[#8B8BFF] transition-all duration-500 group-hover:bg-[#6366F1] group-hover:border-[#6366F1] group-hover:text-white group-hover:shadow-[0_0_24px_rgba(99,102,241,0.4)]">
+        <Icon />
       </div>
-    </section>
+
+      {/* Content */}
+      <h3 className="relative z-10 mb-4 text-[26px] font-medium tracking-tight text-white">
+        {program.title}
+      </h3>
+      
+      <p className="relative z-10 mb-10 flex-1 text-[16px] leading-[1.7] text-[#94A3B8]">
+        {program.description}
+      </p>
+
+      {/* CTA Button */}
+      <Link
+        href={program.href}
+        className="relative z-10 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-transparent px-6 py-3.5 text-[14.5px] font-medium text-white transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-[#0B1028]"
+      >
+        {program.cta}
+        <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </Link>
+    </motion.div>
   );
 }

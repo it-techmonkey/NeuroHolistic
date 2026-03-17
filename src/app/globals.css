@@ -28,6 +28,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -37,6 +38,15 @@ body {
   font-size: 16px;
   line-height: 1.7;
   letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Selection style */
@@ -107,3 +117,12 @@ p {
   font-weight: 600;
   color: var(--accent);
 }
+
+.hero-noise-texture {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.22) 0.6px, transparent 0.7px),
+    radial-gradient(rgba(166, 182, 255, 0.16) 0.6px, transparent 0.7px);
+  background-position: 0 0, 12px 12px;
+  background-size: 24px 24px;
+}
+

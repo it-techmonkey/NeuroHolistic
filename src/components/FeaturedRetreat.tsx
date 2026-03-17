@@ -1,9 +1,8 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardBody } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
-import { H2, Body, BodySmall } from "@/components/ui/Typography";
 import type { FeaturedRetreatData } from "./retreats/types";
 
 interface FeaturedRetreatProps {
@@ -16,84 +15,110 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
     : `/retreats?id=${retreat.id}`;
 
   return (
-    <Card
-      className="rounded-xl overflow-hidden border border-neutral-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300"
-      shadow="none"
-      hoverable
-    >
-      <div className="flex flex-col lg:flex-row">
-        <div className="relative w-full lg:w-2/5 aspect-[16/10] lg:aspect-auto lg:min-h-[320px] flex-shrink-0">
-          <Image
-            src={retreat.image}
-            alt={`${retreat.title} retreat image`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 40vw"
-            priority
-          />
+    <div className="relative w-full py-24 md:py-32 border-b border-[#E2E8F0]">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
+          
+          {/* ── Left Column: Cinematic Imagery (Spans 7) ── */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7"
+          >
+            <div className="group relative aspect-[16/10] w-full overflow-hidden bg-[#F8FAFC]">
+              <Image
+                src={retreat.image}
+                alt={retreat.title}
+                fill
+                className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+                sizes="(max-width: 1024px) 100vw, 60vw"
+                priority
+              />
+              {/* Internal Framing Line */}
+              <div className="pointer-events-none absolute inset-4 border border-white/20" />
+            </div>
+            
+            {/* Museum-style Caption underneath the image */}
+            <div className="mt-6 flex justify-between border-t border-[#F1F5F9] pt-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#94A3B8]">
+                Featured Experience
+              </span>
+              <span className="text-[13px] italic text-[#64748B]">
+                {retreat.location}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* ── Right Column: Editorial Context (Spans 5) ── */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="lg:col-span-5"
+          >
+            <div className="mb-8 flex items-center gap-3">
+              <div className="h-px w-6 bg-[#6366F1]" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.4em] text-[#6366F1]">
+                Identity // 01
+              </span>
+            </div>
+
+            <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
+              {retreat.title.split(' ').slice(0, -1).join(' ')} <br/>
+              <span className="italic text-[#64748B] font-normal">{retreat.title.split(' ').pop()}</span>
+            </h2>
+
+            <p className="mb-12 text-[17px] leading-[1.8] text-[#475569]">
+              {retreat.description}
+            </p>
+
+            {/* Registry Details (Replaces Icons) */}
+            <div className="mb-12 space-y-6 border-t border-[#F1F5F9] pt-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Timeline</span>
+                  <span className="text-[15px] font-medium text-[#0F172A]">{retreat.date}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Duration</span>
+                  <span className="text-[15px] font-medium text-[#0F172A]">{retreat.duration}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Capacity</span>
+                  <span className="text-[15px] font-medium text-[#0F172A]">{retreat.capacity} Participants</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Status</span>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1]">Registration Open</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions: Sharp Rectangles */}
+            <div className="flex flex-wrap items-center gap-6">
+              <Link 
+                href={detailsHref}
+                className="inline-flex h-14 items-center justify-center bg-[#0F172A] px-10 text-[13px] font-bold uppercase tracking-widest text-white transition-all hover:bg-[#1E293B]"
+              >
+                Register
+              </Link>
+              <Link
+                href={detailsHref}
+                className="group inline-flex items-center gap-2 border-b border-[#0F172A] pb-1 text-[13px] font-bold uppercase tracking-widest text-[#0F172A]"
+              >
+                View Details
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </Link>
+            </div>
+          </motion.div>
+
         </div>
-        <CardBody className="flex-1 p-8 md:p-10 flex flex-col justify-center">
-          <H2 className="text-neutral-900 mb-4">{retreat.title}</H2>
-          <Body className="text-neutral-600 mb-8">
-            {retreat.description}
-          </Body>
-          <dl className="space-y-3 mb-8">
-            <div className="flex gap-2">
-              <svg className="h-5 w-5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                <path d="M8 3v4M16 3v4M4 10h16M6 6h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <BodySmall className="text-neutral-700">{retreat.date}</BodySmall>
-            </div>
-            <div className="flex gap-2">
-              <svg className="h-5 w-5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>
-              <BodySmall className="text-neutral-700">{retreat.location}</BodySmall>
-            </div>
-            {retreat.capacity != null && (
-              <div className="flex gap-2">
-                <svg className="h-5 w-5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                  <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <BodySmall className="text-neutral-700">
-                  Capacity: {retreat.capacity} participants
-                </BodySmall>
-              </div>
-            )}
-            {retreat.duration && (
-              <div className="flex gap-2">
-                <svg className="h-5 w-5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                  <path d="M8 3h8M8 21h8M9 3v4l3 3-3 3v8m6-18v4l-3 3 3 3v8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <BodySmall className="text-neutral-700">
-                  Duration: {retreat.duration}
-                </BodySmall>
-              </div>
-            )}
-          </dl>
-          {retreat.tags && retreat.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              {retreat.tags.map((tag) => (
-                <Badge key={tag} variant="primary" size="md" className="rounded-full px-4">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-3">
-            <Link href={detailsHref}>
-              <Button size="md">Register</Button>
-            </Link>
-            <Link
-              href={detailsHref}
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border-2 border-primary-500 text-primary-500 font-medium hover:bg-primary-50 transition-colors"
-            >
-              View Details
-            </Link>
-          </div>
-        </CardBody>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,38 +1,91 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
-import Section from "@/components/ui/Section";
-import { H2, Body } from "@/components/ui/Typography";
 
 export default function WhyItMatters() {
   return (
-    <Section padding="xl" background="white">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <div>
-          <H2 className="text-neutral-900 mb-6">Why It Matters</H2>
-          <Body className="text-neutral-600 mb-6">
-            Modern organizations face growing challenges: stress, burnout,
-            cognitive overload, and reduced engagement. These challenges often
-            stem from nervous system dysregulation and emotional fatigue—yet
-            traditional wellbeing initiatives rarely address the underlying
-            mechanisms.
-          </Body>
-          <Body className="text-neutral-600">
-            The NeuroHolistic approach supports internal regulation, mental
-            clarity, and sustainable performance by working with the human
-            system as a whole. When individuals and teams can regulate
-            effectively, they think more clearly, collaborate better, and
-            perform under pressure without depleting themselves.
-          </Body>
-        </div>
-        <div className="relative rounded-2xl overflow-hidden shadow-xl border border-neutral-100 aspect-[4/3] lg:aspect-auto lg:min-h-[400px]">
-          <Image
-            src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80"
-            alt="Coaching or therapy session"
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
+    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
+          
+          {/* ── Text Column (Spans 5) ── */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="lg:col-span-5"
+          >
+            <div className="mb-10 flex items-center gap-4">
+              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
+                Strategic // Foundation
+              </span>
+            </div>
+
+            <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
+              Why it <span className="italic text-[#64748B] font-normal">matters.</span>
+            </h2>
+
+            <div className="space-y-8">
+              <p className="text-[17px] leading-[1.8] text-[#475569] md:text-[18px]">
+                Modern organizations face growing challenges: stress, burnout, cognitive overload, and reduced engagement. These issues often stem from nervous system dysregulation—yet traditional initiatives rarely address the underlying mechanisms.
+              </p>
+              
+              <div className="h-px w-12 bg-[#E2E8F0]" />
+
+              <p className="text-[16px] leading-[1.8] text-[#64748B]">
+                The NeuroHolistic approach supports internal regulation and sustainable performance by working with the human system as a whole. When teams regulate effectively, they collaborate better and perform under pressure without depletion.
+              </p>
+            </div>
+
+            {/* Critical Factors List */}
+            <div className="mt-12 grid grid-cols-1 gap-4 border-t border-[#F1F5F9] pt-8 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Primary Factor</span>
+                <span className="text-[13px] font-semibold text-[#0F172A]">Cognitive Clarity</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Outcome</span>
+                <span className="text-[13px] font-semibold text-[#0F172A]">Systemic Resilience</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ── Image Column (Spans 7) ── */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7"
+          >
+            <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
+              {/* Sharp Edge Image Frame */}
+              <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 md:aspect-[16/11]">
+                <Image
+                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1400&q=80"
+                  alt="Coaching or therapy session"
+                  fill
+                  className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                />
+              </div>
+              
+              {/* Museum-style Caption */}
+              <div className="mt-6 flex items-center justify-between px-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">
+                  Context // Regulation
+                </span>
+                <span className="text-[13px] text-[#64748B] italic">
+                  Applied Human Systems
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
         </div>
       </div>
-    </Section>
+    </section>
   );
 }

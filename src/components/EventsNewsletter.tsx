@@ -1,51 +1,79 @@
 "use client";
 
 import { useState } from "react";
-import Section from "@/components/ui/Section";
-import Button from "@/components/ui/Button";
-import { H2, Body } from "@/components/ui/Typography";
+import { motion } from "framer-motion";
 
 export default function EventsNewsletter() {
   const [email, setEmail] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder: submit to mailing list
-  }
+    console.log("Registry submission:", email);
+  };
 
   return (
-    <Section padding="xl" background="light" id="newsletter" className="scroll-mt-24">
-      <div className="max-w-2xl mx-auto text-center">
-        <H2 className="text-neutral-900 mb-4">Stay Updated on Upcoming Events</H2>
-        <Body className="text-neutral-600 mb-8">
-          Join our mailing list to receive updates about upcoming workshops,
-          retreats, and online sessions.
-        </Body>
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl bg-white p-6 md:p-8 shadow-md border border-neutral-100"
-        >
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label htmlFor="events-email" className="sr-only">
-                Email
-              </label>
+    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        <div className="flex flex-col items-center text-center">
+          
+          {/* ── Heading ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <div className="mb-6 flex items-center justify-center gap-3">
+              <div className="h-px w-6 bg-[#CBD5E1]" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#94A3B8]">
+                Correspondence
+              </span>
+              <div className="h-px w-6 bg-[#CBD5E1]" />
+            </div>
+
+            <h2 className="text-[34px] md:text-[48px] font-light tracking-tight text-[#0F172A] mb-4">
+              Join the <span className="italic font-normal text-[#64748B]">Registry.</span>
+            </h2>
+            <p className="text-[16px] text-[#475569] max-w-[480px] mx-auto leading-relaxed">
+              Formal updates regarding upcoming clinical workshops, retreats, and live integration sessions.
+            </p>
+          </motion.div>
+
+          {/* ── Simplified Form ── */}
+          <motion.form
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="w-full max-w-[540px]"
+            onSubmit={handleSubmit}
+          >
+            <div className="flex flex-col gap-0 border border-[#E2E8F0] transition-within:border-[#0F172A] sm:flex-row">
               <input
-                id="events-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Email address"
+                className="flex-1 bg-transparent px-5 py-4 text-[15px] text-[#0F172A] placeholder:text-[#94A3B8] outline-none sm:px-6"
                 required
               />
+              <button
+                type="submit"
+                className="bg-[#0F172A] px-6 py-4 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#1E293B] sm:px-10 sm:text-[13px] sm:tracking-widest"
+              >
+                Subscribe
+              </button>
             </div>
-            <Button type="submit" size="lg" className="sm:self-auto">
-              Get Event Updates
-            </Button>
-          </div>
-        </form>
+            
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">
+                Institutional Updates // NeuroHolistic Institute
+              </p>
+            </div>
+          </motion.form>
+
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

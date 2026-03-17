@@ -1,87 +1,46 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 
 const PHASES = [
-  {
-    number: "01",
-    title: "Release",
-    description:
-      "Releasing accumulated emotional and physiological tension so the system can begin to shift out of chronic stress and into a state of safety.",
-    image:
-      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80",
-  },
-  {
-    number: "02",
-    title: "Developmental Repatterning",
-    description:
-      "Reorganizing deep neural patterns that have kept the system locked in old adaptations, creating space for new ways of responding.",
-    image:
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&q=80",
-  },
-  {
-    number: "03",
-    title: "Neuroplastic Integration",
-    description:
-      "Stabilizing new neural pathways and integrating changes so that regulation and coherence become the default rather than the exception.",
-    image:
-      "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80",
-  },
-  {
-    number: "04",
-    title: "Coherence & Regulation",
-    description:
-      "Strengthening the nervous system's capacity for self-regulation and resilience in daily life.",
-    image:
-      "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80",
-  },
-  {
-    number: "05",
-    title: "Integration & Expansion",
-    description:
-      "Embedding transformation into identity and life direction, supporting both healing and the expansion of human potential.",
-    image:
-      "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&q=80",
-  },
+  { number: "01", title: "Release", desc: "Releasing accumulated emotional and physiological tension to shift out of chronic stress.", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80" },
+  { number: "02", title: "Repatterning", desc: "Reorganizing deep neural patterns that have kept the system locked in old adaptations.", img: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&q=80" },
+  { number: "03", title: "Integration", desc: "Stabilizing new neural pathways so that regulation becomes the default state.", img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&q=80" },
+  { number: "04", title: "Regulation", desc: "Strengthening the nervous system's capacity for self-regulation and resilience.", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80" },
+  { number: "05", title: "Expansion", desc: "Embedding transformation into identity, supporting the expansion of human potential.", img: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80" },
 ];
 
 export default function FivePhaseArchitecture() {
   return (
-    <section className="py-20 md:py-28 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
-            The Five-Phase Architecture of the NeuroHolistic Method™
+    <section className="bg-white py-24 md:py-32 overflow-hidden">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        <div className="mb-20 max-w-[800px]">
+          <span className="mb-4 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">The Framework</span>
+          <h2 className="text-[36px] font-medium leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
+            A structured sequence for <span className="italic text-[#64748B]">systemic change.</span>
           </h2>
-          <p className="text-slate-600 text-lg leading-relaxed">
-            Transformation unfolds through structured phases that restore
-            internal balance and create the conditions for deep, lasting change.
-          </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {PHASES.map((phase) => (
-            <div
+
+        <div className="flex flex-col gap-12 md:flex-row md:gap-6 lg:gap-8">
+          {PHASES.map((phase, i) => (
+            <motion.div 
               key={phase.number}
-              className="group relative rounded-xl overflow-hidden aspect-[3/4] min-h-[320px] shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.8 }}
+              viewport={{ once: true }}
+              className="flex-1 group"
             >
-              <Image
-                src={phase.image}
-                alt={`${phase.title} phase illustration`}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-slate-900/20" />
-              <div className="absolute inset-0 flex flex-col justify-end p-6">
-                <span className="text-4xl font-bold text-white/90 tracking-tight mb-1">
+              <div className="relative aspect-[3/4] overflow-hidden rounded-[20px] bg-[#F1F5F9] mb-6">
+                <Image src={phase.img} alt={phase.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute top-4 left-4 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[12px] font-bold text-[#0F172A]">
                   {phase.number}
-                </span>
-                <h3 className="text-xl font-bold text-white mb-2">
-                  {phase.title}
-                </h3>
-                <p className="text-sm text-slate-200 leading-relaxed line-clamp-3">
-                  {phase.description}
-                </p>
+                </div>
               </div>
-            </div>
+              <h3 className="text-[20px] font-semibold text-[#0F172A] mb-2">{phase.title}</h3>
+              <p className="text-[14px] leading-[1.6] text-[#475569]">{phase.desc}</p>
+            </motion.div>
           ))}
         </div>
       </div>

@@ -1,81 +1,125 @@
+"use client";
+
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 
+const NAV_INDEX = [
+  { label: "Home", href: "/" },
+  { label: "The Method", href: "/method" },
+  { label: "The Academy", href: "/academy" },
+  { label: "Research", href: "/research" },
+  { label: "About", href: "/about" },
+];
+
+const PROGRAM_INDEX = [
+  { label: "Private Sessions", href: "/programs/private" },
+  { label: "Group Programs", href: "/events" },
+  { label: "Retreats", href: "/retreats" },
+  { label: "Corporate Strategy", href: "/corporate-wellbeing" },
+];
+
 export default function Footer() {
   return (
-    <footer className="bg-[#0B0F2B] text-slate-300">
-      <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-20 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-10">
-          <div className="lg:col-span-1">
-            <Link href="/" className="text-xl font-semibold text-white tracking-tight">
-              NeuroHolistic
+    <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+        
+        {/* ── Main Registry Grid ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 lg:gap-8 border-b border-white/5 pb-20">
+          
+          {/* Identity Column */}
+          <div className="lg:col-span-5 flex flex-col justify-between">
+            <div>
+              <Link href="/" className="text-[22px] font-bold text-white tracking-tighter">
+                NeuroHolistic<span className="italic font-light opacity-40">.</span>
+              </Link>
+              <div className="mt-8 max-w-[340px] border-l border-white/10 pl-6">
+                <p className="text-[15px] leading-[1.7] text-slate-400 font-light">
+                  The Institute is dedicated to restoring systemic balance through 
+                  applied neuroscience and human systems logic.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-12">
+              <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-4 block">
+                Inquiry // Facilitation
+              </span>
+              <BookNowButton className="inline-flex h-12 items-center justify-center border border-white/20 bg-transparent px-8 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-all hover:bg-white hover:text-[#0B0F2B]">
+                Begin Your Reset
+              </BookNowButton>
+            </div>
+          </div>
+
+          {/* Navigation Index */}
+          <div className="lg:col-span-2 lg:col-start-7">
+            <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
+              Index // 01
+            </span>
+            <ul className="space-y-4">
+              {NAV_INDEX.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Programs Index */}
+          <div className="lg:col-span-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
+              Registry // 02
+            </span>
+            <ul className="space-y-4">
+              {PROGRAM_INDEX.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Index */}
+          <div className="lg:col-span-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
+              Contact // 03
+            </span>
+            <div className="flex flex-col gap-6">
+              <a href="mailto:info@neuroholistic.com" className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+                info@neuroholistic.com
+              </a>
+              <p className="text-[11px] font-mono tracking-widest text-slate-600 uppercase">
+                Remote // Global <br />
+                Dubai // London
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Sub-Footer Metadata ── */}
+        <div className="mt-12 flex flex-col md:flex-row items-start justify-between gap-8">
+          <div className="flex flex-col gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-600">
+              © {new Date().getFullYear()} NeuroHolistic Institute
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-slate-700">
+              Board of Standards // Reg-88402
+            </span>
+          </div>
+
+          <div className="flex gap-10">
+            <Link href="/privacy" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
+              Privacy Protocol
             </Link>
-            <p className="mt-4 text-sm text-slate-400 leading-relaxed max-w-xs">
-              The NeuroHolistic Institute — Restoring balance within the human
-              system for deep, lasting transformation.
-            </p>
-            <BookNowButton className="mt-6 inline-flex items-center rounded-[10px] bg-white px-4 py-2.5 text-sm font-semibold text-[#111827] transition-colors hover:bg-slate-100">
-              Book a Session
-            </BookNowButton>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Navigate</h3>
-            <ul className="space-y-3">
-              <li><Link href="/" className="text-sm hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/programs" className="text-sm hover:text-white transition-colors">Programs</Link></li>
-              <li><Link href="/academy" className="text-sm hover:text-white transition-colors">Academy</Link></li>
-              <li><Link href="/research" className="text-sm hover:text-white transition-colors">Research</Link></li>
-              <li><Link href="/about" className="text-sm hover:text-white transition-colors">About</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Programs</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/programs/private" className="text-sm hover:text-white transition-colors">
-                  Private Sessions
-                </Link>
-              </li>
-              <li>
-                <Link href="/programs/group" className="text-sm hover:text-white transition-colors">
-                  Group Program
-                </Link>
-              </li>
-              <li>
-                <Link href="/academy" className="text-sm hover:text-white transition-colors">
-                  Academy
-                </Link>
-              </li>
-              <li>
-                <Link href="/corporate-wellbeing" className="text-sm hover:text-white transition-colors">
-                  Corporate Wellbeing
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Connect</h3>
-            <ul className="space-y-3">
-              <li>
-                <BookNowButton className="text-sm hover:text-white transition-colors">
-                  Book Session
-                </BookNowButton>
-              </li>
-              <li>
-                <a href="mailto:info@neuroholistic.com" className="text-sm hover:text-white transition-colors">
-                  Contact Us
-                </a>
-              </li>
-            </ul>
+            <Link href="/terms" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
+              Terms of Service
+            </Link>
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-slate-800/80 text-center text-sm text-slate-500">
-          © {new Date().getFullYear()} NeuroHolistic. All rights reserved.
-        </div>
       </div>
     </footer>
   );

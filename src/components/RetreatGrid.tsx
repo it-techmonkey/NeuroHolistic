@@ -1,8 +1,8 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import Section from "@/components/ui/Section";
-import { Card, CardBody } from "@/components/ui/Card";
-import { H2, H3, BodySmall } from "@/components/ui/Typography";
 import type { RetreatItem } from "./retreats/types";
 
 interface RetreatGridProps {
@@ -13,51 +13,95 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
   if (retreats.length === 0) return null;
 
   return (
-    <Section padding="xl" background="light">
-      <H2 className="text-neutral-900 mb-10">Upcoming Retreats</H2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {retreats.map((retreat) => {
-          const href = retreat.slug
-            ? `/retreats/${retreat.slug}`
-            : `/retreats?id=${retreat.id}`;
-          return (
-            <Card
-              key={retreat.id}
-              className="rounded-xl overflow-hidden border border-neutral-100 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
-              shadow="none"
-              hoverable
-            >
-              <div className="relative w-full aspect-[16/10] flex-shrink-0">
-                <Image
-                  src={retreat.image}
-                  alt={`${retreat.title} retreat image`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-              <CardBody className="p-6 flex flex-col flex-1">
-                <H3 className="text-neutral-900 mb-2">{retreat.title}</H3>
-                <BodySmall className="text-neutral-600 mb-2">
-                  📅 {retreat.date}
-                </BodySmall>
-                <BodySmall className="text-neutral-600 mb-4">
-                  📍 {retreat.location}
-                </BodySmall>
-                <BodySmall className="text-neutral-600 mb-6 line-clamp-3 flex-1">
-                  {retreat.description}
-                </BodySmall>
-                <Link
-                  href={href}
-                  className="mt-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold text-sm hover:bg-primary-600 transition-colors w-fit"
-                >
-                  View Retreat
+    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        
+        {/* ── Architectural Header ── */}
+        <div className="mb-16 flex flex-col items-start justify-between gap-8 border-b border-[#E2E8F0] pb-10 lg:flex-row lg:items-end">
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
+                Registry // Available
+              </span>
+            </div>
+            <h2 className="text-[34px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]">
+              Upcoming <span className="italic text-[#64748B]">Sessions.</span>
+            </h2>
+          </div>
+          
+          <div className="font-mono text-[12px] text-[#94A3B8] uppercase tracking-widest">
+            Select an immersive container
+          </div>
+        </div>
+
+        {/* ── The Grid ── */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+          {retreats.map((retreat, i) => {
+            const href = retreat.slug
+              ? `/retreats/${retreat.slug}`
+              : `/retreats?id=${retreat.id}`;
+
+            return (
+              <motion.div
+                key={retreat.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.8 }}
+                className="group flex flex-col"
+              >
+                {/* Framed Image Container */}
+                <Link href={href} className="relative mb-8 block aspect-[16/10] overflow-hidden bg-[#FAFBFF] border border-[#F1F5F9] p-2 transition-all group-hover:border-[#6366F1]">
+                  <div className="relative h-full w-full overflow-hidden bg-slate-200">
+                    <Image
+                      src={retreat.image}
+                      alt={retreat.title}
+                      fill
+                      className="object-cover grayscale-[30%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
                 </Link>
-              </CardBody>
-            </Card>
-          );
-        })}
+
+                {/* Metadata & Content */}
+                <div className="flex flex-col flex-1">
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="font-mono text-[12px] text-[#CBD5E1]">
+                      0{i + 1}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#6366F1]">
+                      {retreat.date}
+                    </span>
+                  </div>
+
+                  <h3 className="mb-3 text-[22px] font-semibold tracking-tight text-[#0F172A]">
+                    {retreat.title}
+                  </h3>
+
+                  <div className="mb-6 flex flex-col gap-1 border-l border-[#E2E8F0] pl-4">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Location</span>
+                    <span className="text-[14px] text-[#475569]">{retreat.location}</span>
+                  </div>
+
+                  <p className="mb-8 line-clamp-2 text-[15px] leading-relaxed text-[#64748B]">
+                    {retreat.description}
+                  </p>
+
+                  <Link
+                    href={href}
+                    className="mt-auto group inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-widest text-[#0F172A]"
+                  >
+                    <span className="border-b border-transparent pb-0.5 transition-all group-hover:border-[#0F172A]">
+                      View Registry
+                    </span>
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

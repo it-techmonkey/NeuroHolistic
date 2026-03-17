@@ -3,14 +3,19 @@ import PageHero from "@/components/ui/PageHero";
 export default function RetreatHero() {
   return (
     <PageHero
-      eyebrow="Immersive Retreats"
-      title="Retreat Experiences for Deep System Reset"
-      description="Step away from daily pressure and enter guided spaces where regulation, integration, and personal clarity can unfold in depth."
-      imageSrc="https://images.unsplash.com/photo-1474418397713-7ede21d49118?w=1920&q=80"
-      imageAlt="Serene coastal wellness retreat setting"
-      badges={["3-7 Day Formats", "Guided Integration", "Small Cohorts"]}
-      primaryAction={{ label: "Get Retreat Updates", href: "#retreat-newsletter" }}
-      secondaryAction={{ label: "See Events", href: "/events" }}
+      eyebrow="Immersive Transformation"
+      title={
+        <>
+          Step away to restore <br className="hidden lg:block" />
+          <span className="italic">nervous coherence.</span>
+        </>
+      }
+      description="Immersive retreat experiences designed to decouple from daily stressors and engage deeply in the transformational process of the NeuroHolistic Method™."
+      imageSrc="https://images.unsplash.com/photo-1544367563-12123d8965cd?w=1400&q=80"
+      imageAlt="A serene retreat location in nature"
+      metaTags={["Deep Immersion", "Nature Based", "Held Container"]}
+      primaryAction={{ label: "View Upcoming Retreats", href: "#upcoming-retreats" }}
+      secondaryAction={{ label: "Join Waitlist", href: "#newsletter" }}
     />
   );
 }

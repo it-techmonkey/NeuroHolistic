@@ -1,4 +1,9 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
+
+/* ─── Data Array (Must be defined in the same file) ───────────────────────── */
 
 const AREAS = [
   {
@@ -31,42 +36,74 @@ const AREAS = [
   },
 ];
 
+/* ─── Main Component ─────────────────────────────────────────────────────── */
+
 export default function MethodTransformationAreas() {
   return (
-    <section className="py-20 md:py-28 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
-            Where Transformation Takes Shape
-          </h2>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-            Changes appear across different areas of life—health, mind,
-            relationships, and human potential—as the internal system returns
-            to coherence.
-          </p>
+    <section className="bg-white py-24 md:py-32 lg:py-40">
+      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+        
+        {/* Editorial Header */}
+        <div className="mb-20 text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-6 flex items-center justify-center gap-3"
+          >
+            <div className="h-px w-6 bg-[#CBD5E1]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#64748B]">
+              Outcomes
+            </span>
+            <div className="h-px w-6 bg-[#CBD5E1]" />
+          </motion.div>
+
+          <motion.h2 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="mx-auto max-w-[800px] text-[34px] font-medium leading-[1.15] text-[#0F172A] md:text-[48px]"
+          >
+            Where transformation <span className="italic text-[#64748B]">takes shape.</span>
+          </motion.h2>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {AREAS.map((area) => (
-            <div
+
+        {/* The Grid */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {AREAS.map((area, i) => (
+            <motion.div
               key={area.title}
-              className="rounded-2xl bg-slate-50 border border-slate-100 p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-bold mb-5">
-                {area.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-3">
-                {area.title}
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                {area.description}
-              </p>
-              <Link
-                href={area.href}
-                className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors"
+              <Link 
+                href={area.href} 
+                className="group flex h-full flex-col justify-between rounded-[24px] border border-[#E2E8F0] bg-white p-8 transition-all duration-500 hover:-translate-y-1 hover:border-[#6366F1] hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.08)]"
               >
-                Explore Now
+                <div>
+                  <span className="mb-8 block text-[28px] text-[#6366F1] transition-transform duration-500 group-hover:scale-110">
+                    {area.icon}
+                  </span>
+                  <h3 className="mb-3 text-[20px] font-semibold tracking-tight text-[#0F172A]">
+                    {area.title}
+                  </h3>
+                  <p className="text-[15px] leading-[1.7] text-[#475569]">
+                    {area.description}
+                  </p>
+                </div>
+
+                <div className="mt-10 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-[#0F172A]">
+                  <span className="relative">
+                    Explore
+                    <span className="absolute -bottom-1 left-0 h-px w-0 bg-[#0F172A] transition-all duration-300 group-hover:w-full" />
+                  </span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </div>
               </Link>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
