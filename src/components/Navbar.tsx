@@ -108,18 +108,64 @@ export default function Navbar() {
               NeuroHolistic
             </Link>
 
-            <nav className="hidden xl:flex items-center justify-center gap-8 flex-1">
-              {/* ... Desktop Nav Links ... */}
-              {NAV_LINKS.map((item) => (
-                <div key={item.label} className="relative py-4" onMouseEnter={() => "children" in item && setOpenDropdown(item.label)} onMouseLeave={() => setOpenDropdown(null)}>
-                  <Link href={item.href} className={`text-[13px] font-medium ${textColor} opacity-80 hover:opacity-100 transition-opacity`}>
-                    {item.label}
-                  </Link>
-                  {/* ... Dropdown Code ... */}
-                </div>
-              ))}
-            </nav>
+<nav className="hidden xl:flex items-center justify-center gap-8 flex-1">
+  {NAV_LINKS.map((item) => {
+    const hasChildren = "children" in item;
+    const isOpen = openDropdown === item.label;
 
+    // We use your existing 'scrolled' and 'isLightPage' logic to define the dropdown's look
+    const dropdownBg = (scrolled && isLightPage) 
+      ? "bg-white/80 border-slate-200/60 shadow-lg text-slate-900" 
+      : "bg-[rgba(8,12,32,0.8)] border-white/10 shadow-2xl text-white";
+
+    const dropdownHover = (scrolled && isLightPage)
+      ? "hover:bg-slate-100/80 text-slate-600 hover:text-slate-900"
+      : "hover:bg-white/10 text-white/60 hover:text-white";
+
+    return (
+      <div
+        key={item.label}
+        className="relative py-4"
+        onMouseEnter={() => hasChildren && setOpenDropdown(item.label)}
+        onMouseLeave={() => setOpenDropdown(null)}
+      >
+        <Link
+          href={item.href}
+          className={`text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${textColor} ${
+            isOpen ? "opacity-100" : "opacity-70 hover:opacity-100"
+          }`}
+        >
+          {item.label}
+          {hasChildren && (
+            <svg 
+              className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'opacity-40'}`} 
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+            >
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </Link>
+
+        {/* ── Adaptive Dropdown ── */}
+        {hasChildren && isOpen && (
+          <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 w-44 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className={`overflow-hidden rounded-xl border backdrop-blur-[20px] p-1.5 ${dropdownBg}`}>
+              {item.children.map((child) => (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  className={`block px-4 py-2 text-[12px] font-medium rounded-lg transition-all duration-200 ${dropdownHover}`}
+                >
+                  {child.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  })}
+</nav>
             <div className="flex items-center gap-3">
               <BookNowButton className={`hidden sm:inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-bold transition-all ${
                 textColor === "text-white" ? 'bg-white text-[#0F172A]' : 'bg-[#0F172A] text-white'

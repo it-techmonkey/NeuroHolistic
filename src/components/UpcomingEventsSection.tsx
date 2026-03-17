@@ -111,6 +111,8 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
 /* ─── Individual Event Row (Non-AI Card) ────────────────────────────────── */
 
 function EventRow({ event, index }: { event: EventItem; index: number }) {
+  const detailsHref = event.slug ? `/events/${event.slug}` : `/events/${event.id}`;
+
   return (
     <motion.div
       layout
@@ -154,7 +156,7 @@ function EventRow({ event, index }: { event: EventItem; index: number }) {
         {/* Action */}
         <div className="flex items-center md:col-span-2 md:justify-end">
           <Link
-            href={`/events/${event.id}`}
+            href={detailsHref}
             className="inline-flex h-12 items-center justify-center border border-[#0F172A] px-6 text-[13px] font-bold uppercase tracking-widest text-[#0F172A] transition-all hover:bg-[#0F172A] hover:text-white"
           >
             Register
