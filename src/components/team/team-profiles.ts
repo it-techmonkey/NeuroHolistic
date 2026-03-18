@@ -23,7 +23,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Over the past twenty years, Dr. Fawzia has worked with tens of thousands of individuals facing a wide range of life challenges. Her work has supported people navigating emotional and psychological struggles, complex relationship dynamics, health crises, and major life transitions. She has also guided leaders, public figures, and individuals from diverse backgrounds through profound personal transformation.",
       "Today, she leads the NeuroHolistic Institute™, guiding individuals through deep personal transformation while training practitioners and advancing research into the science of human change.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Fawzia%20Yassmina.jpeg",
     testimonials: [
       "Working with Dr. Fawzia helped me reconnect with emotional clarity and long-term inner stability.",
       "Her depth, precision, and presence made a profound difference in how I understand myself and my life direction.",
@@ -41,7 +41,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Following the Beirut explosion, she experienced a profound personal turning point that led her to explore a deeper path beyond her professional career. Her long-standing interest in psychology, human behavior, and healing gradually guided her toward the field of wellness and personal transformation.",
       "Through the NeuroHolistic Method™, Mariam found the structured depth she had long been searching for, a way to work with the human system at its deeper layers, restoring coherence and enabling genuine transformation. She is now a certified NeuroHolistic Practitioner, supporting individuals with clarity, presence, and deep commitment to meaningful change.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Mariam%20Al%20Kaissi.jpeg",
     testimonials: [
       "Mariam created a space where I felt safe, focused, and genuinely supported throughout my process.",
       "Her calm guidance helped me move from overwhelm to a clearer, more balanced inner state.",
@@ -59,7 +59,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Syria and trained in Pharmacy, Noura has long been interested in the relationship between health, emotions, and human well-being. Her curiosity about the deeper dimensions of healing led her to explore the NeuroHolistic Method™.",
       "Through her training in NeuroHolistic studies, Noura found an approach that integrates her scientific background with her natural intuition and care for others. She is now a certified NeuroHolistic Practitioner, supporting individuals in reconnecting with themselves and cultivating a healthier, more balanced life.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Noura%20Yousef.jpeg",
     testimonials: [
       "Noura's warmth and clarity helped me feel seen while building healthier emotional patterns.",
       "I appreciated how she blended scientific understanding with genuine compassion in every session.",
@@ -95,7 +95,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Her work focuses on exploring the deep connection between the mind, brain, and emotional healing. Drawing on neuroscience, psychology, and holistic therapeutic approaches, she helps individuals recognize the subconscious patterns that shape their emotions, behaviors, and sense of self.",
       "Through a compassionate and insight-driven approach, Reem guides people toward greater self-awareness, nervous system balance, and inner clarity, supporting meaningful and lasting personal transformation.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Reem%20Mbayed.jpeg",
     testimonials: [
       "Reem combines depth and practicality in a way that helped me make lasting changes.",
       "Her energy and insight gave me confidence to move through difficult transitions with clarity.",
@@ -113,7 +113,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Lebanon and now based in Dubai, Fawares grew up as the only sister among six brothers, an environment that naturally shaped her independence, resilience, and strong sense of leadership. She has built a successful career as a consultant in the medical field, where her work deepened her understanding of the relationship between physical health, emotional wellbeing, and human behavior.",
       "She is now a certified NeuroHolistic Practitioner, integrating her professional experience, emotional intelligence, and natural intuition to support individuals in developing greater awareness, balance, and meaningful change in their lives.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Fawares%20Azaar.jpeg",
     testimonials: [
       "Fawares brought both clarity and encouragement, helping me take meaningful action in my life.",
       "I felt supported and challenged in the right way, with steady guidance throughout my journey.",
@@ -131,7 +131,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Lebanese and based in Lebanon, Joud is a certified NeuroHolistic Practitioner whose work is guided by compassion, intuition, and a sincere dedication to helping others reconnect with their inner balance.",
       "Known for his calm strength and authentic presence, he supports individuals in exploring deeper layers of awareness and restoring harmony within themselves.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Joud%20Charafeddin.jpeg",
     testimonials: [
       "Joud's calm presence helped me slow down, listen deeply, and reconnect with myself.",
       "His grounded style created trust and helped me regain a stronger sense of inner balance.",

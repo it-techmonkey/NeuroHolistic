@@ -18,7 +18,7 @@ export default function TeamPage() {
           </>
         }
         description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."
-        imageSrc="/images/dummy-user.svg"
+        imageSrc="/images/team/Fawzia%20Yassmina.jpeg"
         imageAlt="NeuroHolistic Faculty and Research Environment"
         metaTags={["Certified", "Applied Practice", "Board Oversight"]}
       />
