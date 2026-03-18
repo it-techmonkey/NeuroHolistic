@@ -71,25 +71,25 @@ const phases = [
   {
     label: "Release",
     desc: "Release",
-    details: "Releasing accumulated emotional and physiological tension to shift out of chronic stress.",
+    details: "Releasing stored emotional and physiological tension to move from chronic stress toward safety and openness.",
   },
   {
-    label: "Repatterning",
+    label: "Developmental Repatterning",
     desc: "Repatterning",
     details: "Reorganizing deep neural patterns that have kept the system locked in old adaptations.",
   },
   {
-    label: "Integration",
+    label: "Neuroplastic Rewiring",
     desc: "Integration",
     details: "Stabilizing new neural pathways so that regulation becomes the default state.",
   },
   {
-    label: "Regulation",
+    label: "Targeted Transformation",
     desc: "Regulation",
     details: "Strengthening the nervous system's capacity for self-regulation and resilience.",
   },
   {
-    label: "Expansion",
+    label: " Integration & Stabilization",
     desc: "Expansion",
     details: "Embedding transformation into identity, supporting the expansion of human potential.",
   },

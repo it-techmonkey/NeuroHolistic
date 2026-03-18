@@ -13,25 +13,17 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
   if (retreats.length === 0) return null;
 
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Architectural Header ── */}
         <div className="mb-16 flex flex-col items-start justify-between gap-8 border-b border-[#E2E8F0] pb-10 lg:flex-row lg:items-end">
           <div>
-            <div className="mb-4 flex items-center gap-3">
-              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                Registry // Available
-              </span>
-            </div>
             <h2 className="text-[34px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]">
               Upcoming <span className="italic text-[#64748B]">Sessions.</span>
             </h2>
           </div>
           
-          <div className="font-mono text-[12px] text-[#94A3B8] uppercase tracking-widest">
-            Select an immersive container
-          </div>
         </div>
 
         {/* ── The Grid ── */}

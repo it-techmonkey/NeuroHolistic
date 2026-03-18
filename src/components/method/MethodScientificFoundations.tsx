@@ -27,7 +27,7 @@ const SCIENTIFIC_PILLARS = [
 
 export default function MethodScientificFoundations() {
   return (
-    <section className="bg-[#FAFBFF] py-24 md:py-32 lg:py-40 border-y border-[#E2E8F0]">
+    <section className="bg-[#FAFBFF] py-16 md:py-20 lg:py-24 border-y border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-20">
           
@@ -39,9 +39,7 @@ export default function MethodScientificFoundations() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <span className="mb-5 block text-[11px] font-semibold uppercase tracking-[0.25em] text-[#6366F1]">
-                Evidence Based
-              </span>
+  
               <h2 className="mb-8 text-[34px] font-medium leading-[1.15] tracking-tight text-[#0F172A] md:text-[46px]">
                 Scientific & <br/>Theoretical <span className="italic text-[#64748B]">foundations.</span>
               </h2>

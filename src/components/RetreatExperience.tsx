@@ -31,21 +31,18 @@ const EXPERIENCES = [
 
 export default function RetreatExperience() {
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40">
+    <section className="bg-white py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Editorial Header ── */}
-        <div className="mb-20">
+        <div className="mb-16">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mb-6 flex items-center gap-3"
           >
-            <div className="h-px w-6 bg-[#CBD5E1]" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-[#94A3B8]">
-              The Immersive Process
-            </span>
+
           </motion.div>
 
           <motion.h2 

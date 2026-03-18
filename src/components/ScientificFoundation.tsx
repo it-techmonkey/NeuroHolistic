@@ -20,11 +20,7 @@ export default function ScientificFoundation() {
         <div className="text-center">
           
           <motion.div variants={itemVariants} className="mb-6 flex items-center justify-center gap-3">
-            <div className="h-px w-6 bg-[#6366F1]" />
-            <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
-              Foundations
-            </p>
-            <div className="h-px w-6 bg-[#6366F1]" />
+
           </motion.div>
 
           <motion.h2

@@ -24,18 +24,6 @@ export default function Accreditation() {
         
         {/* ── Editorial Header ── */}
         <div className="mb-16 text-center">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-6 flex items-center justify-center gap-4"
-          >
-            <div className="h-px w-8 bg-[#E2E8F0]" />
-            <span className="font-mono text-[11px] tracking-[0.4em] text-[#94A3B8] uppercase">
-              Validation // Standards
-            </span>
-            <div className="h-px w-8 bg-[#E2E8F0]" />
-          </motion.div>
 
           <motion.h2 
             initial={{ opacity: 0, y: 15 }}

@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function ProfessionalOutcome() {
   return (
-    <section className="bg-[#0F172A] py-24 md:py-32 lg:py-40 relative overflow-hidden">
+    <section className="bg-[#0F172A] py-16 md:py-20 lg:py-24 relative overflow-hidden">
       {/* ── Background Detail ── */}
       <div className="absolute inset-0 opacity-20 grayscale pointer-events-none">
         <Image
@@ -29,11 +29,6 @@ export default function ProfessionalOutcome() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="mb-10 flex items-center gap-4">
-                <span className="font-mono text-[11px] tracking-[0.4em] text-[#8B8BFF] uppercase">
-                  Accreditation // Designation
-                </span>
-              </div>
 
               <h2 className="mb-10 text-[32px] font-light leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[56px]">
                 Certified NeuroHolistic <br className="hidden md:block" />

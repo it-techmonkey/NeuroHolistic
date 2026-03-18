@@ -83,14 +83,6 @@ export default function Programs() {
       >
         {/* ── Section header ── */}
         <div className="mb-16 flex flex-col items-center text-center md:mb-24">
-          <motion.div variants={itemVariants} className="mb-6 flex items-center justify-center gap-4">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#8B8BFF]/50" />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#8B8BFF]">
-              Offerings
-            </span>
-            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#8B8BFF]/50" />
-          </motion.div>
-
           <motion.h2
             variants={itemVariants}
             className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[46px]"

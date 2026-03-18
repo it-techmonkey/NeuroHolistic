@@ -35,20 +35,17 @@ const MODULES = [
 
 export default function TrainingStructure() {
   return (
-    <section className="bg-[#FAFBFF] py-24 md:py-32 lg:py-40 border-y border-[#E2E8F0]">
+    <section className="bg-[#FAFBFF] py-16 md:py-20 lg:py-24 border-y border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Editorial Header ── */}
-        <div className="mb-20 max-w-[800px]">
+        <div className="mb-16 max-w-[800px]">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mb-6 flex items-center gap-4"
           >
-            <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-              Curriculum // Structure
-            </span>
           </motion.div>
 
           <motion.h2 

@@ -12,7 +12,7 @@ export default function RetreatNewsletter() {
   };
 
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="flex flex-col items-center text-center">
           
@@ -23,13 +23,6 @@ export default function RetreatNewsletter() {
             viewport={{ once: true }}
             className="mb-12"
           >
-            <div className="mb-6 flex items-center justify-center gap-3">
-              <div className="h-px w-6 bg-[#CBD5E1]" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#94A3B8]">
-                Correspondence
-              </span>
-              <div className="h-px w-6 bg-[#CBD5E1]" />
-            </div>
 
             <h2 className="text-[34px] md:text-[48px] font-light tracking-tight text-[#0F172A] mb-4">
               Join the <span className="italic font-normal text-[#64748B]">Registry.</span>

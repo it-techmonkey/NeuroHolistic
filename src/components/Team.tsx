@@ -6,82 +6,119 @@ import Image from "next/image";
 import { TEAM_PROFILES } from "./team/team-profiles";
 
 export default function Team() {
-  return (
-    <section className="bg-white py-16 md:py-20">
-      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        
-        {/* ── Editorial Header ── */}
-        <div className="mb-20">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-6 flex items-center gap-4"
-          >
-            <div className="h-px w-8 bg-[#E2E8F0]" />
-            <span className="font-mono text-[11px] tracking-[0.4em] text-[#94A3B8] uppercase">
-              The Team
-            </span>
-          </motion.div>
+  const founder = TEAM_PROFILES.find(member => member.slug === "dr-fawzia-yassmina");
+  const practitioners = TEAM_PROFILES.filter(member => member.slug !== "dr-fawzia-yassmina");
 
+  return (
+    <section className="bg-[#FCFCFD] py-24 lg:py-32">
+      <div className="mx-auto max-w-[1200px] px-6">
+        
+        {/* ── Header: Editorial Style ── */}
+        <div className="max-w-[800px] mb-16 md:mb-24">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-[12px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-6"
+          >
+            The Collective
+          </motion.p>
           <motion.h2 
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-[34px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]"
+            transition={{ duration: 0.8 }}
+            className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
-            Practitioners of the <span className="italic text-[#64748B] font-normal">Method.</span>
+            Practitioners of the <br/>
+            <span className="font-semibold text-[#2B2F55]">NeuroHolistic Method.</span>
           </motion.h2>
         </div>
 
-        {/* ── The Registry Matrix ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-[#E2E8F0]">
-          {TEAM_PROFILES.map((member, i) => (
+        {/* ── Founder Spotlight ── */}
+        {founder && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-32"
+          >
             <Link 
-              key={member.slug} 
-              href={`/team/${member.slug}`}
-              className={`group flex flex-col p-8 md:p-12 border-b border-[#E2E8F0] ${
-                (i + 1) % 3 !== 0 ? "lg:border-r" : ""
-              } ${(i + 1) % 2 !== 0 ? "md:border-r lg:border-r" : "md:border-r-0 lg:border-r"} transition-colors hover:bg-[#FAFBFF]`}
+              href={`/team/${founder.slug}`}
+              className="group relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16 bg-white p-8 md:p-12 rounded-[40px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
             >
-              {/* Framed Portrait */}
-              <div className="relative mb-10 aspect-[4/5] w-full overflow-hidden bg-slate-100 grayscale-[40%] transition-all duration-700 group-hover:grayscale-0">
+              {/* Image Container */}
+              <div className="w-full lg:w-1/2 aspect-[4/5] relative overflow-hidden rounded-[32px] bg-slate-50">
                 <Image
-                  src={member.image}
-                  alt={member.name}
+                  src={founder.image}
+                  alt={founder.name}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 border border-white/10" />
+                <div className="absolute inset-0 bg-[#2B2F55]/5 group-hover:bg-transparent transition-colors duration-700" />
               </div>
 
-              {/* Metadata */}
-              <div className="flex flex-col flex-1">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="font-mono text-[11px] text-[#CBD5E1]">
-                    [ 0{i + 1} ]
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#6366F1]">
-                    {member.slug === "dr-fawzia-yassmina" ? "Founder" : "Practitioner"}
-                  </span>
-                </div>
-
-                <h3 className="mb-2 text-[22px] font-semibold tracking-tight text-[#0F172A]">
-                  {member.name}
+              {/* Text Content */}
+              <div className="w-full lg:w-1/2 flex flex-col items-start">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-6">
+                  Founder   
+                </span>
+                <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6 tracking-tight">
+                  {founder.name}
                 </h3>
-                
-                <p className="text-[14px] leading-relaxed text-[#64748B] line-clamp-2">
-                  {member.shortBio}
+                <p className="text-lg text-slate-500 leading-relaxed font-light mb-8 italic">
+                  "{founder.shortBio}"
                 </p>
-
-                <div className="mt-8 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#0F172A]">
-                  <span className="border-b border-transparent pb-0.5 transition-all group-hover:border-[#0F172A]">
-                    Meet the Team
-                  </span>
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
+                  <span>Explore Biography</span>
+                  <div className="h-[1px] w-8 bg-[#2B2F55]/30 group-hover:w-12 group-hover:bg-[#2B2F55] transition-all" />
                 </div>
               </div>
             </Link>
+          </motion.div>
+        )}
+
+        {/* ── Practitioners Grid ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+          {practitioners.map((member, i) => (
+            <motion.div
+              key={member.slug}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.8 }}
+            >
+              <Link href={`/team/${member.slug}`} className="group block">
+                {/* Image Wrap */}
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-white mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-105"
+                  />
+                  {/* Subtle vignette */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-60" />
+                </div>
+
+                {/* Content */}
+                <div className="px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                    Practitioner
+                  </span>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
+                    {member.name}
+                  </h3>
+                  <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-6">
+                    {member.shortBio}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 group-hover:text-[#2B2F55] transition-all">
+                    <span>View Profile</span>
+                    <div className="h-[1px] w-6 bg-slate-200 group-hover:bg-[#2B2F55] group-hover:w-10 transition-all" />
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
 

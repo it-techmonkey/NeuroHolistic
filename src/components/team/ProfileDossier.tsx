@@ -41,7 +41,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
             >
               <div className="mb-10 flex items-center gap-4">
                 <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                  Profile // {profile.slug === "dr-fawzia-yassmina" ? "Registry 01" : "Practitioner"}
+                  {profile.slug === "dr-fawzia-yassmina" ? "Founder" : "Practitioner"}
                 </span>
               </div>
 

@@ -64,11 +64,6 @@ export default function ResearchPage() {
               viewport={{ once: true }}
               className="lg:col-span-6"
             >
-              <div className="mb-10 flex items-center gap-4">
-                <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                  Vision // Philosophy
-                </span>
-              </div>
               <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
                 Understanding the <br />
                 <span className="italic text-[#64748B] font-normal">emergent human.</span>
@@ -98,10 +93,6 @@ export default function ResearchPage() {
                     className="object-cover"
                   />
                 </div>
-                <div className="mt-6 flex justify-between px-2">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Context // Analysis</span>
-                  <span className="text-[13px] italic text-[#64748B]">Systemic Observation</span>
-                </div>
               </div>
             </motion.div>
           </div>
@@ -112,7 +103,6 @@ export default function ResearchPage() {
       <section className="bg-[#FAFBFF] py-24 md:py-32 lg:py-40 border-y border-[#E2E8F0]">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="mb-20">
-            <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">Domains // Research Focus</span>
             <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">Areas of <span className="italic text-[#64748B]">Inquiry.</span></h2>
           </div>
 
@@ -161,7 +151,6 @@ export default function ResearchPage() {
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-end">
             <div className="lg:col-span-7">
-              <span className="font-mono text-[11px] tracking-[0.4em] text-[#8B8BFF] uppercase">Archive // Publications</span>
               <h3 className="mt-6 text-[32px] font-light text-white md:text-[44px]">Research Projects <br/>& <span className="italic text-slate-400">Publications.</span></h3>
             </div>
             <div className="lg:col-span-5">
@@ -181,7 +170,6 @@ export default function ResearchPage() {
       {/* ── Section 05: Final Inquiry (Clean CTA) ── */}
       <section className="py-24 md:py-32 border-t border-[#E2E8F0]">
         <div className="mx-auto max-w-[800px] px-6 text-center">
-          <span className="font-mono text-[11px] tracking-[0.4em] text-[#94A3B8] uppercase">Contact // Collaboration</span>
           <h2 className="mt-6 text-[32px] font-light tracking-tight text-[#0F172A] md:text-[42px]">
             Inquire for <span className="italic text-[#64748B]">partnership.</span>
           </h2>

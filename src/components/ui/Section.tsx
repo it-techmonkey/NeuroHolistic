@@ -9,10 +9,10 @@ interface SectionProps {
 }
 
 const paddingStyles = {
-  sm: "py-8 md:py-12",
-  md: "py-12 md:py-16",
-  lg: "py-16 md:py-20",
-  xl: "py-20 md:py-24",
+  sm: "py-6 md:py-10",
+  md: "py-10 md:py-14",
+  lg: "py-12 md:py-16",
+  xl: "py-16 md:py-20",
 };
 
 const backgroundStyles = {

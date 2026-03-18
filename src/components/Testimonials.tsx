@@ -137,11 +137,9 @@ export default function Testimonials() {
         className="mx-auto max-w-[1200px] px-6 md:px-12"
       >
         {/* Header Section */}
-        <div className="mb-16 flex flex-col items-center text-center md:mb-20">
+        <div className="mb-16 flex flex-col items-center text-center md:mb-16">
           <motion.div variants={itemVariants} className="mb-5">
-            <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
-              Testimonials
-            </span>
+
           </motion.div>
 
           <motion.h2 
@@ -160,7 +158,7 @@ export default function Testimonials() {
         </div>
 
         {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div key={testimonial.name} variants={itemVariants} className="h-full">
               <TestimonialCard {...testimonial} />

@@ -9,88 +9,83 @@ export default function MethodVision() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } },
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
   };
 
   return (
-    <section className="bg-white py-16 md:py-20">
-      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-24">
+    <section className="bg-white py-20 border-t border-slate-50">
+      <div className="mx-auto max-w-[1100px] px-6">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           
-          {/* ── Imagery (Spans 7 Cols) ── */}
-          {/* We place the image first on mobile, but move it to the right on desktop for visual flow */}
+          {/* ── Imagery ── */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -15 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] as const }}
-            className="order-2 lg:order-1 lg:col-span-7"
+            transition={{ duration: 0.8 }}
+            className="order-2 lg:order-1"
           >
-            <div className="group relative w-full rounded-[2rem] bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-              {/* Internal Image Frame */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[1.5rem] bg-[#F1F5F9]">
-                <Image
-                  src="/images/dummy-user.svg"
-                  alt="Two people in a supportive environment"
-                  fill
-                  className="object-cover grayscale-[10%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </div>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200 shadow-sm group">
+              <Image
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                alt="The Vision Behind the Method"
+                fill
+                priority
+                className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
+                sizes="(max-width: 1024px) 100vw, 550px"
+              />
+              <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl pointer-events-none" />
             </div>
           </motion.div>
 
-          {/* ── Narrative Content (Spans 5 Cols) ── */}
+          {/* ── Narrative Content ── */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="order-1 lg:order-2 lg:col-span-5"
+            className="order-1 lg:order-2"
           >
-            <motion.div variants={itemVariants} className="mb-8 flex items-center gap-3">
-              <div className="h-px w-6 bg-[#6366F1]" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#6366F1]">
-                The Origin
-              </p>
-            </motion.div>
-
-            <motion.h2
-              variants={itemVariants}
-              className="mb-8 text-[34px] font-medium leading-[1.15] tracking-tight text-[#0F172A] md:text-[46px]"
-            >
-              The Vision Behind <br/>the <span className="italic text-[#64748B]">Method.</span>
-            </motion.h2>
-
-            <motion.p
-              variants={itemVariants}
-              className="mb-10 text-[17px] leading-[1.8] text-[#475569] md:text-[18px]"
-            >
-              The NeuroHolistic Method™ emerged from years of therapeutic work and careful observation of the deeper mechanisms that shape human experience. 
-            </motion.p>
-            
-            <motion.p
-              variants={itemVariants}
-              className="mb-12 text-[17px] leading-[1.8] text-[#475569] md:text-[18px]"
-            >
-              It reflects a vision of transformation that goes beyond symptom management—one that restores the internal system to balance and coherence, creating the conditions for lasting change.
-            </motion.p>
-
-            <motion.div variants={itemVariants}>
-              <Link
-                href="/about"
-                className="group inline-flex items-center gap-2 border-b border-[#0F172A] pb-1 text-[13px] font-semibold uppercase tracking-widest text-[#0F172A] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+            <div className="max-w-lg lg:pl-6">
+              <motion.h2
+                variants={itemVariants}
+                className="mb-6 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl"
               >
-                Read Full Story
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-              </Link>
-            </motion.div>
+                The Vision Behind the Method
+              </motion.h2>
+
+              <div className="space-y-5">
+                <motion.p
+                  variants={itemVariants}
+                  className="text-[16px] leading-relaxed text-slate-500"
+                >
+                  The NeuroHolistic Method™ emerged from years of therapeutic work and careful observation of the deeper mechanisms that shape human experience. 
+                </motion.p>
+                
+                <motion.p
+                  variants={itemVariants}
+                  className="text-[16px] leading-relaxed text-slate-500"
+                >
+                  It reflects a vision of transformation that goes beyond symptom management—one that restores the internal system to balance and coherence, creating the conditions for lasting change.
+                </motion.p>
+              </div>
+
+              <motion.div variants={itemVariants} className="mt-10">
+                <Link
+                  href="/about"
+                  className="group inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-900 transition-colors hover:text-indigo-600"
+                >
+                  Read Full Story
+                  <span className="text-lg leading-none transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </Link>
+              </motion.div>
+            </div>
           </motion.div>
 
         </div>

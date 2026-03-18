@@ -25,22 +25,20 @@ export default function Research() {
 
   return (
     <section className="w-full bg-white py-16 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-8">
+      <div className="mx-auto max-w-[900px] px-6 md:px-12">
+        <div className="text-center">
           
-          {/* ── Left Column: Editorial Text (Spans 5 cols) ── */}
+          {/* ── Centered Editorial Text ── */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="lg:col-span-5"
+            className=""
           >
-            <motion.div variants={itemVariants} className="mb-8 flex items-center gap-3">
-              <div className="h-px w-6 bg-[#CBD5E1]" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#64748B]">
-                Institute Research
-              </p>
+            <motion.div variants={itemVariants} className="mb-8 flex items-center justify-center gap-3">
+
+
             </motion.div>
 
             <motion.h2
@@ -65,7 +63,7 @@ export default function Research() {
               Through observation, case studies, and continuous refinement of the NeuroHolistic Method™, we aim to contribute to a deeper understanding of how internal systems can be restored to coherence and support meaningful, lasting change.
             </motion.p>
 
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="flex justify-center">
               <Link
                 href="/research"
                 className="group inline-flex items-center gap-2 border-b border-[#0F172A] pb-1 text-[13px] font-semibold uppercase tracking-widest text-[#0F172A] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"

@@ -10,7 +10,7 @@ export const FEATURED_RETREAT: FeaturedRetreatData = {
   location: "Cafe Shoppe, Oxford, United Kingdom",
   capacity: 20,
   duration: "2 hours",
-  image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+  image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
   tags: ["Networking", "Collaboration", "Project Management", "User Experience"],
   slug: "meet-and-greet-oxford-2026",
 };
@@ -33,7 +33,7 @@ export const UPCOMING_RETREATS: RetreatItem[] = [
       "Connect with fellow practitioners in a held container for integration, reflection, and continued growth through the NeuroHolistic Method™.",
     date: "July 10–12, 2025",
     location: "Coastal Retreat Center, UAE",
-    image: "https://images.unsplash.com/photo-1470240731273-7821a6e5206f?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80",
     slug: "summer-integration-2025",
   },
   {

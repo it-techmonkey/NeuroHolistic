@@ -49,12 +49,6 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="lg:col-span-5"
           >
-            <div className="mb-8 flex items-center gap-3">
-              <div className="h-px w-6 bg-[#6366F1]" />
-              <span className="font-mono text-[11px] uppercase tracking-[0.4em] text-[#6366F1]">
-                Identity // 01
-              </span>
-            </div>
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
               {retreat.title.split(' ').slice(0, -1).join(' ')} <br/>

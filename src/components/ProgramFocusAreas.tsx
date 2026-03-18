@@ -31,21 +31,17 @@ const FOCUS_AREAS = [
 
 export default function ProgramFocusAreas() {
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40">
+    <section className="bg-white py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Editorial Header ── */}
-        <div className="mb-20">
+        <div className="mb-16">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mb-6 flex items-center gap-4"
           >
-            <div className="h-px w-8 bg-[#E2E8F0]" />
-            <span className="font-mono text-[11px] tracking-[0.4em] text-[#94A3B8] uppercase">
-              Scope // Domains
-            </span>
           </motion.div>
 
           <motion.h2 

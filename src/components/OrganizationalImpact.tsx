@@ -32,11 +32,11 @@ const IMPACTS = [
 
 export default function OrganizationalImpact() {
   return (
-    <section className="bg-[#0F172A] py-24 md:py-32 lg:py-40 border-t border-white/5">
+    <section className="bg-[#0F172A] py-16 md:py-20 lg:py-24 border-t border-white/5">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Editorial Header ── */}
-        <div className="mb-20 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="mb-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-7">
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
@@ -44,10 +44,7 @@ export default function OrganizationalImpact() {
               viewport={{ once: true }}
               className="mb-8 flex items-center gap-4"
             >
-              <div className="h-px w-8 bg-white/20" />
-              <span className="font-mono text-[11px] tracking-[0.4em] text-[#8B8BFF] uppercase">
-                Impact // Metrics
-              </span>
+
             </motion.div>
 
             <motion.h2 

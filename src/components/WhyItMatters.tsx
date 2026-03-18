@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function WhyItMatters() {
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
           
@@ -17,11 +17,6 @@ export default function WhyItMatters() {
             transition={{ duration: 0.8 }}
             className="lg:col-span-5"
           >
-            <div className="mb-10 flex items-center gap-4">
-              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                Strategic // Foundation
-              </span>
-            </div>
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
               Why it <span className="italic text-[#64748B] font-normal">matters.</span>
@@ -39,17 +34,6 @@ export default function WhyItMatters() {
               </p>
             </div>
 
-            {/* Critical Factors List */}
-            <div className="mt-12 grid grid-cols-1 gap-4 border-t border-[#F1F5F9] pt-8 md:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Primary Factor</span>
-                <span className="text-[13px] font-semibold text-[#0F172A]">Cognitive Clarity</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Outcome</span>
-                <span className="text-[13px] font-semibold text-[#0F172A]">Systemic Resilience</span>
-              </div>
-            </div>
           </motion.div>
 
           {/* ── Image Column (Spans 7) ── */}
@@ -64,23 +48,15 @@ export default function WhyItMatters() {
               {/* Sharp Edge Image Frame */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 md:aspect-[16/11]">
                 <Image
-                  src="/images/dummy-user.svg"
-                  alt="Coaching or therapy session"
+                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                  alt="Corporate wellness and team collaboration"
                   fill
                   className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                 />
               </div>
               
-              {/* Museum-style Caption */}
-              <div className="mt-6 flex items-center justify-between px-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">
-                  Context // Regulation
-                </span>
-                <span className="text-[13px] text-[#64748B] italic">
-                  Applied Human Systems
-                </span>
-              </div>
+
             </div>
           </motion.div>
 

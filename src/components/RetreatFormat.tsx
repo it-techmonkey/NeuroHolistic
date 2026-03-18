@@ -12,7 +12,7 @@ const PHASES = [
 
 export default function RetreatFormat() {
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
           
@@ -24,12 +24,7 @@ export default function RetreatFormat() {
             transition={{ duration: 0.8 }}
             className="lg:col-span-5"
           >
-            <div className="mb-8 flex items-center gap-3">
-              <div className="h-px w-6 bg-[#6366F1]" />
-              <span className="font-mono text-[11px] uppercase tracking-[0.4em] text-[#6366F1]">
-                The Architecture
-              </span>
-            </div>
+
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
               How the experience <br/>
@@ -70,8 +65,8 @@ export default function RetreatFormat() {
               {/* Internal Framing Effect */}
               <div className="relative aspect-[4/5] w-full overflow-hidden md:aspect-[16/11]">
                 <Image
-                  src="https://images.unsplash.com/photo-1470240731273-7821a6e5206f?w=1400&q=80"
-                  alt="Nature and restoration"
+                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                  alt="Retreat structure and experience"
                   fill
                   className="object-cover grayscale-[15%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 60vw"

@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 
 export default function CorporateCTA() {
   return (
-    <section id="corporate-cta" className="bg-white py-24 md:py-32 lg:py-40 border-t border-[#E2E8F0]">
+    <section id="corporate-cta" className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
           
@@ -18,11 +18,7 @@ export default function CorporateCTA() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="mb-10 flex items-center gap-4">
-                <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                  Inquiry // Partnership
-                </span>
-              </div>
+
 
               <h2 className="mb-8 text-[34px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px] lg:text-[64px]">
                 Bring the NeuroHolistic <br className="hidden md:block" />

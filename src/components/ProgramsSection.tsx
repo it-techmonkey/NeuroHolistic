@@ -2,7 +2,7 @@ import Section from "@/components/ui/Section";
 import ProgramCard from "./ProgramCard";
 
 const PRIVATE_PROGRAM = {
-  icon: "◆",
+  icon: "●",
   title: "Private Program",
   description:
     "The Private Program offers a personalized journey through the NeuroHolistic Method™. Working one-on-one allows the process to be fully adapted to your unique history, patterns, and goals.",
@@ -20,7 +20,7 @@ const PRIVATE_PROGRAM = {
 };
 
 const GROUP_PROGRAM = {
-  icon: "◇",
+  icon: "◉",
   title: "Group Program",
   description:
     "The Group Program offers the opportunity to experience the NeuroHolistic Method™ within a guided group setting. Participants move through the transformational process together in a supportive environment.",

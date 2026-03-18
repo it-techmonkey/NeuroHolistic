@@ -3,115 +3,113 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-/* ─── Data Array (Must be defined in the same file) ───────────────────────── */
+/* ─── Standard, Clean UI Icons ─────────────────────────────────────────── */
+
+const Icons = {
+  Health: () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+  Mind: () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  ),
+  Relationships: () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  Potential: () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M8 6l4-4 4 4M16 18a4 4 0 0 0-8 0" />
+    </svg>
+  ),
+};
 
 const AREAS = [
   {
     title: "Health",
-    description:
-      "When the nervous system returns to balance, the body shifts out of chronic stress and into regulation.",
-    icon: "◆",
-    href: "/programs#health",
+    description: "Shifting the nervous system from chronic stress into regulation and physiological balance.",
+    Icon: Icons.Health,
   },
   {
     title: "Mind",
-    description:
-      "As neural patterns reorganize, mental clarity increases and emotional reactivity decreases.",
-    icon: "◇",
-    href: "/programs#mind",
+    description: "Reorganizing neural patterns to increase clarity and reduce emotional reactivity.",
+    Icon: Icons.Mind,
   },
   {
     title: "Relationships",
-    description:
-      "Internal coherence changes how we relate to others—communication and connection deepen.",
-    icon: "○",
-    href: "/programs#relationships",
+    description: "Fostering internal coherence to deepen communication and authentic connection.",
+    Icon: Icons.Relationships,
   },
   {
-    title: "Human Potential",
-    description:
-      "When internal systems align, energy becomes available for creativity, purpose, and growth.",
-    icon: "△",
-    href: "/programs#potential",
+    title: "Potential",
+    description: "Redirecting stress-consumed energy toward creativity, purpose, and growth.",
+    Icon: Icons.Potential,
   },
 ];
 
-/* ─── Main Component ─────────────────────────────────────────────────────── */
-
-export default function MethodTransformationAreas() {
+export default function TransformationAreas() {
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40">
-      <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+    <section className="w-full bg-white py-16 md:py-20">
+      <div className="mx-auto max-w-[1200px] px-6">
         
-        {/* Editorial Header */}
-        <div className="mb-20 text-center">
-          <motion.div 
+        {/* Header: Compact & Centered */}
+        <div className="mb-12 text-center">
+          <motion.h2 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-6 flex items-center justify-center gap-3"
+            className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl"
           >
-            <div className="h-px w-6 bg-[#CBD5E1]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#64748B]">
-              Outcomes
-            </span>
-            <div className="h-px w-6 bg-[#CBD5E1]" />
-          </motion.div>
-
-          <motion.h2 
-            initial={{ opacity: 0, y: 15 }}
+            Areas of Transformation
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="mx-auto max-w-[800px] text-[34px] font-medium leading-[1.15] text-[#0F172A] md:text-[48px]"
+            className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-500"
           >
-            Where transformation <span className="italic text-[#64748B]">takes shape.</span>
-          </motion.h2>
+            When internal systems return to balance, change appears across multiple dimensions of life, 
+            altering how we think, feel, and engage with the world.
+          </motion.p>
         </div>
 
-        {/* Opening paragraph */}
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="mx-auto max-w-[840px] mb-12 text-[15.5px] leading-[1.8] text-[#475569] text-center"
-        >
-          When internal systems return to balance and coherence, change begins to appear across multiple dimensions of life. As the nervous system stabilizes and perception reorganizes, individuals often experience shifts not only in how they feel internally, but also in how they think, relate to others, and engage with the world.
-        </motion.p>
-
-        {/* The Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {AREAS.map((area, i) => (
+        {/* Compact 4-Column Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {AREAS.map((area, index) => (
             <motion.div
-              key={area.title}
+              key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: index * 0.1 }}
             >
               <Link 
-                href={area.href} 
-                className="group flex h-full flex-col justify-between rounded-[24px] border border-[#E2E8F0] bg-white p-8 transition-all duration-500 hover:-translate-y-1 hover:border-[#6366F1] hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.08)]"
+                href="/programs"
+                className="group block h-full rounded-2xl border border-slate-100 bg-slate-50/30 p-6 transition-all duration-300 hover:border-slate-200 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40"
               >
-                <div>
-                  <span className="mb-8 block text-[28px] text-[#6366F1] transition-transform duration-500 group-hover:scale-110">
-                    {area.icon}
-                  </span>
-                  <h3 className="mb-3 text-[20px] font-semibold tracking-tight text-[#0F172A]">
-                    {area.title}
-                  </h3>
-                  <p className="text-[15px] leading-[1.7] text-[#475569]">
-                    {area.description}
-                  </p>
+                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                  <area.Icon />
                 </div>
+                
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">
+                  {area.title}
+                </h3>
+                
+                <p className="text-[14px] leading-relaxed text-slate-500 group-hover:text-slate-600">
+                  {area.description}
+                </p>
 
-                <div className="mt-10 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-[#0F172A]">
-                  <span className="relative">
-                    Explore
-                    <span className="absolute -bottom-1 left-0 h-px w-0 bg-[#0F172A] transition-all duration-300 group-hover:w-full" />
-                  </span>
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
+                  Explore
+                  <span className="text-[14px]">→</span>
                 </div>
               </Link>
             </motion.div>

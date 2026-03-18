@@ -42,16 +42,14 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
   const dateOptions = useMemo(() => extractDateOptions(events), [events]);
 
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40">
+    <section className="bg-white py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* ── Architectural Header ── */}
-        <header className="mb-20 flex flex-col items-start justify-between gap-12 border-b border-[#E2E8F0] pb-12 lg:flex-row lg:items-end">
+        <header className="mb-16 flex flex-col items-start justify-between gap-12 border-b border-[#E2E8F0] pb-12 lg:flex-row lg:items-end">
           <div className="max-w-[600px]">
             <div className="mb-6 flex items-center gap-4">
-              <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                Registry // 2024—2025
-              </span>
+
             </div>
             <h2 className="text-[42px] font-light leading-[1.05] tracking-tight text-[#0F172A] md:text-[56px]">
               Upcoming <span className="italic text-[#64748B]">Events.</span>
