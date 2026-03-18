@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, cubicBezier } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -59,14 +59,16 @@ const PRACTITIONERS = [
 
 /* ─── Animation Variants ─────────────────────────────────────────────────── */
 
+const customEase = cubicBezier(0.22, 1, 0.36, 1);
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: customEase } }
 };
 
 const imageFade = {
   hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] } }
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.8, delay: 0.2, ease: customEase } }
 };
 
 const textStagger = {
@@ -173,7 +175,7 @@ export default function CollectiveRedesign() {
                 initial={{ opacity: 0, x: -30, rotate: -3 }}
                 animate={{ opacity: 1, x: 0, rotate: 0 }}
                 exit={{ opacity: 0, x: 30, rotate: 3 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.6, ease: customEase }}
                 className="relative z-10 aspect-[3/4] rounded-2xl shadow-2xl shadow-slate-300/60 overflow-hidden flex items-center justify-center p-4 md:p-6 bg-white"
               >
                 {/* Joud's Image Fix (or any other): object-contain with max-dimensions */}
