@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 
 export default function MethodHero() {
   return (
-    <section className="relative w-full bg-[#FAFBFF] py-24 md:py-32">
+    <section className="relative w-full bg-[#FAFBFF] py-16 md:py-20">
       {/* Subtle Background Elements */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(240,244,255,0.6)_100%)]" />
       <div className="pointer-events-none absolute top-0 left-[-10%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.05)_0%,transparent_70%)] blur-3xl" />
@@ -22,30 +22,26 @@ export default function MethodHero() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
             >
-              <div className="mb-6 flex items-center gap-3">
-                <div className="h-px w-6 bg-[#6366F1]" />
-                <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
-                  The NeuroHolistic Method™
-                </p>
-              </div>
 
-              <h1 className="mb-6 text-[36px] font-medium leading-[1.15] tracking-tight text-[#0B1028] md:text-[48px] lg:text-[52px]">
-                A Five-Phase Architecture for <span className="italic text-[#64748B]">Lasting Transformation.</span>
+
+              <h1 className="mb-3 text-[36px] font-medium leading-[1.15] tracking-tight text-[#0B1028] md:text-[48px] lg:text-[52px]">
+                The NeuroHolistic Method™ <br className="hidden md:block" />
               </h1>
 
+              <p className="mb-6 text-[14px] leading-[1.6] text-[#64748B] md:text-[15px]">
+                A Five-Phase Architecture for Systemic Transformation
+              </p>
+
               <p className="mb-10 text-[17px] leading-[1.8] text-[#475569] md:text-[18px]">
-                A structured, neuroscience-informed framework designed to move the human system from chronic overload into coherence, resilience, and integrated growth.
+                The NeuroHolistic Method™ unfolds through five structured phases of transformation, from releasing accumulated stress patterns to stabilizing new neural, emotional, and cognitive pathways.
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
-                <BookNowButton className="inline-flex h-12 items-center justify-center rounded-full bg-[#0B1028] px-8 text-[14.5px] font-medium text-white transition-all hover:bg-[#1E293B] hover:shadow-[0_8px_20px_rgba(11,16,40,0.15)]">
-                  Book a Consultation
-                </BookNowButton>
                 <Link
-                  href="/programs"
-                  className="group inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14.5px] font-medium text-[#475569] transition-all hover:bg-white hover:text-[#0B1028] hover:shadow-sm"
+                  href="/method"
+                  className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#0B1028] px-8 text-[14.5px] font-medium text-white transition-all hover:bg-[#1E293B] hover:shadow-[0_8px_20px_rgba(11,16,40,0.15)]"
                 >
-                  View Programs
+                  Explore the Method
                   <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </Link>
               </div>
@@ -73,29 +69,29 @@ export default function MethodHero() {
 // Data Array for the phases
 const phases = [
   {
-    label: "Assess",
-    desc: "System Mapping",
-    details: "We begin by mapping your unique nervous system baseline, identifying patterns of chronic stress and autonomic overload.",
+    label: "Release",
+    desc: "Release",
+    details: "Releasing accumulated emotional and physiological tension to shift out of chronic stress.",
   },
   {
-    label: "Regulate",
-    desc: "Somatic Safety",
-    details: "Establishing physical safety through targeted somatic practices that down-regulate the fight-or-flight response.",
+    label: "Repatterning",
+    desc: "Repatterning",
+    details: "Reorganizing deep neural patterns that have kept the system locked in old adaptations.",
   },
   {
-    label: "Rewire",
-    desc: "Neural Pathway",
-    details: "Utilizing neuroplasticity to build new, adaptive pathways, clearing mental fog and hyper-vigilant loops.",
+    label: "Integration",
+    desc: "Integration",
+    details: "Stabilizing new neural pathways so that regulation becomes the default state.",
   },
   {
-    label: "Integrate",
-    desc: "Cognitive Alignment",
-    details: "Aligning your newly regulated physical state with your emotional and cognitive processing for holistic coherence.",
+    label: "Regulation",
+    desc: "Regulation",
+    details: "Strengthening the nervous system's capacity for self-regulation and resilience.",
   },
   {
-    label: "Evolve",
-    desc: "Autonomic Resilience",
-    details: "Solidifying these changes so your system can naturally navigate future stressors without returning to baseline overload.",
+    label: "Expansion",
+    desc: "Expansion",
+    details: "Embedding transformation into identity, supporting the expansion of human potential.",
   },
 ];
 

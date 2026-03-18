@@ -35,20 +35,20 @@ const PROGRAMS = [
   {
     id: "private",
     Icon: PersonIcon,
-    title: "Private Sessions",
+    title: "Private Program",
     description:
-      "A personalized transformational journey tailored to your unique history, patterns, and goals. Through one-on-one sessions, the NeuroHolistic Method™ is applied with precision to restore systemic balance and support deep, lasting change.",
-    cta: "Explore Private Sessions",
-    href: "/programs/private",
+      "A personalized transformational journey.",
+    cta: "Book a Consultation",
+    href: "/programs",
   },
   {
     id: "group",
     Icon: GroupIcon,
     title: "Group Program",
     description:
-      "A structured transformational experience conducted within a guided group setting. Participants move through the NeuroHolistic Method™ together, benefiting from shared insight, collective momentum, and a supportive environment for integration.",
-    cta: "Explore the Group Program",
-    href: "/programs/group",
+      "A structured transformational experience conducted within a guided group setting.",
+    cta: "Book a Consultation",
+    href: "/programs",
   },
 ];
 
@@ -86,7 +86,7 @@ export default function Programs() {
           <motion.div variants={itemVariants} className="mb-6 flex items-center justify-center gap-4">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#8B8BFF]/50" />
             <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#8B8BFF]">
-              Pathways
+              Offerings
             </span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#8B8BFF]/50" />
           </motion.div>
@@ -95,7 +95,7 @@ export default function Programs() {
             variants={itemVariants}
             className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[46px]"
           >
-            Choose Your <span className="italic text-[#A5B4FC]">Path.</span>
+            Programs
           </motion.h2>
         </div>
 

@@ -77,16 +77,6 @@ export default function RetreatFormat() {
                   sizes="(max-width: 1024px) 100vw, 60vw"
                 />
               </div>
-              
-              {/* External Museum Caption */}
-              <div className="mt-6 flex items-center justify-between px-2">
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-[#94A3B8]">
-                  Context // Environment
-                </span>
-                <span className="text-[13px] text-[#64748B] italic">
-                  Biophilic Integration
-                </span>
-              </div>
             </div>
           </motion.div>
 

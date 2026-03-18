@@ -59,28 +59,28 @@ function PotentialIcon() {
 
 const AREAS = [
   {
-    title: "Health & Physiology",
-    description: "When the nervous system returns to balance, the body shifts out of chronic stress and into profound physical regulation.",
+    title: "Health",
+    description: "When the nervous system returns to balance, the body shifts out of chronic stress and into regulation.",
     Icon: HealthIcon,
-    href: "/programs#health",
+    href: "/programs",
   },
   {
-    title: "Cognitive Clarity",
-    description: "As neural patterns reorganize, mental fog lifts. Experience sharper focus and significantly decreased emotional reactivity.",
+    title: "Mind",
+    description: "As neural patterns reorganize, mental clarity increases and emotional reactivity decreases.",
     Icon: MindIcon,
-    href: "/programs#mind",
+    href: "/programs",
   },
   {
-    title: "Relational Depth",
-    description: "Internal coherence fundamentally changes how we relate to others—communication, boundaries, and authentic connection deepen.",
+    title: "Relationships",
+    description: "Internal coherence changes how we relate to others.",
     Icon: RelIcon,
-    href: "/programs#relationships",
+    href: "/programs",
   },
   {
     title: "Human Potential",
-    description: "When internal systems align, blocked energy becomes freely available for creativity, purpose, and meaningful life growth.",
+    description: "When internal systems align, energy that was previously consumed by stress or unresolved patterns becomes available for creativity, purpose, and meaningful growth in life.",
     Icon: PotentialIcon,
-    href: "/programs#potential",
+    href: "/programs",
   },
 ];
 
@@ -101,7 +101,7 @@ export default function TransformationAreas() {
   };
 
   return (
-    <section className="w-full bg-[#FAFBFF] py-24 md:py-32">
+    <section className="w-full bg-[#FAFBFF] py-20 md:py-28">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -110,27 +110,28 @@ export default function TransformationAreas() {
         className="mx-auto max-w-[1200px] px-6 md:px-12"
       >
         {/* Header Section */}
-        <div className="mb-16 flex flex-col items-center text-center md:mb-20">
-          <motion.div variants={itemVariants} className="mb-5">
+        <div className="mb-14 flex flex-col items-center text-center md:mb-16">
+          <motion.div variants={itemVariants} className="mb-4">
             <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
-              Areas of Focus
+              Who It Is For
             </span>
           </motion.div>
 
           <motion.h2 
             variants={itemVariants} 
-            className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-4 max-w-[700px] text-[32px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
           >
-            Where Transformation Takes Shape.
+            Where Transformation Takes Shape
           </motion.h2>
-
-          <motion.p 
-            variants={itemVariants} 
-            className="max-w-[600px] text-[17px] leading-[1.7] text-[#475569]"
-          >
-            Each area reflects a different dimension of systemic restoration. Together they create a coherent pathway for meaningful and lasting change.
-          </motion.p>
         </div>
+
+        {/* Opening paragraph */}
+        <motion.p
+          variants={itemVariants}
+          className="mx-auto max-w-[840px] mb-12 text-[15.5px] leading-[1.8] text-[#475569] text-center"
+        >
+          When internal systems return to balance and coherence, change begins to appear across multiple dimensions of life. As the nervous system stabilizes and perception reorganizes, individuals often experience shifts not only in how they feel internally, but also in how they think, relate to others, and engage with the world.
+        </motion.p>
 
         {/* Clean Bento Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
@@ -138,7 +139,7 @@ export default function TransformationAreas() {
             <motion.div key={index} variants={itemVariants} className="h-full">
               <Link 
                 href={area.href}
-                className="group flex h-full flex-col justify-between rounded-[24px] border border-[#E2E8F0] bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#CBD5E1] hover:shadow-[0_20px_40px_-15px_rgba(15,23,42,0.08)] md:p-10"
+                className="group flex h-full flex-col justify-between rounded-[24px] border border-[#E2E8F0] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#CBD5E1] hover:shadow-[0_20px_40px_-15px_rgba(15,23,42,0.08)] md:p-8"
               >
                 <div>
                   {/* Icon Container: Clean & Simple */}

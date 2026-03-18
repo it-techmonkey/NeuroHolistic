@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function AcademyCTA() {
   return (
-    <section className="w-full bg-[#FAFBFF] px-4 py-24 md:px-6 md:py-32">
+    <section className="w-full bg-[#FAFBFF] px-4 py-16 md:px-6 md:py-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -41,22 +41,20 @@ export default function AcademyCTA() {
               </div>
 
               <h2 className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[56px]">
-                Master the Method. <br />
-                <span className="italic text-[#94A3B8]">Shape the future.</span>
+                Become a Therapist
               </h2>
             </div>
 
             {/* Right Column: Context & Action (Spans 5 Cols) */}
             <div className="flex flex-col items-start lg:col-span-5">
               <p className="mb-10 text-[17px] leading-[1.7] text-[#94A3B8] md:text-[18px]">
-                Join an elite community of certified practitioners. Train extensively in the NeuroHolistic Method™ and build a practice dedicated to deep, systemic human transformation.
               </p>
 
               <Link
-                href="/academy/apply"
+                href="/academy"
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-white px-8 text-[15px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
               >
-                Explore the Academy
+                Linked to Academy Page
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
             </div>

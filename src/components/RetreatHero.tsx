@@ -11,7 +11,7 @@ export default function RetreatHero() {
         </>
       }
       description="Immersive retreat experiences designed to decouple from daily stressors and engage deeply in the transformational process of the NeuroHolistic Method™."
-      imageSrc="https://images.unsplash.com/photo-1544367563-12123d8965cd?w=1400&q=80"
+      imageSrc="/images/pages/retreat.jpg"
       imageAlt="A serene retreat location in nature"
       metaTags={["Deep Immersion", "Nature Based", "Held Container"]}
       primaryAction={{ label: "View Upcoming Retreats", href: "#upcoming-retreats" }}

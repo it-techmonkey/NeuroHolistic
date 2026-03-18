@@ -50,7 +50,7 @@ export default function AboutPage() {
           </>
         }
         description="The story behind the NeuroHolistic Method™ and its evolution from applied practice into a structured framework for transformation."
-        imageSrc="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1920&q=80"
+        imageSrc="/images/pages/about.jpg"
         imageAlt="Premium wellbeing consultation environment"
         metaTags={["20+ Years", "Applied Practice", "Interdisciplinary"]}
       />
@@ -94,10 +94,6 @@ export default function AboutPage() {
                 <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                   <div className="relative aspect-[16/11] w-full overflow-hidden grayscale-[20%] transition-all duration-1000 group-hover:grayscale-0">
                     <Image src={block.image} alt={block.title} fill className="object-cover" />
-                  </div>
-                  <div className="mt-6 flex justify-between px-2">
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Registry // Archive</span>
-                    <span className="text-[13px] italic text-[#64748B]">Historical Context</span>
                   </div>
                 </div>
               </motion.div>

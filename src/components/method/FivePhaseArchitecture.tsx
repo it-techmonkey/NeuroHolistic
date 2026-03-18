@@ -18,7 +18,8 @@ export default function FivePhaseArchitecture() {
         <div className="mb-20 max-w-[800px]">
           <span className="mb-4 block text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">The Framework</span>
           <h2 className="text-[36px] font-medium leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-            A structured sequence for <span className="italic text-[#64748B]">systemic change.</span>
+            The Five-Phase Architecture of the NeuroHolis&c
+Method™
           </h2>
         </div>
 

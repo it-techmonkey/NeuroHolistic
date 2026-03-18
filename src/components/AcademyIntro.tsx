@@ -40,7 +40,7 @@ export default function AcademyIntro() {
               </p>
             </div>
 
-            {/* Architectural Meta-info */}
+            {/* Architectural Meta-info
             <div className="mt-12 flex flex-col gap-4 border-t border-[#F1F5F9] pt-8">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Foundation</span>
@@ -50,7 +50,7 @@ export default function AcademyIntro() {
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Standard</span>
                 <span className="text-[12px] font-semibold text-[#0F172A]">Ethical Integrity</span>
               </div>
-            </div>
+            </div> */}
           </motion.div>
 
           {/* ── Column 02: Cinematic Imagery (Spans 7) ── */}
@@ -71,16 +71,6 @@ export default function AcademyIntro() {
                   className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                 />
-              </div>
-              
-              {/* External Museum Caption */}
-              <div className="mt-6 flex items-center justify-between px-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">
-                  Context // Training
-                </span>
-                <span className="text-[13px] text-[#64748B] italic">
-                  Applied Psychology Mastery
-                </span>
               </div>
             </div>
           </motion.div>

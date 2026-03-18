@@ -4,11 +4,11 @@ export default function AcademyHero() {
   return (
     <PageHero
       eyebrow="Academy"
-      title="Train as a NeuroHolistic Applied Psychology Practitioner"
-      description="A rigorous, mentor-led curriculum that combines neuroscience, integrative psychology, and clinical ethics for real-world practice."
-      imageSrc="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80"
+      title="Training the next generation of NeuroHolistic practitioners."
+      description=" "
+      imageSrc="/images/pages/academy.jpg"
       imageAlt="Wellness education cohort in a training session"
-      metaTags={["Mentor-Led", "Applied Psychology", "Certification Pathway"]}
+      metaTags={[]}
       primaryAction={{ label: "Apply to Academy", href: "/academy/apply" }}
       secondaryAction={{ label: "Book Intro Call", kind: "modal" }}
     />

@@ -128,7 +128,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="w-full bg-white py-24 md:py-32">
+    <section className="w-full bg-white py-16 md:py-20">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -140,7 +140,7 @@ export default function Testimonials() {
         <div className="mb-16 flex flex-col items-center text-center md:mb-20">
           <motion.div variants={itemVariants} className="mb-5">
             <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#6366F1]">
-              Outcomes in Practice
+              Testimonials
             </span>
           </motion.div>
 

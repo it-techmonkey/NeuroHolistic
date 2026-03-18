@@ -3,44 +3,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import BookNowButton from "@/components/booking/BookNowButton";
 
-const NAV_LINKS = [
+const PRIMARY_LINKS = [
   { href: "/method", label: "Method" },
+  { href: "/programs", label: "Programs" },
   {
     href: "/events",
-    label: "Events & Retreats",
+    label: "Experience",
     children: [
       { href: "/events", label: "Events" },
       { href: "/retreats", label: "Retreats" },
+      { href: "/corporate-wellbeing", label: "Corporate Wellbeing" },
     ],
   },
-  { href: "/academy", label: "The Academy" },
-  { href: "/corporate-wellbeing", label: "Corporate Wellbeing" },
+  { href: "/academy", label: "Academy" },
+] as const;
+
+const COMPANY_LINKS = [
   { href: "/research", label: "Research" },
   { href: "/about", label: "About" },
   { href: "/team", label: "Team" },
 ] as const;
 
-const UTILITY_LINKS = [
-  { href: "/book", label: "Book a Session" },
-  { href: "/academy", label: "Apply to Academy" },
-  { href: "/faqs", label: "FAQ" },
-] as const;
+const CONTACT_INFO = {
+  email: "info@neuroholistic.com",
+  phone: "+1 (555) 123-4567",
+};
 
-const LOGIN_LINKS = [
-  { href: "/therapist", label: "Therapist" },
-  { href: "/customer", label: "Customer" },
-] as const;
-
-function UtilityIcon({ path, className = "" }: { path: string; className?: string }) {
-  return (
-    <svg className={`h-3.5 w-3.5 ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d={path} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 export default function Navbar() {
+  const [contactOpen, setContactOpen] = useState(false);
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -49,7 +42,7 @@ export default function Navbar() {
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 12);
+    const handleScroll = () => setScrolled(window.scrollY > 15);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -59,207 +52,238 @@ export default function Navbar() {
     else document.body.style.overflow = "";
   }, [mobileOpen]);
 
-  const isDarkText = isLightPage && !scrolled && !mobileOpen;
+  const textColor = isLightPage ? "text-slate-900" : "text-white";
+  const borderColor = isLightPage ? "border-slate-200/50" : "border-white/10";
 
-  const getContainerStyle = () => {
-    if (mobileOpen) return "border-white/10 bg-[rgba(8,12,32,0.95)] backdrop-blur-[20px]";
-    if (scrolled) {
-      if (isLightPage) return "border-slate-200/50 bg-white/70 backdrop-blur-[20px] shadow-sm";
-      return "border-white/10 bg-[rgba(8,12,32,0.5)] backdrop-blur-[20px] shadow-lg";
+  // REFINED: Adaptive background that works instantly on the Hero section
+  const getAdaptiveBg = () => {
+    if (isLightPage) {
+      // For light pages: Frosted white that adapts to the bg color
+      return "bg-white/70 backdrop-blur-xl shadow-sm";
     }
-    if (isLightPage) return "border-transparent bg-transparent";
-    return "border-white/5 bg-white/5 backdrop-blur-[16px]";
+    // For standard/hero pages: Frosted Navy that adapts to the hero image colors
+    return "bg-[#080C20]/75 backdrop-blur-xl shadow-lg";
   };
 
-  const textColor = (scrolled && isLightPage) || isDarkText ? "text-slate-900" : "text-white";
-  const iconColor = (scrolled && isLightPage) || isDarkText ? "text-slate-500" : "text-white/60";
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-6">
-      <div className="max-w-[1200px] mx-auto">
-        <div className={`rounded-2xl border px-4 md:px-6 transition-all duration-500 ease-out ${getContainerStyle()}`}>
-          
-          {/* ── Desktop Utility Bar ── */}
-          <div className={`hidden lg:flex items-center justify-end overflow-hidden text-[12px] transition-all duration-500 ${
-              scrolled ? "max-h-0 opacity-0 -translate-y-2" : "h-10 max-h-10 border-b border-white/10 opacity-100"
-            }`}
-          >
-            {/* ... Desktop Utility Content ... */}
-            <div className={`flex items-center gap-4 ${textColor} opacity-70`}>
-                <button className="inline-flex items-center gap-1.5 hover:opacity-100">
-                    <UtilityIcon path="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c2.4 2.2 2.4 13.8 0 18M12 3c-2.4 2.2-2.4 13.8 0 18" className={iconColor} />
-                    EN / العربية
-                </button>
-                <span className="opacity-20">•</span>
-                <Link href="/faqs" className="hover:opacity-100">FAQ</Link>
-                <span className="opacity-20">•</span>
-                <div className="flex gap-1.5">
-                    <span className="opacity-50">Log In:</span>
-                    <Link href="/therapist" className="hover:underline">Therapist</Link>
-                    <span className="opacity-30">/</span>
-                    <Link href="/customer" className="hover:underline">Customer</Link>
-                </div>
-            </div>
-          </div>
-
-          {/* ── Main Nav ── */}
-          <div className={`flex items-center justify-between gap-4 transition-all duration-500 ${scrolled ? "h-16" : "h-[64px]"}`}>
-            <Link href="/" className={`font-bold text-lg tracking-tight transition-colors ${textColor}`}>
-              NeuroHolistic
-            </Link>
-
-<nav className="hidden xl:flex items-center justify-center gap-8 flex-1">
-  {NAV_LINKS.map((item) => {
-    const hasChildren = "children" in item;
-    const isOpen = openDropdown === item.label;
-
-    // We use your existing 'scrolled' and 'isLightPage' logic to define the dropdown's look
-    const dropdownBg = (scrolled && isLightPage) 
-      ? "bg-white/80 border-slate-200/60 shadow-lg text-slate-900" 
-      : "bg-[rgba(8,12,32,0.8)] border-white/10 shadow-2xl text-white";
-
-    const dropdownHover = (scrolled && isLightPage)
-      ? "hover:bg-slate-100/80 text-slate-600 hover:text-slate-900"
-      : "hover:bg-white/10 text-white/60 hover:text-white";
-
-    return (
-      <div
-        key={item.label}
-        className="relative py-4"
-        onMouseEnter={() => hasChildren && setOpenDropdown(item.label)}
-        onMouseLeave={() => setOpenDropdown(null)}
-      >
-        <Link
-          href={item.href}
-          className={`text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${textColor} ${
-            isOpen ? "opacity-100" : "opacity-70 hover:opacity-100"
-          }`}
+    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-4 pt-4">
+      {/* The container now uses 'backdrop-blur' from the start. 
+          This makes the background color "adapt" to whatever is behind it.
+      */}
+      <div className={`relative w-full max-w-[1200px] rounded-[26px] border transition-all duration-500 ease-in-out ${borderColor} ${getAdaptiveBg()}`}>
+        
+        {/* ── 1. Secondary Navbar (Utility) ── */}
+        <div 
+          className={`flex items-center justify-between px-6 md:px-8 text-[10px] md:text-[11px] font-medium tracking-wide transition-all duration-500 ease-in-out overflow-hidden ${
+            scrolled ? "max-h-0 opacity-0 pointer-events-none" : "py-2 md:h-10 md:max-h-10 border-b opacity-100"
+          } ${borderColor} ${textColor}`}
         >
-          {item.label}
-          {hasChildren && (
-            <svg 
-              className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'opacity-40'}`} 
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-            >
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </Link>
-
-        {/* ── Adaptive Dropdown ── */}
-        {hasChildren && isOpen && (
-          <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 w-44 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className={`overflow-hidden rounded-xl border backdrop-blur-[20px] p-1.5 ${dropdownBg}`}>
-              {item.children.map((child) => (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  className={`block px-4 py-2 text-[12px] font-medium rounded-lg transition-all duration-200 ${dropdownHover}`}
-                >
-                  {child.label}
-                </Link>
-              ))}
-            </div>
+          <div className="flex items-center gap-4 md:gap-6">
+            <span className="opacity-60 whitespace-nowrap">EN / العربية</span>
+            <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[9px]">FAQ</Link>
           </div>
-        )}
-      </div>
-    );
-  })}
-</nav>
-            <div className="flex items-center gap-3">
-              <BookNowButton className={`hidden sm:inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-bold transition-all ${
-                textColor === "text-white" ? 'bg-white text-[#0F172A]' : 'bg-[#0F172A] text-white'
-              }`}>
-                Begin Your Reset
-              </BookNowButton>
-              <button onClick={() => setMobileOpen(!mobileOpen)} className={`xl:hidden p-2 transition-colors ${textColor}`}>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-                </svg>
-              </button>
-            </div>
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
+            <Link href="/therapist" className="opacity-60 hover:opacity-100">Therapist</Link>
+            <span className="opacity-20">|</span>
+            <Link href="/customer" className="opacity-60 hover:opacity-100">Client</Link>
           </div>
         </div>
-      </div>
 
-      {/* ── MOBILE MENU (REFINED) ── */}
-      {mobileOpen && (
-        <div className="xl:hidden mt-3 max-w-[1200px] mx-auto rounded-2xl bg-[#0F172A]/95 backdrop-blur-2xl border border-white/10 shadow-2xl p-0 overflow-hidden">
-          <div className="max-h-[80vh] overflow-y-auto p-6">
-            
-            {/* 1. Language & Utility Header */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
-              <button className="text-[12px] font-mono tracking-widest text-white/50 uppercase">
-                EN // العربية
-              </button>
-              <Link href="/faqs" className="text-[11px] font-mono tracking-widest text-white/40 uppercase">
-                FAQ Support
-              </Link>
-            </div>
+        {/* ── 2. Main Navbar ── */}
+        <div className={`flex items-center justify-between px-6 md:px-10 transition-all duration-500 ${scrolled ? "h-16" : "h-20"}`}>
+          
+          {/* Logo - Simple, Clean, Non-Italic */}
+          <Link href="/" className={`text-xl font-bold tracking-tighter shrink-0 transition-colors ${textColor}`}>
+            NEURO<span className="font-light opacity-50">HOLISTIC</span>
+          </Link>
 
-            {/* 2. Primary Navigation (Smaller Typography) */}
-            <nav className="flex flex-col gap-5">
-              {NAV_LINKS.map((item) => (
-                <div key={item.label} className="flex flex-col gap-2">
-                  <Link 
-                    href={item.href} 
-                    onClick={() => setMobileOpen(false)} 
-                    className="text-[17px] font-medium text-white/90 hover:text-white transition-colors"
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-2">
+            {PRIMARY_LINKS.map((item) => {
+              const hasChildren = "children" in item;
+              return (
+                <div 
+                  key={item.label} 
+                  className="relative h-full flex items-center"
+                  onMouseEnter={() => hasChildren && setOpenDropdown(item.label)}
+                  onMouseLeave={() => setOpenDropdown(null)}
+                >
+                  <Link
+                    href={item.href}
+                    className={`px-4 py-2 text-[13px] font-medium transition-all rounded-full ${textColor} ${
+                      pathname === item.href ? "opacity-100" : "opacity-60 hover:opacity-100"
+                    }`}
                   >
                     {item.label}
                   </Link>
-                  {"children" in item && (
-                    <div className="flex flex-col gap-2.5 pl-4 border-l border-white/10 my-1">
-                      {item.children.map(child => (
-                        <Link 
-                            key={child.href} 
-                            href={child.href} 
-                            onClick={() => setMobileOpen(false)} 
-                            className="text-[14px] text-white/50 hover:text-indigo-400"
-                        >
-                          {child.label}
+
+                  <AnimatePresence>
+                    {hasChildren && openDropdown === item.label && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}
+                        className="absolute top-[85%] left-0 pt-4 w-52 z-[110]"
+                      >
+                        {/* Dropdowns also use the adaptive blurred background */}
+                        <div className={`rounded-2xl border p-2 shadow-2xl backdrop-blur-2xl ${isLightPage ? 'bg-white/95 border-slate-100' : 'bg-[#080C20]/95 border-white/10'}`}>
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={`block px-4 py-3 text-[12px] font-medium rounded-xl transition-colors ${
+                                isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
+
+            <div className="relative h-full flex items-center" onMouseEnter={() => setOpenDropdown('company')} onMouseLeave={() => setOpenDropdown(null)}>
+              <button className={`px-4 py-2 text-[13px] font-medium opacity-60 hover:opacity-100 transition-all ${textColor}`}>
+                Company
+              </button>
+              <AnimatePresence>
+                {openDropdown === 'company' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute top-[85%] right-0 pt-4 w-48 z-[110]">
+                    <div className={`rounded-2xl border p-2 shadow-2xl backdrop-blur-2xl ${isLightPage ? 'bg-white/95 border-slate-100' : 'bg-[#080C20]/95 border-white/10'}`}>
+                      {COMPANY_LINKS.map(link => (
+                        <Link key={link.href} href={link.href} className={`block px-4 py-3 text-[12px] font-medium rounded-xl transition-colors ${
+                          isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}>
+                          {link.label}
                         </Link>
                       ))}
                     </div>
-                  )}
-                </div>
-              ))}
-            </nav>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </nav>
 
-            {/* 3. Utility & Auth Section (Secondary Navbar Items) */}
-            <div className="mt-10 pt-8 border-t border-white/5 flex flex-col gap-6">
-              <div className="grid grid-cols-2 gap-4">
-                 <Link href="/therapist" className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[9px] font-mono tracking-widest text-white/30 uppercase">Portal</span>
-                    <span className="text-[13px] text-white">Therapist</span>
-                 </Link>
-                 <Link href="/customer" className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[9px] font-mono tracking-widest text-white/30 uppercase">Portal</span>
-                    <span className="text-[13px] text-white">Customer</span>
-                 </Link>
-              </div>
-
-              <div className="space-y-4">
-                <Link href="/book" className="flex items-center gap-3 text-white/70 text-[14px]">
-                  <UtilityIcon path="M8 7V3m8 4V3M4 11h16" className="text-white/30" />
-                  Book a Session
-                </Link>
-                <Link href="/academy" className="flex items-center gap-3 text-white/70 text-[14px]">
-                  <UtilityIcon path="M12 4l8 4-8 4-8-4 8-4z" className="text-white/30" />
-                  Apply to Academy
-                </Link>
-              </div>
+          {/* Action Area */}
+          <div className="flex items-center gap-3">
+            {/* Contact Icon - Desktop Only */}
+            <div className="relative hidden md:flex items-center">
+              <button
+                onClick={() => setContactOpen(!contactOpen)}
+                className={`p-2 rounded-full transition-all hover:bg-white/10 ${textColor}`}
+                aria-label="Contact options"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {contactOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute top-full right-0 mt-2 w-56 z-[110]"
+                  >
+                    <div className={`rounded-2xl border p-3 shadow-2xl backdrop-blur-2xl ${isLightPage ? 'bg-white/95 border-slate-100' : 'bg-[#080C20]/95 border-white/10'}`}>
+                      <a
+                        href={`mailto:${CONTACT_INFO.email}`}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-[13px] font-medium ${
+                          isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>{CONTACT_INFO.email}</span>
+                      </a>
+                      <a
+                        href={`tel:${CONTACT_INFO.phone}`}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-[13px] font-medium ${
+                          isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span>{CONTACT_INFO.phone}</span>
+                      </a>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* 4. Action Button */}
-            <div className="mt-10">
-              <BookNowButton className="w-full h-14 rounded-xl bg-white text-[#0F172A] font-bold text-[14px] shadow-xl">
-                Begin Your Reset
-              </BookNowButton>
-            </div>
+            {/* lassName="flex items-center gap-3">
+            {/* Desktop Only Book Button */}
+            <BookNowButton className={`hidden md:flex rounded-full px-6 py-2.5 text-[13px] font-bold transition-all active:scale-95 shadow-lg ${
+              isLightPage ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
+            }`}>
+              Book Now
+            </BookNowButton>
+
+            {/* Hamburger - Only visible on Mobile/Tablet */}
+            <button 
+              onClick={() => setMobileOpen(!mobileOpen)} 
+              className={`lg:hidden p-2 transition-colors ${textColor} hover:bg-white/5 rounded-full`}
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* ── 3. Mobile Menu Overlay ── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+            
+            <motion.div 
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] z-[160] shadow-2xl p-8 flex flex-col ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
+            >
+              <div className="flex justify-between items-center mb-12">
+                <span className="font-bold tracking-tighter text-lg">NEUROHOLISTIC</span>
+                <button onClick={() => setMobileOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6" /></svg>
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-6 overflow-y-auto">
+                {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
+                  <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className="text-2xl font-light hover:translate-x-2 transition-transform duration-300">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="mt-auto pt-8 border-t border-white/10">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <Link href="/therapist" className="text-sm opacity-60 hover:opacity-100" onClick={() => setMobileOpen(false)}>Therapist</Link>
+                  <Link href="/customer" className="text-sm opacity-60 hover:opacity-100" onClick={() => setMobileOpen(false)}>Client Portal</Link>
+                  <a href={`mailto:${CONTACT_INFO.email}`} className="text-sm opacity-60 hover:opacity-100">Contact</a>
+                </div>
+                {/* Mobile Drawer Action Button. 
+                    Simplified design to match the clean interior menu.
+                */}
+                <BookNowButton 
+                  className="w-full py-4 rounded-2xl bg-white text-[#080C20] font-bold text-center shadow-lg active:scale-95 transition-transform"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Begin Your Reset
+                </BookNowButton>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -33,21 +33,18 @@ export default function Hero() {
                 Restore the System.
               </span>
               <span className="block whitespace-nowrap text-[36px] italic text-white sm:text-[60px] lg:text-[55px]">
-                Begin Your Reset.
+                Transform Your Life.
               </span>
             </h1>
             <p className="mt-10 max-w-[60ch] text-[17px] leading-[1.85] text-[#C3CBE8] sm:text-[18px] lg:text-[17.5px]">
               The NeuroHolistic Method™ is a science-based approach that restores balance within the human system, supporting deep, long-lasting transformation.
             </p>
             <div className="mt-12 flex flex-wrap items-center gap-3 md:gap-4">
-              <BookNowButton className="inline-flex items-center justify-center rounded-[12px] bg-white px-6 py-3.5 text-[15px] font-semibold tracking-[0.01em] text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF]">
-                Begin Your Reset
-              </BookNowButton>
               <Link
-                href="/method"
-                className="inline-flex items-center justify-center rounded-[12px] border border-white/22 bg-transparent px-5 py-3.5 text-[15px] font-medium text-white/88 transition-all duration-300 hover:border-white/35 hover:text-white"
+                href="/programs"
+                className="inline-flex items-center justify-center gap-1 rounded-[12px] bg-white px-6 py-3.5 text-[15px] font-semibold tracking-[0.01em] text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF]"
               >
-                Explore the Method
+                Book a Consultation <span>→</span>
               </Link>
             </div>
           </motion.div>

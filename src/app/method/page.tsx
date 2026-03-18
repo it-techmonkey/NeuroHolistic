@@ -4,6 +4,7 @@ import MethodScientificFoundations from "@/components/method/MethodScientificFou
 import FivePhaseArchitecture from "@/components/method/FivePhaseArchitecture";
 import MethodDifference from "@/components/method/MethodDifference";
 import MethodTransformationAreas from "@/components/method/MethodTransformationAreas";
+import TransformationPathway from "@/components/TransformationPathway";
 
 export const metadata = {
   title: "The Method | NeuroHolistic",
@@ -20,6 +21,7 @@ export default function MethodPage() {
       <FivePhaseArchitecture />
       <MethodDifference />
       <MethodTransformationAreas />
+      <TransformationPathway />
     </div>
   );
 }

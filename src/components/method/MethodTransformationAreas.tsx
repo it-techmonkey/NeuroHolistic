@@ -69,6 +69,17 @@ export default function MethodTransformationAreas() {
           </motion.h2>
         </div>
 
+        {/* Opening paragraph */}
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="mx-auto max-w-[840px] mb-12 text-[15.5px] leading-[1.8] text-[#475569] text-center"
+        >
+          When internal systems return to balance and coherence, change begins to appear across multiple dimensions of life. As the nervous system stabilizes and perception reorganizes, individuals often experience shifts not only in how they feel internally, but also in how they think, relate to others, and engage with the world.
+        </motion.p>
+
         {/* The Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {AREAS.map((area, i) => (

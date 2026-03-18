@@ -11,7 +11,7 @@ export default function EventsHero() {
         </>
       }
       description="Join workshops, guided sessions, and live learning experiences designed to restore nervous system balance and deepen practical transformation through the NeuroHolistic Method™."
-      imageSrc="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1400&q=80"
+      imageSrc="/images/pages/events.jpg"
       imageAlt="Participants in a premium wellness workshop"
       metaTags={["Workshops", "Live Sessions", "Practical Tools"]}
       primaryAction={{ label: "Get Event Updates", href: "#newsletter" }}

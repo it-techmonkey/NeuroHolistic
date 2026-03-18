@@ -24,50 +24,54 @@ export default function ProgramCard({
   ctaHref,
 }: ProgramCardProps) {
   return (
-    <Card
-      className="rounded-xl shadow-lg border border-neutral-100 overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
-      shadow="none"
-      border={false}
-    >
-      <CardBody className="p-6 md:p-8 flex flex-col flex-1">
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0 text-2xl">
-              {icon}
-            </div>
-            <H3 className="text-neutral-900">{title}</H3>
+    <div className="group relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-8 md:p-10 transition-all duration-500 hover:border-[#D1D5DB] hover:shadow-xl hover:-translate-y-1">
+      {/* Gradient background on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      
+      <div className="relative z-10">
+        {/* Header with icon and title */}
+        <div className="mb-8 flex items-start gap-4">
+          <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white flex items-center justify-center text-2xl shadow-md">
+            {icon}
           </div>
-          <Link
-            href={ctaHref}
-            className="flex-shrink-0 inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold text-sm hover:bg-primary-600 transition-colors shadow-sm"
-          >
-            {ctaLabel}
-          </Link>
+          <H3 className="text-[#0B1028] text-[24px] md:text-[28px] leading-tight">{title}</H3>
         </div>
 
-        <Body className="text-neutral-600 mb-4">{description}</Body>
+        {/* Main description */}
+        <Body className="text-[#475569] mb-5 text-[16px] md:text-[17px] leading-[1.7]">
+          {description}
+        </Body>
+
+        {/* Secondary description */}
         {descriptionSecondary && (
-          <BodySmall className="text-neutral-600 mb-6">
+          <BodySmall className="text-[#64748B] mb-8 text-[15px] leading-[1.6]">
             {descriptionSecondary}
           </BodySmall>
         )}
 
-        <div className="rounded-xl bg-amber-50/80 border border-amber-100/80 p-5 md:p-6 mt-auto">
-          <p className="font-semibold text-neutral-800 mb-3 text-sm md:text-base">
+        {/* Suited for section */}
+        <div className="mb-8 rounded-xl bg-gradient-to-br from-[#F0F4FF] to-[#F5F7FF] border border-[#E0E7FF] p-6 md:p-7">
+          <p className="font-semibold text-[#0B1028] mb-4 text-[15px] md:text-[16px]">
             {suitedTitle}
           </p>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {suitedBullets.map((bullet) => (
-              <li key={bullet} className="flex gap-2 items-start">
-                <span className="text-primary-500 mt-0.5 flex-shrink-0" aria-hidden>
-                  •
-                </span>
-                <BodySmall className="text-neutral-700">{bullet}</BodySmall>
+              <li key={bullet} className="flex gap-3 items-start">
+                <span className="text-[#6366F1] mt-1.5 flex-shrink-0 font-bold">▸</span>
+                <BodySmall className="text-[#475569] text-[15px] leading-[1.6]">{bullet}</BodySmall>
               </li>
             ))}
           </ul>
         </div>
-      </CardBody>
-    </Card>
+
+        {/* CTA Button */}
+        <Link
+          href={ctaHref}
+          className="inline-flex items-center justify-center px-7 py-3 rounded-lg bg-[#0B1028] text-white font-semibold text-[14px] md:text-[15px] transition-all duration-300 hover:bg-[#1F2347] hover:shadow-lg"
+        >
+          {ctaLabel} →
+        </Link>
+      </div>
+    </div>
   );
 }

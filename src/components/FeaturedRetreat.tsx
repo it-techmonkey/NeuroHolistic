@@ -39,16 +39,6 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
               {/* Internal Framing Line */}
               <div className="pointer-events-none absolute inset-4 border border-white/20" />
             </div>
-            
-            {/* Museum-style Caption underneath the image */}
-            <div className="mt-6 flex justify-between border-t border-[#F1F5F9] pt-4">
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#94A3B8]">
-                Featured Experience
-              </span>
-              <span className="text-[13px] italic text-[#64748B]">
-                {retreat.location}
-              </span>
-            </div>
           </motion.div>
 
           {/* ── Right Column: Editorial Context (Spans 5) ── */}

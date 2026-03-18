@@ -19,7 +19,7 @@ export default function MethodVision() {
   };
 
   return (
-    <section className="bg-white py-24 md:py-32 lg:py-40">
+    <section className="bg-white py-16 md:py-20">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-24">
           
@@ -42,16 +42,6 @@ export default function MethodVision() {
                   className="object-cover grayscale-[10%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
-              </div>
-              
-              {/* Museum-style bottom caption */}
-              <div className="mt-6 flex items-center justify-between px-2">
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-[#94A3B8]">
-                  Clinical Setting
-                </span>
-                <span className="text-[13px] text-[#64748B] italic">
-                  Restoring Systemic Balance
-                </span>
               </div>
             </div>
           </motion.div>

@@ -13,8 +13,10 @@ export default function BookNowButton({ className = "", children, onClick }: Boo
   const { openBookingModal } = useBookingModal();
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    console.log('[BOOK_NOW_BUTTON] Clicked');
     onClick?.(event);
     if (!event.defaultPrevented) {
+      console.log('[BOOK_NOW_BUTTON] Opening modal');
       openBookingModal();
     }
   };
