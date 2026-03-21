@@ -25,6 +25,9 @@ type UseBookingFormReturn = {
 const initialFormData: BookingFormData = {
   name: "",
   email: "",
+  phone: "",
+  country: "",
+  bookingType: null,
   date: null,
   time: "",
   therapist: "",

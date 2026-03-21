@@ -12,7 +12,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useBookingForm } from "./hooks/useBookingForm";
 import { THERAPISTS, TIME_SLOTS } from "./constants";
-import { createBooking } from "@/lib/supabase/bookings";
+import { createBooking, type BookingError } from "@/lib/supabase/bookings-with-programs";
 import { sendBookingConfirmationEmail } from "@/lib/email/send-booking-email";
 import { supabase } from "@/lib/supabase/client";
 
@@ -54,99 +54,270 @@ function CalendarPicker({ selectedDate, onSelect }: { selectedDate: Date | null;
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 text-center">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-          <span key={`${d}-${i}`} className="text-[10px] font-bold text-slate-300 mb-2 uppercase tracking-widest">{d}</span>
+
+      <div className="mb-3 grid grid-cols-7 gap-1 text-center">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          <div key={day} className="text-[11px] font-bold text-slate-400 py-2">{day}</div>
         ))}
-        {blanks.map(i => <div key={`b-${i}`} />)}
-        {days.map(day => (
-          <button key={day} type="button" onClick={() => onSelect(new Date(viewDate.getFullYear(), viewDate.getMonth(), day))}
-            className={`h-9 w-9 mx-auto flex items-center justify-center rounded-xl text-[13px] transition-all ${selectedDate?.getDate() === day && selectedDate?.getMonth() === viewDate.getMonth() ? "bg-[#2B2F55] text-white shadow-md" : "text-slate-600 hover:bg-white"}`}
-          >
-            {day}
-          </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {blanks.map((i) => (
+          <div key={`blank-${i}`} />
         ))}
+        {days.map((day) => {
+          const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+          const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+          const isToday = date.toDateString() === new Date().toDateString();
+
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() => onSelect(date)}
+              className={`py-2 text-[12px] font-bold rounded-lg transition-all ${
+                isSelected
+                  ? "bg-[#2B2F55] text-white"
+                  : isToday
+                  ? "bg-slate-100 text-slate-800"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {day}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { formData, errors, setField, setDate, validate, reset } = useBookingForm();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { formData, errors, setField, setDate, reset } = useBookingForm();
+  const [hasActiveProgram, setHasActiveProgram] = useState(false);
+  const [hasHadConsultation, setHasHadConsultation] = useState(false);
+  const [isCheckingProgram, setIsCheckingProgram] = useState(false);
+  const [isCheckingConsultation, setIsCheckingConsultation] = useState(false);
 
-  const isStepValid = useMemo(() => {
-    if (currentStep === 1) return formData.name.trim() !== "" && formData.email.includes("@");
-    if (currentStep === 2) return formData.therapist !== "";
-    if (currentStep === 3) return formData.date !== null && formData.time !== "";
-    return true;
-  }, [currentStep, formData]);
+  const selectedTherapist = THERAPISTS.find((t) => t.id === formData.therapist);
+  const selectedTimeSlot = TIME_SLOTS.find((t) => t.value === formData.time);
 
-  const handleNext = () => isStepValid && currentStep < 4 && setCurrentStep(s => s + 1);
-  const handleBack = () => currentStep > 1 && setCurrentStep(s => s - 1);
+  // Determine total steps based on booking type
+  const getTotalSteps = () => {
+    if (formData.bookingType === 'consultation') return 6; // personal → type → therapist → date/time → confirm → success
+    if (formData.bookingType === 'program') {
+      return hasActiveProgram ? 6 : 7; // personal → type → [if no program: payment] → date/time → confirm → success
+    }
+    return 6; // default
+  };
 
-  const selectedTherapist = useMemo(() => THERAPISTS.find(t => t.id === formData.therapist), [formData.therapist]);
-  const selectedTimeSlot = useMemo(() => TIME_SLOTS.find(s => s.value === formData.time), [formData.time]);
+  const totalSteps = getTotalSteps();
 
-  // Handle final confirmation click (not form submit)
+  const handleNext = async () => {
+    // Step 1: Personal info - validate and move to type selection
+    if (currentStep === 1) {
+      if (!formData.name || !formData.email || !formData.phone || !formData.country) {
+        setErrorMessage("Please fill in all fields");
+        return;
+      }
+      // Check consultation history when moving from step 1
+      setIsCheckingConsultation(true);
+      try {
+        const res = await fetch('/api/users/check-consultation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const alreadyHad = data.hasHadConsultation ?? false;
+          setHasHadConsultation(alreadyHad);
+          // If they've had a consultation, force booking type to program
+          if (alreadyHad) {
+            setField('bookingType', 'program');
+          }
+        }
+      } catch {
+        // Non-fatal: default to allowing consultation option
+      } finally {
+        setIsCheckingConsultation(false);
+      }
+      setCurrentStep(2);
+      setErrorMessage(null);
+      return;
+    }
+
+    // Step 2: Type selection - validate and check program status if program
+    if (currentStep === 2) {
+      if (!formData.bookingType) {
+        setErrorMessage("Please select a booking type");
+        return;
+      }
+      
+      if (formData.bookingType === 'program') {
+        await checkUserProgram();
+      }
+      
+      setCurrentStep(3);
+      setErrorMessage(null);
+      return;
+    }
+
+    // Step 3: Therapist selection (consultation) or Payment info (program without active)
+    if (currentStep === 3) {
+      if (formData.bookingType === 'consultation' && !formData.therapist) {
+        setErrorMessage("Please select a therapist");
+        return;
+      }
+      setCurrentStep(4);
+      setErrorMessage(null);
+      return;
+    }
+
+    // Step 4: Date & Time selection
+    if (currentStep === 4) {
+      if (!formData.date || !formData.time) {
+        setErrorMessage("Please select date and time");
+        return;
+      }
+      setCurrentStep(5);
+      setErrorMessage(null);
+      return;
+    }
+
+    // Step 5: Confirmation
+    if (currentStep === 5) {
+      setCurrentStep(6);
+      setErrorMessage(null);
+    }
+  };
+
+  const checkUserProgram = async () => {
+    setIsCheckingProgram(true);
+    try {
+      const response = await fetch('/api/users/check-program', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHasActiveProgram(data.hasActiveProgram ?? false);
+      }
+    } catch (error) {
+      console.error('Error checking program:', error);
+      setHasActiveProgram(false);
+    } finally {
+      setIsCheckingProgram(false);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(Math.max(1, currentStep - 1));
+    setErrorMessage(null);
+  };
+
   const handleConfirmBooking = async () => {
-    if (isSubmitting) return;
-
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
       const isoDate = formData.date?.toISOString().split('T')[0] ?? '';
-      
-      // Duplicate Check
-      const { data: existing, error: checkErr } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("therapist_id", formData.therapist)
-        .eq("date", isoDate)
-        .eq("time", formData.time)
-        .maybeSingle();
 
-      if (checkErr) throw checkErr;
-      if (existing) {
-        setErrorMessage("This time slot is no longer available. Please choose another.");
-        setIsSubmitting(false);
-        return;
+      // Duplicate Check for consultation bookings (time slot specific)
+      if (formData.bookingType === 'consultation') {
+        const { data: existingSlot } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("therapist_id", formData.therapist)
+          .eq("date", isoDate)
+          .eq("time", formData.time)
+          .maybeSingle();
+
+        if (existingSlot) {
+          setErrorMessage("This time slot is no longer available. Please choose another.");
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      // Create Booking
+      // Create Booking with correct type
       await createBooking({
         name: formData.name,
         email: formData.email,
-        therapist_id: formData.therapist,
-        therapist_name: selectedTherapist?.name || 'Unknown',
+        phone: formData.phone,
+        country: formData.country,
+        therapist_id: formData.bookingType === 'consultation' ? formData.therapist : '',
+        therapist_name: formData.bookingType === 'consultation' ? (selectedTherapist?.name || 'Unknown') : 'Program',
         date: isoDate,
         time: formData.time,
+        type: formData.bookingType as 'consultation' | 'program',
       });
 
       // Advance to Success Page
-      setCurrentStep(5);
+      setCurrentStep(totalSteps);
 
-      // Send confirmation email (non-blocking, fire-and-forget)
+      // Send confirmation email
       sendBookingConfirmationEmail({
         name: formData.name,
         email: formData.email,
-        therapistName: selectedTherapist?.name || 'Unknown',
+        therapistName: formData.bookingType === 'consultation' ? (selectedTherapist?.name || 'Unknown') : 'Program Session',
         date: isoDate,
         time: formData.time,
-        // Optionally add meetingLink when available
         meetingLink: undefined,
       });
     } catch (error: any) {
-      setErrorMessage(error.message || 'An error occurred during booking.');
+      let displayMessage = 'An error occurred during booking. Please try again.';
+
+      if (error && typeof error === 'object' && 'userMessage' in error) {
+        displayMessage = error.userMessage;
+      } else if (error instanceof Error) {
+        displayMessage = error.message;
+      }
+
+      setErrorMessage(displayMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle form submission (no longer needed, but kept for structure)
+  const handleInitiatePayment = async () => {
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          phoneNumber: formData.phone,
+          amount: 'full',
+          metadata: {
+            bookingEmail: formData.email,
+            bookingType: 'program-purchase',
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error('Payment creation failed');
+
+      const { checkoutUrl } = await response.json();
+      window.location.href = checkoutUrl;
+    } catch (error: any) {
+      let displayMessage = 'Payment initiation failed. Please try again.';
+      if (error instanceof Error) {
+        displayMessage = error.message;
+      }
+      setErrorMessage(displayMessage);
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
@@ -155,34 +326,39 @@ function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     reset();
     setCurrentStep(1);
     setErrorMessage(null);
+    setHasActiveProgram(false);
+    setHasHadConsultation(false);
     onClose();
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={handleClose} />
 
-          <motion.div 
-            className="relative flex w-full max-w-[1000px] h-[90vh] max-h-[720px] overflow-hidden rounded-[40px] bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr]" 
-            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
+          <motion.div
+            className="relative flex w-full max-w-[1000px] h-[90vh] max-h-[720px] overflow-hidden rounded-[40px] bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr]"
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
           >
-            {/* Form Column - Sandwich layout ensures fixed header/footer and scrollable middle */}
+            {/* Form Column */}
             <div className="flex flex-col h-full bg-white overflow-hidden min-h-0">
-              
+
               {/* Header */}
               <header className="px-8 pt-10 pb-4 shrink-0">
                 <h2 className="text-2xl font-semibold text-slate-800 tracking-tight sm:text-3xl">Schedule Booking</h2>
-                {currentStep < 5 && (
+                {currentStep < totalSteps && (
                   <div className="mt-4 flex items-center gap-3">
                     <div className="h-1 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                      <motion.div className="h-full bg-[#2B2F55]" animate={{ width: `${(currentStep / 4) * 100}%` }} />
+                      <motion.div className="h-full bg-[#2B2F55]" animate={{ width: `${(currentStep / totalSteps) * 100}%` }} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Step {currentStep}/4</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Step {currentStep}/{totalSteps}</span>
                   </div>
                 )}
               </header>
@@ -191,18 +367,87 @@ function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
               <div className="flex-1 overflow-y-auto px-8 py-4 custom-scrollbar min-h-0">
                 <AnimatePresence mode="wait">
                   <motion.div key={currentStep} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-                    
+
+                    {/* STEP 1: Personal Information */}
                     {currentStep === 1 && (
                       <div className="space-y-4">
                         <p className="text-slate-500 text-sm">Please provide your details to get started.</p>
                         <div className="space-y-4">
                           <input type="text" value={formData.name} onChange={(e) => setField("name", e.target.value)} placeholder="Full Name" className="w-full rounded-2xl bg-slate-50 px-5 py-4 text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-[#2B2F55]/20 transition-all" />
                           <input type="email" value={formData.email} onChange={(e) => setField("email", e.target.value)} placeholder="Email Address" className="w-full rounded-2xl bg-slate-50 px-5 py-4 text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-[#2B2F55]/20 transition-all" />
+                          <input type="tel" value={formData.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="Phone Number" className="w-full rounded-2xl bg-slate-50 px-5 py-4 text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-[#2B2F55]/20 transition-all" />
+                          <input type="text" value={formData.country} onChange={(e) => setField("country", e.target.value)} placeholder="Country of Residency" className="w-full rounded-2xl bg-slate-50 px-5 py-4 text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-2 focus:ring-[#2B2F55]/20 transition-all" />
                         </div>
                       </div>
                     )}
 
+                    {/* STEP 2: Booking Type Selection */}
                     {currentStep === 2 && (
+                      <div className="space-y-4">
+                        <p className="text-slate-500 text-sm">
+                          {hasHadConsultation
+                            ? 'Your free consultation has already been used. Please book a program session.'
+                            : 'What would you like to book?'}
+                        </p>
+                        <div className="grid grid-cols-1 gap-3">
+                          {/* Only show consultation option if client hasn't had one yet */}
+                          {!hasHadConsultation && (
+                            <button
+                              type="button"
+                              onClick={() => setField("bookingType", "consultation")}
+                              className={`flex flex-col items-start justify-start gap-3 rounded-2xl p-5 border-2 transition-all ${
+                                formData.bookingType === "consultation"
+                                  ? "border-[#2B2F55] bg-[#2B2F55]/5"
+                                  : "border-slate-200 hover:border-slate-300 bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <h3 className={`font-bold ${formData.bookingType === "consultation" ? "text-[#2B2F55]" : "text-slate-800"}`}>
+                                  Consultation Booking
+                                </h3>
+                                {formData.bookingType === "consultation" && (
+                                  <div className="h-5 w-5 rounded-full bg-[#2B2F55] flex items-center justify-center">
+                                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-slate-500 text-sm">Single complimentary session with a therapist of your choice</p>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setField("bookingType", "program")}
+                            className={`flex flex-col items-start justify-start gap-3 rounded-2xl p-5 border-2 transition-all ${
+                              formData.bookingType === "program"
+                                ? "border-[#2B2F55] bg-[#2B2F55]/5"
+                                : "border-slate-200 hover:border-slate-300 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <h3 className={`font-bold ${formData.bookingType === "program" ? "text-[#2B2F55]" : "text-slate-800"}`}>
+                                Program Session
+                              </h3>
+                              {formData.bookingType === "program" && (
+                                <div className="h-5 w-5 rounded-full bg-[#2B2F55] flex items-center justify-center">
+                                  <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-slate-500 text-sm">
+                              {hasActiveProgram ? "Book a session as part of your program" : "Buy a program or book per-session"}
+                            </p>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 3: Therapist Selection (Consultation only) */}
+                    {currentStep === 3 && formData.bookingType === 'consultation' && (
                       <div className="space-y-4">
                         <p className="text-slate-500 text-sm">Who would you like to book a session with?</p>
                         <div className="grid grid-cols-1 gap-3">
@@ -221,7 +466,19 @@ function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                       </div>
                     )}
 
-                    {currentStep === 3 && (
+                    {/* STEP 3: Program Payment Info (Program without active program) */}
+                    {currentStep === 3 && formData.bookingType === 'program' && !hasActiveProgram && (
+                      <div className="space-y-4">
+                        <p className="text-slate-500 text-sm">You don't have an active program. Let's get you set up!</p>
+                        <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4">
+                          <p className="text-sm text-blue-900 font-medium">Next: Payment Options</p>
+                          <p className="text-xs text-blue-700 mt-1">Choose between a full program or pay-per-session option</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 4: Date & Time Selection (Consultation or Program with active) */}
+                    {currentStep === 4 && (
                       <div className="space-y-6">
                         <CalendarPicker selectedDate={formData.date} onSelect={setDate} />
                         <div className="grid grid-cols-3 gap-2">
@@ -232,21 +489,31 @@ function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                       </div>
                     )}
 
-                    {currentStep === 4 && (
+                    {/* STEP 5: Confirmation */}
+                    {currentStep === 5 && (
                       <div className="space-y-6">
                         <div className="rounded-3xl bg-slate-50 p-8 space-y-4">
-                          <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Practitioner</span><span className="font-bold text-slate-700">{selectedTherapist?.name}</span></div>
-                          <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Time</span><span className="font-bold text-slate-700">{selectedTimeSlot?.display}</span></div>
+                          {formData.bookingType === 'consultation' && (
+                            <div>
+                              <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Practitioner</span><span className="font-bold text-slate-700">{selectedTherapist?.name}</span></div>
+                              <div className="border-t border-slate-200 my-3" />
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Type</span><span className="font-bold text-slate-700 capitalize">{formData.bookingType} Session</span></div>
                           <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Date</span><span className="font-bold text-slate-700">{formData.date?.toLocaleDateString()}</span></div>
+                          <div className="flex justify-between items-center text-sm"><span className="text-slate-400 font-medium">Time</span><span className="font-bold text-slate-700">{selectedTimeSlot?.display}</span></div>
                         </div>
                         <p className="text-[11px] text-center text-slate-400">Review your information. Once you click "Confirm Booking", we'll secure your session.</p>
                       </div>
                     )}
 
-                    {currentStep === 5 && (
+                    {/* Success Screen */}
+                    {currentStep === totalSteps && (
                       <div className="flex flex-col items-center py-12 text-center">
                         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-500"><svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
-                        <h3 className="text-2xl font-bold text-slate-800">Booking Confirmed</h3>
+                        <h3 className="text-2xl font-bold text-slate-800">
+                          {formData.bookingType === 'consultation' ? 'Booking Confirmed' : 'Session Booked'}
+                        </h3>
                         <p className="mt-2 text-slate-500">We've sent a confirmation email to {formData.email}.</p>
                       </div>
                     )}
@@ -258,20 +525,28 @@ function BookingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
               <footer className="px-8 py-8 border-t border-slate-50 bg-white shrink-0">
                 <form onSubmit={handleSubmit}>
                   <div className="flex items-center gap-3">
-                    {currentStep < 5 ? (
+                    {currentStep < totalSteps ? (
                       <>
                         {currentStep > 1 && (
                           <button type="button" onClick={handleBack} className="h-14 px-8 font-semibold text-slate-400 hover:text-slate-800 transition-colors">
                             Back
                           </button>
                         )}
-                        <button 
+                        <button
                           type="button"
-                          onClick={currentStep === 4 ? handleConfirmBooking : (currentStep < 4 ? handleNext : undefined)} 
-                          disabled={!isStepValid || isSubmitting}
-                          className={`h-14 flex-1 rounded-[22px] font-bold text-white transition-all active:scale-[0.98] ${isStepValid ? "bg-[#2B2F55] shadow-lg shadow-[#2B2F55]/20 hover:opacity-95" : "bg-slate-100 text-slate-300"}`}
+                          onClick={
+                            currentStep === 5
+                              ? handleConfirmBooking
+                              : handleNext
+                          }
+                          disabled={isSubmitting || isCheckingProgram || isCheckingConsultation}
+                          className={`h-14 flex-1 rounded-[22px] font-bold text-white transition-all active:scale-[0.98] ${
+                            isSubmitting || isCheckingProgram || isCheckingConsultation
+                              ? "bg-slate-100 text-slate-300"
+                              : "bg-[#2B2F55] shadow-lg shadow-[#2B2F55]/20 hover:opacity-95"
+                          }`}
                         >
-                          {isSubmitting ? "Processing..." : currentStep === 4 ? "Confirm Booking" : "Continue"}
+                          {isSubmitting ? "Processing..." : isCheckingProgram || isCheckingConsultation ? "Checking..." : currentStep === 5 ? "Confirm Booking" : "Continue"}
                         </button>
                       </>
                     ) : (

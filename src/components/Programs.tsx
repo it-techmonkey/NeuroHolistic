@@ -37,18 +37,18 @@ const PROGRAMS = [
     Icon: PersonIcon,
     title: "Private Program",
     description:
-      "A personalized transformational journey.",
-    cta: "Book a Consultation",
-    href: "/programs",
+      "A personalized transformational journey of 10 sessions, tailored to your unique neurology and life goals.",
+    cta: "Book Free Consultation",
+    href: "/consultation",
   },
   {
     id: "group",
     Icon: GroupIcon,
     title: "Group Program",
     description:
-      "A structured transformational experience conducted within a guided group setting.",
-    cta: "Book a Consultation",
-    href: "/programs",
+      "A structured transformational experience conducted within a guided group setting. Powerful shared healing.",
+    cta: "Book Free Consultation",
+    href: "/consultation",
   },
 ];
 

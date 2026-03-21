@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { BookingModalProvider } from "@/components/booking/BookingModalProvider";
+import { AuthProvider } from "@/lib/auth/context";
+import { LayoutContent } from "./LayoutContent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,11 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
-        <BookingModalProvider>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
-        </BookingModalProvider>
+        <AuthProvider>
+          <BookingModalProvider>
+            <LayoutContent>{children}</LayoutContent>
+          </BookingModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );

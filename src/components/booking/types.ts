@@ -19,6 +19,9 @@ export type Therapist = {
 export type BookingFormData = {
   name: string;
   email: string;
+  phone: string;
+  country: string;
+  bookingType: 'consultation' | 'program' | null;
   date: Date | null;
   time: string;
   therapist: string;
@@ -27,6 +30,9 @@ export type BookingFormData = {
 export type BookingFormErrors = {
   name?: string;
   email?: string;
+  phone?: string;
+  country?: string;
+  bookingType?: string;
   date?: string;
   time?: string;
   therapist?: string;

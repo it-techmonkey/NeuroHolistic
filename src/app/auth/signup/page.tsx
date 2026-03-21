@@ -1,0 +1,248 @@
+'use client';
+
+import { useState, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { signUp } from '@/app/auth/actions';
+
+function SignUpForm() {
+  const searchParams = useSearchParams();
+  const intent = searchParams.get('intent'); // 'program' for paid flow
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    const result = await signUp({
+      firstName,
+      lastName,
+      phone,
+      email,
+      password,
+      passwordConfirm,
+      redirectTo: intent === 'program'
+        ? `${process.env.NEXT_PUBLIC_APP_URL || ''}/booking/payment-options`
+        : undefined,
+    });
+
+    setLoading(false);
+
+    if (result.error) {
+      setError(result.error);
+    } else if (result.success) {
+      setSuccess(result.message || 'Account created successfully. Check your email to verify your account.');
+      setFirstName('');
+      setLastName('');
+      setPhone('');
+      setEmail('');
+      setPassword('');
+      setPasswordConfirm('');
+    }
+  }
+
+  const inputClass =
+    'w-full bg-white px-0 py-3 border-b border-slate-200 focus:border-slate-900 focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 font-light rounded-none';
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col md:flex-row">
+      {/* Visual Side */}
+      <div className="hidden md:flex md:w-1/2 bg-[#F8FAFC] items-center justify-center p-12 relative overflow-hidden">
+        <div className="max-w-md z-10 relative">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-semibold mb-6">
+            Membership
+          </p>
+          <h1 className="text-4xl lg:text-5xl font-light tracking-tight text-slate-900 leading-[1.1] mb-8">
+            Begin the<br />
+            journey inward.
+          </h1>
+          <p className="text-slate-500 font-light leading-relaxed">
+            Create your account to access the NeuroHolistic method, schedule your sessions, and track your transformation.
+          </p>
+        </div>
+      </div>
+
+      {/* Form Side */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto">
+        <div className="w-full max-w-sm space-y-10 my-auto">
+
+          {/* Program intent banner */}
+          {intent === 'program' && (
+            <div className="p-5 bg-indigo-50/50 border border-indigo-100/50">
+              <p className="text-[10px] uppercase tracking-widest text-indigo-900 font-semibold mb-2">Program Access</p>
+              <p className="text-xs text-indigo-700 leading-relaxed font-light">
+                You are registering for the 10-session NeuroHolistic program. Please create your account to proceed to payment.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-light tracking-tight text-slate-900">Create Account</h2>
+            <p className="text-sm text-slate-500 font-light">
+              {intent === 'program' ? 'For program registration' : 'Enter your details below'}
+            </p>
+          </div>
+
+          {success ? (
+            <div className="p-6 bg-emerald-50 border border-emerald-100 space-y-4">
+              <p className="text-sm text-emerald-900 font-medium">{success}</p>
+              <p className="text-xs text-emerald-700">
+                After verifying your email,{' '}
+                <Link
+                  href={intent === 'program' ? '/auth/login' : '/auth/login'}
+                  className="underline font-semibold hover:text-emerald-900"
+                >
+                  log in here
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Name row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label htmlFor="firstName" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                    First Name
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className={inputClass}
+                    placeholder="Sara"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="lastName" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                    Last Name
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className={inputClass}
+                    placeholder="Ahmed"
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-1">
+                <label htmlFor="phone" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                  Phone Number
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className={inputClass}
+                  placeholder="+971 50 000 0000"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1">
+                <label htmlFor="email" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className={inputClass}
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <label htmlFor="password" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={inputClass}
+                  placeholder="At least 6 characters"
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label htmlFor="passwordConfirm" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="passwordConfirm"
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  required
+                  className={inputClass}
+                  placeholder="Confirm matches"
+                />
+              </div>
+
+              {error && (
+                <div className="text-xs text-red-600 bg-red-50 p-4 border-l-2 border-red-500 backdrop-blur-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#2B2F55] text-white py-4 rounded-full text-xs font-bold uppercase tracking-[0.15em] hover:bg-[#1E2140] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              >
+                {loading ? 'Creating account…' : 'Create Account'}
+              </button>
+            </form>
+          )}
+
+          {/* Login Link */}
+          <p className="text-center text-xs text-slate-400">
+            Already have an account?{' '}
+            <Link
+              href={intent === 'program' ? '/auth/login?next=/booking/payment-options' : '/auth/login'}
+              className="text-slate-900 font-medium underline underline-offset-4 hover:text-indigo-600 transition-colors"
+            >
+              Log in
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <SignUpForm />
+    </Suspense>
+  );
+}

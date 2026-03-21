@@ -71,12 +71,50 @@ function validateTime(time: string): string | undefined {
 }
 
 /**
+ * Validates phone number
+ * Rules: non-empty, basic format check
+ */
+function validatePhone(phone: string): string | undefined {
+  if (!phone || phone.trim().length === 0) {
+    return "Phone number is required";
+  }
+  // Basic phone validation: at least 10 digits
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return "Please enter a valid phone number";
+  }
+  return undefined;
+}
+
+/**
+ * Validates country selection
+ * Rules: country must be selected (non-empty string)
+ */
+function validateCountry(country: string): string | undefined {
+  if (!country || country.trim().length === 0) {
+    return "Country of residency is required";
+  }
+  return undefined;
+}
+
+/**
  * Validates therapist selection
  * Rules: therapist must be selected (non-empty string)
  */
 function validateTherapist(therapist: string): string | undefined {
   if (!therapist || therapist.trim().length === 0) {
     return "Please select a therapist";
+  }
+  return undefined;
+}
+
+/**
+ * Validates booking type selection
+ * Rules: booking type must be selected (consultation or program)
+ */
+function validateBookingType(bookingType: string | null): string | undefined {
+  if (!bookingType || (bookingType !== 'consultation' && bookingType !== 'program')) {
+    return "Please select a booking type";
   }
   return undefined;
 }
@@ -95,14 +133,26 @@ export function validateBookingForm(data: BookingFormData): BookingFormErrors {
   const emailError = validateEmail(data.email);
   if (emailError) errors.email = emailError;
 
+  const phoneError = validatePhone(data.phone);
+  if (phoneError) errors.phone = phoneError;
+
+  const countryError = validateCountry(data.country);
+  if (countryError) errors.country = countryError;
+
+  const bookingTypeError = validateBookingType(data.bookingType);
+  if (bookingTypeError) errors.bookingType = bookingTypeError;
+
   const dateError = validateDate(data.date);
   if (dateError) errors.date = dateError;
 
   const timeError = validateTime(data.time);
   if (timeError) errors.time = timeError;
 
-  const therapistError = validateTherapist(data.therapist);
-  if (therapistError) errors.therapist = therapistError;
+  // Therapist is only required for consultation bookings
+  if (data.bookingType === 'consultation') {
+    const therapistError = validateTherapist(data.therapist);
+    if (therapistError) errors.therapist = therapistError;
+  }
 
   return errors;
 }
