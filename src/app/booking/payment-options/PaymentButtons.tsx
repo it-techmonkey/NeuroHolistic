@@ -1,0 +1,137 @@
+'use client';
+
+import { useState } from 'react';
+import { redirectToZiinaCheckout } from '@/lib/payments/client';
+
+const FULL_PROGRAM_AED = 7700;
+const PER_SESSION_AED = 800;
+const FULL_PROGRAM_AMOUNT = FULL_PROGRAM_AED * 100; // fils
+const PER_SESSION_AMOUNT = PER_SESSION_AED * 100;
+
+interface PaymentButtonsProps {
+  userEmail: string;
+  userName: string;
+}
+
+export default function PaymentButtons({ userEmail, userName }: PaymentButtonsProps) {
+  const [loading, setLoading] = useState<'full' | 'session' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePayment(type: 'full' | 'session') {
+    setLoading(type);
+    setError(null);
+    try {
+      if (type === 'full') {
+        await redirectToZiinaCheckout({
+          amount: FULL_PROGRAM_AMOUNT,
+          description: 'NeuroHolistic Full Program — 10 Sessions',
+          customerEmail: userEmail,
+          customerName: userName,
+          sessionCount: 10,
+        });
+      } else {
+        await redirectToZiinaCheckout({
+          amount: PER_SESSION_AMOUNT,
+          description: 'NeuroHolistic Single Session',
+          customerEmail: userEmail,
+          customerName: userName,
+          sessionCount: 1,
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+          {error}
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Option 1 — Full Program */}
+        <div className="bg-white rounded-2xl border-2 border-[#2B2F55] shadow-xl p-8 flex flex-col relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2B2F55] to-[#6366F1]" />
+          <div className="mb-1">
+            <span className="inline-block px-3 py-1 bg-[#2B2F55]/10 text-[#2B2F55] text-xs font-bold rounded-full uppercase tracking-wider">
+              Best Value
+            </span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Program Payment</h2>
+          <p className="text-slate-500 text-sm mb-6 flex-1">
+            Book the full program of 10 sessions and pay in advance. Get the complete
+            transformation journey at the best rate.
+          </p>
+          <div className="mb-6">
+            <span className="text-4xl font-bold text-[#2B2F55]">7,700</span>
+            <span className="text-slate-500 text-base ml-1">AED</span>
+            <p className="text-slate-400 text-sm mt-1">10 sessions · 770 AED / session</p>
+          </div>
+          <button
+            onClick={() => handlePayment('full')}
+            disabled={!!loading}
+            className="w-full py-3.5 rounded-xl bg-[#2B2F55] text-white font-semibold text-[15px] hover:bg-[#3d4270] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+          >
+            {loading === 'full' ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Redirecting…
+              </span>
+            ) : (
+              'Pay Full Program'
+            )}
+          </button>
+        </div>
+
+        {/* Option 2 — Per Session */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-8 flex flex-col">
+          <div className="mb-1">
+            <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full uppercase tracking-wider">
+              Flexible
+            </span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mt-3 mb-2">Pay Session by Session</h2>
+          <p className="text-slate-500 text-sm mb-6 flex-1">
+            Book and pay one session at a time. Flexibility to continue at your own pace
+            without a full commitment upfront.
+          </p>
+          <div className="mb-6">
+            <span className="text-4xl font-bold text-slate-800">800</span>
+            <span className="text-slate-500 text-base ml-1">AED</span>
+            <p className="text-slate-400 text-sm mt-1">per session</p>
+          </div>
+          <button
+            onClick={() => handlePayment('session')}
+            disabled={!!loading}
+            className="w-full py-3.5 rounded-xl border-2 border-[#2B2F55] text-[#2B2F55] font-semibold text-[15px] hover:bg-[#2B2F55] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+          >
+            {loading === 'session' ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-[#2B2F55] border-t-transparent rounded-full animate-spin" />
+                Redirecting…
+              </span>
+            ) : (
+              'Book a Session'
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Assistance */}
+      <div className="p-6 bg-white rounded-2xl border border-slate-100 text-center">
+        <p className="text-slate-600 text-sm leading-relaxed">
+          <strong className="text-slate-800">Need assistance?</strong>{' '}
+          Please{' '}
+          <a href="mailto:support@neuroholistic.com" className="text-[#2B2F55] font-semibold hover:underline">
+            contact the Admin
+          </a>{' '}
+          who will assist you with the process.
+        </p>
+      </div>
+    </div>
+  );
+}

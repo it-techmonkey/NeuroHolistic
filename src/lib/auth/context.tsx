@@ -66,24 +66,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setRole(null);
-          setIsLoading(false);
-          return;
-        }
+        try {
+          if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setRole(null);
+            return;
+          }
 
-        if (session?.user) {
-          setUser(session.user);
-          // Fetch role for every meaningful auth event
-          const r = await fetchRole(session.user.id);
-          setRole(r);
-        } else {
-          setUser(null);
-          setRole(null);
+          if (session?.user) {
+            setUser(session.user);
+            const r = await fetchRole(session.user.id);
+            setRole(r);
+          } else {
+            setUser(null);
+            setRole(null);
+          }
+        } catch (err) {
+          console.error('[AuthContext] onAuthStateChange error:', err);
+          // Still set user from session even if role fetch fails
+          if (session?.user) {
+            setUser(session.user);
+            setRole('client'); // safe default
+          } else {
+            setUser(null);
+            setRole(null);
+          }
+        } finally {
+          // Always resolve loading — this is critical for production
+          setIsLoading(false);
         }
-        // Always resolve loading
-        setIsLoading(false);
       }
     );
 
