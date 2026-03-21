@@ -14,9 +14,10 @@ function getServiceSupabase() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log('[Assessment API] GET /api/assessments/:id -', params.id);
+  const { id } = await params;
+  console.log('[Assessment API] GET /api/assessments/:id -', id);
 
   try {
     // Require authentication
@@ -29,8 +30,6 @@ export async function GET(
     if (authError || !user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { id } = params;
     if (!id) {
       return NextResponse.json({ success: false, error: 'Missing assessment ID' }, { status: 400 });
     }

@@ -30,6 +30,10 @@ if (!supabaseUrl || !supabaseServiceKey) {
   process.exit(1);
 }
 
+// TypeScript type assertion after null check
+const apiUrl: string = supabaseUrl;
+const apiKey: string = supabaseServiceKey;
+
 async function runMigration() {
   console.log('🔧 Running migration 004: Adding missing columns...\n');
 
@@ -42,11 +46,11 @@ async function runMigration() {
     console.log('📡 Connecting to Supabase...');
     
     // Use fetch to execute SQL directly via the PostgreSQL function
-    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
+    const response = await fetch(`${apiUrl}/rest/v1/rpc/exec_sql`, {
       method: 'POST',
       headers: {
-        'apikey': supabaseServiceKey,
-        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal',
       },
@@ -57,7 +61,7 @@ async function runMigration() {
       console.log('⚠️  REST exec_sql not available, trying direct approach...\n');
       
       // Try using the Supabase client to execute individual statements
-      const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      const supabase = createClient(apiUrl, apiKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
 

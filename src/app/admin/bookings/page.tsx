@@ -11,7 +11,7 @@ import {
   Filter, 
   MoreHorizontal 
 } from 'lucide-react';
-import { FadeIn } from '@/components/ui/FadeIn';
+import FadeIn from '@/components/ui/FadeIn';
 
 const supabase = createServiceClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
