@@ -36,9 +36,10 @@ function LoginForm() {
     if (result.error) {
       setError(result.error);
     } else {
-      // successful login - wait a moment for session to propagate before redirecting
-      await new Promise(resolve => setTimeout(resolve, 500));
-      router.push(result.redirectTo || next || '/dashboard');
+      // Hard navigation resets the React tree, picking up fresh server-side session cookies.
+      // This is required to avoid the AuthContext stale-state issue where the dashboard
+      // would show a loading spinner indefinitely or redirect incorrectly.
+      window.location.href = result.redirectTo || next || '/dashboard';
     }
   }
 

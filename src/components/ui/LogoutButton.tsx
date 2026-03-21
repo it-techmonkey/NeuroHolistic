@@ -1,7 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { logout } from '@/app/auth/actions';
+import { supabase } from '@/lib/supabase/client';
 
 interface LogoutButtonProps {
   className?: string;
@@ -9,12 +8,11 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({ className, children }: LogoutButtonProps) {
-  const router = useRouter();
-
   async function handleLogout() {
-    const result = await logout();
-    router.push(result.redirectTo);
-    router.refresh();
+    // Sign out on the client side (clears cookies + localStorage)
+    await supabase.auth.signOut();
+    // Hard navigation resets the entire React tree and Auth context cleanly
+    window.location.href = '/';
   }
 
   return (

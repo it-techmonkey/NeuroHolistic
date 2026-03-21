@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { useAuth } from "@/lib/auth/context";
-import { logout } from "@/app/auth/actions";
+import { supabase } from "@/lib/supabase/client";
 
 const PRIMARY_LINKS = [
   { href: "/method", label: "Method" },
@@ -51,7 +51,6 @@ function ChevronIcon({ isOpen }: { isOpen: boolean }) {
 export default function Navbar() {
   const [contactOpen, setContactOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -85,9 +84,8 @@ export default function Navbar() {
   }, [mobileOpen]);
 
   async function handleLogout() {
-    await logout();
-    // Auth context will automatically update on sign out
-    router.push('/');
+    await supabase.auth.signOut();
+    window.location.href = '/';
   }
 
   const textColor = isLightPage ? "text-slate-900" : "text-white";

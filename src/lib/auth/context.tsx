@@ -1,16 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 
-export type UserRole = 'client' | 'therapist' | null;
+export type UserRole = 'client' | 'therapist' | 'founder' | null;
 
 interface AuthContextType {
   user: User | null;
   role: UserRole;
   isLoading: boolean;
   isAuthenticated: boolean;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,72 +19,73 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   isLoading: true,
   isAuthenticated: false,
+  refreshAuth: async () => {},
 });
+
+async function fetchRole(userId: string): Promise<UserRole> {
+  const { data } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single();
+  return (data?.role as UserRole) ?? 'client';
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Track if we're mid-fetch to avoid double-setting isLoading
+  const initDone = useRef(false);
 
-  useEffect(() => {
-    // Check current session
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          console.log('[AuthContext] Session found for user:', session.user.id);
-          setUser(session.user);
-          // Fetch user role from database
-          const { data } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-
-          if (data) {
-            setRole(data.role as UserRole);
-          }
-        } else {
-          console.log('[AuthContext] No session found on initial load');
-        }
-      } catch (error) {
-        console.error('[AuthContext] Error checking auth:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthContext] Auth state changed:', event, session?.user?.id);
-      
-      if (session?.user) {
-        setUser(session.user);
-
-        // Fetch role on auth change
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          const { data } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-
-          if (data) {
-            setRole(data.role as UserRole);
-          }
-        }
+  const refreshAuth = async () => {
+    try {
+      // Always use getUser() (server-validated) not getSession() (client-only)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        setUser(currentUser);
+        const r = await fetchRole(currentUser.id);
+        setRole(r);
       } else {
         setUser(null);
         setRole(null);
       }
-    });
+    } catch {
+      setUser(null);
+      setRole(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial auth check
+    refreshAuth();
+    initDone.current = true;
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setRole(null);
+          setIsLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          setUser(session.user);
+          // Fetch role for every meaningful auth event
+          const r = await fetchRole(session.user.id);
+          setRole(r);
+        } else {
+          setUser(null);
+          setRole(null);
+        }
+        // Always resolve loading
+        setIsLoading(false);
+      }
+    );
 
     return () => {
       subscription?.unsubscribe();
@@ -97,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         isLoading,
         isAuthenticated: !!user,
+        refreshAuth,
       }}
     >
       {children}
