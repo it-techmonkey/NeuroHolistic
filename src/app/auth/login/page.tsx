@@ -36,7 +36,8 @@ function LoginForm() {
     if (result.error) {
       setError(result.error);
     } else {
-      // successful login - auth context will update automatically
+      // successful login - wait a moment for session to propagate before redirecting
+      await new Promise(resolve => setTimeout(resolve, 500));
       router.push(result.redirectTo || next || '/dashboard');
     }
   }

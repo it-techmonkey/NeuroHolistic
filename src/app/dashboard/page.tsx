@@ -73,15 +73,26 @@ function ProgressLine({ label, value }: { label: string; value: number }) {
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/auth/login');
+  
+  // If no user after first check, wait a moment and try again (handles redirect timing)
+  if (!user) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const retryCheck = await supabase.auth.getUser();
+    if (!retryCheck.data.user) {
+      redirect('/auth/login');
+    }
+  }
 
-  const { data: profile } = await supabase.from('users').select('full_name').eq('id', user.id).single();
+  const actualUser = user || (await supabase.auth.getUser()).data.user;
+  if (!actualUser) redirect('/auth/login');
+
+  const { data: profile } = await supabase.from('users').select('full_name').eq('id', actualUser.id).single();
   const firstName = profile?.full_name?.split(' ')[0] || 'User';
 
   const [programsRes, assessmentsRes, bookingsRes] = await Promise.all([
-    supabase.from('programs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
-    supabase.from('assessments').select('*').eq('user_id', user.id).order('submitted_at', { ascending: false }).limit(1),
-    supabase.from('bookings').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+    supabase.from('programs').select('*').eq('user_id', actualUser.id).order('created_at', { ascending: false }).limit(1),
+    supabase.from('assessments').select('*').eq('user_id', actualUser.id).order('submitted_at', { ascending: false }).limit(1),
+    supabase.from('bookings').select('*').eq('user_id', actualUser.id).order('date', { ascending: false }),
   ]);
 
   const program = programsRes.data?.[0];
