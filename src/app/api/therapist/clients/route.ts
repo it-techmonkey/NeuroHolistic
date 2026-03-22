@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/auth/server';
+import { getNextConfirmedSession, isUpcomingSession, sortSessionsAsc, sortSessionsDesc } from '@/lib/booking/session-flow';
 
 function getServiceSupabase() {
   return createServiceClient(
@@ -9,11 +10,31 @@ function getServiceSupabase() {
   );
 }
 
+type RecordMap = Record<string, unknown>;
+
+function computeAverageScore(rows: RecordMap[]) {
+  if (!rows.length) return null;
+
+  return Number(
+    (
+      rows.reduce(
+        (sum, row) => sum + Number((row.overall_dysregulation_score as number | null) ?? 0),
+        0
+      ) / rows.length
+    ).toFixed(2)
+  );
+}
+
 export async function GET() {
   try {
     const authClient = await createClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const {
+      data: { user },
+    } = await authClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { data: userData } = await authClient.from('users').select('role').eq('id', user.id).single();
     if (userData?.role !== 'therapist' && userData?.role !== 'founder') {
@@ -22,184 +43,279 @@ export async function GET() {
 
     const supabase = getServiceSupabase();
 
-    // Get clients assigned to this therapist
-    const { data: assignments } = await supabase
-      .from('therapist_clients')
-      .select('client_id')
-      .eq('therapist_id', user.id);
-
-    const clientIds = (assignments ?? []).map(a => a.client_id);
-
-    let clients: Record<string, unknown>[] = [];
-    let bookings: Record<string, unknown>[] = [];
-    let assessments: Record<string, unknown>[] = [];
-    let programs: Record<string, unknown>[] = [];
-    let sessionAssessments: Record<string, unknown>[] = [];
-
-    if (clientIds.length > 0) {
-      const [usersRes, bookingsRes, assessmentsRes, programsRes, sessionAssessmentsRes] = await Promise.all([
-        supabase.from('users').select('*').in('id', clientIds),
-        supabase.from('bookings').select('*').eq('therapist_user_id', user.id).order('date', { ascending: false }),
-        supabase.from('assessments').select('*').in('user_id', clientIds).order('submitted_at', { ascending: false }),
-        supabase.from('programs').select('*').in('user_id', clientIds),
-        supabase
-          .from('therapist_session_assessments')
-          .select('*')
-          .eq('therapist_id', user.id)
-          .in('client_id', clientIds)
-          .order('created_at', { ascending: false }),
-      ]);
-      clients = usersRes.data ?? [];
-      bookings = bookingsRes.data ?? [];
-      assessments = assessmentsRes.data ?? [];
-      programs = programsRes.data ?? [];
-      sessionAssessments = sessionAssessmentsRes.data ?? [];
+    let assignmentsQuery = supabase.from('therapist_clients').select('*');
+    if (userData?.role === 'therapist') {
+      assignmentsQuery = assignmentsQuery.eq('therapist_id', user.id);
     }
 
-    const now = new Date();
-    now.setHours(0,0,0,0);
+    const { data: assignments, error: assignmentsError } = await assignmentsQuery;
+    if (assignmentsError) {
+      return NextResponse.json({ error: assignmentsError.message }, { status: 500 });
+    }
 
-    // Build enriched client objects
-    const enrichedClients = clients.map(c => {
-      const uid = c.id as string;
-      const assessment = assessments.find(a => a.user_id === uid);
-      const program = programs.find(p => p.user_id === uid);
-      const clientBookings = bookings.filter(b => b.user_id === uid);
-      const clientSessionAssessments = sessionAssessments.filter((a) => a.client_id === uid);
-      const latestSessionAssessment = clientSessionAssessments[0];
-      const averageSessionScore = clientSessionAssessments.length
-        ? Number(
-            (
-              clientSessionAssessments.reduce(
-                (sum, row) => sum + Number((row.overall_dysregulation_score as number | null) ?? 0),
-                0
-              ) / clientSessionAssessments.length
-            ).toFixed(2)
-          )
-        : null;
-      const upcoming = clientBookings
-        .filter(b => b.status === 'confirmed' && new Date(b.date as string) >= now)
-        .sort((a, b) => new Date(a.date as string).getTime() - new Date(b.date as string).getTime());
+    const clientIds = Array.from(new Set((assignments ?? []).map((assignment) => assignment.client_id)));
 
-      return {
-        userId: uid,
-        email: c.email,
-        fullName: c.full_name ?? c.email,
-        assessmentScore: latestSessionAssessment?.overall_dysregulation_score ?? assessment?.overall_dysregulation_score ?? null,
-        averageScore: averageSessionScore,
-        severityBand: assessment?.overall_severity_band ?? null,
-        nervousSystemType: assessment?.nervous_system_type ?? null,
-        primaryWound: assessment?.primary_core_wound ?? null,
-        recommendedPhase: assessment?.recommended_phase_primary ?? null,
-        assessmentDate: assessment?.submitted_at ?? null,
-        nervousSystemScore: latestSessionAssessment?.nervous_system_score ?? assessment?.nervous_system_score ?? null,
-        emotionalScore: latestSessionAssessment?.emotional_pattern_score ?? assessment?.emotional_pattern_score ?? null,
-        familyScore: latestSessionAssessment?.family_imprint_score ?? assessment?.family_imprint_score ?? null,
-        incidentScore: latestSessionAssessment?.incident_load_score ?? assessment?.incident_load_score ?? null,
-        bodyScore: latestSessionAssessment?.body_symptom_score ?? assessment?.body_symptom_score ?? null,
-        stressScore: latestSessionAssessment?.current_stress_score ?? assessment?.current_stress_score ?? null,
-        therapistNotes: latestSessionAssessment?.therapist_notes ?? assessment?.therapist_notes ?? null,
-        programStatus: program?.status ?? null,
-        sessionsUsed: program?.used_sessions ?? 0,
-        totalSessions: program?.total_sessions ?? 0,
-        upcomingDate: upcoming[0]?.date ?? null,
-        upcomingTime: upcoming[0]?.time ?? null,
-        meetingLink: upcoming[0]?.meeting_link ?? null,
-        allBookings: clientBookings.map(b => ({
-          id: b.id,
-          date: b.date,
-          time: b.time,
-          status: b.status,
-          meeting_link: b.meeting_link,
-          type: b.type,
-        })),
-        sessionAssessments: clientSessionAssessments.map((row) => ({
-          id: row.id,
-          bookingId: row.booking_id,
-          overallScore: row.overall_dysregulation_score,
-          notes: row.therapist_notes,
-          pdfUrl: row.resource_pdf_url,
-          mp4Url: row.resource_mp4_url,
-          createdAt: row.created_at,
-        })),
-      };
-    }).sort((a, b): number => {
-      // Sort: upcoming first, then by score descending
-      if (a.upcomingDate && !b.upcomingDate) return -1;
-      if (!a.upcomingDate && b.upcomingDate) return 1;
-      return ((b.assessmentScore as number) ?? 0) - ((a.assessmentScore as number) ?? 0);
+    if (clientIds.length === 0) {
+      return NextResponse.json({
+        clients: [],
+        overview: {
+          totalClients: 0,
+          completedSessions: 0,
+          upcomingSessions: 0,
+          pendingDocumentation: 0,
+          averageScore: null,
+        },
+      });
+    }
+
+    const [usersRes, bookingsRes, assessmentsRes, programsRes, sessionAssessmentsRes] = await Promise.all([
+      supabase.from('users').select('id,email,full_name').in('id', clientIds),
+      supabase
+        .from('bookings')
+        .select('*')
+        .in('user_id', clientIds)
+        .order('date', { ascending: false })
+        .order('time', { ascending: false }),
+      supabase
+        .from('assessments')
+        .select('*')
+        .in('user_id', clientIds)
+        .order('submitted_at', { ascending: false }),
+      supabase
+        .from('programs')
+        .select('*')
+        .in('user_id', clientIds)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('therapist_session_assessments')
+        .select('*')
+        .in('client_id', clientIds)
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const users = usersRes.data ?? [];
+    const bookings = (bookingsRes.data ?? []).filter((booking) => {
+      if (userData?.role === 'founder') {
+        return true;
+      }
+
+      return booking.therapist_user_id === user.id;
+    });
+    const assessments = assessmentsRes.data ?? [];
+    const programs = programsRes.data ?? [];
+    const sessionAssessments = (sessionAssessmentsRes.data ?? []).filter((assessment) => {
+      if (userData?.role === 'founder') {
+        return true;
+      }
+
+      return assessment.therapist_id === user.id;
     });
 
-    const completedSessions = bookings.filter(b => b.status === 'completed').length;
+    const assignmentByClientId = new Map((assignments ?? []).map((assignment) => [assignment.client_id, assignment]));
+
+    const initialAssessmentByClientId = new Map<string, RecordMap>();
+    for (const assessment of assessments) {
+      if (!assessment.user_id || initialAssessmentByClientId.has(assessment.user_id)) continue;
+      initialAssessmentByClientId.set(assessment.user_id, assessment);
+    }
+
+    const programByClientId = new Map<string, RecordMap>();
+    for (const program of programs) {
+      if (!program.user_id || programByClientId.has(program.user_id)) continue;
+      programByClientId.set(program.user_id, program);
+    }
+
+    const sessionAssessmentsByClientId = new Map<string, RecordMap[]>();
+    for (const assessment of sessionAssessments) {
+      const clientId = assessment.client_id;
+      if (!sessionAssessmentsByClientId.has(clientId)) {
+        sessionAssessmentsByClientId.set(clientId, []);
+      }
+      sessionAssessmentsByClientId.get(clientId)?.push(assessment);
+    }
+
+    const allUpcomingBookings = bookings.filter(
+      (booking) => booking.status === 'confirmed' && isUpcomingSession(booking)
+    );
+    const completedBookings = bookings.filter((booking) => booking.status === 'completed');
+
+    const clients = users
+      .map((client) => {
+        const clientId = client.id;
+        const assignment = assignmentByClientId.get(clientId);
+        const initialAssessment = initialAssessmentByClientId.get(clientId);
+        const program = programByClientId.get(clientId);
+        const clientSessionAssessments = sessionAssessmentsByClientId.get(clientId) ?? [];
+        const latestSessionAssessment = clientSessionAssessments[0] ?? null;
+        const clientBookings = sortSessionsDesc(
+          bookings.filter((booking) => booking.user_id === clientId)
+        );
+        const ascendingBookings = sortSessionsAsc(clientBookings);
+        const sessionNumberByBookingId = new Map(
+          ascendingBookings.map((booking, index) => [booking.id, index + 1])
+        );
+        const assessmentByBookingId = new Map(
+          clientSessionAssessments.map((assessment) => [assessment.booking_id, assessment])
+        );
+        const sessionTimeline = clientBookings.map((booking) => {
+          const sessionAssessment = assessmentByBookingId.get(booking.id) ?? null;
+
+          return {
+            id: booking.id,
+            date: booking.date,
+            time: booking.time,
+            type: booking.type,
+            status: booking.status,
+            meetingLink: booking.meeting_link,
+            sessionNumber: sessionNumberByBookingId.get(booking.id) ?? null,
+            canComplete: booking.status === 'confirmed',
+            assessment: sessionAssessment
+              ? {
+                  id: sessionAssessment.id,
+                  overallScore: sessionAssessment.overall_dysregulation_score,
+                  nervousSystemScore: sessionAssessment.nervous_system_score,
+                  emotionalPatternScore: sessionAssessment.emotional_pattern_score,
+                  familyImprintScore: sessionAssessment.family_imprint_score,
+                  incidentLoadScore: sessionAssessment.incident_load_score,
+                  bodySymptomScore: sessionAssessment.body_symptom_score,
+                  currentStressScore: sessionAssessment.current_stress_score,
+                  therapistNotes: sessionAssessment.therapist_notes,
+                  observations: sessionAssessment.observations,
+                  recommendations: sessionAssessment.recommendations,
+                  pdfUrl: sessionAssessment.resource_pdf_url,
+                  videoUrl: sessionAssessment.resource_mp4_url,
+                  createdAt: sessionAssessment.created_at,
+                }
+              : null,
+          };
+        });
+        const nextSession = getNextConfirmedSession(clientBookings);
+        const pendingDocumentationCount = clientBookings.filter(
+          (booking) => booking.status === 'completed' && !assessmentByBookingId.has(booking.id)
+        ).length;
+        const completedSessionsCount = clientBookings.filter((booking) => booking.status === 'completed').length;
+        const averageScore = computeAverageScore(clientSessionAssessments);
+        const totalSessions = Number((program?.total_sessions as number | null) ?? 0);
+        const usedSessions = Number((program?.used_sessions as number | null) ?? 0);
+        const remainingSessions = Math.max(0, totalSessions - usedSessions);
+
+        return {
+          userId: clientId,
+          email: client.email ?? '',
+          fullName: client.full_name ?? client.email ?? 'Client',
+          therapistOverviewNotes: (assignment?.notes as string | null) ?? '',
+          initialAssessment: initialAssessment
+            ? {
+                severityBand: (initialAssessment.overall_severity_band as string | null) ?? null,
+                nervousSystemType: (initialAssessment.nervous_system_type as string | null) ?? null,
+                primaryWound: (initialAssessment.primary_core_wound as string | null) ?? null,
+                recommendedPhase: (initialAssessment.recommended_phase_primary as string | null) ?? null,
+                assessmentDate: (initialAssessment.submitted_at as string | null) ?? null,
+              }
+            : null,
+          latestAssessment: latestSessionAssessment
+            ? {
+                overallScore: latestSessionAssessment.overall_dysregulation_score,
+                nervousSystemScore: latestSessionAssessment.nervous_system_score,
+                emotionalPatternScore: latestSessionAssessment.emotional_pattern_score,
+                familyImprintScore: latestSessionAssessment.family_imprint_score,
+                incidentLoadScore: latestSessionAssessment.incident_load_score,
+                bodySymptomScore: latestSessionAssessment.body_symptom_score,
+                currentStressScore: latestSessionAssessment.current_stress_score,
+                therapistNotes: latestSessionAssessment.therapist_notes,
+                observations: latestSessionAssessment.observations,
+                recommendations: latestSessionAssessment.recommendations,
+                createdAt: latestSessionAssessment.created_at,
+              }
+            : null,
+          averageScore,
+          nextSession: nextSession
+            ? {
+                id: nextSession.id,
+                date: nextSession.date,
+                time: nextSession.time,
+                type: nextSession.type,
+                meetingLink: nextSession.meeting_link,
+                sessionNumber: sessionNumberByBookingId.get(nextSession.id) ?? null,
+              }
+            : null,
+          pendingDocumentationCount,
+          program: {
+            status: (program?.status as string | null) ?? null,
+            type: (program?.program_type as string | null) ?? null,
+            totalSessions,
+            usedSessions,
+            completedSessions: completedSessionsCount,
+            remainingSessions,
+          },
+          sessions: sessionTimeline,
+        };
+      })
+      .sort((a, b) => {
+        if (a.nextSession && !b.nextSession) return -1;
+        if (!a.nextSession && b.nextSession) return 1;
+        const leftScore = Number(a.averageScore ?? a.latestAssessment?.overallScore ?? 0);
+        const rightScore = Number(b.averageScore ?? b.latestAssessment?.overallScore ?? 0);
+        return rightScore - leftScore;
+      });
+
+    const overallAverageScore = computeAverageScore(sessionAssessments);
 
     return NextResponse.json({
-      clients: enrichedClients,
+      clients,
       overview: {
-        totalClients: enrichedClients.length,
-        completedSessions,
-        upcomingToday: enrichedClients.filter(c => c.upcomingDate === new Date().toISOString().split('T')[0]).length,
-        pendingAssessments: enrichedClients.filter(c => c.assessmentScore === null).length,
+        totalClients: clients.length,
+        completedSessions: completedBookings.length,
+        upcomingSessions: allUpcomingBookings.length,
+        pendingDocumentation: clients.reduce((sum, client) => sum + client.pendingDocumentationCount, 0),
+        averageScore: overallAverageScore,
       },
     });
-  } catch (err) {
-    console.error('[Therapist Clients API]', err);
+  } catch (error) {
+    console.error('[Therapist Clients API]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PATCH: save therapist notes on an assessment
 export async function PATCH(request: NextRequest) {
   try {
     const authClient = await createClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const {
+      data: { user },
+    } = await authClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { data: userData } = await authClient.from('users').select('role').eq('id', user.id).single();
     if (userData?.role !== 'therapist' && userData?.role !== 'founder') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { email, notes, bookingId } = await request.json();
-    if (!email) return NextResponse.json({ error: 'Missing email' }, { status: 400 });
-
-    const supabase = getServiceSupabase();
-
-    let error: { message?: string } | null = null;
-
-    if (bookingId) {
-      const updateResult = await supabase
-        .from('therapist_session_assessments')
-        .update({ therapist_notes: notes, updated_at: new Date().toISOString() })
-        .eq('booking_id', bookingId)
-        .select('id')
-        .maybeSingle();
-
-      if (updateResult.error) {
-        error = updateResult.error;
-      }
-    } else {
-      const { data: latestAssessment } = await supabase
-        .from('assessments')
-        .select('id')
-        .eq('email', email)
-        .order('submitted_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!latestAssessment) return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
-
-      const updateResult = await supabase
-        .from('assessments')
-        .update({ therapist_notes: notes })
-        .eq('id', latestAssessment.id);
-
-      error = updateResult.error;
+    const { clientId, notes } = await request.json();
+    if (!clientId) {
+      return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
     }
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const supabase = getServiceSupabase();
+    let query = supabase
+      .from('therapist_clients')
+      .update({ notes: notes ?? null })
+      .eq('client_id', clientId);
+
+    if (userData?.role === 'therapist') {
+      query = query.eq('therapist_id', user.id);
+    }
+
+    const { error } = await query;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error('[Therapist Notes API]', err);
+  } catch (error) {
+    console.error('[Therapist Clients API PATCH]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

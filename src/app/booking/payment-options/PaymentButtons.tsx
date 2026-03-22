@@ -55,7 +55,7 @@ export default function PaymentButtons({ userEmail, userName }: PaymentButtonsPr
       <div className="grid md:grid-cols-2 gap-6">
         {/* Option 1 — Full Program */}
         <div className="bg-white rounded-2xl border-2 border-[#2B2F55] shadow-xl p-8 flex flex-col relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2B2F55] to-[#6366F1]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-[#2B2F55] to-[#6366F1]" />
           <div className="mb-1">
             <span className="inline-block px-3 py-1 bg-[#2B2F55]/10 text-[#2B2F55] text-xs font-bold rounded-full uppercase tracking-wider">
               Best Value

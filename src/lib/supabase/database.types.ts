@@ -60,6 +60,7 @@ export type Database = {
           updated_at: string | null;
           rescheduled_from_date: string | null;
           rescheduled_from_time: string | null;
+          google_calendar_event_id: string | null;
         };
         Insert: {
           id?: string;
@@ -81,6 +82,7 @@ export type Database = {
           updated_at?: string | null;
           rescheduled_from_date?: string | null;
           rescheduled_from_time?: string | null;
+          google_calendar_event_id?: string | null;
         };
         Update: {
           id?: string;
@@ -102,6 +104,7 @@ export type Database = {
           updated_at?: string | null;
           rescheduled_from_date?: string | null;
           rescheduled_from_time?: string | null;
+          google_calendar_event_id?: string | null;
         };
         Relationships: [];
       };
@@ -320,6 +323,12 @@ export type Database = {
           id: string;
           program_id: string;
           booking_id: string | null;
+          client_id: string | null;
+          therapist_id: string | null;
+          date_time: string | null;
+          meet_link: string | null;
+          assessment_score: number | null;
+          assessment_notes: string | null;
           session_number: number;
           date: string | null;
           time: string | null;
@@ -332,6 +341,12 @@ export type Database = {
           id?: string;
           program_id: string;
           booking_id?: string | null;
+          client_id?: string | null;
+          therapist_id?: string | null;
+          date_time?: string | null;
+          meet_link?: string | null;
+          assessment_score?: number | null;
+          assessment_notes?: string | null;
           session_number: number;
           date?: string | null;
           time?: string | null;
@@ -344,6 +359,12 @@ export type Database = {
           id?: string;
           program_id?: string;
           booking_id?: string | null;
+          client_id?: string | null;
+          therapist_id?: string | null;
+          date_time?: string | null;
+          meet_link?: string | null;
+          assessment_score?: number | null;
+          assessment_notes?: string | null;
           session_number?: number;
           date?: string | null;
           time?: string | null;
@@ -400,6 +421,8 @@ export type Database = {
           current_stress_score: number;
           overall_dysregulation_score: number;
           therapist_notes: string | null;
+          observations: string | null;
+          recommendations: string | null;
           resource_pdf_url: string | null;
           resource_mp4_url: string | null;
           created_at: string;
@@ -419,6 +442,8 @@ export type Database = {
           current_stress_score: number;
           overall_dysregulation_score: number;
           therapist_notes?: string | null;
+          observations?: string | null;
+          recommendations?: string | null;
           resource_pdf_url?: string | null;
           resource_mp4_url?: string | null;
           created_at?: string;
@@ -438,6 +463,8 @@ export type Database = {
           current_stress_score?: number;
           overall_dysregulation_score?: number;
           therapist_notes?: string | null;
+          observations?: string | null;
+          recommendations?: string | null;
           resource_pdf_url?: string | null;
           resource_mp4_url?: string | null;
           created_at?: string;

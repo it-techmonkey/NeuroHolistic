@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { getUserProgram } from '@/lib/programs';
 import { incrementUsedSessions } from '@/lib/supabase/programs';
 import { isValidSlot } from '@/lib/booking/slots';
-import { generateGoogleMeetLink } from '@/lib/meeting/google-meet';
+import { getNextConfirmedSession, toDubaiDateTime } from '@/lib/booking/session-flow';
+import { createGoogleMeetEvent } from '@/lib/meeting/google-meet';
 import { sendBookingNotifications } from '@/lib/notifications/booking';
 import type { Database } from '@/lib/supabase/database.types';
 
@@ -48,6 +49,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No sessions remaining in your program.' }, { status: 403 });
     }
 
+    const { data: confirmedBookings, error: confirmedBookingsError } = await supabase
+      .from('bookings')
+      .select('id,date,time,status')
+      .eq('user_id', user.id)
+      .eq('program_id', program.id)
+      .eq('type', 'program')
+      .eq('status', 'confirmed');
+
+    if (confirmedBookingsError) {
+      console.error('[ScheduleSession] Failed to load existing program bookings:', confirmedBookingsError);
+      return NextResponse.json({ error: 'Failed to validate your current session flow.' }, { status: 500 });
+    }
+
+    const nextUpcomingBooking = getNextConfirmedSession(confirmedBookings ?? []);
+
+    if (nextUpcomingBooking) {
+      return NextResponse.json(
+        {
+          error: 'Your next session is already scheduled. You can reschedule that session, but you cannot book the session after it yet.',
+          nextBookingId: nextUpcomingBooking.id,
+        },
+        { status: 409 }
+      );
+    }
+
     let duplicateQuery = supabase
       .from('bookings')
       .select('id')
@@ -75,7 +101,15 @@ export async function POST(request: NextRequest) {
     const lastName = (user.user_metadata?.last_name as string | undefined) || '';
     const fullName = `${firstName} ${lastName}`.trim() || user.email || '';
 
-    const meetingLink = generateGoogleMeetLink();
+    const meetingEvent = await createGoogleMeetEvent({
+      summary: `NeuroHolistic Session ${sessionNumber} - ${fullName}`,
+      description: 'Program session booking via NeuroHolistic platform',
+      date,
+      time,
+      durationMinutes: 60,
+      attendeeEmails: [user.email!],
+    });
+    const meetingLink = meetingEvent.meetLink;
 
     // Create booking record
     const { data: booking, error: bookingError } = await supabase
@@ -94,6 +128,7 @@ export async function POST(request: NextRequest) {
         type: 'program',
         program_id: program.id,
         meeting_link: meetingLink,
+        google_calendar_event_id: meetingEvent.eventId,
         status: 'confirmed',
       })
       .select('id')
@@ -113,9 +148,13 @@ export async function POST(request: NextRequest) {
     await supabase.from('sessions').insert({
       program_id: program.id,
       booking_id: booking.id,
+      client_id: user.id,
+      therapist_id: program.therapist_user_id || null,
       session_number: sessionNumber,
+      date_time: toDubaiDateTime(date, time),
       date,
       time,
+      meet_link: meetingLink,
       status: 'scheduled',
     }).then(({ error }) => {
       if (error) console.error('[ScheduleSession] sessions insert error (non-fatal):', error);

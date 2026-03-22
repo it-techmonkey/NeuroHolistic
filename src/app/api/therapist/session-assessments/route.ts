@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
       body_symptom_score,
       current_stress_score,
       therapist_notes,
+      observations,
+      recommendations,
       resource_pdf_url,
       resource_mp4_url,
     } = body;
@@ -61,10 +63,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'All score fields must be numeric' }, { status: 400 });
     }
 
+    if (scoreValues.some((value) => value < 0 || value > 10)) {
+      return NextResponse.json({ error: 'All score fields must be between 0 and 10' }, { status: 400 });
+    }
+
     const supabase = getServiceSupabase();
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('id,user_id,therapist_user_id')
+      .select('id,user_id,therapist_user_id,status')
       .eq('id', bookingId)
       .single();
 
@@ -80,6 +86,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Booking has no linked client account' }, { status: 400 });
     }
 
+    if (booking.status !== 'confirmed') {
+      return NextResponse.json(
+        { error: 'Only confirmed sessions can be marked complete with a post-session assessment.' },
+        { status: 409 }
+      );
+    }
+
+    const { data: existingAssessment } = await supabase
+      .from('therapist_session_assessments')
+      .select('id')
+      .eq('booking_id', booking.id)
+      .maybeSingle();
+
+    if (existingAssessment) {
+      return NextResponse.json(
+        { error: 'Assessment already submitted for this session. Duplicate submissions are not allowed.' },
+        { status: 409 }
+      );
+    }
+
     const { data: sessionRow } = await supabase
       .from('sessions')
       .select('id')
@@ -88,40 +114,46 @@ export async function POST(request: NextRequest) {
 
     const overall_dysregulation_score = computeOverallScore(scoreValues);
 
-    const { error: upsertError } = await supabase
-      .from('therapist_session_assessments')
-      .upsert(
-        {
-          booking_id: booking.id,
-          session_id: sessionRow?.id ?? null,
-          therapist_id: user.id,
-          client_id: booking.user_id,
-          nervous_system_score,
-          emotional_pattern_score,
-          family_imprint_score,
-          incident_load_score,
-          body_symptom_score,
-          current_stress_score,
-          overall_dysregulation_score,
-          therapist_notes: therapist_notes ?? null,
-          resource_pdf_url: resource_pdf_url ?? null,
-          resource_mp4_url: resource_mp4_url ?? null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'booking_id' }
-      );
+    const { data: insertedAssessment, error: insertError } = await supabase.from('therapist_session_assessments').insert({
+      booking_id: booking.id,
+      session_id: sessionRow?.id ?? null,
+      therapist_id: user.id,
+      client_id: booking.user_id,
+      nervous_system_score,
+      emotional_pattern_score,
+      family_imprint_score,
+      incident_load_score,
+      body_symptom_score,
+      current_stress_score,
+      overall_dysregulation_score,
+      therapist_notes: therapist_notes ?? null,
+      observations: observations ?? null,
+      recommendations: recommendations ?? null,
+      resource_pdf_url: resource_pdf_url ?? null,
+      resource_mp4_url: resource_mp4_url ?? null,
+      updated_at: new Date().toISOString(),
+    }).select('id').single();
 
-    if (upsertError) {
-      return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
     await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id);
     await supabase
       .from('sessions')
-      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .update({
+        status: 'completed',
+        assessment_score: overall_dysregulation_score,
+        assessment_notes: therapist_notes ?? null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('booking_id', booking.id);
 
-    return NextResponse.json({ success: true, overall_dysregulation_score });
+    return NextResponse.json({
+      success: true,
+      assessmentId: insertedAssessment?.id ?? null,
+      overall_dysregulation_score,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },

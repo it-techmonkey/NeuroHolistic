@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
-import { generateGoogleMeetLink } from '@/lib/meeting/google-meet';
+import { createGoogleMeetEvent } from '@/lib/meeting/google-meet';
 import { sendBookingNotifications } from '@/lib/notifications/booking';
 
 const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-function formatDisplayDate(isoDate: string): string {
-  const date = new Date(isoDate + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatDisplayTime(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minutes} ${ampm}`;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,7 +34,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const meetingLink = generateGoogleMeetLink();
+    const meetingEvent = await createGoogleMeetEvent({
+      summary: `NeuroHolistic Consultation - ${name}`,
+      description: 'Free consultation booked via NeuroHolistic platform',
+      date,
+      time,
+      durationMinutes: 60,
+      attendeeEmails: [email],
+    });
+    const meetingLink = meetingEvent.meetLink;
 
     const { data: booking, error: insertError } = await supabase
       .from('bookings')
@@ -64,6 +59,7 @@ export async function POST(request: NextRequest) {
         type: 'free_consultation',
         status: 'confirmed',
         meeting_link: meetingLink,
+        google_calendar_event_id: meetingEvent.eventId,
       })
       .select('id')
       .single();

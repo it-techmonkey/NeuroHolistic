@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/auth/server';
 import { isValidSlot } from '@/lib/booking/slots';
+import { getNextConfirmedSession, toDubaiDateTime } from '@/lib/booking/session-flow';
+import { updateGoogleMeetEvent } from '@/lib/meeting/google-meet';
 import { sendBookingNotifications } from '@/lib/notifications/booking';
 
 function getServiceSupabase() {
@@ -57,6 +59,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only confirmed bookings can be rescheduled' }, { status: 400 });
     }
 
+    let upcomingBookingsQuery = supabase
+      .from('bookings')
+      .select('id,date,time,status')
+      .eq('user_id', user.id)
+      .eq('status', 'confirmed');
+
+    if (booking.type === 'program' && booking.program_id) {
+      upcomingBookingsQuery = upcomingBookingsQuery.eq('program_id', booking.program_id);
+    } else {
+      upcomingBookingsQuery = upcomingBookingsQuery.eq('type', booking.type);
+    }
+
+    const { data: upcomingBookings, error: upcomingBookingsError } = await upcomingBookingsQuery;
+
+    if (upcomingBookingsError) {
+      return NextResponse.json({ error: upcomingBookingsError.message }, { status: 500 });
+    }
+
+    const nextUpcomingBooking = getNextConfirmedSession(upcomingBookings ?? []);
+
+    if (!nextUpcomingBooking || nextUpcomingBooking.id !== booking.id) {
+      return NextResponse.json(
+        {
+          error: 'Only your immediate next session can be rescheduled.',
+          nextBookingId: nextUpcomingBooking?.id ?? null,
+        },
+        { status: 409 }
+      );
+    }
+
     let conflictQuery = supabase
       .from('bookings')
       .select('id')
@@ -76,11 +108,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Selected slot is not available' }, { status: 409 });
     }
 
+    let updatedMeetingLink = booking.meeting_link;
+    if (booking.google_calendar_event_id) {
+      await updateGoogleMeetEvent(booking.google_calendar_event_id, {
+        date,
+        time,
+        durationMinutes: 60,
+      });
+    }
+
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
         date,
         time,
+        meeting_link: updatedMeetingLink,
         rescheduled_from_date: booking.date,
         rescheduled_from_time: booking.time,
         updated_at: new Date().toISOString(),
@@ -96,6 +138,8 @@ export async function POST(request: NextRequest) {
       .update({
         date,
         time,
+        date_time: toDubaiDateTime(date, time),
+        meet_link: updatedMeetingLink,
         updated_at: new Date().toISOString(),
       })
       .eq('booking_id', booking.id);
@@ -107,7 +151,7 @@ export async function POST(request: NextRequest) {
       therapistName: booking.therapist_name,
       date,
       time,
-      meetingLink: booking.meeting_link,
+      meetingLink: updatedMeetingLink,
       context: 'reschedule',
     });
 

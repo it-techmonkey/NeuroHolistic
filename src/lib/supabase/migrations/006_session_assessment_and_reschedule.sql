@@ -31,11 +31,78 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='bookings' AND column_name='google_calendar_event_id'
+  ) THEN
+    ALTER TABLE public.bookings ADD COLUMN google_calendar_event_id TEXT;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_bookings_therapist_date_time_status
   ON public.bookings(therapist_id, date, time, status);
 
 CREATE INDEX IF NOT EXISTS idx_bookings_therapist_user_date_time_status
   ON public.bookings(therapist_user_id, date, time, status);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_google_calendar_event_id
+  ON public.bookings(google_calendar_event_id);
+
+-- 1b) Extend sessions to hold end-to-end lifecycle fields
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='client_id'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN client_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='therapist_id'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN therapist_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='date_time'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN date_time TIMESTAMP WITH TIME ZONE;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='meet_link'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN meet_link TEXT;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='assessment_score'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN assessment_score NUMERIC(5,2);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='sessions' AND column_name='assessment_notes'
+  ) THEN
+    ALTER TABLE public.sessions ADD COLUMN assessment_notes TEXT;
+  END IF;
+END $$;
 
 -- 2) Session-level therapist assessments
 CREATE TABLE IF NOT EXISTS public.therapist_session_assessments (
@@ -64,6 +131,24 @@ CREATE INDEX IF NOT EXISTS idx_tsa_client_id_created_at
 
 CREATE INDEX IF NOT EXISTS idx_tsa_therapist_id_created_at
   ON public.therapist_session_assessments(therapist_id, created_at DESC);
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='therapist_session_assessments' AND column_name='observations'
+  ) THEN
+    ALTER TABLE public.therapist_session_assessments ADD COLUMN observations TEXT;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='therapist_session_assessments' AND column_name='recommendations'
+  ) THEN
+    ALTER TABLE public.therapist_session_assessments ADD COLUMN recommendations TEXT;
+  END IF;
+END $$;
 
 ALTER TABLE public.therapist_session_assessments ENABLE ROW LEVEL SECURITY;
 
