@@ -57,6 +57,9 @@ export type Database = {
           meeting_link: string | null;
           status: 'confirmed' | 'cancelled' | 'completed';
           created_at: string;
+          updated_at: string | null;
+          rescheduled_from_date: string | null;
+          rescheduled_from_time: string | null;
         };
         Insert: {
           id?: string;
@@ -75,6 +78,9 @@ export type Database = {
           meeting_link?: string | null;
           status?: 'confirmed' | 'cancelled' | 'completed';
           created_at?: string;
+          updated_at?: string | null;
+          rescheduled_from_date?: string | null;
+          rescheduled_from_time?: string | null;
         };
         Update: {
           id?: string;
@@ -93,6 +99,9 @@ export type Database = {
           meeting_link?: string | null;
           status?: 'confirmed' | 'cancelled' | 'completed';
           created_at?: string;
+          updated_at?: string | null;
+          rescheduled_from_date?: string | null;
+          rescheduled_from_time?: string | null;
         };
         Relationships: [];
       };
@@ -373,6 +382,66 @@ export type Database = {
           client_id?: string;
           assigned_at?: string;
           notes?: string | null;
+        };
+        Relationships: [];
+      };
+      therapist_session_assessments: {
+        Row: {
+          id: string;
+          booking_id: string;
+          session_id: string | null;
+          therapist_id: string;
+          client_id: string;
+          nervous_system_score: number;
+          emotional_pattern_score: number;
+          family_imprint_score: number;
+          incident_load_score: number;
+          body_symptom_score: number;
+          current_stress_score: number;
+          overall_dysregulation_score: number;
+          therapist_notes: string | null;
+          resource_pdf_url: string | null;
+          resource_mp4_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          session_id?: string | null;
+          therapist_id: string;
+          client_id: string;
+          nervous_system_score: number;
+          emotional_pattern_score: number;
+          family_imprint_score: number;
+          incident_load_score: number;
+          body_symptom_score: number;
+          current_stress_score: number;
+          overall_dysregulation_score: number;
+          therapist_notes?: string | null;
+          resource_pdf_url?: string | null;
+          resource_mp4_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          session_id?: string | null;
+          therapist_id?: string;
+          client_id?: string;
+          nervous_system_score?: number;
+          emotional_pattern_score?: number;
+          family_imprint_score?: number;
+          incident_load_score?: number;
+          body_symptom_score?: number;
+          current_stress_score?: number;
+          overall_dysregulation_score?: number;
+          therapist_notes?: string | null;
+          resource_pdf_url?: string | null;
+          resource_mp4_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

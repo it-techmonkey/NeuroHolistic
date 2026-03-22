@@ -33,6 +33,7 @@ export async function GET() {
       leadsResult,
       assessmentsResult,
       tcResult,
+      sessionAssessmentsResult,
     ] = await Promise.all([
       supabase.from('users').select('*').order('created_at', { ascending: false }),
       supabase.from('programs').select('*').order('created_at', { ascending: false }),
@@ -41,6 +42,7 @@ export async function GET() {
       supabase.from('leads').select('*').order('created_at', { ascending: false }),
       supabase.from('assessments').select('id,user_id,email,full_name,overall_dysregulation_score,overall_severity_band,nervous_system_type,primary_core_wound,submitted_at,nervous_system_score,emotional_pattern_score,family_imprint_score,incident_load_score,body_symptom_score,current_stress_score,recommended_phase_primary').order('submitted_at', { ascending: false }),
       supabase.from('therapist_clients').select('*'),
+      supabase.from('therapist_session_assessments').select('*').order('created_at', { ascending: false }),
     ]);
 
     const users = usersResult.data ?? [];
@@ -50,6 +52,7 @@ export async function GET() {
     const leads = leadsResult.data ?? [];
     const assessments = assessmentsResult.data ?? [];
     const therapistClients = tcResult.data ?? [];
+    const sessionAssessments = sessionAssessmentsResult.data ?? [];
 
     // Computed KPIs
     const therapists = users.filter(u => u.role === 'therapist');
@@ -74,6 +77,7 @@ export async function GET() {
         therapistPrograms.some(tp => tp.id === p.program_id) && p.status === 'paid'
       );
       const therapistBookings = bookings.filter(b => b.therapist_user_id === t.id);
+      const therapistSessionAssessments = sessionAssessments.filter((a) => a.therapist_id === t.id);
       const completedSessions = therapistBookings.filter(b => b.status === 'completed').length;
       const upcomingBookings = therapistBookings.filter(b => {
         if (b.status !== 'confirmed') return false;
@@ -89,6 +93,16 @@ export async function GET() {
         completedSessions,
         upcomingCount: upcomingBookings.length,
         revenue: therapistPayments.reduce((s, p) => s + (p.amount ?? 0), 0),
+        averageScore: therapistSessionAssessments.length
+          ? Number(
+              (
+                therapistSessionAssessments.reduce(
+                  (sum, row) => sum + Number((row.overall_dysregulation_score as number | null) ?? 0),
+                  0
+                ) / therapistSessionAssessments.length
+              ).toFixed(2)
+            )
+          : null,
       };
     });
 
@@ -101,6 +115,8 @@ export async function GET() {
         ? users.find(u => u.id === therapistAssignment.therapist_id)
         : null;
       const clientPayments = payments.filter(p => p.user_id === c.id && p.status === 'paid');
+      const clientSessionAssessments = sessionAssessments.filter((a) => a.client_id === c.id);
+      const latestSessionAssessment = clientSessionAssessments[0];
 
       return {
         id: c.id,
@@ -111,7 +127,17 @@ export async function GET() {
         programStatus: program?.status ?? null,
         sessionsUsed: program?.used_sessions ?? 0,
         totalSessions: program?.total_sessions ?? 0,
-        assessmentScore: assessment?.overall_dysregulation_score ?? null,
+        assessmentScore: latestSessionAssessment?.overall_dysregulation_score ?? assessment?.overall_dysregulation_score ?? null,
+        averageSessionScore: clientSessionAssessments.length
+          ? Number(
+              (
+                clientSessionAssessments.reduce(
+                  (sum, row) => sum + Number((row.overall_dysregulation_score as number | null) ?? 0),
+                  0
+                ) / clientSessionAssessments.length
+              ).toFixed(2)
+            )
+          : null,
         severityBand: assessment?.overall_severity_band ?? null,
         totalPaid: clientPayments.reduce((s, p) => s + (p.amount ?? 0), 0),
         joinedAt: c.created_at,
@@ -145,6 +171,7 @@ export async function GET() {
         ...a,
         clientName: clients.find(c => c.id === a.user_id)?.full_name ?? a.full_name ?? a.email,
       })),
+      sessionAssessments,
     });
   } catch (err) {
     console.error('[Admin Overview]', err);

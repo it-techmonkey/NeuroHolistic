@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Check, Clock, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import FadeIn from '@/components/ui/FadeIn';
 
@@ -103,12 +105,55 @@ function formatDisplayTime(time: string): string {
   return `${displayHour}:${minutes} ${ampm}`;
 }
 
-export default function ScheduleSessionPage() {
+function ScheduleSessionPageContent() {
+  const searchParams = useSearchParams();
+  const rescheduleBookingId = searchParams.get('reschedule');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [time, setTime] = useState('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>(TIME_SLOTS.map((slot) => slot.value));
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<{ sessionNumber: number; remaining: number; date: string; time: string } | null>(null);
+  const [success, setSuccess] = useState<{ sessionNumber: number; remaining: number; date: string; time: string; rescheduled?: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setAvailableSlots(TIME_SLOTS.map((slot) => slot.value));
+      return;
+    }
+
+    const loadAvailability = async () => {
+      setAvailabilityLoading(true);
+      setError(null);
+      try {
+        const date = selectedDate.toISOString().split('T')[0];
+        const params = new URLSearchParams({ date });
+        if (rescheduleBookingId) {
+          params.set('excludeBookingId', rescheduleBookingId);
+        }
+
+        const response = await fetch(`/api/booking/availability?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Failed to load availability');
+          return;
+        }
+
+        setAvailableSlots(data.availableSlots ?? []);
+
+        if (time && !(data.availableSlots ?? []).includes(time)) {
+          setTime('');
+        }
+      } catch {
+        setError('Failed to load real-time availability.');
+      } finally {
+        setAvailabilityLoading(false);
+      }
+    };
+
+    loadAvailability();
+  }, [selectedDate, rescheduleBookingId, time]);
 
   async function handleSchedule() {
     if (!selectedDate) { setError('Please select a date from the calendar.'); return; }
@@ -119,10 +164,15 @@ export default function ScheduleSessionPage() {
 
     try {
       const isoDate = selectedDate.toISOString().split('T')[0];
-      const res = await fetch('/api/booking/schedule-session', {
+      const endpoint = rescheduleBookingId ? '/api/booking/reschedule' : '/api/booking/schedule-session';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: isoDate, time }),
+        body: JSON.stringify(
+          rescheduleBookingId
+            ? { bookingId: rescheduleBookingId, date: isoDate, time }
+            : { date: isoDate, time }
+        ),
       });
 
       const data = await res.json();
@@ -133,10 +183,11 @@ export default function ScheduleSessionPage() {
       }
 
       setSuccess({
-        sessionNumber: data.sessionNumber,
-        remaining: data.remainingSessions,
+        sessionNumber: data.sessionNumber ?? 0,
+        remaining: data.remainingSessions ?? 0,
         date: isoDate,
         time,
+        rescheduled: Boolean(rescheduleBookingId),
       });
     } catch {
       setError('Network communication failed.');
@@ -158,7 +209,7 @@ export default function ScheduleSessionPage() {
           <div className="space-y-4">
              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Confirmation</p>
              <h1 className="text-4xl font-light tracking-tight text-slate-900">
-               Session {success.sessionNumber} Confirmed.
+               {success.rescheduled ? 'Session Rescheduled.' : `Session ${success.sessionNumber} Confirmed.`}
              </h1>
           </div>
 
@@ -174,9 +225,11 @@ export default function ScheduleSessionPage() {
           </div>
 
           <div className="space-y-8">
-            <p className="text-sm text-slate-500 font-light">
-               You have <strong className="font-medium text-slate-900">{success.remaining} sessions</strong> remaining in your program.
-            </p>
+            {!success.rescheduled && (
+              <p className="text-sm text-slate-500 font-light">
+                You have <strong className="font-medium text-slate-900">{success.remaining} sessions</strong> remaining in your program.
+              </p>
+            )}
             <div className="flex flex-col gap-4">
               <Link href="/dashboard" className="w-full py-4 bg-[#2B2F55] text-white text-xs font-bold uppercase tracking-[0.15em] rounded-full hover:bg-[#1E2140] transition-colors flex items-center justify-center">
                 Return to Dashboard
@@ -235,13 +288,16 @@ export default function ScheduleSessionPage() {
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    {TIME_SLOTS.map((slot) => {
                      const isSelected = time === slot.value;
+                     const isAvailable = availableSlots.includes(slot.value);
                      return (
                        <button 
                          key={slot.id} 
                          type="button" 
                          onClick={() => setTime(slot.value)}
+                          disabled={!isAvailable || availabilityLoading}
                          className={`
                            group relative flex items-center justify-between p-6 border transition-all duration-300
+                           ${!isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
                            ${isSelected
                               ? 'border-[#2B2F55] bg-[#2B2F55] text-white' 
                               : 'border-slate-100 hover:border-slate-300 text-slate-500 hover:text-slate-900'
@@ -252,10 +308,12 @@ export default function ScheduleSessionPage() {
                            {slot.display}
                          </span>
                          {isSelected && <Check size={16} strokeWidth={1.5} />}
+                         {!isSelected && !isAvailable && <span className="text-xs font-semibold">Booked</span>}
                        </button>
                      );
                    })}
                  </div>
+                 {availabilityLoading && <p className="text-xs text-slate-400 mt-3">Checking therapist availability...</p>}
                </section>
 
                {error && (
@@ -283,5 +341,13 @@ export default function ScheduleSessionPage() {
         </FadeIn>
       </div>
     </div>
+  );
+}
+
+export default function ScheduleSessionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <ScheduleSessionPageContent />
+    </Suspense>
   );
 }

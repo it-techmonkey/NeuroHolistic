@@ -4,14 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-const THERAPISTS = [
-  { id: 'dr-fawzia-yassmina', name: 'Dr. Fawzia Yassmina', role: 'Founder & Method Creator' },
-  { id: 'mariam-al-kaisi', name: 'Mariam Al Kaisi', role: 'Certified Practitioner' },
-  { id: 'noura-youssef', name: 'Noura Youssef', role: 'Certified Practitioner' },
-  { id: 'reem-mobayed', name: 'Reem Mobayed', role: 'Certified Practitioner' },
-  { id: 'fawares-azaar', name: 'Fawares Azaar', role: 'Certified Practitioner' },
-  { id: 'joud-charafeddin', name: 'Joud Charafeddin', role: 'Certified Practitioner' },
-];
+interface TherapistOption {
+  id: string;
+  slug: string;
+  name: string;
+  role: string;
+}
 
 const TIME_SLOTS = [
   { id: 'morning-early', display: '09:00', value: '09:00' },
@@ -91,8 +89,10 @@ export default function ConsultationBookPage() {
   const router = useRouter();
   const [lead, setLead] = useState<any>(null);
   const [therapist, setTherapist] = useState('');
+  const [therapists, setTherapists] = useState<TherapistOption[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [time, setTime] = useState('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>(TIME_SLOTS.map((slot) => slot.value));
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
 
@@ -100,13 +100,52 @@ export default function ConsultationBookPage() {
     const stored = sessionStorage.getItem('consultation_lead');
     if (!stored) { router.replace('/consultation'); return; }
     setLead(JSON.parse(stored));
+
+    const loadTherapists = async () => {
+      try {
+        const response = await fetch('/api/therapist/list');
+        const data = await response.json();
+        if (response.ok) {
+          setTherapists(data.therapists ?? []);
+        }
+      } catch (error) {
+        console.error('Failed to load therapists', error);
+      }
+    };
+
+    loadTherapists();
   }, [router]);
+
+  useEffect(() => {
+    if (!therapist || !selectedDate) {
+      setAvailableSlots(TIME_SLOTS.map((slot) => slot.value));
+      return;
+    }
+
+    const loadAvailability = async () => {
+      try {
+        const date = selectedDate.toISOString().split('T')[0];
+        const response = await fetch(`/api/booking/availability?date=${date}&therapistId=${therapist}`);
+        const data = await response.json();
+        if (response.ok) {
+          setAvailableSlots(data.availableSlots ?? []);
+          if (time && !(data.availableSlots ?? []).includes(time)) {
+            setTime('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load availability', error);
+      }
+    };
+
+    loadAvailability();
+  }, [therapist, selectedDate, time]);
 
   async function handleBook() {
     if (!therapist || !selectedDate || !time) return;
     setLoading(true);
     try {
-      const selectedTherapist = THERAPISTS.find((t) => t.id === therapist);
+      const selectedTherapist = therapists.find((t) => t.slug === therapist);
       const res = await fetch('/api/consultation/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,6 +153,7 @@ export default function ConsultationBookPage() {
           ...lead,
           therapist_id: therapist,
           therapist_name: selectedTherapist?.name,
+          therapist_user_id: selectedTherapist?.id,
           date: selectedDate.toISOString().split('T')[0],
           time,
         }),
@@ -178,17 +218,17 @@ export default function ConsultationBookPage() {
             </p>
             
             <div className="space-y-1">
-              {THERAPISTS.map((t) => (
+              {therapists.map((t) => (
                 <button 
                   key={t.id} 
-                  onClick={() => setTherapist(t.id)}
-                  className={`w-full text-left p-4 rounded-xl transition-all flex justify-between items-center ${therapist === t.id ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'}`}
+                  onClick={() => setTherapist(t.slug)}
+                  className={`w-full text-left p-4 rounded-xl transition-all flex justify-between items-center ${therapist === t.slug ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'}`}
                 >
                   <div>
                     <p className="text-[13px] font-bold uppercase tracking-wide">{t.name}</p>
-                    <p className={`text-[11px] font-medium ${therapist === t.id ? 'text-slate-400' : 'text-slate-400'}`}>{t.role}</p>
+                    <p className={`text-[11px] font-medium ${therapist === t.slug ? 'text-slate-400' : 'text-slate-400'}`}>{t.role}</p>
                   </div>
-                  {therapist === t.id && <span className="text-xs">●</span>}
+                  {therapist === t.slug && <span className="text-xs">●</span>}
                 </button>
               ))}
             </div>
@@ -208,7 +248,11 @@ export default function ConsultationBookPage() {
                 <button 
                   key={slot.id} 
                   onClick={() => setTime(slot.value)}
+                  disabled={!availableSlots.includes(slot.value)}
                   className={`py-4 rounded-lg text-[12px] font-bold transition-all ${
+                    !availableSlots.includes(slot.value)
+                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      :
                     time === slot.value ? 'bg-[#2B2F55] text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >

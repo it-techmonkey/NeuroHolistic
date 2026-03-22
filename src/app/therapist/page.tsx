@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import LogoutButton from '@/components/ui/LogoutButton';
 import { 
   Users, 
@@ -23,6 +22,7 @@ interface Client {
   email: string;
   fullName: string;
   assessmentScore: number | null;
+  averageScore?: number | null;
   severityBand: string | null;
   nervousSystemType: string | null;
   primaryWound: string | null;
@@ -42,6 +42,15 @@ interface Client {
   allBookings: Booking[];
   therapistNotes: string | null;
   assessmentDate: string | null;
+  sessionAssessments?: Array<{
+    id: string;
+    bookingId: string;
+    overallScore: number;
+    notes: string | null;
+    pdfUrl: string | null;
+    mp4Url: string | null;
+    createdAt: string;
+  }>;
 }
 
 interface Booking {
@@ -109,7 +118,6 @@ function DomainLine({ label, value }: { label: string; value: number | null }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function TherapistDashboard() {
-  const router = useRouter();
   const [tab, setTab] = useState<'overview' | 'clients' | 'schedule'>('overview');
   const [clients, setClients] = useState<Client[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -118,14 +126,27 @@ export default function TherapistDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string>('');
+  const [scoreForm, setScoreForm] = useState({
+    nervous_system_score: 0,
+    emotional_pattern_score: 0,
+    family_imprint_score: 0,
+    incident_load_score: 0,
+    body_symptom_score: 0,
+    current_stress_score: 0,
+    therapist_notes: '',
+    resource_pdf_url: '',
+    resource_mp4_url: '',
+  });
+  const [savingAssessment, setSavingAssessment] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/therapist/clients');
-      if (res.status === 401) { router.push('/auth/login'); return; }
-      if (res.status === 403) { router.push('/dashboard'); return; }
-      if (!res.ok) throw new Error('Failed to load data');
+      // Middleware already ensures only therapists reach this page.
+      // If the API returns an auth error, surface it as a UI error rather than redirecting.
+      if (!res.ok) throw new Error(`Failed to load data (${res.status})`);
       const data = await res.json();
       setClients(data.clients ?? []);
       setOverview(data.overview ?? null);
@@ -138,7 +159,7 @@ export default function TherapistDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router, selected]);
+  }, [selected]);
 
   useEffect(() => { fetchData(); }, []); 
 
@@ -153,6 +174,45 @@ export default function TherapistDashboard() {
     setSavingNote(false);
     setClients(prev => prev.map(c => c.email === selected.email ? { ...c, therapistNotes: noteText } : c));
     setSelected(prev => prev ? { ...prev, therapistNotes: noteText } : null);
+  }
+
+  async function submitSessionAssessment() {
+    if (!selectedBookingId) return;
+
+    setSavingAssessment(true);
+    try {
+      const res = await fetch('/api/therapist/session-assessments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: selectedBookingId,
+          ...scoreForm,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save assessment');
+      }
+
+      await fetchData();
+      setScoreForm({
+        nervous_system_score: 0,
+        emotional_pattern_score: 0,
+        family_imprint_score: 0,
+        incident_load_score: 0,
+        body_symptom_score: 0,
+        current_stress_score: 0,
+        therapist_notes: '',
+        resource_pdf_url: '',
+        resource_mp4_url: '',
+      });
+      setSelectedBookingId('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save assessment');
+    } finally {
+      setSavingAssessment(false);
+    }
   }
 
   const allUpcoming = clients.flatMap(c => {
@@ -287,6 +347,11 @@ export default function TherapistDashboard() {
                   <SeverityDot band={selected.severityBand} />
                   <h1 className="text-4xl font-bold tracking-tight mt-4">{selected.fullName}</h1>
                   <p className="text-slate-500 mt-2 font-medium">{selected.email}</p>
+                  {selected.averageScore !== null && selected.averageScore !== undefined && (
+                    <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 mt-4">
+                      Average session score: {Math.round(selected.averageScore)}
+                    </p>
+                  )}
                   
                   <div className="grid grid-cols-3 gap-8 mt-12">
                     <div>
@@ -347,12 +412,97 @@ export default function TherapistDashboard() {
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{b.status}</span>
+                          <button
+                            onClick={() => setSelectedBookingId(b.id)}
+                            className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 hover:text-indigo-800"
+                          >
+                            Assess
+                          </button>
                           {b.meeting_link && (
                             <a href={b.meeting_link} target="_blank" className="text-indigo-600 hover:text-indigo-800 transition-colors"><Video size={18} strokeWidth={1.5} /></a>
                           )}
                         </div>
                       </div>
                     ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-8">Post-Session Assessment</h2>
+                  <div className="space-y-4">
+                    <select
+                      value={selectedBookingId}
+                      onChange={(e) => setSelectedBookingId(e.target.value)}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm"
+                    >
+                      <option value="">Select booking to assess</option>
+                      {selected.allBookings.map((booking) => (
+                        <option key={booking.id} value={booking.id}>
+                          {fmtDate(booking.date)} {fmtTime(booking.time)} ({booking.status})
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        ['nervous_system_score', 'Nervous System'],
+                        ['emotional_pattern_score', 'Emotional Pattern'],
+                        ['family_imprint_score', 'Family Imprint'],
+                        ['incident_load_score', 'Incident Load'],
+                        ['body_symptom_score', 'Body Symptoms'],
+                        ['current_stress_score', 'Current Stress'],
+                      ].map(([field, label]) => (
+                        <label key={field} className="text-xs text-slate-600">
+                          <span className="block mb-1 font-semibold">{label}</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={scoreForm[field as keyof typeof scoreForm] as number}
+                            onChange={(e) =>
+                              setScoreForm((prev) => ({
+                                ...prev,
+                                [field]: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full border border-slate-200 rounded-xl p-2"
+                          />
+                        </label>
+                      ))}
+                    </div>
+
+                    <textarea
+                      value={scoreForm.therapist_notes}
+                      onChange={(e) => setScoreForm((prev) => ({ ...prev, therapist_notes: e.target.value }))}
+                      rows={4}
+                      placeholder="Session notes"
+                      className="w-full border border-slate-200 rounded-xl p-3"
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="url"
+                        value={scoreForm.resource_pdf_url}
+                        onChange={(e) => setScoreForm((prev) => ({ ...prev, resource_pdf_url: e.target.value }))}
+                        placeholder="PDF URL"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm"
+                      />
+                      <input
+                        type="url"
+                        value={scoreForm.resource_mp4_url}
+                        onChange={(e) => setScoreForm((prev) => ({ ...prev, resource_mp4_url: e.target.value }))}
+                        placeholder="MP4 URL"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm"
+                      />
+                    </div>
+
+                    <button
+                      onClick={submitSessionAssessment}
+                      disabled={savingAssessment || !selectedBookingId}
+                      className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-slate-800 disabled:opacity-40"
+                    >
+                      {savingAssessment ? 'Saving...' : 'Save Session Assessment'}
+                    </button>
                   </div>
                 </section>
               </div>

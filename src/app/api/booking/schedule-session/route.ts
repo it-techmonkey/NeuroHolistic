@@ -3,6 +3,9 @@ import { createClient as createServerClient } from '@/lib/auth/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUserProgram } from '@/lib/programs';
 import { incrementUsedSessions } from '@/lib/supabase/programs';
+import { isValidSlot } from '@/lib/booking/slots';
+import { generateGoogleMeetLink } from '@/lib/meeting/google-meet';
+import { sendBookingNotifications } from '@/lib/notifications/booking';
 import type { Database } from '@/lib/supabase/database.types';
 
 // Service-role client for writes
@@ -28,6 +31,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Date and time are required' }, { status: 400 });
     }
 
+    if (!isValidSlot(time)) {
+      return NextResponse.json({ error: 'Invalid time slot' }, { status: 400 });
+    }
+
     // Get user's program
     const programData = await getUserProgram(user.id);
 
@@ -41,14 +48,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No sessions remaining in your program.' }, { status: 403 });
     }
 
-    // Check for duplicate slot
-    const { data: existingSlot } = await supabase
+    let duplicateQuery = supabase
       .from('bookings')
       .select('id')
-      .eq('program_id', program.id)
       .eq('date', date)
       .eq('time', time)
-      .maybeSingle();
+      .eq('status', 'confirmed');
+
+    if (program.therapist_user_id) {
+      duplicateQuery = duplicateQuery.eq('therapist_user_id', program.therapist_user_id);
+    } else {
+      duplicateQuery = duplicateQuery.eq('therapist_id', program.therapist_name || 'program-session');
+    }
+
+    const { data: existingSlot } = await duplicateQuery.maybeSingle();
 
     if (existingSlot) {
       return NextResponse.json({ error: 'This time slot is already booked. Please choose another.' }, { status: 409 });
@@ -62,6 +75,8 @@ export async function POST(request: NextRequest) {
     const lastName = (user.user_metadata?.last_name as string | undefined) || '';
     const fullName = `${firstName} ${lastName}`.trim() || user.email || '';
 
+    const meetingLink = generateGoogleMeetLink();
+
     // Create booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
@@ -71,12 +86,14 @@ export async function POST(request: NextRequest) {
         email: user.email!,
         phone: (user.user_metadata?.phone as string | undefined) || '',
         country: '',
-        therapist_id: 'program-session',
-        therapist_name: 'Program Session',
+        therapist_id: program.therapist_name || 'program-session',
+        therapist_name: program.therapist_name || 'Program Session',
+        therapist_user_id: program.therapist_user_id || null,
         date,
         time,
         type: 'program',
         program_id: program.id,
+        meeting_link: meetingLink,
         status: 'confirmed',
       })
       .select('id')
@@ -104,11 +121,23 @@ export async function POST(request: NextRequest) {
       if (error) console.error('[ScheduleSession] sessions insert error (non-fatal):', error);
     });
 
+    await sendBookingNotifications({
+      name: fullName,
+      email: user.email!,
+      phone: (user.user_metadata?.phone as string | undefined) || null,
+      therapistName: program.therapist_name || 'Program Session',
+      date,
+      time,
+      meetingLink,
+      context: 'program_session',
+    });
+
     return NextResponse.json({
       success: true,
       sessionNumber,
       remainingSessions: remainingSessions - 1,
       bookingId: booking.id,
+      meetingLink,
     });
   } catch (err) {
     console.error('[ScheduleSession] Unexpected error:', err);

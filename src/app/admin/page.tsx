@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import LogoutButton from '@/components/ui/LogoutButton';
 import { 
   TrendingUp, 
@@ -92,7 +91,6 @@ function calculateLTVTrend(payments: any[], clientStats: any[]) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function SuperAdminDashboard() {
-  const router = useRouter();
   const [tab, setTab] = useState<'finance' | 'staff' | 'growth' | 'clients' | 'assessments'>('finance');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -103,7 +101,8 @@ export default function SuperAdminDashboard() {
       setLoading(true);
       setError(null);
       const res = await fetch('/api/admin/overview');
-      if (res.status === 401) { router.push('/auth/login'); return; }
+      // Middleware ensures only founders reach /admin.
+      // Surface API errors in the UI rather than silently redirecting.
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
       const json = await res.json();
       setData(json);
@@ -113,7 +112,7 @@ export default function SuperAdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -264,6 +263,10 @@ export default function SuperAdminDashboard() {
                         <span className="text-slate-400">Upcoming Sessions</span>
                         <span className="font-semibold">{t.upcomingCount}</span>
                       </div>
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-slate-400">Avg Session Score</span>
+                        <span className="font-semibold">{t.averageScore ?? '—'}</span>
+                      </div>
                     </div>
                     <button className="w-full py-3 bg-slate-50 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-colors">View Details</button>
                   </div>
@@ -350,6 +353,7 @@ export default function SuperAdminDashboard() {
                     <th className="pb-4">Program Status</th>
                     <th className="pb-4 text-center">Sessions</th>
                     <th className="pb-4">Dysregulation Score</th>
+                    <th className="pb-4">Avg Session Score</th>
                     <th className="pb-4">Total Paid</th>
                     <th className="pb-4">Joined</th>
                   </tr>
@@ -371,6 +375,7 @@ export default function SuperAdminDashboard() {
                         <span className="font-semibold">{client.sessionsUsed}/{client.totalSessions}</span>
                       </td>
                       <td className="py-5 text-xs font-semibold">{client.assessmentScore ?? '—'}</td>
+                      <td className="py-5 text-xs font-semibold">{client.averageSessionScore ?? '—'}</td>
                       <td className="py-5 font-mono text-sm">{fmtAED(client.totalPaid)}</td>
                       <td className="py-5 text-xs text-slate-400">{fmtDate(client.joinedAt)}</td>
                     </tr>
