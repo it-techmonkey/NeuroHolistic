@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth, type UserRole } from '@/lib/auth/context';
+import { getHomeRouteForRole } from '@/lib/auth/role-routing';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -9,38 +10,23 @@ interface ProtectedRouteProps {
   requiredRole?: UserRole;
 }
 
-/**
- * Protect a route based on authentication and role.
- * 
- * IMPORTANT: Only redirects after isLoading=false AND role is resolved.
- * This prevents the "infinite loading" bug caused by role being null
- * while the initial auth check is still in progress.
- */
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { isAuthenticated, role, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Do nothing while auth is loading
     if (isLoading) return;
 
-    // Not authenticated → login
     if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
 
-    // If a requiredRole is given, wait until role is actually resolved (not null)
-    // before deciding to redirect — this avoids redirecting during the DB fetch
-    if (requiredRole && role !== null && role !== requiredRole) {
-      // Wrong role: redirect to the right dashboard
-      if (role === 'therapist') router.push('/therapist');
-      else if (role === 'founder') router.push('/admin');
-      else router.push('/dashboard');
+    if (requiredRole && role && role !== requiredRole) {
+      router.push(getHomeRouteForRole(role));
     }
   }, [isAuthenticated, role, isLoading, requiredRole, router]);
 
-  // Show loading spinner while auth resolves
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -52,13 +38,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     );
   }
 
-  // Not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  // Has a requiredRole but role is still being fetched — keep showing spinner
-  // (role=null while isLoading=false can briefly occur on fast navigations)
   if (requiredRole && role === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -67,7 +50,6 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     );
   }
 
-  // Wrong role — render nothing while redirect fires
   if (requiredRole && role !== requiredRole) {
     return null;
   }

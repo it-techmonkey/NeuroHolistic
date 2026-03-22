@@ -2,13 +2,14 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { login } from '@/app/auth/actions';
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const next = searchParams.get('next');
+  const redirectTo = searchParams.get('redirectTo');
+  const targetAfterLogin = next || redirectTo || undefined;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +31,7 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
-    const result = await login({ email, password, next: next || undefined });
+    const result = await login({ email, password, next: targetAfterLogin });
     setLoading(false);
 
     if (result.error) {
@@ -39,7 +40,7 @@ function LoginForm() {
       // Hard navigation resets the React tree, picking up fresh server-side session cookies.
       // This is required to avoid the AuthContext stale-state issue where the dashboard
       // would show a loading spinner indefinitely or redirect incorrectly.
-      window.location.href = result.redirectTo || next || '/dashboard';
+      window.location.href = result.redirectTo || targetAfterLogin || '/dashboard';
     }
   }
 

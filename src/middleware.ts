@@ -1,10 +1,29 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { canAccessPath, getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Build response to pass cookies through
+  const isApiRoute = pathname.startsWith('/api/');
+  const isNextInternal = pathname.startsWith('/_next/') || pathname === '/favicon.ico';
+
+  const publicPrefixes = [
+    '/', '/auth', '/method', '/programs', '/about',
+    '/team', '/events', '/retreats', '/corporate-wellbeing',
+    '/research', '/academy', '/faqs', '/consultation',
+    '/assessment',
+  ];
+
+  const isPublic = publicPrefixes.some(p =>
+    pathname === p || (p !== '/' && pathname.startsWith(p + '/'))
+  );
+
+  if (isApiRoute || isNextInternal || isPublic) {
+    return NextResponse.next({ request });
+  }
+
+  // Build response first — required by @supabase/ssr cookie handling
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -24,62 +43,37 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session
+  // IMPORTANT: getUser() validates the JWT server-side — never use getSession() here
   const { data: { user } } = await supabase.auth.getUser();
 
-  // ── Public routes — no auth required ──────────────────────
-  const publicPaths = ['/', '/auth', '/consultation', '/programs', '/method', '/about',
-    '/team', '/events', '/retreats', '/corporate-wellbeing', '/research',
-    '/academy', '/assessment', '/faqs'];
-  
-  const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
-  const isApiRoute = pathname.startsWith('/api/');
+  const authRequiredPrefixes = ['/dashboard', '/therapist', '/admin', '/booking'];
+  const requiresAuth = authRequiredPrefixes.some(prefix => pathname.startsWith(prefix));
 
-  if (isPublic || isApiRoute) {
+  // ── Unauthenticated → redirect to login ────────────────────
+  if (requiresAuth && !user) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('next', pathname);
+    const response = NextResponse.redirect(loginUrl);
+    // Copy over any Supabase cookies
+    supabaseResponse.cookies.getAll().forEach(c => response.cookies.set(c));
+    return response;
+  }
+
+  if (!user) {
     return supabaseResponse;
   }
 
-  // ── Unauthenticated → login ────────────────────────────────
-  if (!user) {
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Get role from public.users
-  const { data: userData } = await supabase
+  // ── Fetch role for authenticated users ─────────────────────
+  const { data: profile } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single();
 
-  const role = userData?.role ?? 'client';
+  const role = normalizeUserRole(profile?.role as string | null | undefined);
 
-  // ── /admin → founder only ──────────────────────────────────
-  if (pathname.startsWith('/admin')) {
-    if (role !== 'founder') {
-      return NextResponse.redirect(new URL(role === 'therapist' ? '/therapist' : '/dashboard', request.url));
-    }
-    return supabaseResponse;
-  }
-
-  // ── /therapist → therapist or founder only ─────────────────
-  if (pathname.startsWith('/therapist')) {
-    if (role !== 'therapist' && role !== 'founder') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return supabaseResponse;
-  }
-
-  // ── /dashboard → client or founder ────────────────────────
-  if (pathname.startsWith('/dashboard')) {
-    if (role === 'therapist') {
-      return NextResponse.redirect(new URL('/therapist', request.url));
-    }
-    if (role === 'founder') {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
-    return supabaseResponse;
+  if (!canAccessPath(role, pathname)) {
+    return NextResponse.redirect(new URL(getHomeRouteForRole(role), request.url));
   }
 
   return supabaseResponse;
@@ -87,6 +81,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // Match all paths except static assets
     '/((?!_next/static|_next/image|favicon.ico|images/|icons/).*)',
   ],
 };

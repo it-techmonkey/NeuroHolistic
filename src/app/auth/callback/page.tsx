@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/auth/server';
+import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
 import { redirect } from 'next/navigation';
 
 export default async function AuthCallbackPage({
@@ -27,8 +28,20 @@ export default async function AuthCallbackPage({
     }
 
     console.log('[AuthCallback] Session created successfully for user:', user.id);
+
+    if (next) {
+      redirect(next);
+    }
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const role = normalizeUserRole(profile?.role as string | null | undefined);
+    redirect(getHomeRouteForRole(role));
   }
 
-  // Redirect to next param (e.g. /booking/payment-options for program flow), or dashboard
   redirect(next || '/dashboard');
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/auth/server';
+import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
 
 export async function signUp(formData: {
   firstName: string;
@@ -92,26 +93,14 @@ export async function login(formData: {
       .eq('id', user.id)
       .single();
 
-    const role = userData?.role || 'client';
+    const role = normalizeUserRole(userData?.role as string | null | undefined);
 
     // If a next param was provided, always use it
     if (formData.next) {
       return { success: true, redirectTo: formData.next };
     }
 
-    // Route based on role
-    if (role === 'founder') {
-      return { success: true, redirectTo: '/admin' };
-    }
-
-    if (role === 'therapist') {
-      return { success: true, redirectTo: '/therapist' };
-    }
-
-    // Clients always go to dashboard
-    if (role === 'client') {
-      return { success: true, redirectTo: '/dashboard' };
-    }
+    return { success: true, redirectTo: getHomeRouteForRole(role) };
   }
 
   return { success: true, redirectTo: '/dashboard' };
