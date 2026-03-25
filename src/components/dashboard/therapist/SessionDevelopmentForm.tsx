@@ -1,0 +1,483 @@
+'use client';
+
+import { useState } from 'react';
+
+interface SessionDevelopmentFormProps {
+  sessionId: string;
+  clientId: string;
+  therapistId: string;
+  sessionNumber: number;
+  sessionDate: string;
+  existingForm?: any;
+  onClose: () => void;
+  onSave: (form: any) => void;
+}
+
+const TECHNIQUE_OPTIONS = [
+  'Somatic Tracking', 'Breathwork', 'EMDR', 'Parts Work/IFS', 'CBT Techniques',
+  'DBT Skills', 'Mindfulness', 'Body Scanning', 'Grounding Exercises',
+  'Trauma Release', 'Inner Child Work', 'Narrative Therapy', 'EFT Tapping',
+  'Progressive Relaxation', 'Visualization', 'Psychoeducation',
+];
+
+const SCORE_LABELS: Record<number, string> = {
+  0: 'None',
+  1: 'Minimal',
+  2: 'Very mild',
+  3: 'Mild',
+  4: 'Mild-moderate',
+  5: 'Moderate',
+  6: 'Moderate-significant',
+  7: 'Significant',
+  8: 'Severe',
+  9: 'Very severe',
+  10: 'Extreme',
+};
+
+export default function SessionDevelopmentForm({
+  sessionId,
+  clientId,
+  therapistId,
+  sessionNumber,
+  sessionDate,
+  existingForm,
+  onClose,
+  onSave,
+}: SessionDevelopmentFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'pre' | 'session' | 'post' | 'scores' | 'notes'>('pre');
+
+  const [form, setForm] = useState({
+    previous_session_improvements: existingForm?.previous_session_improvements ?? '',
+    previous_session_challenges: existingForm?.previous_session_challenges ?? '',
+    pre_session_symptoms: existingForm?.pre_session_symptoms ?? [],
+    pre_session_intensity: existingForm?.pre_session_intensity ?? 5,
+    techniques_used: existingForm?.techniques_used ?? [],
+    key_interventions: existingForm?.key_interventions ?? '',
+    breakthroughs_resistance: existingForm?.breakthroughs_resistance ?? '',
+    post_session_symptoms: existingForm?.post_session_symptoms ?? [],
+    post_session_intensity: existingForm?.post_session_intensity ?? 5,
+    shift_observed: existingForm?.shift_observed ?? '',
+    client_feedback: existingForm?.client_feedback ?? '',
+    integration_notes: existingForm?.integration_notes ?? '',
+    therapist_internal_notes: existingForm?.therapist_internal_notes ?? '',
+    nervous_system_score: existingForm?.nervous_system_score ?? 5,
+    emotional_state_score: existingForm?.emotional_state_score ?? 5,
+    cognitive_patterns_score: existingForm?.cognitive_patterns_score ?? 5,
+    body_symptoms_score: existingForm?.body_symptoms_score ?? 5,
+    behavioral_patterns_score: existingForm?.behavioral_patterns_score ?? 5,
+    life_functioning_score: existingForm?.life_functioning_score ?? 5,
+  });
+
+  const updateField = (field: string, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleTechnique = (technique: string) => {
+    setForm(prev => ({
+      ...prev,
+      techniques_used: prev.techniques_used.includes(technique)
+        ? prev.techniques_used.filter((t: string) => t !== technique)
+        : [...prev.techniques_used, technique],
+    }));
+  };
+
+  const goalReadinessScore = form.nervous_system_score + form.emotional_state_score +
+    form.cognitive_patterns_score + form.body_symptoms_score +
+    form.behavioral_patterns_score + form.life_functioning_score;
+
+  const handleSave = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const payload = {
+        sessionId,
+        clientId,
+        therapistId,
+        data: {
+          session_number: sessionNumber,
+          session_date: sessionDate,
+          ...form,
+          submitted_at: new Date().toISOString(),
+        },
+      };
+
+      const res = await fetch('/api/assessments/session-development', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save form');
+      }
+
+      const data = await res.json();
+      onSave(data.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ScoreSlider = ({ label, field, value }: { label: string; field: string; value: number }) => (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        <span className="text-sm font-bold text-indigo-600">{value}/10</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="10"
+        value={value}
+        onChange={(e) => updateField(field, parseInt(e.target.value))}
+        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+      />
+      <p className="text-xs text-slate-500">{SCORE_LABELS[value]}</p>
+    </div>
+  );
+
+  const IntensitySlider = ({ label, field, value }: { label: string; field: string; value: number }) => (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        <span className="text-sm font-bold text-amber-600">{value}/10</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="10"
+        value={value}
+        onChange={(e) => updateField(field, parseInt(e.target.value))}
+        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+      />
+    </div>
+  );
+
+  const tabs = [
+    { id: 'pre', label: 'Pre-Session' },
+    { id: 'session', label: 'Session' },
+    { id: 'post', label: 'Post-Session' },
+    { id: 'scores', label: 'Scores' },
+    { id: 'notes', label: 'Notes' },
+  ] as const;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">Session Development Form</h2>
+              <p className="text-sm text-slate-500 mt-1">Session {sessionNumber} — {sessionDate}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-slate-500">Goal Readiness</p>
+              <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-4">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Pre-Session Tab */}
+          {activeTab === 'pre' && (
+            <div className="space-y-6">
+              <h3 className="font-medium text-slate-900">Pre-Session Assessment</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Previous Session Improvements
+                </label>
+                <textarea
+                  value={form.previous_session_improvements}
+                  onChange={(e) => updateField('previous_session_improvements', e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="What improvements were observed since the last session?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Previous Session Challenges
+                </label>
+                <textarea
+                  value={form.previous_session_challenges}
+                  onChange={(e) => updateField('previous_session_challenges', e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="What challenges remain from the previous session?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Pre-Session Symptoms (describe what client reported)
+                </label>
+                <input
+                  type="text"
+                  value={form.pre_session_symptoms.join(', ')}
+                  onChange={(e) => updateField('pre_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Anxiety, tension, fatigue (comma-separated)"
+                />
+              </div>
+
+              <IntensitySlider
+                label="Pre-Session Symptom Intensity"
+                field="pre_session_intensity"
+                value={form.pre_session_intensity}
+              />
+            </div>
+          )}
+
+          {/* Session Tab */}
+          {activeTab === 'session' && (
+            <div className="space-y-6">
+              <h3 className="font-medium text-slate-900">Session Documentation</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Techniques Used</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {TECHNIQUE_OPTIONS.map(technique => (
+                    <button
+                      key={technique}
+                      type="button"
+                      onClick={() => toggleTechnique(technique)}
+                      className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
+                        form.techniques_used.includes(technique)
+                          ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {form.techniques_used.includes(technique) ? '✓ ' : ''}{technique}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Key Interventions</label>
+                <textarea
+                  value={form.key_interventions}
+                  onChange={(e) => updateField('key_interventions', e.target.value)}
+                  rows={4}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Describe the key therapeutic interventions used..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Breakthroughs & Resistance</label>
+                <textarea
+                  value={form.breakthroughs_resistance}
+                  onChange={(e) => updateField('breakthroughs_resistance', e.target.value)}
+                  rows={4}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Note any breakthroughs or resistance encountered..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Post-Session Tab */}
+          {activeTab === 'post' && (
+            <div className="space-y-6">
+              <h3 className="font-medium text-slate-900">Post-Session Assessment</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Post-Session Symptoms (describe what client reported)
+                </label>
+                <input
+                  type="text"
+                  value={form.post_session_symptoms.join(', ')}
+                  onChange={(e) => updateField('post_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Reduced anxiety, lighter (comma-separated)"
+                />
+              </div>
+
+              <IntensitySlider
+                label="Post-Session Symptom Intensity"
+                field="post_session_intensity"
+                value={form.post_session_intensity}
+              />
+
+              {/* Intensity Change Indicator */}
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Intensity Change:</span>
+                  <span className={`text-lg font-bold ${
+                    form.post_session_intensity < form.pre_session_intensity
+                      ? 'text-green-600'
+                      : form.post_session_intensity > form.pre_session_intensity
+                      ? 'text-red-600'
+                      : 'text-slate-600'
+                  }`}>
+                    {form.post_session_intensity - form.pre_session_intensity > 0 ? '+' : ''}
+                    {form.post_session_intensity - form.pre_session_intensity}
+                    {form.post_session_intensity < form.pre_session_intensity && ' (Improved)'}
+                    {form.post_session_intensity > form.pre_session_intensity && ' (Worsened)'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Shift Observed</label>
+                <textarea
+                  value={form.shift_observed}
+                  onChange={(e) => updateField('shift_observed', e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="What shifts were observed during/after the session?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Client Feedback</label>
+                <textarea
+                  value={form.client_feedback}
+                  onChange={(e) => updateField('client_feedback', e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Direct feedback from the client..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Scores Tab */}
+          {activeTab === 'scores' && (
+            <div className="space-y-6">
+              <h3 className="font-medium text-slate-900">Progress Scores (0-10)</h3>
+              <p className="text-sm text-slate-500">Rate each domain based on session observations.</p>
+
+              <div className="space-y-4">
+                <ScoreSlider label="Nervous System Regulation" field="nervous_system_score" value={form.nervous_system_score} />
+                <ScoreSlider label="Emotional State" field="emotional_state_score" value={form.emotional_state_score} />
+                <ScoreSlider label="Cognitive Patterns" field="cognitive_patterns_score" value={form.cognitive_patterns_score} />
+                <ScoreSlider label="Body Symptoms" field="body_symptoms_score" value={form.body_symptoms_score} />
+                <ScoreSlider label="Behavioral Patterns" field="behavioral_patterns_score" value={form.behavioral_patterns_score} />
+                <ScoreSlider label="Life Functioning" field="life_functioning_score" value={form.life_functioning_score} />
+              </div>
+
+              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-indigo-900">Goal Readiness Score:</span>
+                  <span className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notes Tab */}
+          {activeTab === 'notes' && (
+            <div className="space-y-6">
+              <h3 className="font-medium text-slate-900">Clinical Notes</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Integration Notes <span className="text-xs text-slate-400">(visible to client)</span>
+                </label>
+                <textarea
+                  value={form.integration_notes}
+                  onChange={(e) => updateField('integration_notes', e.target.value)}
+                  rows={4}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  placeholder="Notes for the client to integrate between sessions..."
+                />
+              </div>
+
+              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                <label className="block text-sm font-medium text-amber-800 mb-1">
+                  Therapist Internal Notes <span className="text-xs">(NOT visible to client)</span>
+                </label>
+                <textarea
+                  value={form.therapist_internal_notes}
+                  onChange={(e) => updateField('therapist_internal_notes', e.target.value)}
+                  rows={5}
+                  className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-white mt-2"
+                  placeholder="Private clinical notes — these will never be shared with the client..."
+                />
+                <p className="text-xs text-amber-700 mt-2">
+                  These notes are protected by RLS and only accessible by therapists and admins.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-slate-100 flex justify-between items-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
+          >
+            Cancel
+          </button>
+          <div className="flex gap-3">
+            {activeTab !== 'pre' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab(tabs[tabs.findIndex(t => t.id === activeTab) - 1]?.id || 'pre')}
+                className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50"
+              >
+                Previous
+              </button>
+            )}
+            {activeTab !== 'notes' ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab(tabs[tabs.findIndex(t => t.id === activeTab) + 1]?.id || 'notes')}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={loading}
+                className="px-6 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : existingForm ? 'Update Form' : 'Submit Form'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

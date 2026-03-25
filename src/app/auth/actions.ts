@@ -10,14 +10,21 @@ export async function signUp(formData: {
   email: string;
   password: string;
   passwordConfirm: string;
+  country?: string;
   redirectTo?: string;
 }) {
   if (formData.password !== formData.passwordConfirm) {
     return { error: 'Passwords do not match' };
   }
 
-  if (formData.password.length < 6) {
-    return { error: 'Password must be at least 6 characters' };
+  if (formData.password.length < 8) {
+    return { error: 'Password must be at least 8 characters' };
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    return { error: 'Invalid email format' };
   }
 
   const supabase = await createClient();
@@ -35,6 +42,7 @@ export async function signUp(formData: {
         last_name: formData.lastName.trim(),
         full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         phone: formData.phone.trim(),
+        country: formData.country?.trim() ?? '',
       },
       emailRedirectTo,
     },
@@ -50,9 +58,19 @@ export async function signUp(formData: {
       id: authData.user.id,
       email: formData.email,
       role: 'client',
+      full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+      phone: formData.phone.trim() || null,
+      country: formData.country?.trim() ?? null,
     }).then(({ error }) => {
       if (error) console.error('[SignUp] Error creating user record:', error);
     });
+  }
+
+  if (authData.session && formData.redirectTo) {
+    return {
+      success: true,
+      redirectTo: formData.redirectTo,
+    };
   }
 
   return {
@@ -66,6 +84,10 @@ export async function signUp(formData: {
  * Returns { error } on failure, or { redirectTo } on success.
  * The CLIENT is responsible for navigating to redirectTo.
  * This avoids the NEXT_REDIRECT error swallowed by try/catch in client components.
+ */
+/**
+ * Login handler with role-based redirect
+ * Uses admin client to ensure we read the correct role from database
  */
 export async function login(formData: {
   email: string;
@@ -83,27 +105,44 @@ export async function login(formData: {
     return { error: error.message };
   }
 
-  // Get role for redirect
+  // Get user and fetch role
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (user) {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const role = normalizeUserRole(userData?.role as string | null | undefined);
-
-    // If a next param was provided, always use it
-    if (formData.next) {
-      return { success: true, redirectTo: formData.next };
-    }
-
-    return { success: true, redirectTo: getHomeRouteForRole(role) };
+  if (!user) {
+    return { error: 'User not found after login' };
   }
 
-  return { success: true, redirectTo: '/dashboard' };
+  // Use service client to ensure we get the correct role
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: userData, error: roleError } = await serviceClient
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (roleError) {
+    console.error('[Login] Error fetching role:', roleError);
+    // Fallback to client role if we can't determine
+    const role = 'client';
+    const redirectTo = formData.next 
+      ? formData.next 
+      : getHomeRouteForRole(role);
+    return { success: true, redirectTo };
+  }
+
+  const role = normalizeUserRole(userData?.role as string | null | undefined);
+  
+  // Always redirect to /dashboard which will handle role-based routing
+  const redirectUrl = '/dashboard';
+  
+  console.log('[Login] User:', user.email, 'DB Role:', userData?.role, 'Normalized:', role, 'Redirect:', redirectUrl);
+
+  return { success: true, redirectTo: redirectUrl };
 }
 
 export async function logout() {

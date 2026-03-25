@@ -2,35 +2,37 @@
 
 import { useRouter } from "next/navigation";
 import { type MouseEvent, type ReactNode } from "react";
-import { useAuth } from "@/lib/auth/context";
+import { useBookingModalSafe } from "./BookingModal";
 
 type BookNowButtonProps = {
   className?: string;
   children: ReactNode;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
-  href?: string;
+  bookingType?: "consultation" | "program" | null;
 };
 
-/**
- * BookNowButton — navigates to consultation or paid program booking.
- * If authenticated and has used free consultation, goes to /booking/payment-options
- * Otherwise goes to /consultation for free consultation
- */
-export default function BookNowButton({ className = "", children, onClick, href = "/consultation" }: BookNowButtonProps) {
+export default function BookNowButton({
+  className = "",
+  children,
+  onClick,
+  bookingType = null,
+}: BookNowButtonProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const modal = useBookingModalSafe();
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);
-    if (!event.defaultPrevented) {
-      // If authenticated and going to paid program, redirect to login with next param
-      if (isAuthenticated) {
-        router.push(href);
-      } else if (href !== "/consultation") {
-        // If not authenticated but trying to go to paid program, redirect to login with next param
-        router.push(`/auth/login?next=${encodeURIComponent(href)}`);
+    if (event.defaultPrevented) return;
+
+    if (modal) {
+      // Open the booking modal directly on the page
+      modal.openBookingModal(bookingType);
+    } else {
+      // Fallback: navigate to booking page
+      if (bookingType === "program") {
+        router.push("/booking/payment-options");
       } else {
-        router.push("/consultation");
+        router.push("/consultation/book");
       }
     }
   };

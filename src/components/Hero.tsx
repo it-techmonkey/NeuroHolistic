@@ -1,44 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import BookNowButton from "@/components/booking/BookNowButton";
-import { useAuth } from "@/lib/auth/context";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import LandingBookingCTA from "@/components/booking/LandingBookingCTA";
 
 export default function Hero() {
-  const { isAuthenticated, user, isLoading } = useAuth();
-  const [hasHadConsultation, setHasHadConsultation] = useState(false);
-  const [checkingConsultation, setCheckingConsultation] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !user || isLoading) {
-      setHasHadConsultation(false);
-      return;
-    }
-
-    const checkConsultation = async () => {
-      try {
-        setCheckingConsultation(true);
-        const { data: bookings } = await supabase
-          .from('bookings')
-          .select('type')
-          .eq('user_id', user.id)
-          .eq('type', 'consultation');
-        
-        setHasHadConsultation(!!bookings && bookings.length > 0);
-      } catch (error) {
-        console.error('Error checking consultation:', error);
-      } finally {
-        setCheckingConsultation(false);
-      }
-    };
-
-    checkConsultation();
-  }, [isAuthenticated, user, isLoading]);
-
-  const buttonText = isAuthenticated && hasHadConsultation ? 'Book a Program' : 'Book a Free Consultation';
-  const buttonHref = isAuthenticated && hasHadConsultation ? '/booking/payment-options' : '/consultation';
 
   return (
     <motion.section
@@ -74,14 +39,11 @@ export default function Hero() {
             <p className="mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] leading-[1.7] text-[#C3CBE8] lg:text-[17.5px]">
               The NeuroHolistic Method™ is a science-based approach that restores balance within the human system, supporting deep, long-lasting transformation.
             </p>
-            <div className="mt-10 flex justify-center lg:justify-start">
-              <BookNowButton 
-                href={buttonHref}
-                className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
-              >
-                {buttonText} <span>→</span>
-              </BookNowButton>
-            </div>
+            <LandingBookingCTA
+              containerClassName="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
+              primaryClassName="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
+              secondaryClassName="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15"
+            />
           </motion.div>
 
           <motion.div

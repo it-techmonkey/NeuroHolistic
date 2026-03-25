@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Hide navbar and footer on auth, dashboard, admin, therapist, booking, and consultation routes
   const hideNavbar = 
     pathname?.startsWith('/auth/') || 
     pathname?.startsWith('/dashboard/') || 
@@ -16,8 +15,8 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname === '/admin' ||
     pathname?.startsWith('/therapist/') ||
     pathname === '/therapist' ||
-    pathname?.startsWith('/consultation/') ||
-    pathname === '/consultation' ||
+    pathname?.startsWith('/book/') ||
+    pathname === '/book' ||
     pathname?.startsWith('/booking/') ||
     pathname === '/booking';
     

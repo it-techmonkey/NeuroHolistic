@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { normalizeUserRole } from '@/lib/auth/role-routing';
 
 export async function GET() {
@@ -20,11 +21,20 @@ export async function GET() {
       );
     }
 
-    const { data: profile } = await supabase
+    // Use service role to bypass RLS when fetching role
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: profile, error: profileError } = await serviceSupabase
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single();
+
+    console.log('[Auth ME] User ID:', user.id, 'Email:', user.email);
+    console.log('[Auth ME] Profile from DB:', profile, 'Error:', profileError?.message);
 
     return NextResponse.json(
       {

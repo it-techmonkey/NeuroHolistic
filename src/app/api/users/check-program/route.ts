@@ -1,23 +1,65 @@
 import { supabase } from "@/lib/supabase/client";
+import { createClient } from '@/lib/auth/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { NextRequest, NextResponse } from "next/server";
 
 /**
+ * GET /api/users/check-program
+ * Check if authenticated user has an active program
+ */
+export async function GET() {
+  try {
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const serviceSupabase = getServiceSupabase();
+
+    // Check for active program
+    const { data: program, error } = await serviceSupabase
+      .from('programs')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Get first pending/scheduled session if program exists
+    let firstSession = null;
+    if (program) {
+      const { data: session } = await serviceSupabase
+        .from('sessions')
+        .select('*')
+        .eq('program_id', program.id)
+        .in('status', ['pending', 'scheduled'])
+        .is('is_complete', false)
+        .order('session_number', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      firstSession = session;
+    }
+
+    return NextResponse.json({
+      hasProgram: !!program,
+      program: program || null,
+      firstPendingSession: firstSession,
+    });
+  } catch (error) {
+    console.error('[Check Program]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
  * POST /api/users/check-program
- * 
  * Check if a user has an active program by email
- * 
- * Request body:
- * {
- *   email: string
- * }
- * 
- * Response:
- * {
- *   hasActiveProgram: boolean
- *   programId?: string
- *   sessionsRemaining?: number
- *   userId?: string
- * }
  */
 export async function POST(request: NextRequest) {
   try {

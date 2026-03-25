@@ -1,20 +1,79 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import LogoutButton from '@/components/ui/LogoutButton';
-import { 
-  TrendingUp, 
-  Users, 
-  BarChart3, 
-  ArrowUpRight, 
-  Search,
-  MoreHorizontal,
-  DollarSign,
-  AlertCircle,
-  LogOut
-} from 'lucide-react';
+import DashboardShell from '@/components/dashboard/DashboardShell';
+import { AlertCircle } from 'lucide-react';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type PaymentRecord = {
+  id: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  type: string;
+  clientName: string;
+  createdAt: string;
+};
+
+type TherapistStat = {
+  id: string;
+  name: string;
+  email: string;
+  clientCount: number;
+  revenue: number;
+  activePrograms: number;
+  completedSessions: number;
+  upcomingCount: number;
+  averageScore: number | null;
+};
+
+type ClientStat = {
+  id: string;
+  name: string;
+  email: string;
+  therapistName: string | null;
+  programStatus: string | null;
+  sessionsUsed: number;
+  totalSessions: number;
+  assessmentScore: number | null;
+  averageSessionScore: number | null;
+  totalPaid: number;
+  joinedAt: string;
+};
+
+type LeadRecord = {
+  id: string;
+  name: string;
+  email: string;
+  country: string;
+  source: string;
+  created_at: string;
+};
+
+type AssessmentRecord = {
+  id: string;
+  clientName: string;
+  full_name: string;
+  email: string;
+  overall_dysregulation_score: number | null;
+  overall_severity_band: string | null;
+  nervous_system_type: string | null;
+  submitted_at: string;
+};
+
+type AdminData = {
+  kpis: { totalRevenue: number };
+  payments: PaymentRecord[];
+  therapistStats: TherapistStat[];
+  clientStats: ClientStat[];
+  leads: LeadRecord[];
+  assessments: AssessmentRecord[];
+};
+
+type FounderTab = 'finance' | 'team' | 'clients' | 'growth' | 'assessments';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function fmtAED(fils: number) {
   return `AED ${(fils / 100).toLocaleString('en-AE', { minimumFractionDigits: 0 })}`;
 }
@@ -23,76 +82,69 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function calculateAverageLTV(clientStats: any[]) {
+function calculateAverageLTV(clientStats: ClientStat[]) {
   if (!clientStats?.length) return 0;
   const totalValue = clientStats.reduce((sum, c) => sum + (c.totalPaid || 0), 0);
   return Math.round(totalValue / clientStats.length);
 }
 
-function calculateConversionRate(leads: any[], clients: any[]) {
+function calculateConversionRate(leads: LeadRecord[], clients: ClientStat[]) {
   if (!leads?.length) return 0;
-  const leadsEmail = new Set(leads.map((l: any) => l.email?.toLowerCase()));
-  const convertedCount = clients.filter((c: any) => leadsEmail.has(c.email?.toLowerCase())).length;
+  const leadsEmail = new Set(leads.map((l) => l.email?.toLowerCase()));
+  const convertedCount = clients.filter((c) => leadsEmail.has(c.email?.toLowerCase())).length;
   return leads.length > 0 ? Math.round((convertedCount / leads.length) * 100 * 10) / 10 : 0;
 }
 
-function calculateLeadSources(leads: any[]) {
+function calculateLeadSources(leads: LeadRecord[]) {
   const sources: Record<string, number> = {};
-  leads.forEach((lead: any) => {
+  leads.forEach((lead) => {
     const source = lead.source || 'Direct';
     sources[source] = (sources[source] || 0) + 1;
   });
   return sources;
 }
 
-function calculateMonthlyGrowth(payments: any[], clients: any[]) {
+function calculateMonthlyGrowth(payments: PaymentRecord[], _clients: ClientStat[]) {
   const now = new Date();
   const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  
+
   const thisMonthRevenue = payments
-    .filter((p: any) => p.status === 'paid' && new Date(p.createdAt) >= thisMonth)
+    .filter((p) => p.status === 'paid' && new Date(p.createdAt) >= thisMonth)
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  
+
   const lastMonthRevenue = payments
-    .filter((p: any) => p.status === 'paid' && new Date(p.createdAt) >= lastMonth && new Date(p.createdAt) < thisMonth)
+    .filter((p) => p.status === 'paid' && new Date(p.createdAt) >= lastMonth && new Date(p.createdAt) < thisMonth)
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  
+
   if (lastMonthRevenue === 0) return 0;
   return Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 * 10) / 10;
 }
 
-function calculateClientRetention(bookings: any[]) {
-  if (!bookings?.length) return 0;
-  const completedCount = bookings.filter((b: any) => b.status === 'completed').length;
-  return bookings.length > 0 ? Math.round((completedCount / bookings.length) * 100 * 10) / 10 : 0;
-}
-
-function calculateLTVTrend(payments: any[], clientStats: any[]) {
+function calculateLTVTrend(_payments: PaymentRecord[], clientStats: ClientStat[]) {
   const now = new Date();
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  // Clients who joined this month vs last month
-  const thisMonthClients = clientStats.filter((c: any) => new Date(c.joinedAt) >= thisMonthStart);
-  const lastMonthClients = clientStats.filter((c: any) => new Date(c.joinedAt) >= lastMonthStart && new Date(c.joinedAt) < thisMonthStart);
+  const thisMonthClients = clientStats.filter((c) => new Date(c.joinedAt) >= thisMonthStart);
+  const lastMonthClients = clientStats.filter((c) => new Date(c.joinedAt) >= lastMonthStart && new Date(c.joinedAt) < thisMonthStart);
 
   const avgThisMonth = thisMonthClients.length > 0
-    ? thisMonthClients.reduce((s: number, c: any) => s + (c.totalPaid || 0), 0) / thisMonthClients.length
+    ? thisMonthClients.reduce((s, c) => s + (c.totalPaid || 0), 0) / thisMonthClients.length
     : 0;
   const avgLastMonth = lastMonthClients.length > 0
-    ? lastMonthClients.reduce((s: number, c: any) => s + (c.totalPaid || 0), 0) / lastMonthClients.length
+    ? lastMonthClients.reduce((s, c) => s + (c.totalPaid || 0), 0) / lastMonthClients.length
     : 0;
 
-  if (avgLastMonth === 0) return null; // Not enough data
-  const pct = Math.round(((avgThisMonth - avgLastMonth) / avgLastMonth) * 100 * 10) / 10;
-  return pct;
+  if (avgLastMonth === 0) return null;
+  return Math.round(((avgThisMonth - avgLastMonth) / avgLastMonth) * 100 * 10) / 10;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function SuperAdminDashboard() {
-  const [tab, setTab] = useState<'finance' | 'staff' | 'growth' | 'clients' | 'assessments'>('finance');
-  const [data, setData] = useState<any>(null);
+  const [tab, setTab] = useState<FounderTab>('finance');
+  const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,10 +153,8 @@ export default function SuperAdminDashboard() {
       setLoading(true);
       setError(null);
       const res = await fetch('/api/admin/overview');
-      // Middleware ensures only founders reach /admin.
-      // Surface API errors in the UI rather than silently redirecting.
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-      const json = await res.json();
+      const json: AdminData = await res.json();
       setData(json);
     } catch (e) {
       console.error('[Admin Dashboard Error]', e);
@@ -116,7 +166,6 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Memoized calculations
   const stats = useMemo(() => {
     if (!data) return null;
     return {
@@ -128,256 +177,274 @@ export default function SuperAdminDashboard() {
     };
   }, [data]);
 
-  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-400">Loading Executive Data...</div>;
-  
-  if (error) return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="flex items-center gap-4 text-red-600">
-        <AlertCircle size={20} />
-        <span className="text-sm font-semibold">{error}</span>
-      </div>
-    </div>
-  );
+  const pendingAmount = useMemo(() => {
+    if (!data?.payments) return 0;
+    return data.payments
+      .filter((p) => p.status !== 'paid')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+  }, [data?.payments]);
 
-  return (
-    <div className="min-h-screen bg-white text-slate-900">
-      
-      {/* ── Executive Top Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100 px-4 md:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-4 md:gap-12 overflow-hidden">
-          <span className="hidden md:inline text-sm font-bold tracking-tighter uppercase whitespace-nowrap">NEURO<span className="font-light opacity-50">HOLISTIC</span> <span className="ml-2 font-light text-slate-400">HQ</span></span>
-          <span className="md:hidden text-sm font-bold tracking-tighter uppercase whitespace-nowrap">NH<span className="font-light opacity-50">HQ</span></span>
-          <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar mask-linear-fade pr-4">
-            {['finance', 'staff', 'growth', 'clients', 'assessments'].map((t) => (
-              <button 
-                key={t}
-                onClick={() => setTab(t as any)}
-                className={`text-[10px] font-bold uppercase tracking-[0.2em] transition-colors whitespace-nowrap ${tab === t ? 'text-slate-900 border-b border-slate-900 pb-1' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                {t}
-              </button>
-            ))}
+  const pendingPct = useMemo(() => {
+    if (!data?.payments?.length) return '0%';
+    const count = data.payments.filter((p) => p.status !== 'paid').length;
+    return Math.round((count / data.payments.length) * 100) + '%';
+  }, [data?.payments]);
+
+  if (loading) {
+    return (
+      <DashboardShell role="admin" activeTab={tab} onTabChange={(t) => setTab(t as FounderTab)}>
+        <div className="flex items-center justify-center py-32 text-xs uppercase tracking-widest text-slate-400">
+          Loading executive data…
+        </div>
+      </DashboardShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardShell role="admin" activeTab={tab} onTabChange={(t) => setTab(t as FounderTab)}>
+        <div className="flex items-center justify-center py-32">
+          <div className="flex items-center gap-3 text-red-600">
+            <AlertCircle size={20} />
+            <span className="text-sm font-semibold">{error}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 shrink-0">
-           <span className="hidden sm:inline text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded whitespace-nowrap">LIVE MARKET</span>
-           <div className="w-8 h-8 rounded-full bg-slate-900 shrink-0" />
-           <LogoutButton className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
-             <LogOut size={12} strokeWidth={2} />
-             <span className="hidden sm:inline">Logout</span>
-           </LogoutButton>
-        </div>
-      </nav>
+      </DashboardShell>
+    );
+  }
 
-      <main className="max-w-[1400px] mx-auto px-8 pt-32 pb-20">
+  return (
+    <DashboardShell role="admin" activeTab={tab} onTabChange={(t) => setTab(t as FounderTab)}>
 
-        {/* ── FINANCE: The Money View ── */}
-        {tab === 'finance' && (
-          <div className="space-y-16">
-            <header className="flex justify-between items-end">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2">Total Verified Revenue</p>
-                <h1 className="text-5xl font-light tracking-tighter text-slate-900">{fmtAED(data?.kpis?.totalRevenue || 0)}</h1>
-              </div>
-              <div className="flex gap-4">
-                <button className="px-6 py-2 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Tax Report</button>
-                <button className="px-6 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-colors">Payouts</button>
-              </div>
-            </header>
+      {/* ── FINANCE ── */}
+      {tab === 'finance' && (
+        <div className="space-y-12">
+          <header>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Total Verified Revenue</p>
+            <h1 className="text-4xl md:text-5xl font-light tracking-tight text-slate-900">
+              {fmtAED(data?.kpis?.totalRevenue || 0)}
+            </h1>
+          </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-100 border border-slate-100 overflow-hidden rounded-2xl">
-              {[
-                { label: 'Average LTV', value: fmtAED(stats?.avgLTV || 0), trend: stats?.ltvTrend !== null && stats?.ltvTrend !== undefined ? (stats.ltvTrend >= 0 ? '+' + stats.ltvTrend + '%' : stats.ltvTrend + '%') : 'N/A' },
-                { label: 'Pending Collections', value: fmtAED(data?.payments?.filter((p: any) => p.status !== 'paid').reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0), trend: data?.payments?.length ? Math.round(data.payments.filter((p: any) => p.status !== 'paid').length / data.payments.length * 100) + '%' : '0%' },
-                { label: 'Monthly Growth', value: (stats?.monthlyGrowth || 0) + '%', trend: (stats?.monthlyGrowth || 0) > 0 ? '+' + (stats?.monthlyGrowth || 0) + '%' : (stats?.monthlyGrowth || 0) + '%' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white p-10">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">{stat.label}</p>
-                  <div className="flex items-baseline gap-4">
-                    <p className="text-3xl font-light tracking-tight">{stat.value}</p>
-                    <span className={`text-[10px] font-bold ${stat.trend?.startsWith('+') ? 'text-emerald-600' : 'text-amber-600'}`}>{stat.trend}</span>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-200 border border-slate-200 overflow-hidden rounded-xl">
+            {[
+              {
+                label: 'Average LTV',
+                value: fmtAED(stats?.avgLTV || 0),
+                trend: stats?.ltvTrend != null ? (stats.ltvTrend >= 0 ? '+' + stats.ltvTrend + '%' : stats.ltvTrend + '%') : 'N/A',
+              },
+              {
+                label: 'Pending Collections',
+                value: fmtAED(pendingAmount),
+                trend: pendingPct,
+              },
+              {
+                label: 'Monthly Growth',
+                value: (stats?.monthlyGrowth || 0) + '%',
+                trend: (stats?.monthlyGrowth || 0) > 0 ? '+' + (stats?.monthlyGrowth || 0) + '%' : (stats?.monthlyGrowth || 0) + '%',
+              },
+            ].map((stat, i) => (
+              <div key={i} className="bg-white p-8">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-3">{stat.label}</p>
+                <div className="flex items-baseline gap-3">
+                  <p className="text-2xl font-light tracking-tight">{stat.value}</p>
+                  <span className={`text-xs font-semibold ${stat.trend?.startsWith('+') ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    {stat.trend}
+                  </span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
 
-            <section>
-              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-8">Transaction Stream</h3>
-              <div className="border-t border-slate-100 overflow-x-auto">
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-6">Transaction Stream</h3>
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
                 <div className="min-w-[600px]">
-                  {data?.payments?.slice(0, 10).map((p: any) => (
-                    <div key={p.id} className="flex items-center justify-between py-5 border-b border-slate-100">
-                      <div className="flex items-center gap-8">
-                        <span className="text-[10px] font-mono text-slate-300 uppercase w-20">{fmtDate(p.createdAt)}</span>
-                        <p className="text-sm font-semibold w-40 truncate">{p.clientName}</p>
+                  {data?.payments?.slice(0, 10).map((p) => (
+                    <div key={p.id} className="flex items-center justify-between px-6 py-4 border-b border-slate-100 last:border-b-0">
+                      <div className="flex items-center gap-6">
+                        <span className="text-[10px] font-mono text-slate-400 w-24">{fmtDate(p.createdAt)}</span>
+                        <p className="text-sm font-medium w-40 truncate">{p.clientName}</p>
                         <span className="text-[10px] uppercase tracking-widest text-slate-400 w-32">{p.type.replace(/_/g, ' ')}</span>
                       </div>
-                      <div className="flex items-center gap-12">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded w-20 text-center ${p.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{p.status}</span>
-                        <p className="text-sm font-bold tabular-nums w-20 text-right">{fmtAED(p.amount)}</p>
+                      <div className="flex items-center gap-8">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md text-center w-20 ${
+                          p.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
+                          p.status === 'failed' ? 'bg-red-50 text-red-600' :
+                          p.status === 'refunded' ? 'bg-slate-100 text-slate-600' :
+                          'bg-amber-50 text-amber-700'
+                        }`}>
+                          {p.status}
+                        </span>
+                        <p className="text-sm font-semibold tabular-nums w-24 text-right">{fmtAED(p.amount)}</p>
                       </div>
                     </div>
                   ))}
+                  {!data?.payments?.length && (
+                    <div className="py-12 text-center text-slate-400 text-xs">No transactions recorded</div>
+                  )}
                 </div>
               </div>
-            </section>
-          </div>
-        )}
+            </div>
+          </section>
+        </div>
+      )}
 
-        {/* ── STAFF: Efficiency & Payouts ── */}
-        {tab === 'staff' && (
-          <div className="space-y-12">
-            <header className="flex justify-between items-end pb-8 border-b border-slate-100">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Practitioner Contribution</h2>
-              <p className="text-lg font-light text-slate-600">{data?.therapistStats?.length || 0} Practitioners</p>
-            </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {data?.therapistStats?.map((t: any) => {
-                const bookedSessions = (t.completedSessions || 0) + (t.upcomingCount || 0);
-                return (
-                  <div key={t.id} className="border border-slate-100 p-8 rounded-2xl bg-white hover:border-slate-300 transition-colors">
-                    <div className="flex justify-between items-start mb-8">
-                      <div>
-                        <h3 className="text-xl font-bold">{t.name}</h3>
-                        <p className="text-xs text-slate-400">{t.email}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Clients</p>
-                        <p className="text-2xl font-bold text-indigo-600">{t.clientCount}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-4 mb-8">
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">Total Revenue</span>
-                        <span className="font-semibold">{fmtAED(t.revenue)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">Active Programs</span>
-                        <span className="font-semibold">{t.activePrograms}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">Completed Sessions</span>
-                        <span className="font-semibold text-emerald-600">{t.completedSessions}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">Upcoming Sessions</span>
-                        <span className="font-semibold">{t.upcomingCount}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-400">Avg Session Score</span>
-                        <span className="font-semibold">{t.averageScore ?? '—'}</span>
-                      </div>
-                    </div>
-                    <button className="w-full py-3 bg-slate-50 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-colors">View Details</button>
+      {/* ── TEAM ── */}
+      {tab === 'team' && (
+        <div className="space-y-10">
+          <header className="flex justify-between items-end pb-6 border-b border-slate-200">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">Practitioner Overview</h2>
+            <p className="text-base font-medium text-slate-600">{data?.therapistStats?.length || 0} Practitioners</p>
+          </header>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data?.therapistStats?.map((t) => (
+              <div key={t.id} className="border border-slate-200 rounded-xl bg-white p-6 hover:shadow-sm transition-shadow">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{t.name}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{t.email}</p>
                   </div>
-                );
-              })}
+                  <div className="text-right">
+                    <p className="text-[10px] font-semibold uppercase text-slate-400">Clients</p>
+                    <p className="text-xl font-bold text-indigo-600">{t.clientCount}</p>
+                  </div>
+                </div>
+                <dl className="space-y-3">
+                  {[
+                    { label: 'Total Revenue', value: fmtAED(t.revenue) },
+                    { label: 'Active Programs', value: String(t.activePrograms) },
+                    { label: 'Completed Sessions', value: String(t.completedSessions), accent: 'text-emerald-600' },
+                    { label: 'Upcoming Sessions', value: String(t.upcomingCount) },
+                    { label: 'Avg Session Score', value: t.averageScore != null ? String(t.averageScore) : '—' },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between text-xs">
+                      <dt className="text-slate-400">{row.label}</dt>
+                      <dd className={`font-semibold ${row.accent || 'text-slate-900'}`}>{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── GROWTH ── */}
+      {tab === 'growth' && (
+        <div className="space-y-10">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 pb-6 border-b border-slate-200">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">Lead Conversion Pipeline</h2>
+            <p className="text-xl font-light">
+              {stats?.conversionRate || 0}%
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest ml-2">Conversion Rate</span>
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="lg:col-span-2">
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[600px]">
+                    <thead>
+                      <tr className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50">
+                        <th className="px-6 py-3">Name</th>
+                        <th className="px-6 py-3">Source</th>
+                        <th className="px-6 py-3">Country</th>
+                        <th className="px-6 py-3 text-right">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {data?.leads?.map((lead) => (
+                        <tr key={lead.id} className="hover:bg-slate-50/50">
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium">{lead.name}</p>
+                            <p className="text-xs text-slate-400">{lead.email}</p>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-slate-600 font-medium">{lead.source || 'Direct'}</td>
+                          <td className="px-6 py-4 text-xs text-slate-600">{lead.country || '—'}</td>
+                          <td className="px-6 py-4 text-right text-xs text-slate-400 font-mono">{fmtDate(lead.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!data?.leads?.length && (
+                    <div className="py-12 text-center text-slate-400 text-xs">No leads recorded</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6 h-fit">
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-6">Lead Attribution</h3>
+              <div className="space-y-5">
+                {stats?.leadSources && Object.entries(stats.leadSources).map(([source, count]) => {
+                  const percentage = data?.leads?.length ? Math.round((count / data.leads.length) * 100) : 0;
+                  return (
+                    <div key={source}>
+                      <div className="flex justify-between text-xs font-medium mb-1.5">
+                        <span>{source}</span>
+                        <span className="text-slate-400">{percentage}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#2B2F55] rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ── GROWTH: Lead Pipeline ── */}
-        {tab === 'growth' && (
-          <div className="space-y-12">
-             <div className="flex justify-between items-end pb-8 border-b border-slate-100">
-               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Lead Conversion Pipeline</h2>
-               <p className="text-2xl font-light">{stats?.conversionRate || 0}% <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest ml-2">Conversion Rate</span></p>
-             </div>
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                <div className="lg:col-span-2 overflow-x-auto">
-                   <table className="w-full text-left min-w-[600px]">
-                     <thead>
-                        <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                          <th className="pb-4">Name</th>
-                          <th className="pb-4">Source</th>
-                          <th className="pb-4">Country</th>
-                          <th className="pb-4 text-right">Date</th>
-                        </tr>
-                     </thead>
-                     <tbody className="divide-y divide-slate-100">
-                        {data?.leads?.map((lead: any) => (
-                          <tr key={lead.id} className="group cursor-pointer hover:bg-slate-50">
-                            <td className="py-5">
-                               <p className="text-sm font-semibold">{lead.name}</p>
-                               <p className="text-xs text-slate-400">{lead.email}</p>
-                            </td>
-                            <td className="py-5 text-xs text-slate-600 uppercase tracking-tighter font-medium">{lead.source || 'Direct'}</td>
-                            <td className="py-5 text-xs text-slate-600">{lead.country || '—'}</td>
-                            <td className="py-5 text-right text-xs text-slate-400 font-mono">{fmtDate(lead.created_at)}</td>
-                          </tr>
-                        ))}
-                     </tbody>
-                   </table>
-                   {!data?.leads?.length && (
-                     <div className="py-12 text-center text-slate-400 text-xs">No leads recorded</div>
-                   )}
-                </div>
-                
-                <div className="bg-slate-50 rounded-2xl p-8 h-fit">
-                   <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-8">Lead Attribution</h3>
-                   <div className="space-y-6">
-                      {stats?.leadSources && Object.entries(stats.leadSources).map(([source, count]: [string, any]) => {
-                        const percentage = data?.leads?.length ? Math.round((count / data.leads.length) * 100) : 0;
-                        return (
-                          <div key={source}>
-                             <div className="flex justify-between text-xs font-medium mb-2">
-                                <span>{source}</span>
-                                <span className="text-slate-400 font-semibold">{percentage}%</span>
-                             </div>
-                             <div className="h-[2px] w-full bg-slate-200">
-                                <div className="h-full bg-slate-900 transition-all" style={{ width: `${percentage}%` }} />
-                             </div>
-                          </div>
-                        );
-                      })}
-                   </div>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* ── CLIENTS: Client Directory ── */}
-        {tab === 'clients' && (
-          <div className="space-y-12">
-            <header className="flex justify-between items-end pb-8 border-b border-slate-100">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Client Directory</h2>
-              <p className="text-lg font-light text-slate-600">{data?.clientStats?.length || 0} Active Clients</p>
-            </header>
+      {/* ── CLIENTS ── */}
+      {tab === 'clients' && (
+        <div className="space-y-10">
+          <header className="flex justify-between items-end pb-6 border-b border-slate-200">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">Client Directory</h2>
+            <p className="text-base font-medium text-slate-600">{data?.clientStats?.length || 0} Clients</p>
+          </header>
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                    <th className="pb-4">Name</th>
-                    <th className="pb-4">Email</th>
-                    <th className="pb-4">Assigned Therapist</th>
-                    <th className="pb-4">Program Status</th>
-                    <th className="pb-4 text-center">Sessions</th>
-                    <th className="pb-4">Dysregulation Score</th>
-                    <th className="pb-4">Avg Session Score</th>
-                    <th className="pb-4">Total Paid</th>
-                    <th className="pb-4">Joined</th>
+                  <tr className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50">
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Email</th>
+                    <th className="px-5 py-3">Therapist</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-center">Sessions</th>
+                    <th className="px-5 py-3">Dysreg. Score</th>
+                    <th className="px-5 py-3">Avg Score</th>
+                    <th className="px-5 py-3">Paid</th>
+                    <th className="px-5 py-3">Joined</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data?.clientStats?.map((client: any) => (
-                    <tr key={client.id} className="group hover:bg-slate-50 border-b border-slate-100">
-                      <td className="py-5 font-semibold">{client.name}</td>
-                      <td className="py-5 text-xs text-slate-400 font-mono">{client.email}</td>
-                      <td className="py-5">
-                        <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{client.therapistName || 'Unassigned'}</span>
+                  {data?.clientStats?.map((client) => (
+                    <tr key={client.id} className="hover:bg-slate-50/50">
+                      <td className="px-5 py-4 font-medium">{client.name}</td>
+                      <td className="px-5 py-4 text-xs text-slate-400 font-mono">{client.email}</td>
+                      <td className="px-5 py-4">
+                        <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full">
+                          {client.therapistName || 'Unassigned'}
+                        </span>
                       </td>
-                      <td className="py-5">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${client.programStatus === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+                      <td className="px-5 py-4">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${
+                          client.programStatus === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                        }`}>
                           {client.programStatus || 'None'}
                         </span>
                       </td>
-                      <td className="py-5 text-center text-xs font-medium">
-                        <span className="font-semibold">{client.sessionsUsed}/{client.totalSessions}</span>
+                      <td className="px-5 py-4 text-center text-xs font-medium">
+                        {client.sessionsUsed}/{client.totalSessions}
                       </td>
-                      <td className="py-5 text-xs font-semibold">{client.assessmentScore ?? '—'}</td>
-                      <td className="py-5 text-xs font-semibold">{client.averageSessionScore ?? '—'}</td>
-                      <td className="py-5 font-mono text-sm">{fmtAED(client.totalPaid)}</td>
-                      <td className="py-5 text-xs text-slate-400">{fmtDate(client.joinedAt)}</td>
+                      <td className="px-5 py-4 text-xs font-medium">{client.assessmentScore ?? '—'}</td>
+                      <td className="px-5 py-4 text-xs font-medium">{client.averageSessionScore ?? '—'}</td>
+                      <td className="px-5 py-4 font-mono text-sm">{fmtAED(client.totalPaid)}</td>
+                      <td className="px-5 py-4 text-xs text-slate-400">{fmtDate(client.joinedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -387,44 +454,46 @@ export default function SuperAdminDashboard() {
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ── ASSESSMENTS: Results Overview ── */}
-        {tab === 'assessments' && (
-          <div className="space-y-12">
-            <header className="flex justify-between items-end pb-8 border-b border-slate-100">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Assessment Results</h2>
-              <p className="text-lg font-light text-slate-600">{data?.assessments?.length || 0} Assessments</p>
-            </header>
+      {/* ── ASSESSMENTS ── */}
+      {tab === 'assessments' && (
+        <div className="space-y-10">
+          <header className="flex justify-between items-end pb-6 border-b border-slate-200">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">Assessment Results</h2>
+            <p className="text-base font-medium text-slate-600">{data?.assessments?.length || 0} Assessments</p>
+          </header>
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                    <th className="pb-4">Client Name</th>
-                    <th className="pb-4">Email</th>
-                    <th className="pb-4">Dysregulation Score</th>
-                    <th className="pb-4">Severity Band</th>
-                    <th className="pb-4">Nervous System Type</th>
-                    <th className="pb-4">Submitted</th>
+                  <tr className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 bg-slate-50">
+                    <th className="px-5 py-3">Client</th>
+                    <th className="px-5 py-3">Email</th>
+                    <th className="px-5 py-3">Dysreg. Score</th>
+                    <th className="px-5 py-3">Severity</th>
+                    <th className="px-5 py-3">NS Type</th>
+                    <th className="px-5 py-3">Submitted</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data?.assessments?.map((assessment: any) => (
-                    <tr key={assessment.id} className="group hover:bg-slate-50">
-                      <td className="py-5 font-semibold">{assessment.clientName || assessment.full_name}</td>
-                      <td className="py-5 text-xs text-slate-400 font-mono">{assessment.email}</td>
-                      <td className="py-5 text-sm font-bold">{assessment.overall_dysregulation_score ?? '—'}</td>
-                      <td className="py-5">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
-                          assessment.overall_severity_band === 'Severe' ? 'bg-red-50 text-red-600' :
-                          assessment.overall_severity_band === 'Moderate' ? 'bg-amber-50 text-amber-600' :
-                          'bg-emerald-50 text-emerald-600'
+                  {data?.assessments?.map((a) => (
+                    <tr key={a.id} className="hover:bg-slate-50/50">
+                      <td className="px-5 py-4 font-medium">{a.clientName || a.full_name}</td>
+                      <td className="px-5 py-4 text-xs text-slate-400 font-mono">{a.email}</td>
+                      <td className="px-5 py-4 text-sm font-semibold">{a.overall_dysregulation_score ?? '—'}</td>
+                      <td className="px-5 py-4">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${
+                          a.overall_severity_band === 'Severe' ? 'bg-red-50 text-red-600' :
+                          a.overall_severity_band === 'Moderate' ? 'bg-amber-50 text-amber-700' :
+                          'bg-emerald-50 text-emerald-700'
                         }`}>
-                          {assessment.overall_severity_band || '—'}
+                          {a.overall_severity_band || '—'}
                         </span>
                       </td>
-                      <td className="py-5 text-xs text-slate-600">{assessment.nervous_system_type || '—'}</td>
-                      <td className="py-5 text-xs text-slate-400">{fmtDate(assessment.submitted_at)}</td>
+                      <td className="px-5 py-4 text-xs text-slate-600">{a.nervous_system_type || '—'}</td>
+                      <td className="px-5 py-4 text-xs text-slate-400">{fmtDate(a.submitted_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -434,9 +503,9 @@ export default function SuperAdminDashboard() {
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      </main>
-    </div>
+    </DashboardShell>
   );
 }

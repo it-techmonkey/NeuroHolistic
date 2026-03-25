@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: roleData } = await authClient.from('users').select('role').eq('id', user.id).single();
-    if (roleData?.role !== 'therapist' && roleData?.role !== 'founder') {
+    if (roleData?.role !== 'therapist' && roleData?.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

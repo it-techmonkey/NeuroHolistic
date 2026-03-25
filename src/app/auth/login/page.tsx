@@ -10,6 +10,9 @@ function LoginForm() {
   const next = searchParams.get('next');
   const redirectTo = searchParams.get('redirectTo');
   const targetAfterLogin = next || redirectTo || undefined;
+  const signupHref = next
+    ? `/auth/signup?next=${encodeURIComponent(next)}`
+    : '/auth/signup';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +34,9 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
+    console.log('[Login Form] Submitting with:', { email, targetAfterLogin });
     const result = await login({ email, password, next: targetAfterLogin });
+    console.log('[Login Form] Result:', result);
     setLoading(false);
 
     if (result.error) {
@@ -40,7 +45,9 @@ function LoginForm() {
       // Hard navigation resets the React tree, picking up fresh server-side session cookies.
       // This is required to avoid the AuthContext stale-state issue where the dashboard
       // would show a loading spinner indefinitely or redirect incorrectly.
-      window.location.href = result.redirectTo || targetAfterLogin || '/dashboard';
+      const redirectUrl = result.redirectTo || targetAfterLogin || '/dashboard';
+      console.log('[Login Form] Redirecting to:', redirectUrl);
+      window.location.href = redirectUrl;
     }
   }
 
@@ -135,7 +142,7 @@ function LoginForm() {
           <p className="text-center text-xs text-slate-400">
             Don't have an account?{' '}
             <Link
-              href="/auth/signup"
+              href={signupHref}
               className="text-slate-900 font-medium underline underline-offset-4 hover:text-indigo-600 transition-colors"
             >
               Create one

@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabase/database.types';
 import { normalizeUserRole } from './role-routing';
 
-export type UserRole = 'client' | 'therapist' | 'founder';
+export type UserRole = 'client' | 'therapist' | 'admin';
 
 export interface AuthUser {
   id: string;
@@ -41,11 +41,25 @@ export async function createClient() {
   );
 }
 
+export async function createServiceClient(
+  supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  supabaseKey: string = process.env.SUPABASE_SERVICE_ROLE_KEY!
+) {
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return [];
+      },
+      setAll(_) {
+        // No-op for service client (server-only)
+      },
+    },
+  });
+}
+
 /**
  * Get the current authenticated user with their role in a single call.
  * Uses getUser() for server-validated JWT — never stale.
- * 
- * @returns AuthUser or null if unauthenticated
  */
 export async function getCurrentUserWithRole(): Promise<AuthUser | null> {
   try {
@@ -78,7 +92,7 @@ export async function getCurrentUserWithRole(): Promise<AuthUser | null> {
 }
 
 /**
- * Convenience: get just the user ID. For API routes and server actions.
+ * Convenience: get just the user ID.
  */
 export async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUserWithRole();

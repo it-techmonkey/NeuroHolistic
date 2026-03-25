@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'client' | 'therapist' | 'founder' | null;
+export type UserRole = 'client' | 'therapist' | 'admin' | null;
 
 interface AuthContextValue {
   user: User | null;
@@ -55,6 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: UserRole;
       };
 
+      console.log('[AuthContext] Auth snapshot:', payload);
+
       if (!isMountedRef.current || currentRequestSeq !== requestSeqRef.current) {
         return;
       }
@@ -90,21 +92,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const bootstrap = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        // First, try to refresh the session if it exists
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('[AuthContext] Initial session:', !!session, 'error:', sessionError?.message);
 
         if (!isMountedRef.current) return;
 
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          setUser(session.user);
+          await resolveAuthSnapshot();
+        } else {
+          // Try to refresh from stored credentials
+          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+          
+          console.log('[AuthContext] Refresh attempt:', !!refreshedSession, 'error:', refreshError?.message);
 
-        if (!session?.user) {
-          setRole(null);
-          setIsLoading(false);
-          return;
+          if (!isMountedRef.current) return;
+
+          if (refreshedSession?.user) {
+            setUser(refreshedSession.user);
+            await resolveAuthSnapshot();
+          } else {
+            setUser(null);
+            setRole(null);
+            setIsLoading(false);
+          }
         }
-
-        await resolveAuthSnapshot();
       } catch (error) {
         if (!isMountedRef.current) return;
         setUser(null);
@@ -121,6 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMountedRef.current) return;
 
+      console.log('[AuthContext] Auth state change:', _event, 'user:', !!session?.user);
+
       setUser(session?.user ?? null);
 
       if (!session?.user) {
@@ -129,15 +145,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setIsLoading(true);
-      await resolveAuthSnapshot();
+      // Only resolve snapshot if we don't have a role yet or it's a new sign-in
+      if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || !role) {
+        setIsLoading(true);
+        await resolveAuthSnapshot();
+      }
     });
 
     return () => {
       isMountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AuthContext.Provider value={{ user, role, isLoading, isAuthenticated: !!user }}>

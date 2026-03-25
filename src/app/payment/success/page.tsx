@@ -60,7 +60,10 @@ function PaymentSuccessContent() {
 
           {/* CTAs */}
           <div className="space-y-3">
-            <BookNowButton className="block w-full py-3.5 rounded-xl bg-[#2B2F55] text-white font-semibold text-[15px] hover:bg-[#3d4270] transition-all active:scale-[0.98]">
+            <BookNowButton
+              bookingType="program"
+              className="block w-full py-3.5 rounded-xl bg-[#2B2F55] text-white font-semibold text-[15px] hover:bg-[#3d4270] transition-all active:scale-[0.98]"
+            >
               Schedule Your Session
             </BookNowButton>
             <Link

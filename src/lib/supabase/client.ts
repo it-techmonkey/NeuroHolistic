@@ -10,5 +10,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Use createBrowserClient instead of createClient to enable cookie-based session persistence
-export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+// Create browser client with cookie-based session persistence
+// The createBrowserClient automatically handles session persistence via cookies
+export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Persist session in localStorage as backup
+    persistSession: true,
+    // Auto-refresh token before expiry
+    autoRefreshToken: true,
+    // Detect session from URL (for OAuth callbacks)
+    detectSessionInUrl: true,
+  },
+});

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { BookingModalProvider } from "@/components/booking/BookingModalProvider";
+import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
 import { LayoutContent } from "./LayoutContent";
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
-import { createGoogleMeetEvent } from '@/lib/meeting/google-meet';
+import { createMeetEvent } from '@/lib/meeting/google-meet';
 import { sendBookingNotifications } from '@/lib/notifications/booking';
 
 const supabase = createClient<Database>(
@@ -34,12 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const meetingEvent = await createGoogleMeetEvent({
+    const meetingEvent = await createMeetEvent({
       summary: `NeuroHolistic Consultation - ${name}`,
       description: 'Free consultation booked via NeuroHolistic platform',
-      date,
-      time,
-      durationMinutes: 60,
+      startDateTime: `${date}T${time}:00`,
+      endDateTime: `${date}T${time.split(':')[0] + 1}:00:00`,
       attendeeEmails: [email],
     });
     const meetingLink = meetingEvent.meetLink;
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
         type: 'free_consultation',
         status: 'confirmed',
         meeting_link: meetingLink,
-        google_calendar_event_id: meetingEvent.eventId,
+        google_calendar_event_id: meetingEvent.calendarEventId,
       })
       .select('id')
       .single();

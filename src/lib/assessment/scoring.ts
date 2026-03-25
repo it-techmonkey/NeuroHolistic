@@ -1,4 +1,4 @@
-import { AssessmentFormData } from '@/components/assessment/types';
+import { AssessmentFormData } from './types';
 
 /**
  * NeuroHolistic Assessment Scoring Engine
@@ -432,7 +432,7 @@ function detectCoreWounds(
     ep.triggers.includes('uncertainty') ||
     ep.triggers.includes('authority') ||
     ep.primaryEmotions.includes('anxiety') ||
-    data.presentingCondition.duration.includes('more_than') ||
+    data.presentingCondition?.duration.includes('more_than') ||
     data.stress.responsePatterns.includes('freeze')
   ) {
     scores.control_safety += 5;
@@ -517,7 +517,7 @@ function determineDominantParentalInfluence(data: AssessmentFormData): ParentalI
  */
 function determineOriginPeriod(data: AssessmentFormData): OriginPeriod {
   // Check duration of presenting condition
-  const duration = data.presentingCondition.duration;
+  const duration = data.presentingCondition?.duration ?? '';
 
   if (duration.includes('less_than_3')) {
     return 'unknown'; // Recent onset, can't determine origin
@@ -663,15 +663,6 @@ function getDefaultScoringResult(): AssessmentScoringResult {
  * Sample moderate dysregulation assessment for testing
  */
 export const SAMPLE_TEST_ASSESSMENT: AssessmentFormData = {
-  basicInfo: {
-    firstName: 'Test',
-    lastName: 'User',
-    email: 'test@example.com',
-    phone: '+1 555-0000',
-    dateOfBirth: '1990-01-15',
-    gender: 'female',
-    location: 'New York, USA',
-  },
   presentingCondition: {
     primaryReason: 'stress',
     otherReason: '',
@@ -688,26 +679,35 @@ export const SAMPLE_TEST_ASSESSMENT: AssessmentFormData = {
   emotionalPatterns: {
     primaryEmotions: ['anxiety', 'frustration', 'overwhelm'],
     triggers: ['uncertainty', 'performance', 'rejection'],
-    otherTriggers: '',
+    otherTriggers: [],
     copingStrategies: ['exercise', 'meditation', 'avoidance'],
-    otherCopingStrategies: '',
+    otherCopingStrategies: [],
     copingEffectiveness: 2,
   },
   motherHistory: {
+    health_issues: [],
+    relationship: 'distant',
+    emotional_presence: 'low',
     emotionalChallenges: ['anxiety', 'depression'],
-    otherEmotionalChallenges: '',
+    otherEmotionalChallenges: [],
     physicalHealth: ['hypertension'],
-    otherPhysicalHealth: '',
+    otherPhysicalHealth: [],
     relationshipPatterns: 'Anxious and controlling',
   },
   fatherHistory: {
+    health_issues: [],
+    relationship: 'distant',
+    emotional_presence: 'low',
     emotionalChallenges: ['anger-issues'],
-    otherEmotionalChallenges: '',
+    otherEmotionalChallenges: [],
     physicalHealth: ['heart-disease'],
-    otherPhysicalHealth: '',
+    otherPhysicalHealth: [],
     relationshipPatterns: 'Distant and withdrawn',
   },
   parentsDynamic: {
+    conflict_level: 3,
+    stability: 'unstable',
+    support_quality: 'low',
     emotionalCloseness: 2,
     conflictLevel: 4,
     emotionalAvailability: 2,
@@ -726,21 +726,25 @@ export const SAMPLE_TEST_ASSESSMENT: AssessmentFormData = {
   },
   bodySymptoms: {
     symptoms: ['headaches', 'tension', 'insomnia', 'gi-issues'],
-    otherSymptoms: '',
+    otherSymptoms: [],
     painDiscomfort: 'Chronic tension in shoulders and neck',
     sleepQuality: 2,
     energyLevel: 2,
   },
   stress: {
+    level: 3,
+    sources: ['work', 'relationships'],
+    coping_mechanisms: ['exercise'],
+    impact_on_life: 3,
     responsePatterns: ['fight', 'freeze', 'fawn'],
-    otherResponses: '',
+    otherResponses: [],
     substanceUse: ['caffeine'],
-    otherSubstances: '',
+    otherSubstances: [],
     supportStrength: 2,
     workLifeBalance: 2,
   },
   goals: {
-    primaryGoals: 'Reduce anxiety and rebuild confidence',
+    primaryGoals: ['reduce_anxiety', 'rebuild_confidence'],
     desiredOutcomes: 'Feel calm and capable in work and relationships',
     previousTherapy: 'yes',
     therapyDetails: 'Had cognitive behavioral therapy for 6 months, helped somewhat',

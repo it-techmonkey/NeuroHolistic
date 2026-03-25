@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/auth/server';
 
-export type UserRole = 'client' | 'therapist';
+export type UserRole = 'client' | 'therapist' | 'admin';
 
 /**
  * Fetch the role for a given user ID from the users table.
@@ -14,7 +14,14 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
     .single();
 
   if (error || !data) return null;
-  return data.role as UserRole;
+  
+  // Normalize legacy 'founder' to 'admin'
+  const rawRole = data.role as string;
+  if (rawRole === 'founder') return 'admin';
+  if (rawRole === 'client' || rawRole === 'therapist' || rawRole === 'admin') {
+    return rawRole;
+  }
+  return null;
 }
 
 /**

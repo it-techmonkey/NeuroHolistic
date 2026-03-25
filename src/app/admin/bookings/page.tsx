@@ -120,7 +120,7 @@ export default async function AdminBookingsPage() {
   );
 
   // Calculate stats
-  const consultationCount = bookingsWithPrograms.filter(b => b.type === 'consultation').length;
+  const consultationCount = bookingsWithPrograms.filter(b => b.type === 'free_consultation').length;
   const programCount = bookingsWithPrograms.filter(b => b.type === 'program').length;
 
   return (
@@ -220,11 +220,11 @@ export default async function AdminBookingsPage() {
                       </td>
                       <td className="py-4 px-4">
                          <span className={`text-[10px] uppercase tracking-wider px-2 py-1 border ${
-                           booking.type === 'consultation'
+                           booking.type === 'free_consultation'
                              ? 'bg-blue-50 text-blue-900 border-blue-100'
                              : 'bg-emerald-50 text-emerald-900 border-emerald-100'
                          }`}>
-                           {booking.type === 'consultation' ? 'Consultation' : 'Program Session'}
+                           {booking.type === 'free_consultation' ? 'Consultation' : 'Program Session'}
                          </span>
                       </td>
                       <td className="py-4 px-4 w-48">

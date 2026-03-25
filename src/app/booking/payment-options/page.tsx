@@ -12,7 +12,7 @@ export default async function PaymentOptionsPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login?next=/booking/payment-options');
+    redirect('/auth/signup?intent=program&next=/booking/payment-options');
   }
 
   const firstName = (user.user_metadata?.first_name as string | undefined) || '';

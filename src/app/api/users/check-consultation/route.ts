@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from('bookings')
       .select('id')
       .eq('user_id', user.id)
-      .eq('type', 'consultation')
+      .eq('type', 'free_consultation')
       .limit(1)
       .maybeSingle();
 

@@ -101,7 +101,7 @@ async function createConsultationBooking(booking: BookingInsert) {
       .insert([{
         ...booking,
         user_id: userId,
-        type: 'consultation',
+        type: 'free_consultation',
         program_id: null,
       }])
       .select()

@@ -5,16 +5,28 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signUp } from '@/app/auth/actions';
 
+const COUNTRIES = [
+  'UAE', 'Saudi Arabia', 'Kuwait', 'Qatar', 'Bahrain', 'Oman',
+  'Egypt', 'Jordan', 'Lebanon', 'Iraq', 'Morocco', 'Tunisia',
+  'Turkey', 'India', 'Pakistan', 'United Kingdom', 'United States', 'Canada', 'Other'
+];
+
 function SignUpForm() {
   const searchParams = useSearchParams();
   const intent = searchParams.get('intent'); // 'program' for paid flow
+  const next = searchParams.get('next') || undefined;
+  const emailPrefill = searchParams.get('email') || '';
+  const firstNamePrefill = searchParams.get('firstName') || '';
+  const lastNamePrefill = searchParams.get('lastName') || '';
+  const phonePrefill = searchParams.get('phone') || '';
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState(firstNamePrefill);
+  const [lastName, setLastName] = useState(lastNamePrefill);
+  const [phone, setPhone] = useState(phonePrefill);
+  const [email, setEmail] = useState(emailPrefill);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [country, setCountry] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,8 +44,9 @@ function SignUpForm() {
       email,
       password,
       passwordConfirm,
+      country,
       redirectTo: intent === 'program'
-        ? `${process.env.NEXT_PUBLIC_APP_URL || ''}/booking/payment-options`
+        ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${next || '/booking/payment-options'}`
         : undefined,
     });
 
@@ -41,7 +54,23 @@ function SignUpForm() {
 
     if (result.error) {
       setError(result.error);
+    } else if ((result as { redirectTo?: string }).redirectTo) {
+      window.location.href = (result as { redirectTo: string }).redirectTo;
     } else if (result.success) {
+      // Create lead record for free consultation signup
+      if (intent === 'consultation' || !intent) {
+        try {
+          await fetch('/api/consultation/create-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `${firstName} ${lastName}`.trim(), mobile: phone, email, country }),
+          });
+        } catch {
+          // Non-critical, continue to booking
+        }
+        window.location.href = '/consultation/book';
+        return;
+      }
       setSuccess(result.message || 'Account created successfully. Check your email to verify your account.');
       setFirstName('');
       setLastName('');
@@ -100,7 +129,7 @@ function SignUpForm() {
               <p className="text-xs text-emerald-700">
                 After verifying your email,{' '}
                 <Link
-                  href={intent === 'program' ? '/auth/login' : '/auth/login'}
+                  href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/payment-options')}` : '/auth/login'}
                   className="underline font-semibold hover:text-emerald-900"
                 >
                   log in here
@@ -156,6 +185,25 @@ function SignUpForm() {
                   className={inputClass}
                   placeholder="+971 50 000 0000"
                 />
+              </div>
+
+              {/* Country */}
+              <div className="space-y-1">
+                <label htmlFor="country" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
+                  Country
+                </label>
+                <select
+                  id="country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  required
+                  className={inputClass + ' bg-white'}
+                >
+                  <option value="">Select country</option>
+                  {COUNTRIES.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Email */}
@@ -227,7 +275,7 @@ function SignUpForm() {
           <p className="text-center text-xs text-slate-400">
             Already have an account?{' '}
             <Link
-              href={intent === 'program' ? '/auth/login?next=/booking/payment-options' : '/auth/login'}
+              href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/payment-options')}` : '/auth/login'}
               className="text-slate-900 font-medium underline underline-offset-4 hover:text-indigo-600 transition-colors"
             >
               Log in
