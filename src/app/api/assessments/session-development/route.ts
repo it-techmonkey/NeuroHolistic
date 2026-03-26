@@ -56,47 +56,85 @@ export async function POST(request: NextRequest) {
         actualSessionId = newSession.id;
       } else {
         // Booking has no program_id - this is likely a consultation booking
-        // Return an error indicating development forms require a program session
         return NextResponse.json({ 
           error: 'Development forms can only be submitted for program sessions. This booking is not associated with a program.' 
         }, { status: 400 });
       }
     }
 
-    // Map form data to actual database columns
-    // The form uses different field names than the database
+    // Calculate goal readiness score (sum of all domain scores)
+    const nervousSystemScore = data.nervous_system_score ?? 5;
+    const emotionalStateScore = data.emotional_state_score ?? 5;
+    const cognitivePatternsScore = data.cognitive_patterns_score ?? 5;
+    const bodySymptomsScore = data.body_symptoms_score ?? 5;
+    const behavioralPatternsScore = data.behavioral_patterns_score ?? 5;
+    const lifeFunctioningScore = data.life_functioning_score ?? 5;
+    const goalReadinessScore = nervousSystemScore + emotionalStateScore + cognitivePatternsScore + 
+                               bodySymptomsScore + behavioralPatternsScore + lifeFunctioningScore;
+
+    // Store all structured data properly
     const insertData: Record<string, any> = {
       session_id: actualSessionId,
       client_id: clientId,
       therapist_id: therapistId,
-      // Map pre-session intensity to energy/mood/anxiety
+      
+      // Pre-session data
+      previous_session_improvements: data.previous_session_improvements || null,
+      previous_session_challenges: data.previous_session_challenges || null,
+      pre_session_symptoms: data.pre_session_symptoms || [],
+      pre_session_intensity: data.pre_session_intensity ?? 5,
       pre_session_energy: data.pre_session_intensity ?? 5,
-      pre_session_mood: 5, // Default value - form doesn't have this field
-      pre_session_anxiety: data.pre_session_intensity ?? 5,
+      pre_session_mood: data.pre_session_mood ?? 5,
+      pre_session_anxiety: data.pre_session_anxiety ?? data.pre_session_intensity ?? 5,
+      
+      // Session data
+      techniques_used: data.techniques_used || [],
+      key_interventions: data.key_interventions || null,
+      breakthroughs_resistance: data.breakthroughs_resistance || null,
+      
+      // Post-session data
+      post_session_symptoms: data.post_session_symptoms || [],
+      post_session_intensity: data.post_session_intensity ?? 5,
+      post_session_energy: data.post_session_energy ?? data.post_session_intensity ?? 5,
+      post_session_mood: data.post_session_mood ?? 5,
+      post_session_anxiety: data.post_session_anxiety ?? data.post_session_intensity ?? 5,
+      shift_observed: data.shift_observed || null,
+      client_feedback: data.client_feedback || null,
+      
+      // Integration notes (visible to client)
+      integration_notes: data.integration_notes || null,
+      
+      // Progress tracking scores (0-10)
+      nervous_system_score: nervousSystemScore,
+      emotional_state_score: emotionalStateScore,
+      cognitive_patterns_score: cognitivePatternsScore,
+      body_symptoms_score: bodySymptomsScore,
+      behavioral_patterns_score: behavioralPatternsScore,
+      life_functioning_score: lifeFunctioningScore,
+      goal_readiness_score: goalReadinessScore,
+      
+      // Therapist internal notes (NOT visible to client)
+      therapist_internal_notes: data.therapist_internal_notes || null,
+      
+      // Legacy fields for backward compatibility
       pre_session_notes: [
         data.previous_session_improvements ? `Improvements: ${data.previous_session_improvements}` : '',
         data.previous_session_challenges ? `Challenges: ${data.previous_session_challenges}` : '',
         data.pre_session_symptoms?.length ? `Symptoms: ${data.pre_session_symptoms.join(', ')}` : '',
       ].filter(Boolean).join('\n') || null,
-      // Map post-session intensity to energy/mood/anxiety
-      post_session_energy: data.post_session_intensity ?? 5,
-      post_session_mood: 5, // Default value - form doesn't have this field
-      post_session_anxiety: data.post_session_intensity ?? 5,
       post_session_notes: [
         data.shift_observed ? `Shift: ${data.shift_observed}` : '',
         data.client_feedback ? `Feedback: ${data.client_feedback}` : '',
         data.integration_notes ? `Integration: ${data.integration_notes}` : '',
       ].filter(Boolean).join('\n') || null,
-      // Techniques
-      techniques_used: data.techniques_used || [],
       key_insights: [
         data.key_interventions ? `Interventions: ${data.key_interventions}` : '',
         data.breakthroughs_resistance ? `Breakthroughs/Resistance: ${data.breakthroughs_resistance}` : '',
       ].filter(Boolean).join('\n') || null,
+      
       homework_assigned: null,
       homework_completed: false,
-      // Internal notes
-      therapist_internal_notes: data.therapist_internal_notes || null,
+      
       // Timestamps
       filled_by_therapist_at: new Date().toISOString(),
     };

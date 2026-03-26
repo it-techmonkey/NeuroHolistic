@@ -182,6 +182,7 @@ export async function GET(request: NextRequest) {
       materials,
       progress: progressData,
       assessments: assessments ?? [],
+      devForms: devForms ?? [],
       therapist: therapistInfo,
       program: program ?? null,
       completedPrograms: completedPrograms ?? [],

@@ -1,19 +1,134 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import Clients from '@/components/dashboard/therapist/Clients';
-import Sessions from '@/components/dashboard/therapist/Sessions';
-import Reports from '@/components/dashboard/therapist/Reports';
-import { Loader2, Users, Calendar, BarChart3 } from 'lucide-react';
+import {
+  Loader2, Users, Calendar, Clock, CheckCircle, AlertCircle,
+  Video, FileText, User, Mail, TrendingUp, ChevronRight,
+  X, Filter, Search, BarChart3, Phone, Settings, LogOut,
+  UserCircle, ChevronDown, Plus, Trash2, Upload, Download,
+  Eye, Edit2, File, Image, Music
+} from 'lucide-react';
+import DiagnosticAssessmentForm from '@/components/dashboard/therapist/DiagnosticAssessmentForm';
+import SessionDevelopmentForm from '@/components/dashboard/therapist/SessionDevelopmentForm';
+import MarkComplete from '@/components/dashboard/therapist/MarkComplete';
+import UploadMaterial from '@/components/dashboard/therapist/UploadMaterial';
+import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/TherapistTabs';
+
+// Types
+type Session = {
+  id: string;
+  client_id: string;
+  client_name?: string;
+  clients?: { full_name?: string; email?: string };
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+  session_number?: number;
+  meet_link?: string;
+  meeting_link?: string;
+  program_id?: string;
+  development_form_submitted?: boolean;
+  is_complete?: boolean;
+  therapist_id?: string;
+  booking_id?: string;
+};
+
+type Client = {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  nextSession?: Session | null;
+  lastSession?: Session | null;
+  program?: {
+    id: string;
+    status: string;
+    totalSessions: number;
+    completedSessions: number;
+    program_type?: string;
+  } | null;
+  assessment?: {
+    goal_readiness_score: number;
+    is_baseline: boolean;
+  } | null;
+  assessmentCount?: number;
+  devFormsCount?: number;
+};
+
+type Document = {
+  id: string;
+  client_id: string;
+  session_id?: string;
+  type: 'pdf' | 'video' | 'note' | 'image' | 'other';
+  file_url: string;
+  file_name: string;
+  description?: string;
+  created_at: string;
+};
+
+type Availability = {
+  id: string;
+  therapist_id: string;
+  day_of_week?: number;
+  exception_date?: string;
+  start_time: string;
+  end_time: string;
+  is_blocked: boolean;
+};
+
+type DashboardStats = {
+  totalClients: number;
+  activeProgramClients: number;
+  todaySessions: number;
+  upcomingSessions: number;
+  completedSessions: number;
+  pendingAssessments: number;
+};
+
+type ViewMode = 'overview' | 'clients' | 'sessions';
 
 export default function TherapistDashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'clients' | 'sessions' | 'reports'>('clients');
   const [loading, setLoading] = useState(true);
   const [therapistId, setTherapistId] = useState<string | null>(null);
   const [therapistInfo, setTherapistInfo] = useState<any>(null);
+
+  // View state
+  const [viewMode, setViewMode] = useState<ViewMode>('overview');
+
+  // Data state
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [todaySessions, setTodaySessions] = useState<Session[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
+  const [pastSessions, setPastSessions] = useState<Session[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientFilter, setClientFilter] = useState<'all' | 'active' | 'consultation' | 'awaiting'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Selected client detail
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientDetail, setClientDetail] = useState<any>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [clientTab, setClientTab] = useState<'overview' | 'sessions' | 'assessments' | 'reports'>('overview');
+
+  // Modal state
+  const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [modalType, setModalType] = useState<'diagnostic' | 'development' | null>(null);
+
+  // Account menu
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  // Availability modal
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [availability, setAvailability] = useState<Availability[]>([]);
+
+  // Documents
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -23,10 +138,9 @@ export default function TherapistDashboardPage() {
         return;
       }
 
-      // Verify role
       const { data: userData } = await supabase
         .from('users')
-        .select('role, full_name')
+        .select('role, full_name, email')
         .eq('id', user.id)
         .single();
 
@@ -36,66 +150,1547 @@ export default function TherapistDashboardPage() {
       }
 
       setTherapistId(user.id);
-      setTherapistInfo(userData);
-      setLoading(false);
+      setTherapistInfo({ ...userData, id: user.id });
+      await fetchAllData(user.id);
+      await fetchAvailability(user.id);
     }
     init();
   }, [router]);
 
+  // Close account menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setShowAccountMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  async function fetchAllData(tid: string) {
+    setLoading(true);
+    try {
+      const [sessionsRes, clientsRes] = await Promise.all([
+        fetch(`/api/therapist/sessions?therapistId=${tid}`),
+        fetch(`/api/therapist/clients`)
+      ]);
+
+      const sessionsData = await sessionsRes.json();
+      const clientsData = await clientsRes.json();
+
+      const allSessions: Session[] = sessionsData.sessions || [];
+      const allClients: Client[] = clientsData.clients || [];
+
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+
+      const todayList = allSessions.filter(s => {
+        if (s.date !== today) return false;
+        if (['completed', 'cancelled', 'no_show'].includes(s.status)) return false;
+        return true;
+      }).sort((a, b) => a.time.localeCompare(b.time));
+
+      const upcomingList = allSessions.filter(s => {
+        const sessionDate = new Date(s.date + 'T00:00:00');
+        if (sessionDate < now) return false;
+        if (['completed', 'cancelled', 'no_show'].includes(s.status)) return false;
+        if (s.date === today) return false;
+        return true;
+      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const pastList = allSessions.filter(s => {
+        const sessionDate = new Date(s.date + 'T23:59:59');
+        return s.status === 'completed' || sessionDate < now;
+      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      const completedSessions = allSessions.filter(s => s.status === 'completed').length;
+      const activeProgramClients = allClients.filter(c => c.program?.status === 'active').length;
+      const pendingAssessments = upcomingList.filter(s =>
+        s.type !== 'free_consultation' && !s.development_form_submitted
+      ).length;
+
+      setStats({
+        totalClients: allClients.length,
+        activeProgramClients,
+        todaySessions: todayList.length,
+        upcomingSessions: upcomingList.length,
+        completedSessions,
+        pendingAssessments,
+      });
+
+      setTodaySessions(todayList);
+      setUpcomingSessions(upcomingList);
+      setPastSessions(pastList.slice(0, 20));
+      setClients(allClients);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchAvailability(tid: string) {
+    try {
+      const res = await fetch(`/api/therapist/availability?therapistId=${tid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAvailability(data.availability || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch availability:', error);
+    }
+  }
+
+  const fetchClientDetail = async (client: Client) => {
+    setSelectedClient(client);
+    setClientTab('overview');
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/therapist/client-detail?clientId=${client.userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setClientDetail(data);
+        // Also fetch documents for this client
+        fetchClientDocuments(client.userId);
+      }
+    } catch (err) {
+      console.error('Failed to load client detail:', err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const fetchClientDocuments = async (clientId: string) => {
+    try {
+      const res = await fetch(`/api/documents?clientId=${clientId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    }
+  };
+
+  const openForm = (session: Session, type: 'diagnostic' | 'development') => {
+    setActiveSession(session);
+    setModalType(type);
+  };
+
+  const closeForm = (refresh = false) => {
+    setActiveSession(null);
+    setModalType(null);
+    if (refresh && therapistId) {
+      fetchAllData(therapistId);
+      if (selectedClient) {
+        fetchClientDetail(selectedClient);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+  };
+
+  const handleUploadDocument = async (file: File) => {
+    if (!selectedClient) return;
+    setUploadingDoc(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${file.name}`;
+      const filePath = `documents/${selectedClient.userId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('therapist-files')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('therapist-files')
+        .getPublicUrl(filePath);
+
+      let docType: Document['type'] = 'other';
+      if (file.type === 'application/pdf') docType = 'pdf';
+      else if (file.type.startsWith('video/')) docType = 'video';
+      else if (file.type.startsWith('image/')) docType = 'image';
+
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: selectedClient.userId,
+          type: docType,
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save document');
+
+      await fetchClientDocuments(selectedClient.userId);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload document');
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  // Filter clients
+  const filteredClients = clients.filter(c => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (!c.fullName?.toLowerCase().includes(query) && !c.email?.toLowerCase().includes(query)) {
+        return false;
+      }
+    }
+    switch (clientFilter) {
+      case 'active': return c.program?.status === 'active';
+      case 'consultation': return !c.program || c.program.status === 'none';
+      case 'awaiting': return !c.program && (c.assessmentCount ?? 0) > 0;
+      default: return true;
+    }
+  });
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
-  const tabs = [
-    { id: 'clients', label: 'Clients', icon: Users },
-    { id: 'sessions', label: 'Sessions', icon: Calendar },
-    { id: 'reports', label: 'Reports', icon: BarChart3 },
-  ] as const;
-
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div>
-              <h1 className="text-xl font-light text-slate-900">Therapist Workspace</h1>
-              {therapistInfo?.full_name && (
-                <p className="text-xs text-slate-500">{therapistInfo.full_name}</p>
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-semibold text-slate-900">Therapist Dashboard</h1>
+            </div>
+
+            {/* Navigation Tabs */}
+            <nav className="hidden md:flex gap-1 bg-slate-100 p-1 rounded-lg">
+              {[
+                { id: 'overview' as ViewMode, label: 'Overview', icon: BarChart3 },
+                { id: 'clients' as ViewMode, label: 'Clients', icon: Users },
+                { id: 'sessions' as ViewMode, label: 'Sessions', icon: Calendar },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setViewMode(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === tab.id
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Account Menu */}
+            <div className="relative" ref={accountMenuRef}>
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <UserCircle className="w-5 h-5 text-indigo-600" />
+                </div>
+                <span className="text-sm font-medium text-slate-700 hidden sm:block">
+                  {therapistInfo?.full_name?.split(' ')[0] || 'Account'}
+                </span>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {showAccountMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-medium text-slate-900">{therapistInfo?.full_name}</p>
+                    <p className="text-xs text-slate-500">{therapistInfo?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { setShowAccountMenu(false); setShowAvailabilityModal(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Manage Availability
+                  </button>
+                  <button
+                    onClick={() => { setShowAccountMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <UserCircle className="w-4 h-4" />
+                    View Profile
+                  </button>
+                  <hr className="my-1 border-slate-100" />
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
               )}
             </div>
-            <nav className="flex space-x-1">
-              {tabs.map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </nav>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {activeTab === 'clients' && <Clients therapistId={therapistId!} />}
-        {activeTab === 'sessions' && <Sessions therapistId={therapistId!} />}
-        {activeTab === 'reports' && <Reports therapistId={therapistId!} />}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-2">
+          {[
+            { id: 'overview' as ViewMode, label: 'Overview' },
+            { id: 'clients' as ViewMode, label: 'Clients' },
+            { id: 'sessions' as ViewMode, label: 'Sessions' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setViewMode(tab.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+                viewMode === tab.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-slate-600 border border-slate-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* OVERVIEW VIEW */}
+        {viewMode === 'overview' && (
+          <div className="space-y-6">
+            {/* Therapist Info Card */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                  <UserCircle className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold">{therapistInfo?.full_name}</h2>
+                  <p className="text-white/80">NeuroHolistic Therapist</p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  onClick={() => setShowAvailabilityModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  Set Availability
+                </button>
+                <button
+                  onClick={() => setViewMode('clients')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  View Clients
+                </button>
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <StatCard icon={Users} label="Total Clients" value={stats?.totalClients || 0} color="slate" />
+              <StatCard icon={TrendingUp} label="Active Programs" value={stats?.activeProgramClients || 0} color="green" />
+              <StatCard icon={Clock} label="Today" value={stats?.todaySessions || 0} color="indigo" />
+              <StatCard icon={Calendar} label="Upcoming" value={stats?.upcomingSessions || 0} color="blue" />
+              <StatCard icon={CheckCircle} label="Completed" value={stats?.completedSessions || 0} color="emerald" />
+              <StatCard icon={AlertCircle} label="Pending Forms" value={stats?.pendingAssessments || 0} color="amber" />
+            </div>
+
+            {/* Today's Sessions - Presentation View */}
+            {todaySessions.length > 0 && (
+              <section className="bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                          <Clock className="w-6 h-6 text-indigo-300" />
+                        </div>
+                        Today's Sessions
+                      </h2>
+                      <p className="text-white/60 mt-1">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="bg-white/10 px-4 py-2 rounded-xl">
+                      <p className="text-3xl font-bold">{todaySessions.length}</p>
+                      <p className="text-xs text-white/60 uppercase tracking-wider">Sessions</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {todaySessions.map(session => (
+                      <TodaySessionCard
+                        key={session.id}
+                        session={session}
+                        onAssessment={() => openForm(session, 'diagnostic')}
+                        onDevForm={() => openForm(session, 'development')}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Upcoming Sessions */}
+              <section className="bg-white rounded-xl border border-slate-200">
+                <div className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-indigo-600" />
+                    Upcoming Sessions
+                  </h2>
+                </div>
+                <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                  {upcomingSessions.length > 0 ? (
+                    upcomingSessions.slice(0, 8).map(session => (
+                      <div key={session.id} className="px-6 py-3 hover:bg-slate-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-slate-900 text-sm">
+                              {session.clients?.full_name || session.client_name || 'Client'}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {session.type === 'free_consultation' ? 'Consultation' : `Session ${session.session_number}`}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-medium text-slate-900">
+                              {new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-slate-500">{session.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-6 py-8 text-center text-slate-400 text-sm">
+                      No upcoming sessions
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Recent Clients */}
+              <section className="bg-white rounded-xl border border-slate-200">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                  <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    Recent Clients
+                  </h2>
+                  <button onClick={() => setViewMode('clients')}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                    View all <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                  {clients.slice(0, 8).map(client => (
+                    <button key={client.userId} onClick={() => { setViewMode('clients'); fetchClientDetail(client); }}
+                      className="w-full px-6 py-3 hover:bg-slate-50 text-left">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <User className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900 text-sm">{client.fullName}</p>
+                            <p className="text-xs text-slate-500">{client.email}</p>
+                          </div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          client.program?.status === 'active' ? 'bg-green-100 text-green-700' :
+                          client.program?.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {client.program?.status === 'active' ? 'Active' :
+                           client.program?.status === 'completed' ? 'Completed' : 'Consultation'}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* CLIENTS VIEW */}
+        {viewMode === 'clients' && (
+          <div className="space-y-6">
+            {selectedClient ? (
+              <ClientDetailView
+                client={selectedClient}
+                detail={clientDetail}
+                detailLoading={detailLoading}
+                activeTab={clientTab}
+                onTabChange={setClientTab}
+                onBack={() => { setSelectedClient(null); setClientDetail(null); setDocuments([]); }}
+                onOpenAssessment={(s) => openForm(s, 'diagnostic')}
+                onOpenDevForm={(s) => openForm(s, 'development')}
+                onRefresh={() => therapistId && fetchAllData(therapistId)}
+                documents={documents}
+                onUploadDocument={handleUploadDocument}
+                uploadingDoc={uploadingDoc}
+              />
+            ) : (
+              <>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search clients by name or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { id: 'all', label: 'All' },
+                      { id: 'active', label: 'Active Program' },
+                      { id: 'consultation', label: 'Consultation' },
+                    ].map(filter => (
+                      <button
+                        key={filter.id}
+                        onClick={() => setClientFilter(filter.id as any)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          clientFilter === filter.id
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {filteredClients.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
+                    <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-slate-900 font-medium">No clients found</h3>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredClients.map(client => (
+                      <ClientCard key={client.userId} client={client} onClick={() => fetchClientDetail(client)} />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* SESSIONS VIEW */}
+        {viewMode === 'sessions' && (
+          <div className="space-y-6">
+            {/* Today's Sessions - Presentation View */}
+            {todaySessions.length > 0 && (
+              <section className="bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                          <Clock className="w-6 h-6 text-indigo-300" />
+                        </div>
+                        Today's Sessions
+                      </h2>
+                      <p className="text-white/60 mt-1">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <div className="bg-white/10 px-4 py-2 rounded-xl">
+                      <p className="text-3xl font-bold">{todaySessions.length}</p>
+                      <p className="text-xs text-white/60 uppercase tracking-wider">Sessions</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {todaySessions.map(session => (
+                      <TodaySessionCard
+                        key={session.id}
+                        session={session}
+                        onAssessment={() => openForm(session, 'diagnostic')}
+                        onDevForm={() => openForm(session, 'development')}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <section className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <div className="px-6 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-600" />
+                  All Upcoming Sessions ({upcomingSessions.length})
+                </h2>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {upcomingSessions.map(session => (
+                  <div key={session.id} className="px-6 py-4 hover:bg-slate-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {session.clients?.full_name || session.client_name || 'Client'}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {session.type === 'free_consultation' ? 'Free Consultation' : `Session ${session.session_number}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-slate-900">
+                          {new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-sm text-slate-500">{session.time}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-2 flex-wrap">
+                      {session.meet_link && (
+                        <a href={session.meet_link} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200">
+                          <Video className="w-4 h-4" /> Join
+                        </a>
+                      )}
+                      <button onClick={() => openForm(session, 'diagnostic')}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg ${
+                          session.type === 'free_consultation'
+                            ? 'bg-red-100 text-red-700 border border-red-300'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                        <FileText className="w-4 h-4" />
+                        Assessment {session.type === 'free_consultation' && <span className="text-xs">(Required)</span>}
+                      </button>
+                      {session.type !== 'free_consultation' && session.program_id && (
+                        <button onClick={() => openForm(session, 'development')}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg ${
+                            !session.development_form_submitted
+                              ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                          <FileText className="w-4 h-4" />
+                          Dev Form {!session.development_form_submitted && <span className="text-xs">(Required)</span>}
+                          {session.development_form_submitted && <span className="text-xs">✓</span>}
+                        </button>
+                      )}
+                      {session.type !== 'free_consultation' && session.program_id && (
+                        <MarkComplete
+                          sessionId={session.id}
+                          isReady={session.development_form_submitted || false}
+                          isCompleted={session.status === 'completed'}
+                          onComplete={() => therapistId && fetchAllData(therapistId)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+
+      {/* Availability Modal */}
+      {showAvailabilityModal && (
+        <AvailabilityModal
+          therapistId={therapistId!}
+          availability={availability}
+          onClose={() => setShowAvailabilityModal(false)}
+          onSave={() => { fetchAvailability(therapistId!); setShowAvailabilityModal(false); }}
+        />
+      )}
+
+      {/* Form Modals */}
+      {activeSession && modalType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative">
+            <button onClick={() => closeForm()} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10">
+              <X className="w-6 h-6" />
+            </button>
+            <div className="p-8">
+              {modalType === 'diagnostic' && (
+                <DiagnosticAssessmentForm
+                  clientId={activeSession.client_id}
+                  therapistId={therapistId!}
+                  sessionId={activeSession.id}
+                  onClose={() => closeForm(false)}
+                  onSave={() => closeForm(true)}
+                />
+              )}
+              {modalType === 'development' && (
+                <SessionDevelopmentForm
+                  sessionId={activeSession.id}
+                  clientId={activeSession.client_id}
+                  therapistId={therapistId!}
+                  sessionNumber={activeSession.session_number || 1}
+                  sessionDate={activeSession.date || new Date().toISOString().split('T')[0]}
+                  onClose={() => closeForm(false)}
+                  onSave={() => closeForm(true)}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== HELPER COMPONENTS ====================
+
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
+  const colors: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-600',
+    indigo: 'bg-indigo-100 text-indigo-600',
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    amber: 'bg-amber-100 text-amber-600',
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className={`w-10 h-10 rounded-lg ${colors[color]} flex items-center justify-center mb-3`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <p className="text-2xl font-bold text-slate-900">{value}</p>
+      <p className="text-sm text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function TodaySessionCard({
+  session,
+  onAssessment,
+  onDevForm,
+}: {
+  session: Session;
+  onAssessment: () => void;
+  onDevForm: () => void;
+}) {
+  const isConsultation = session.type === 'free_consultation';
+  const devFormRequired = !isConsultation && session.program_id;
+  const devFormComplete = session.development_form_submitted;
+
+  return (
+    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 hover:bg-white/15 transition-colors">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <p className="font-semibold text-white text-lg">
+            {session.clients?.full_name || session.client_name || 'Client'}
+          </p>
+          <p className="text-white/70 text-sm">
+            {session.type === 'free_consultation' ? 'Free Consultation' : `Session ${session.session_number || 1}`}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-white font-medium text-lg">{session.time}</p>
+        </div>
+      </div>
+
+      {/* Form Status */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {isConsultation && (
+          <span className="px-2 py-1 text-xs font-medium bg-red-500/20 text-red-200 rounded-lg">
+            Assessment Required
+          </span>
+        )}
+        {devFormRequired && (
+          <span className={`px-2 py-1 text-xs font-medium rounded-lg ${
+            devFormComplete ? 'bg-green-500/20 text-green-200' : 'bg-amber-500/20 text-amber-200'
+          }`}>
+            {devFormComplete ? 'Dev Form Complete' : 'Dev Form Required'}
+          </span>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2">
+        {session.meet_link && (
+          <a href={session.meet_link} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors">
+            <Video className="w-4 h-4" /> Join
+          </a>
+        )}
+        <button onClick={onAssessment}
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
+          <FileText className="w-4 h-4" /> Assessment
+        </button>
+        {devFormRequired && (
+          <button onClick={onDevForm}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
+            <FileText className="w-4 h-4" /> Dev Form
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SessionCard({
+  session, onAssessment, onDevForm, onRefresh, variant = 'default'
+}: {
+  session: Session;
+  onAssessment: () => void;
+  onDevForm: () => void;
+  onRefresh: () => void;
+  variant?: 'default' | 'highlighted';
+}) {
+  const isHighlighted = variant === 'highlighted';
+
+  return (
+    <div className={`rounded-lg p-4 ${
+      isHighlighted ? 'bg-white/10 backdrop-blur-sm border border-white/20' : 'bg-slate-50 border border-slate-200'
+    }`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className={`font-medium ${isHighlighted ? 'text-white' : 'text-slate-900'}`}>
+            {session.clients?.full_name || session.client_name || 'Client'}
+          </p>
+          <p className={`text-sm ${isHighlighted ? 'text-white/80' : 'text-slate-500'}`}>
+            {session.type === 'free_consultation' ? 'Free Consultation' : `Session ${session.session_number || 1}`}
+          </p>
+          <p className={`text-sm mt-1 ${isHighlighted ? 'text-white/80' : 'text-slate-600'}`}>{session.time}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2 flex-wrap">
+        {session.meet_link && (
+          <a href={session.meet_link} target="_blank" rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+              isHighlighted ? 'bg-white text-slate-800' : 'bg-indigo-100 text-indigo-700'
+            }`}>
+            <Video className="w-3 h-3" /> Join
+          </a>
+        )}
+        <button onClick={onAssessment}
+          className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+            isHighlighted ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+          }`}>
+          <FileText className="w-3 h-3" /> Assessment
+        </button>
+        {session.type !== 'free_consultation' && !session.development_form_submitted && (
+          <button onClick={onDevForm}
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-amber-500 text-white">
+            <FileText className="w-3 h-3" /> Dev Form
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left"
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+          <User className="w-6 h-6 text-indigo-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-slate-900 truncate">{client.fullName}</h3>
+          <div className="flex items-center gap-1 text-sm text-slate-500 mt-0.5">
+            <Mail className="w-3 h-3" />
+            <span className="truncate">{client.email}</span>
+          </div>
+          {client.phone && (
+            <div className="flex items-center gap-1 text-sm text-slate-500 mt-0.5">
+              <Phone className="w-3 h-3" />
+              <span>{client.phone}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-slate-100">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          client.program?.status === 'active' ? 'bg-green-100 text-green-800' :
+          client.program?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+          'bg-slate-100 text-slate-800'
+        }`}>
+          {client.program?.status === 'active' ?
+            `Active (${client.program.completedSessions}/${client.program.totalSessions})` :
+           client.program?.status === 'completed' ? 'Completed' : 'Free Consultation'}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function ClientDetailView({
+  client, detail, detailLoading, activeTab, onTabChange,
+  onBack, onOpenAssessment, onOpenDevForm, onRefresh,
+  documents, onUploadDocument, uploadingDoc
+}: {
+  client: Client;
+  detail: any;
+  detailLoading: boolean;
+  activeTab: string;
+  onTabChange: (tab: any) => void;
+  onBack: () => void;
+  onOpenAssessment: (session: Session) => void;
+  onOpenDevForm: (session: Session) => void;
+  onRefresh: () => void;
+  documents: Document[];
+  onUploadDocument: (file: File) => void;
+  uploadingDoc: boolean;
+}) {
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: User },
+    { id: 'sessions', label: 'Sessions', icon: Calendar },
+    { id: 'assessments', label: 'Assessments', icon: FileText },
+    { id: 'reports', label: 'Reports', icon: BarChart3 },
+  ];
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+        <ChevronRight className="w-4 h-4 rotate-180" />
+        Back to all clients
+      </button>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+            <User className="w-8 h-8 text-indigo-600" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-semibold text-slate-900">{client.fullName}</h2>
+            <div className="flex flex-wrap items-center gap-4 mt-2 text-slate-500">
+              <div className="flex items-center gap-1"><Mail className="w-4 h-4" />{client.email}</div>
+              {client.phone && <div className="flex items-center gap-1"><Phone className="w-4 h-4" />{client.phone}</div>}
+            </div>
+            <div className="mt-3">
+              {client.program?.status === 'active' ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  {client.program.program_type || 'Program'} ({client.program.completedSessions}/{client.program.totalSessions} sessions)
+                </span>
+              ) : client.program?.status === 'completed' ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  Program Completed
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-800">
+                  Free Consultation
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="border-b border-slate-200 overflow-x-auto">
+          <nav className="flex">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  {/* Session Statistics */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+                      <p className="text-sm text-slate-600 font-medium">Total Sessions</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">
+                        {detail?.sessions?.length || 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-200 text-center">
+                      <p className="text-sm text-green-600 font-medium">Completed</p>
+                      <p className="text-3xl font-bold text-green-700 mt-1">
+                        {detail?.sessions?.filter((s: any) => s.status === 'completed').length || 0}
+                      </p>
+                    </div>
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 text-center">
+                      <p className="text-sm text-amber-600 font-medium">Upcoming</p>
+                      <p className="text-3xl font-bold text-amber-700 mt-1">
+                        {detail?.sessions?.filter((s: any) => s.status !== 'completed').length || 0}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Latest Assessment Overview */}
+                  {detail?.assessments?.length > 0 ? (
+                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                      <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-indigo-600" />
+                            Latest Assessment
+                            {detail.assessments[detail.assessments.length - 1]?.is_baseline && (
+                              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">Baseline</span>
+                            )}
+                          </h4>
+                          <span className="text-sm text-slate-500">
+                            {new Date(detail.assessments[detail.assessments.length - 1]?.assessed_at || detail.assessments[detail.assessments.length - 1]?.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-5 space-y-4">
+                        {/* Clinical Summary */}
+                        {detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Condition Brief</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief}</p>
+                          </div>
+                        )}
+                        {detail.assessments[detail.assessments.length - 1]?.therapist_focus && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapist Focus</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapist_focus}</p>
+                          </div>
+                        )}
+                        {detail.assessments[detail.assessments.length - 1]?.therapy_goal && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapy Goal</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapy_goal}</p>
+                          </div>
+                        )}
+
+                        {/* Scores Grid */}
+                        <div className="pt-4 border-t border-slate-100">
+                          <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Assessment Scores</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {[
+                              { label: 'Nervous System', key: 'nervous_system_score' },
+                              { label: 'Emotional', key: 'emotional_state_score' },
+                              { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                              { label: 'Physical', key: 'body_symptoms_score' },
+                              { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                              { label: 'Life Functioning', key: 'life_functioning_score' },
+                            ].map(metric => (
+                              <div key={metric.key} className="bg-slate-50 rounded-lg p-3">
+                                <p className="text-xs text-slate-500">{metric.label}</p>
+                                <p className="text-lg font-semibold text-slate-900">
+                                  {detail.assessments[detail.assessments.length - 1]?.[metric.key] || 0}
+                                  <span className="text-sm font-normal text-slate-400">/10</span>
+                                </p>
+                              </div>
+                            ))}
+                            <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                              <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
+                              <p className="text-lg font-bold text-indigo-700">
+                                {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}
+                                <span className="text-sm font-normal text-indigo-400">/60</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress Comparison */}
+                        {detail.assessments.length > 1 && (
+                          <div className="pt-4 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Progress from Baseline</p>
+                            <div className="flex items-center gap-4">
+                              <div className="text-center">
+                                <p className="text-xs text-slate-500">Baseline</p>
+                                <p className="text-2xl font-bold text-slate-700">
+                                  {detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0}/60
+                                </p>
+                              </div>
+                              <div className="flex-1 h-1 bg-slate-200 rounded">
+                                <div
+                                  className="h-full bg-indigo-500 rounded"
+                                  style={{ width: `${((detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) / 60) * 100}%` }}
+                                />
+                              </div>
+                              <TrendingUp className="w-5 h-5 text-green-500" />
+                              <div className="flex-1 h-1 bg-slate-200 rounded">
+                                <div
+                                  className="h-full bg-green-500 rounded"
+                                  style={{ width: `${((detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) / 60) * 100}%` }}
+                                />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs text-green-600">Current</p>
+                                <p className="text-2xl font-bold text-green-700">
+                                  {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}/60
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-center text-sm text-slate-600 mt-2">
+                              Change: <span className={`font-semibold ${
+                                (detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0
+                                  ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0 ? '+' : ''}
+                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0)} points
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border border-slate-200 rounded-xl p-8 text-center">
+                      <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">No assessments yet</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'sessions' && (
+                <SessionsTab
+                  sessions={(detail?.sessions || []) as Session[]}
+                  documents={documents}
+                  onOpenAssessment={(s: Session) => onOpenAssessment(s)}
+                  onOpenDevForm={(s: Session) => onOpenDevForm(s)}
+                  onRefresh={onRefresh}
+                  onUploadDocument={onUploadDocument}
+                  uploadingDoc={uploadingDoc}
+                />
+              )}
+
+              {activeTab === 'assessments' && (
+                <div className="space-y-6">
+                  {detail?.assessments?.length > 0 ? (
+                    detail.assessments.map((a: any) => (
+                      <div key={a.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                        {/* Assessment Header */}
+                        <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <h4 className="font-semibold text-slate-900">
+                                {a.is_baseline ? 'Baseline Assessment' : 'Assessment'}
+                              </h4>
+                              {a.is_baseline && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">Baseline</span>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-indigo-600">{a.goal_readiness_score || 0}/60</p>
+                              <p className="text-xs text-slate-500">{new Date(a.assessed_at || a.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                          {/* Main Complaint */}
+                          {a.main_complaint && (
+                            <div>
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Main Complaint</p>
+                              <p className="text-sm text-slate-700">{a.main_complaint}</p>
+                            </div>
+                          )}
+
+                          {/* Current Symptoms */}
+                          {a.current_symptoms && a.current_symptoms.length > 0 && (
+                            <div>
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Current Symptoms</p>
+                              <div className="flex flex-wrap gap-2">
+                                {a.current_symptoms.map((symptom: string, idx: number) => (
+                                  <span key={idx} className="px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">{symptom}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Clinical Summary */}
+                          {(a.clinical_condition_brief || a.therapist_focus || a.therapy_goal) && (
+                            <div className="pt-4 border-t border-slate-100">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Clinical Summary</p>
+                              <div className="space-y-3">
+                                {a.clinical_condition_brief && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Condition Brief</p>
+                                    <p className="text-sm text-slate-700">{a.clinical_condition_brief}</p>
+                                  </div>
+                                )}
+                                {a.therapist_focus && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Therapist Focus</p>
+                                    <p className="text-sm text-slate-700">{a.therapist_focus}</p>
+                                  </div>
+                                )}
+                                {a.therapy_goal && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Therapy Goal</p>
+                                    <p className="text-sm text-slate-700">{a.therapy_goal}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Domain Scores */}
+                          <div className="pt-4 border-t border-slate-100">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Assessment Scores</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {[
+                                { label: 'Nervous System', key: 'nervous_system_score', pattern: a.nervous_system_pattern },
+                                { label: 'Emotional', key: 'emotional_state_score' },
+                                { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                                { label: 'Physical', key: 'body_symptoms_score' },
+                                { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                                { label: 'Life Functioning', key: 'life_functioning_score' },
+                              ].map(metric => (
+                                <div key={metric.key} className="bg-slate-50 rounded-lg p-3">
+                                  <p className="text-xs text-slate-500">{metric.label}</p>
+                                  <p className="text-lg font-semibold text-slate-900">
+                                    {a[metric.key] || 0}<span className="text-sm font-normal text-slate-400">/10</span>
+                                  </p>
+                                  {metric.pattern && (
+                                    <p className="text-xs text-slate-400 mt-1">Pattern: {metric.pattern}</p>
+                                  )}
+                                </div>
+                              ))}
+                              <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                                <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
+                                <p className="text-lg font-bold text-indigo-700">
+                                  {a.goal_readiness_score || 0}<span className="text-sm font-normal text-indigo-400">/60</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Pattern Selections */}
+                          {(a.emotional_patterns?.length > 0 || a.cognitive_patterns?.length > 0 || 
+                            a.body_symptoms?.length > 0 || a.behavioral_patterns?.length > 0 || 
+                            a.life_functioning_patterns?.length > 0) && (
+                            <div className="pt-4 border-t border-slate-100">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Selected Patterns</p>
+                              <div className="space-y-2">
+                                {a.emotional_patterns?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Emotional Patterns:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {a.emotional_patterns.map((p: string, i: number) => (
+                                        <span key={i} className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">{p}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {a.cognitive_patterns?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Cognitive Patterns:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {a.cognitive_patterns.map((p: string, i: number) => (
+                                        <span key={i} className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">{p}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {a.body_symptoms?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Body Symptoms:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {a.body_symptoms.map((p: string, i: number) => (
+                                        <span key={i} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">{p}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {a.behavioral_patterns?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Behavioral Patterns:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {a.behavioral_patterns.map((p: string, i: number) => (
+                                        <span key={i} className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">{p}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {a.life_functioning_patterns?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs text-slate-500 mb-1">Life Functioning:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {a.life_functioning_patterns.map((p: string, i: number) => (
+                                        <span key={i} className="px-2 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded">{p}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Root Cause Analysis */}
+                          {(a.root_cause_pattern_timeline || a.root_cause_parental_influence || 
+                            a.root_cause_core_patterns || a.root_cause_contributing_factors) && (
+                            <div className="pt-4 border-t border-slate-100">
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Root Cause Analysis</p>
+                              <div className="space-y-2">
+                                {a.root_cause_pattern_timeline && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Pattern Timeline</p>
+                                    <p className="text-sm text-slate-700">{a.root_cause_pattern_timeline}</p>
+                                  </div>
+                                )}
+                                {a.root_cause_parental_influence && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Parental Influence</p>
+                                    <p className="text-sm text-slate-700">{a.root_cause_parental_influence}</p>
+                                  </div>
+                                )}
+                                {a.root_cause_core_patterns && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Core Patterns</p>
+                                    <p className="text-sm text-slate-700">{a.root_cause_core_patterns}</p>
+                                  </div>
+                                )}
+                                {a.root_cause_contributing_factors && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500 mb-1">Contributing Factors</p>
+                                    <p className="text-sm text-slate-700">{a.root_cause_contributing_factors}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 border border-slate-200 rounded-xl">
+                      <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">No assessments yet</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'reports' && (
+                <ReportsTab
+                  clientId={client.userId}
+                  assessments={detail?.assessments || []}
+                  devForms={detail?.devForms || []}
+                  sessions={(detail?.sessions || []) as Session[]}
+                />
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AvailabilityModal({
+  therapistId, availability, onClose, onSave
+}: {
+  therapistId: string;
+  availability: Availability[];
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [blockDate, setBlockDate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<'recurring' | 'block'>('recurring');
+
+  const daysOfWeek = [
+    { id: 0, label: 'Sunday' }, { id: 1, label: 'Monday' }, { id: 2, label: 'Tuesday' },
+    { id: 3, label: 'Wednesday' }, { id: 4, label: 'Thursday' }, { id: 5, label: 'Friday' },
+    { id: 6, label: 'Saturday' },
+  ];
+
+  const toggleDay = (day: number) => {
+    setSelectedDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
+  const handleSaveRecurring = async () => {
+    if (selectedDays.length === 0) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/therapist/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_recurring', recurring_days: selectedDays, start_time: startTime, end_time: endTime }),
+      });
+      if (res.ok) onSave();
+    } catch (error) {
+      console.error('Failed to save availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBlockDay = async () => {
+    if (!blockDate) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/therapist/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'block_full_day', date: blockDate }),
+      });
+      if (res.ok) onSave();
+    } catch (error) {
+      console.error('Failed to block day:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBlock = async (id: string) => {
+    try {
+      const res = await fetch(`/api/therapist/availability?id=${id}`, { method: 'DELETE' });
+      if (res.ok) onSave();
+    } catch (error) {
+      console.error('Failed to delete block:', error);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-slate-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-slate-900">Manage Availability</h2>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setTab('recurring')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                tab === 'recurring' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Weekly Schedule
+            </button>
+            <button
+              onClick={() => setTab('block')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                tab === 'block' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Block Dates
+            </button>
+          </div>
+
+          {tab === 'recurring' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Select Available Days</label>
+                <div className="flex flex-wrap gap-2">
+                  {daysOfWeek.map(day => (
+                    <button
+                      key={day.id}
+                      onClick={() => toggleDay(day.id)}
+                      className={`px-3 py-2 text-sm rounded-lg ${
+                        selectedDays.includes(day.id)
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Time</label>
+                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full p-2 border border-slate-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">End Time</label>
+                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full p-2 border border-slate-300 rounded-lg" />
+                </div>
+              </div>
+              <button
+                onClick={handleSaveRecurring}
+                disabled={loading || selectedDays.length === 0}
+                className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Availability'}
+              </button>
+            </div>
+          )}
+
+          {tab === 'block' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Block a Date</label>
+                <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg" />
+                <button
+                  onClick={handleBlockDay}
+                  disabled={loading || !blockDate}
+                  className="mt-2 w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Blocking...' : 'Block This Day'}
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Blocked Dates</label>
+                <div className="space-y-2">
+                  {availability.filter(a => a.is_blocked && a.exception_date).map(block => (
+                    <div key={block.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                      <span className="text-sm text-red-700">
+                        {new Date(block.exception_date + 'T00:00:00').toLocaleDateString()}
+                      </span>
+                      <button onClick={() => handleDeleteBlock(block.id)} className="text-red-600 hover:text-red-700">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {availability.filter(a => a.is_blocked && a.exception_date).length === 0 && (
+                    <p className="text-sm text-slate-500 text-center py-4">No blocked dates</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
