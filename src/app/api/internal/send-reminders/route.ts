@@ -33,9 +33,10 @@ export async function GET(req: NextRequest) {
   const supabase = getServiceClient();
   const nowUtc = Date.now();
 
-  const windows: { type: 'reminder_24h' | 'reminder_1h'; startMs: number; endMs: number }[] = [
+  // On free Vercel plan: once per day, so we only send 24-hour reminders
+  // The 1-hour reminder is sent when user views their dashboard (client-side check)
+  const windows: { type: 'reminder_24h'; startMs: number; endMs: number }[] = [
     { type: 'reminder_24h', startMs: nowUtc + 23 * 3_600_000, endMs: nowUtc + 25 * 3_600_000 },
-    { type: 'reminder_1h', startMs: nowUtc + 55 * 60_000, endMs: nowUtc + 65 * 60_000 },
   ];
 
   const candidateDates = new Set<string>();
