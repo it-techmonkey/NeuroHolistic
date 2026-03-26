@@ -217,7 +217,7 @@ export default function ClientDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-slate-900">Health Dashboard</h1>
+              <h1 className="text-xl font-semibold text-slate-900">User Dashboard</h1>
             </div>
 
             {/* Navigation Tabs */}
