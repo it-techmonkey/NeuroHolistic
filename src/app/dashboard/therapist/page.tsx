@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import Clients from '@/components/dashboard/therapist/Clients';
 import Sessions from '@/components/dashboard/therapist/Sessions';
 import Reports from '@/components/dashboard/therapist/Reports';
-import { Loader2, Users, Calendar, FileText, BarChart3 } from 'lucide-react';
+import { Loader2, Users, Calendar, BarChart3 } from 'lucide-react';
 
 export default function TherapistDashboardPage() {
   const router = useRouter();

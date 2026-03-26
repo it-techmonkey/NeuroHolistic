@@ -55,8 +55,25 @@ export async function GET() {
     const therapists = users.filter(u => u.role === 'therapist');
     const clients = users.filter(u => u.role === 'client');
     const activePrograms = programs.filter(p => p.status === 'active');
-    // Calculate revenue from programs (no separate payments table)
-    const totalRevenue = programs.reduce((sum, p) => sum + (p.price_paid ?? 0), 0);
+    // Calculate revenue - only 800 (single session) or 7700 (full program) allowed
+    const programRevenue = programs.reduce((sum, p) => {
+      const price = p.price_paid ?? 0;
+      // Only count valid program prices: 7700 for full program
+      if (price === 7700) {
+        return sum + 7700;
+      }
+      return sum;
+    }, 0);
+    
+    const singleSessionRevenue = bookings.reduce((sum, b) => {
+      // Only count valid single session price: 800
+      if (b.type === 'paid_session' && b.price === 800) {
+        return sum + 800;
+      }
+      return sum;
+    }, 0);
+    
+    const totalRevenue = programRevenue + singleSessionRevenue;
 
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -79,8 +96,25 @@ export async function GET() {
       );
       const therapistAssessments = diagnosticAssessments.filter(a => a.therapist_id === t.id);
 
-      // Calculate revenue from therapist's programs
-      const revenue = therapistPrograms.reduce((sum: number, p: any) => sum + (p.price_paid ?? 0), 0);
+      // Calculate revenue - only 800 (single session) or 7700 (full program) allowed
+      const therapistProgramRevenue = therapistPrograms.reduce((sum: number, p: any) => {
+        const price = p.price_paid ?? 0;
+        // Only count valid program prices: 7700 for full program
+        if (price === 7700) {
+          return sum + 7700;
+        }
+        return sum;
+      }, 0);
+      
+      const therapistSingleSessionRevenue = therapistBookings.reduce((sum: number, b: any) => {
+        // Only count valid single session price: 800
+        if (b.type === 'paid_session' && b.price === 800) {
+          return sum + 800;
+        }
+        return sum;
+      }, 0);
+      
+      const revenue = therapistProgramRevenue + therapistSingleSessionRevenue;
 
       return {
         id: t.id,

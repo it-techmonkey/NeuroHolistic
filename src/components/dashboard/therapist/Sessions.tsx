@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Loader2, Video, FileText, CheckCircle, Clock, Calendar, User, ExternalLink, XCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Video, FileText, CheckCircle, Clock, Calendar, User, ExternalLink, XCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Link2, Unlink } from 'lucide-react';
 import DiagnosticAssessmentForm from './DiagnosticAssessmentForm';
 import SessionDevelopmentForm from './SessionDevelopmentForm';
 import UploadMaterial from './UploadMaterial';
@@ -14,9 +14,50 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
+  // Google Calendar state
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
+  
   // Modal State
   const [activeSession, setActiveSession] = useState<any>(null);
   const [modalType, setModalType] = useState<'diagnostic' | 'development' | null>(null);
+
+  // Check Google Calendar status
+  const checkGoogleStatus = async () => {
+    try {
+      const res = await fetch('/api/google/status');
+      if (res.ok) {
+        const data = await res.json();
+        setGoogleConnected(data.connected);
+      }
+    } catch {
+      setGoogleConnected(false);
+    }
+  };
+
+  // Connect Google Calendar
+  const handleConnectGoogle = async () => {
+    setConnectingGoogle(true);
+    try {
+      const res = await fetch('/api/google/connect');
+      const data = await res.json();
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (err) {
+      console.error('Failed to connect Google:', err);
+      setConnectingGoogle(false);
+    }
+  };
+
+  // Check for OAuth callback results in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('google_connected') === 'true') {
+      window.history.replaceState({}, '', window.location.pathname);
+      checkGoogleStatus();
+    }
+  }, []);
 
   const fetchSessions = async () => {
     try {
@@ -32,6 +73,7 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
 
   useEffect(() => {
     fetchSessions();
+    checkGoogleStatus();
   }, [therapistId]);
 
   const openForm = (session: any, type: 'diagnostic' | 'development') => {
@@ -89,23 +131,49 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
           <h2 className="text-lg font-semibold text-slate-900">Sessions</h2>
           <p className="text-sm text-slate-500">Manage your sessions and join meetings</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setView('list')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              view === 'list' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
-            }`}
-          >
-            List View
-          </button>
-          <button
-            onClick={() => setView('calendar')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              view === 'calendar' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
-            }`}
-          >
-            Calendar View
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Google Calendar Status */}
+          <div className="flex items-center gap-2">
+            {googleConnected === true ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+                <Link2 className="w-4 h-4" />
+                Calendar Connected
+              </span>
+            ) : googleConnected === false ? (
+              <button
+                onClick={handleConnectGoogle}
+                disabled={connectingGoogle}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm border border-blue-200 hover:bg-blue-100 disabled:opacity-50 transition-colors"
+              >
+                {connectingGoogle ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Unlink className="w-4 h-4" />
+                )}
+                Connect Calendar
+              </button>
+            ) : null}
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setView('list')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                view === 'list' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
+              }`}
+            >
+              List View
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                view === 'calendar' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
+              }`}
+            >
+              Calendar View
+            </button>
+          </div>
         </div>
       </div>
 
@@ -350,23 +418,28 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
                           <FileText className="w-4 h-4" />
                           Assessment
                         </button>
-                        <button
-                          onClick={() => openForm(session, 'development')}
-                          className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg ${
-                            session.development_form_submitted 
-                              ? 'border border-green-300 bg-green-50 text-green-700' 
-                              : 'border border-yellow-300 bg-yellow-50 text-yellow-700'
-                          }`}
-                        >
-                          <FileText className="w-4 h-4" />
-                          {session.development_form_submitted ? 'Dev Form ✓' : 'Dev Form'}
-                        </button>
+                        {/* Only show Dev Form for program sessions, not free consultations */}
+                        {session.type !== 'free_consultation' && session.program_id && (
+                          <button
+                            onClick={() => openForm(session, 'development')}
+                            className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg ${
+                              session.development_form_submitted 
+                                ? 'border border-green-300 bg-green-50 text-green-700' 
+                                : 'border border-yellow-300 bg-yellow-50 text-yellow-700'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                            {session.development_form_submitted ? 'Dev Form ✓' : 'Dev Form'}
+                          </button>
+                        )}
                         
                         <UploadMaterial sessionId={session.id} onUploadComplete={() => {}} />
                         
+                        {/* For free consultations, allow completion without development form */}
+                        {/* For program sessions, require development form */}
                         <MarkComplete 
                           sessionId={session.id} 
-                          isReady={session.development_form_submitted} 
+                          isReady={session.type === 'free_consultation' || !session.program_id || session.development_form_submitted} 
                           isCompleted={session.status === 'completed'}
                           onComplete={() => fetchSessions()}
                         />

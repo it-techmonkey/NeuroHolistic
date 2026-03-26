@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       .from('session_development_forms')
       .select('*')
       .eq('client_id', clientId)
-      .order('session_date', { ascending: true });
+      .order('created_at', { ascending: true });
 
     // Fetch materials
     const sessionIds = (sessions ?? []).map(s => s.id);

@@ -110,12 +110,17 @@ export default function SessionDevelopmentForm({
         body: JSON.stringify(payload),
       });
 
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Server returned an invalid response');
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to save form');
       }
 
-      const data = await res.json();
       onSave(data.data);
     } catch (err: any) {
       setError(err.message);
@@ -178,7 +183,7 @@ export default function SessionDevelopmentForm({
               <p className="text-sm text-slate-500 mt-1">Session {sessionNumber} — {sessionDate}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-500">Goal Readiness</p>
+              <p className="text-sm text-slate-500">Wellbeing Score</p>
               <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
             </div>
           </div>
@@ -394,7 +399,7 @@ export default function SessionDevelopmentForm({
 
               <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-indigo-900">Goal Readiness Score:</span>
+                  <span className="font-medium text-indigo-900">Wellbeing Score:</span>
                   <span className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>

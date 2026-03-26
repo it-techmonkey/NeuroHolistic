@@ -155,7 +155,7 @@ export default function Clients({ therapistId }: { therapistId: string }) {
                         </p>
                       </div>
                       <p className="text-xs text-indigo-600 mt-1">
-                        Goal Readiness: {a.goal_readiness_score || 0}/60
+                        Wellbeing Score: {a.goal_readiness_score || 0}/60
                       </p>
                     </div>
                   ))}
@@ -182,7 +182,7 @@ export default function Clients({ therapistId }: { therapistId: string }) {
                         </p>
                       </div>
                       <p className="text-xs text-indigo-600 mt-1">
-                        Goal Readiness: {f.goal_readiness_score || 0}/60
+                        Wellbeing Score: {f.goal_readiness_score || 0}/60
                       </p>
                     </div>
                   ))}

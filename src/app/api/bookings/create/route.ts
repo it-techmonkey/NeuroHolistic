@@ -180,18 +180,25 @@ export async function POST(request: NextRequest) {
 
     // For program sessions: Validate client is only scheduling the immediate next session
     if (type === 'program' && programId && sessionNumber) {
-      const { data: completedSessions } = await supabase
+      // Get all sessions for this program to determine which one can be scheduled
+      const { data: allSessions } = await supabase
         .from('sessions')
-        .select('session_number')
+        .select('session_number, status, date')
         .eq('program_id', programId)
         .eq('client_id', userId)
-        .eq('status', 'completed')
-        .order('session_number', { ascending: false });
+        .order('session_number', { ascending: true });
 
-      const lastCompletedSession = completedSessions?.[0]?.session_number ?? 0;
-      const expectedNextSession = lastCompletedSession + 1;
+      // Find the next session that needs to be scheduled (pending with no date)
+      const pendingSessions = (allSessions ?? []).filter(s => s.status === 'pending' && !s.date);
+      const scheduledSessions = (allSessions ?? []).filter(s => s.status === 'scheduled');
+      const completedSessions = (allSessions ?? []).filter(s => s.status === 'completed');
 
-      // Client can only schedule the next session, not skip ahead
+      // The next session to schedule is the first pending one, or if all pending have dates, the first scheduled
+      const nextPendingSession = pendingSessions[0];
+      const lastCompleted = completedSessions[completedSessions.length - 1];
+      const expectedNextSession = lastCompleted ? lastCompleted.session_number + 1 : 1;
+
+      // Client can only schedule the next session in order
       if (sessionNumber !== expectedNextSession) {
         return NextResponse.json(
           { error: `You can only schedule Session ${expectedNextSession}. Please schedule sessions in order.` },
@@ -199,17 +206,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check if this session is already scheduled
+      // Check if this session is already scheduled with a date
       const { data: existingScheduled } = await supabase
         .from('sessions')
-        .select('id, status')
+        .select('id, status, date')
         .eq('program_id', programId)
         .eq('session_number', sessionNumber)
         .eq('client_id', userId)
-        .neq('status', 'cancelled')
         .maybeSingle();
 
-      if (existingScheduled && existingScheduled.status === 'scheduled') {
+      if (existingScheduled && existingScheduled.status === 'scheduled' && existingScheduled.date) {
         return NextResponse.json(
           { error: `Session ${sessionNumber} is already scheduled. You can reschedule it from your dashboard.` },
           { status: 409 }
@@ -227,7 +233,7 @@ export async function POST(request: NextRequest) {
       const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
       const endDateTime = `${date}T${endTime}:00`;
 
-      console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime });
+      console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime, therapistId });
       
       const result = await createMeetEvent({
         summary: `NeuroHolistic ${type === 'free_consultation' ? 'Free Consultation' : 'Session'}${sessionNumber ? ` #${sessionNumber}` : ''} - ${name}`,
@@ -235,6 +241,7 @@ export async function POST(request: NextRequest) {
         startDateTime,
         endDateTime,
         attendeeEmails: [email],
+        therapistId, // Pass therapist ID to use their connected Google Calendar if available
       });
       
       console.log('[CreateBooking] Meet result:', result);

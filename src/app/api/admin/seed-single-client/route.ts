@@ -19,9 +19,10 @@ function getDate(daysOffset: number): string {
   return new Date(Date.now() + daysOffset * 86400000).toISOString().split('T')[0];
 }
 
-function getRandomTime(): string {
-  const times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
-  return times[Math.floor(Math.random() * times.length)];
+// Session-specific times (consistent for each session number)
+const SESSION_TIMES = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+function getSessionTime(sessionNum: number): string {
+  return SESSION_TIMES[(sessionNum - 1) % SESSION_TIMES.length];
 }
 
 export async function POST() {
@@ -125,7 +126,7 @@ export async function POST() {
         therapist_user_id: therapistId,
         therapist_name: therapistName,
         date: getDate(-70 + (i * 7)),
-        time: getRandomTime(),
+        time: getSessionTime(i),
         type: 'paid_program',
         status: 'completed',
         session_number: i,
@@ -142,7 +143,7 @@ export async function POST() {
         therapist_id: therapistId,
         session_number: i,
         date: getDate(-70 + (i * 7)),
-        time: getRandomTime(),
+        time: getSessionTime(i),
         status: 'completed',
         is_complete: true,
         development_form_submitted: true,

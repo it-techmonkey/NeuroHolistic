@@ -167,6 +167,24 @@ export async function GET(request: NextRequest) {
     // Filter out booked slots
     let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
 
+    // Filter out past time slots if booking for today
+    const today = new Date().toISOString().split('T')[0];
+    if (date === today) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      availableSlots = availableSlots.filter((slot) => {
+        const [slotHour, slotMinute] = slot.split(':').map(Number);
+        // Only show slots that are at least 1 hour in the future
+        if (slotHour > currentHour) return true;
+        if (slotHour === currentHour && slotMinute > currentMinute + 60) return true;
+        return false;
+      });
+      
+      console.log('[Availability] Filtered past slots for today. Current time:', `${currentHour}:${currentMinute}`, 'Available:', availableSlots);
+    }
+
     // If no slots available, still return default slots (for testing)
     if (availableSlots.length === 0 && allSlots.length > 0) {
       console.log('[Availability] No slots available, returning defaults anyway');

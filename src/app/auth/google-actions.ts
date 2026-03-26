@@ -1,0 +1,88 @@
+'use server';
+
+import { createClient } from '@/lib/auth/server';
+
+/**
+ * Sign in with Google OAuth
+ * Redirects user to Google consent screen
+ */
+export async function signInWithGoogle(redirectTo?: string) {
+  const supabase = await createClient();
+
+  const callbackUrl = redirectTo
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+    : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`;
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: callbackUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { url: data.url };
+}
+
+/**
+ * Handle Google OAuth callback
+ * Creates user record if new user
+ */
+export async function handleGoogleCallback() {
+  const supabase = await createClient();
+  const serviceSupabase = getServiceClient();
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return { error: 'Failed to get user from Google' };
+  }
+
+  // Check if user record already exists
+  const { data: existingUser } = await serviceSupabase
+    .from('users')
+    .select('id, role')
+    .eq('id', user.id)
+    .single();
+
+  // If user doesn't exist in our users table, create them
+  if (!existingUser) {
+    const fullName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.email?.split('@')[0] || 
+                     'User';
+    
+    const { error: insertError } = await serviceSupabase.from('users').upsert({
+      id: user.id,
+      email: user.email!,
+      role: 'client',
+      full_name: fullName,
+      phone: user.user_metadata?.phone || null,
+      country: user.user_metadata?.country || null,
+    }, {
+      onConflict: 'id',
+    });
+
+    if (insertError) {
+      console.error('[GoogleCallback] Error creating user record:', insertError);
+    }
+  }
+
+  return { success: true, user };
+}
+
+// Helper to get service role client
+function getServiceClient() {
+  const { createClient: createServiceClient } = require('@supabase/supabase-js');
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}

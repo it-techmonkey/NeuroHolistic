@@ -15,7 +15,7 @@ async function sendProgramConfirmationEmail({
   programId: string;
 }) {
   await resend.emails.send({
-    from: 'NeuroHolistic Institute <nboarding@resend.dev>',
+    from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
     to: email,
     subject: 'Program Confirmation — NeuroHolistic Institute',
     html: `<!DOCTYPE html>

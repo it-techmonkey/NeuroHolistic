@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Send to the client
     const clientResponse = await resend.emails.send({
-      from: 'NeuroHolistic Institute <nboarding@resend.dev>',
+      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
       to: email,
       subject: 'Your Free Consultation is Confirmed',
       html: generateConsultationConfirmationEmail({
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Send admin notification in parallel (fire-and-forget)
     resend.emails.send({
-      from: 'NeuroHolistic Institute <nboarding@resend.dev>',
+      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
       to: adminEmail,
       subject: `New Consultation Booking — ${name}`,
       html: generateAdminNotificationEmail({

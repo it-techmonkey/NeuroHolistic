@@ -9,7 +9,21 @@ type Slot = {
   display: string;
 };
 
-export default function Sessions({ upcoming, past }: { upcoming: any[]; past: any[] }) {
+type ProgramStatus = 'active' | 'completed' | 'consultation_done' | 'none';
+
+export default function Sessions({ 
+  upcoming, 
+  past, 
+  pending, 
+  programStatus = 'none',
+  hasActiveProgram = false,
+}: { 
+  upcoming: any[]; 
+  past: any[]; 
+  pending?: any[];
+  programStatus?: ProgramStatus;
+  hasActiveProgram?: boolean;
+}) {
   const [reschedulingSession, setReschedulingSession] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -82,9 +96,139 @@ export default function Sessions({ upcoming, past }: { upcoming: any[]; past: an
     setRescheduleSuccess(false);
   };
 
+  // Check if user has a scheduled consultation
+  const scheduledConsultation = upcoming.find((s: any) => s.type === 'free_consultation' && s.status === 'confirmed');
+  const hasScheduledConsultation = !!scheduledConsultation;
+
+  // Determine what action buttons to show
+  const getActionButtons = () => {
+    switch (programStatus) {
+      case 'active':
+        return (
+          <div className="flex space-x-3">
+            <Link
+              href="/booking/schedule-session"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Book Next Session
+            </Link>
+          </div>
+        );
+      case 'completed':
+        return (
+          <div className="flex space-x-3">
+            <Link
+              href="/booking/payment-options"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Book a New Program
+            </Link>
+          </div>
+        );
+      case 'consultation_done':
+        return (
+          <div className="flex space-x-3">
+            <Link
+              href="/booking/payment-options"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Book a Paid Program
+            </Link>
+          </div>
+        );
+      case 'none':
+      default:
+        return (
+          <div className="flex space-x-3">
+            <Link
+              href="/consultation/book"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Book Free Consultation
+            </Link>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="space-y-8">
-      {/* Upcoming */}
+      {/* Scheduled Consultation Banner */}
+      {hasScheduledConsultation && (
+        <section>
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-medium text-emerald-900">Free Consultation Scheduled</h3>
+                <p className="text-sm text-emerald-700 mt-1">
+                  Your consultation is booked. Join using the link when it's time.
+                </p>
+                <p className="text-sm text-emerald-600 mt-2 font-medium">
+                  {new Date(scheduledConsultation.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {scheduledConsultation.time}
+                </p>
+                {scheduledConsultation.therapist_name && (
+                  <p className="text-xs text-emerald-500 mt-1">Therapist: {scheduledConsultation.therapist_name}</p>
+                )}
+              </div>
+              <div className="flex space-x-3">
+                {scheduledConsultation.meeting_link && (
+                  <a
+                    href={scheduledConsultation.meeting_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Video className="w-4 h-4 mr-2" />
+                    Join Session
+                  </a>
+                )}
+                <button
+                  onClick={() => setReschedulingSession(scheduledConsultation)}
+                  className="inline-flex items-center px-4 py-2 border border-emerald-300 text-sm font-medium rounded-lg text-emerald-700 bg-white hover:bg-emerald-50"
+                >
+                  Reschedule
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Program Actions */}
+      {!hasScheduledConsultation && (
+        <section>
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-medium text-slate-900">
+                  {programStatus === 'active' ? 'Your Therapy Program' : 
+                   programStatus === 'completed' ? 'Program Completed' : 
+                   programStatus === 'consultation_done' ? 'Free Consultation Completed' :
+                   'Start Your Wellness Journey'}
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  {programStatus === 'active' ? 'You have an active program. Book your next session.' :
+                   programStatus === 'completed' ? 'You have completed your program. Book another to continue your journey.' :
+                   programStatus === 'consultation_done' ? 'Great start! Book a paid program to continue your therapy journey.' :
+                   'Book a free consultation to begin your healing journey.'}
+                </p>
+              </div>
+              <div className="hidden md:block">
+                {getActionButtons()}
+              </div>
+            </div>
+            <div className="mt-4 md:hidden">
+              {getActionButtons()}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Upcoming Sessions */}
       <section>
         <h2 className="text-lg font-medium text-slate-900 mb-4 flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
@@ -100,7 +244,8 @@ export default function Sessions({ upcoming, past }: { upcoming: any[]; past: an
               <div key={session.id} className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
                   <div className="font-medium text-slate-900 mb-1">
-                    {session.session_number ? `Session #${session.session_number}` : 'Free Consultation'}
+                    {session.type === 'free_consultation' ? 'Free Consultation' : 
+                     session.session_number ? `Session #${session.session_number}` : 'Session'}
                   </div>
                   <div className="text-sm text-slate-600 flex items-center space-x-4">
                     <span>{new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
@@ -117,15 +262,17 @@ export default function Sessions({ upcoming, past }: { upcoming: any[]; past: an
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                     >
                       <Video className="w-4 h-4 mr-2" />
-                      Join Meet
+                      Join Session
                     </a>
                   )}
-                  <button
-                    onClick={() => setReschedulingSession(session)}
-                    className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50"
-                  >
-                    Reschedule
-                  </button>
+                  {hasActiveProgram && (
+                    <button
+                      onClick={() => setReschedulingSession(session)}
+                      className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50"
+                    >
+                      Reschedule
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -133,7 +280,31 @@ export default function Sessions({ upcoming, past }: { upcoming: any[]; past: an
         )}
       </section>
 
-      {/* Past */}
+      {/* Pending Sessions - Only show for active programs */}
+      {hasActiveProgram && pending && pending.length > 0 && (
+        <section>
+          <h2 className="text-lg font-medium text-slate-900 mb-4 flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-amber-600" />
+            Pending Sessions
+          </h2>
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <div className="text-center py-4">
+              <p className="text-slate-600 mb-4">
+                You have {pending.length} session{pending.length > 1 ? 's' : ''} waiting to be scheduled.
+              </p>
+              <Link
+                href="/booking/schedule-session"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Schedule Next Session
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Past Sessions */}
       <section>
         <h2 className="text-lg font-medium text-slate-900 mb-4 flex items-center">
           <Clock className="w-5 h-5 mr-2 text-slate-400" />
@@ -147,7 +318,8 @@ export default function Sessions({ upcoming, past }: { upcoming: any[]; past: an
               <div key={session.id} className="p-4 flex justify-between items-center">
                 <div>
                   <div className="text-sm font-medium text-slate-900">
-                    {session.session_number ? `Session #${session.session_number}` : 'Free Consultation'}
+                    {session.type === 'free_consultation' ? 'Free Consultation' : 
+                     session.session_number ? `Session #${session.session_number}` : 'Session'}
                   </div>
                   <div className="text-xs text-slate-500">
                     {new Date(session.date).toLocaleDateString()} at {session.time}

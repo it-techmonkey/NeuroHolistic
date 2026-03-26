@@ -18,19 +18,6 @@ export default function ClientDashboardPage() {
   useEffect(() => {
     async function loadDashboard(userId: string, userEmail: string) {
       try {
-        const eligibilityRes = await fetch(`/api/bookings/eligibility?email=${encodeURIComponent(userEmail)}`);
-        if (eligibilityRes.ok) {
-           const eligibility = await eligibilityRes.json();
-           if (eligibility.consultationStatus === 'completed' && !eligibility.hasActiveProgram) {
-             router.push('/booking/payment-options');
-             return;
-           }
-        }
-      } catch (e) {
-         console.error("Eligibility check failed", e);
-      }
-
-      try {
         const res = await fetch(`/api/client/dashboard?clientId=${userId}`);
         if (!res.ok) throw new Error('Failed to load dashboard data');
         const dashboardData = await res.json();
@@ -102,7 +89,15 @@ export default function ClientDashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {activeTab === 'sessions' && <Sessions upcoming={data.upcomingSessions} past={data.pastSessions} />}
+        {activeTab === 'sessions' && (
+          <Sessions 
+            upcoming={data.upcomingSessions} 
+            past={data.pastSessions} 
+            pending={data.pendingSessions}
+            programStatus={data.programStatus}
+            hasActiveProgram={data.programStatus === 'active'}
+          />
+        )}
         {activeTab === 'materials' && <Materials materials={data.materials} />}
         {activeTab === 'progress' && <Progress assessments={data.progress} />}
         {activeTab === 'account' && <Account user={data.user} />}

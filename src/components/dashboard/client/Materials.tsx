@@ -2,7 +2,17 @@
 import { FileText, Video, Download } from 'lucide-react';
 
 export default function Materials({ materials }: { materials: any[] }) {
-  if (!materials || materials.length === 0) {
+  // Map database fields to component expected fields
+  // Handle both old and new schema field names
+  const mappedMaterials = materials.map((material: any) => ({
+    id: material.id,
+    type: material.material_type || material.type || 'pdf',
+    url: material.file_url || material.url || '#',
+    filename: material.title || material.filename || material.name || 'Untitled Resource',
+    description: material.description || 'Session material',
+    created_at: material.created_at,
+  }));
+  if (!mappedMaterials || mappedMaterials.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
         <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -14,7 +24,7 @@ export default function Materials({ materials }: { materials: any[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {materials.map((file) => (
+      {mappedMaterials.map((file) => (
         <div key={file.id} className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col">
           <div className="flex items-start justify-between mb-4">
             <div className={`p-2 rounded-lg ${file.type === 'video' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'}`}>

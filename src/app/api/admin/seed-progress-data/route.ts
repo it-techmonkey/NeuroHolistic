@@ -19,9 +19,10 @@ function getDate(daysOffset: number): string {
   return new Date(Date.now() + daysOffset * 86400000).toISOString().split('T')[0];
 }
 
-function getRandomTime(): string {
-  const times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
-  return times[Math.floor(Math.random() * times.length)];
+// Session-specific times (consistent for each session number)
+const SESSION_TIMES = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+function getSessionTime(sessionNum: number): string {
+  return SESSION_TIMES[(sessionNum - 1) % SESSION_TIMES.length];
 }
 
 export async function POST() {
@@ -100,7 +101,7 @@ export async function POST() {
       const sessionDate = getDate(-60 + (i * 7)); // Weekly sessions over 10 weeks
       await supabase.from('sessions').insert({
         program_id: program.id, client_id: progressClientId, therapist_id: therapistId,
-        session_number: i, date: sessionDate, time: getRandomTime(),
+        session_number: i, date: sessionDate, time: getSessionTime(i),
         status: 'completed', is_complete: true, development_form_submitted: true,
         meet_link: generateMeetLink(),
       });
@@ -295,7 +296,7 @@ export async function POST() {
       await supabase.from('sessions').insert({
         program_id: midProgram.id, client_id: midClientId, therapist_id: therapistId,
         session_number: i, date: isCompleted ? getDate(-28 + (i * 4)) : getDate((i - 6) * 7),
-        time: getRandomTime(), status: isCompleted ? 'completed' : 'scheduled',
+        time: getSessionTime(i), status: isCompleted ? 'completed' : 'scheduled',
         is_complete: isCompleted, development_form_submitted: isCompleted,
         meet_link: generateMeetLink(),
       });

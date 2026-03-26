@@ -14,22 +14,49 @@ export async function GET(request: NextRequest) {
     const supabase = getServiceSupabase();
     const clientId = user.id;
 
-    // 1. Fetch all bookings for this client
-    const { data: bookings } = await supabase
+    // Get user email for fallback lookup
+    const userEmail = user.email?.toLowerCase();
+
+    // 1. Fetch all bookings for this client (by user_id or email fallback)
+    let { data: bookings } = await supabase
       .from('bookings')
       .select('*')
       .eq('user_id', clientId)
       .order('date', { ascending: false });
 
+    // If no bookings found by user_id, try by email (for bookings made before user_id was set)
+    if ((!bookings || bookings.length === 0) && userEmail) {
+      const { data: emailBookings } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('email', userEmail)
+        .order('date', { ascending: false });
+      bookings = emailBookings;
+    }
+
     const now = new Date();
+    
+    // Upcoming: confirmed and in the future (or today with future time)
     const upcomingBookings = (bookings ?? []).filter(b => {
-      const bookingDate = new Date(`${b.date}T${b.time}`);
-      return b.status === 'confirmed' && bookingDate >= now;
+      if (b.status !== 'confirmed') return false;
+      const bookingDateTime = new Date(`${b.date}T${b.time}`);
+      return bookingDateTime >= now;
     });
+    
+    // Past: completed, cancelled, or in the past
     const pastBookings = (bookings ?? []).filter(b => {
-      const bookingDate = new Date(`${b.date}T${b.time}`);
-      return b.status === 'completed' || b.status === 'cancelled' || bookingDate < now;
+      if (b.status === 'completed' || b.status === 'cancelled') return true;
+      const bookingDateTime = new Date(`${b.date}T${b.time}`);
+      return bookingDateTime < now;
     });
+    
+    // 1.1 Fetch pending sessions for active programs
+    const { data: pendingSessions } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('status', 'pending')
+      .order('session_number', { ascending: true });
 
     // 2. Fetch diagnostic assessments
     const { data: assessments } = await supabase
@@ -39,17 +66,24 @@ export async function GET(request: NextRequest) {
       .order('assessed_at', { ascending: true });
 
     // 3. Fetch session development forms (strip therapist_internal_notes)
+    // Note: Using actual column names from the database schema
     const { data: devFormsRaw } = await supabase
       .from('session_development_forms')
-      .select('id, session_id, client_id, therapist_id, pre_session_energy, pre_session_mood, pre_session_anxiety, pre_session_notes, post_session_energy, post_session_mood, post_session_anxiety, post_session_notes, techniques_used, key_insights, homework_assigned, homework_completed, filled_by_client_at, filled_by_therapist_at, created_at, updated_at')
+      .select('id, session_id, client_id, therapist_id, pre_session_energy, pre_session_mood, pre_session_anxiety, post_session_energy, post_session_mood, post_session_anxiety, techniques_used, created_at, updated_at')
       .eq('client_id', clientId)
       .order('created_at', { ascending: true });
 
     // Strip therapist_internal_notes - clients should never see this
     const devForms = (devFormsRaw ?? []).map(({ therapist_internal_notes, ...rest }: any) => rest);
 
-    // 4. Fetch session materials
-    const sessionIds = (devFormsRaw ?? []).map((f: any) => f.session_id).filter(Boolean);
+    // 4. Fetch session materials - get all session IDs for this client
+    const { data: clientSessions } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('status', 'completed');
+    
+    const sessionIds = (clientSessions ?? []).map((s: any) => s.id);
     let materials: any[] = [];
     if (sessionIds.length > 0) {
       const { data: materialsData } = await supabase
@@ -89,7 +123,15 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // 7. Build progress data
+    // 6.1 Fetch completed programs for users who finished all sessions
+    const { data: completedPrograms } = await supabase
+      .from('programs')
+      .select('*')
+      .eq('user_id', clientId)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false });
+
+    // 7. Build progress data - only from assessments (dev forms use different schema)
     const progressData = [
       ...(assessments ?? []).map(a => ({
         date: a.assessed_at ?? a.created_at,
@@ -104,30 +146,53 @@ export async function GET(request: NextRequest) {
           life_functioning: a.life_functioning_score,
         },
       })),
-      ...(devForms ?? []).map((f: any) => ({
-        date: f.session_date,
-        type: 'session' as const,
-        sessionNumber: f.session_number,
-        goalReadinessScore: f.goal_readiness_score,
-        scores: {
-          nervous_system: f.nervous_system_score,
-          emotional_state: f.emotional_state_score,
-          cognitive_patterns: f.cognitive_patterns_score,
-          body_symptoms: f.body_symptoms_score,
-          behavioral_patterns: f.behavioral_patterns_score,
-          life_functioning: f.life_functioning_score,
-        },
-      })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // 6.2 Determine user's program status for UI
+    const hasCompletedFreeConsult = (bookings ?? []).some(b => 
+      b.type === 'free_consultation' && b.status === 'completed'
+    );
+    
+    const hasActiveProgram = !!program;
+    const hasCompletedAllSessions = (completedPrograms ?? []).some(p => 
+      p.used_sessions >= p.total_sessions
+    );
+    
+    // Determine what action user should see
+    let programStatus = 'none';
+    if (hasActiveProgram) {
+      programStatus = 'active';
+    } else if (hasCompletedAllSessions) {
+      programStatus = 'completed';
+    } else if (hasCompletedFreeConsult) {
+      programStatus = 'consultation_done';
+    }
+
+    // Debug info - remove in production
+    const allPrograms = await supabase
+      .from('programs')
+      .select('id, status, used_sessions, total_sessions, created_at')
+      .eq('user_id', clientId)
+      .order('created_at', { ascending: false });
 
     return NextResponse.json({
       upcomingSessions: upcomingBookings,
       pastSessions: pastBookings,
+      pendingSessions: pendingSessions ?? [],
       materials,
       progress: progressData,
       assessments: assessments ?? [],
       therapist: therapistInfo,
       program: program ?? null,
+      completedPrograms: completedPrograms ?? [],
+      programStatus, // 'active', 'completed', 'consultation_done', or 'none'
+      hasCompletedFreeConsult,
+      hasCompletedAllSessions,
+      debug: {
+        allPrograms: allPrograms.data || [],
+        activeProgram: program || null,
+        completedProgramsCount: (completedPrograms ?? []).length,
+      },
     });
   } catch (error) {
     console.error('[Client Dashboard]', error);

@@ -3,6 +3,7 @@ import { getServiceClient } from '@/lib/services/supabase-admin';
 export type EligibilityResult = {
   canBookConsultation: boolean;
   hasActiveProgram: boolean;
+  hasCompletedProgram: boolean;
   canBookProgramSessions: boolean;
   programId: string | null;
   remainingSessions: number;
@@ -23,6 +24,7 @@ export async function checkEligibility(email: string): Promise<EligibilityResult
   const result: EligibilityResult = {
     canBookConsultation: true,
     hasActiveProgram: false,
+    hasCompletedProgram: false,
     canBookProgramSessions: false,
     programId: null,
     remainingSessions: 0,
@@ -94,6 +96,22 @@ export async function checkEligibility(email: string): Promise<EligibilityResult
           name: program.therapist_name,
           userId: program.therapist_user_id ?? null,
         };
+      }
+    }
+
+    // Check for completed program (if no active program found)
+    if (!result.hasActiveProgram) {
+      const { data: completedProgram } = await supabase
+        .from('programs')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (completedProgram) {
+        result.hasCompletedProgram = true;
       }
     }
 

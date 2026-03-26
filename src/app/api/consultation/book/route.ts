@@ -12,7 +12,7 @@ const supabase = createClient<Database>(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, country, therapist_id, therapist_name, therapist_user_id, date, time } = body;
+    const { name, email, phone, country, therapist_id, therapist_name, therapist_user_id, date, time, userId } = body;
 
     if (!name || !email || !therapist_id || !date || !time) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -43,9 +43,23 @@ export async function POST(request: NextRequest) {
     });
     const meetingLink = meetingEvent.meetLink;
 
+    // Get user ID if not provided (for logged-in users)
+    let bookingUserId = userId;
+    if (!bookingUserId) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+      if (userData) {
+        bookingUserId = userData.id;
+      }
+    }
+
     const { data: booking, error: insertError } = await supabase
       .from('bookings')
       .insert({
+        user_id: bookingUserId || null,
         name,
         email: email.toLowerCase(),
         phone: phone || '',

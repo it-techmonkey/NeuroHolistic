@@ -207,7 +207,7 @@ export default function Reports({ therapistId }: ReportsProps) {
           {/* Progress Timeline Chart */}
           {report.progressTimeline && report.progressTimeline.length > 0 && (
             <div>
-              <h4 className="font-medium text-slate-900 mb-3">Goal Readiness Progress</h4>
+              <h4 className="font-medium text-slate-900 mb-3">Wellbeing Progress</h4>
               <div className="h-48 flex items-end gap-1">
                 {report.progressTimeline.map((point: any, idx: number) => (
                   <div key={idx} className="flex-1 flex flex-col items-center">
@@ -223,7 +223,7 @@ export default function Reports({ therapistId }: ReportsProps) {
               </div>
               <div className="flex justify-between text-xs text-slate-500 mt-2">
                 <span>0</span>
-                <span>Goal Readiness Score (max 60)</span>
+                <span>Wellbeing Score (0-60)</span>
                 <span>60</span>
               </div>
             </div>

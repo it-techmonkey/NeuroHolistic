@@ -7,6 +7,12 @@ interface DiagnosticAssessmentFormProps {
   therapistId: string;
   sessionId?: string;
   existingAssessment?: any;
+  clientData?: {
+    full_name?: string;
+    email?: string;
+    phone?: string;
+    country?: string;
+  };
   onClose: () => void;
   onSave: (assessment: any) => void;
 }
@@ -75,6 +81,7 @@ export default function DiagnosticAssessmentForm({
   therapistId,
   sessionId,
   existingAssessment,
+  clientData,
   onClose,
   onSave,
 }: DiagnosticAssessmentFormProps) {
@@ -83,12 +90,12 @@ export default function DiagnosticAssessmentForm({
   const [error, setError] = useState('');
 
   const [form, setForm] = useState({
-    // Section 1: Basic Info
-    client_name: existingAssessment?.client_name ?? '',
+    // Section 1: Basic Info - Auto-fill from clientData if available
+    client_name: existingAssessment?.client_name ?? clientData?.full_name ?? '',
     date_of_birth: existingAssessment?.date_of_birth ?? '',
-    client_email: existingAssessment?.client_email ?? '',
-    client_phone: existingAssessment?.client_phone ?? '',
-    client_country: existingAssessment?.client_country ?? '',
+    client_email: existingAssessment?.client_email ?? clientData?.email ?? '',
+    client_phone: existingAssessment?.client_phone ?? clientData?.phone ?? '',
+    client_country: existingAssessment?.client_country ?? clientData?.country ?? '',
     client_occupation: existingAssessment?.client_occupation ?? '',
     relationship_status: existingAssessment?.relationship_status ?? '',
 
@@ -156,12 +163,15 @@ export default function DiagnosticAssessmentForm({
     setError('');
 
     try {
+      // Note: goal_readiness_score is auto-calculated by the database
+      // Note: session_id is set to null to avoid foreign key constraint issues
       const payload = {
         clientId,
         therapistId,
-        sessionId: sessionId || null,
+        sessionId: null,
         data: {
           ...form,
+          // Do NOT include goal_readiness_score - it's auto-calculated
           assessed_at: new Date().toISOString(),
           status: 'submitted',
         },
@@ -173,12 +183,17 @@ export default function DiagnosticAssessmentForm({
         body: JSON.stringify(payload),
       });
 
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Server returned an invalid response');
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to save assessment');
       }
 
-      const data = await res.json();
       onSave(data.data);
     } catch (err: any) {
       setError(err.message);
@@ -249,7 +264,7 @@ export default function DiagnosticAssessmentForm({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-500">Goal Readiness Score</p>
+              <p className="text-sm text-slate-500">Wellbeing Score</p>
               <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
             </div>
           </div>
@@ -577,7 +592,7 @@ export default function DiagnosticAssessmentForm({
                   <div className="flex justify-between"><span>Life Functioning:</span><span className="font-medium">{form.life_functioning_score}/10</span></div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
-                  <span>Goal Readiness Score:</span>
+                  <span>Wellbeing Score:</span>
                   <span className="text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>

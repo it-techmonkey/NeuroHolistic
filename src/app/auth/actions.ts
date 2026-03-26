@@ -3,6 +3,15 @@
 import { createClient } from '@/lib/auth/server';
 import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
 
+// Helper to get service role client for admin operations
+function getServiceClient() {
+  const { createClient: createServiceClient } = require('@supabase/supabase-js');
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export async function signUp(formData: {
   firstName: string;
   lastName: string;
@@ -28,6 +37,7 @@ export async function signUp(formData: {
   }
 
   const supabase = await createClient();
+  const serviceSupabase = getServiceClient();
 
   const emailRedirectTo = formData.redirectTo
     ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(formData.redirectTo)}`
@@ -53,17 +63,23 @@ export async function signUp(formData: {
   }
 
   // Create user record in public.users with role='client'
+  // Use service client to bypass RLS, and upsert to handle existing users
   if (authData.user?.id) {
-    await supabase.from('users').insert({
+    const { error: insertError } = await serviceSupabase.from('users').upsert({
       id: authData.user.id,
       email: formData.email,
       role: 'client',
       full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
       phone: formData.phone.trim() || null,
       country: formData.country?.trim() ?? null,
-    }).then(({ error }) => {
-      if (error) console.error('[SignUp] Error creating user record:', error);
+    }, {
+      onConflict: 'id',
+      ignoreDuplicates: true,
     });
+    
+    if (insertError) {
+      console.error('[SignUp] Error creating user record:', insertError);
+    }
   }
 
   if (authData.session && formData.redirectTo) {
@@ -149,4 +165,32 @@ export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return { redirectTo: '/' };
+}
+
+/**
+ * Sign in with Google OAuth
+ */
+export async function signInWithGoogle(redirectTo?: string) {
+  const supabase = await createClient();
+
+  const callbackUrl = redirectTo
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+    : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`;
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: callbackUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { url: data.url };
 }

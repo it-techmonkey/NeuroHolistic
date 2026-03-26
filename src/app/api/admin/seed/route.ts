@@ -166,7 +166,9 @@ export async function POST() {
       pastDate.setDate(pastDate.getDate() - Math.floor(Math.random() * 30) - 1);
       
       const formatDate = (d: Date) => d.toISOString().split('T')[0];
-      const randomTime = () => `${String(9 + Math.floor(Math.random() * 8)).padStart(2, '0')}:00`;
+      // Session-specific times (consistent for each session number)
+      const sessionTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+      const getSessionTime = (sessionNum: number) => sessionTimes[(sessionNum - 1) % sessionTimes.length];
 
       switch (clientData.status) {
         case 'free_consultation_booked':
@@ -181,7 +183,7 @@ export async function POST() {
             therapist_user_id: assignedTherapist?.id || adminTherapist?.id,
             therapist_name: assignedTherapist?.full_name || adminTherapist?.full_name,
             date: formatDate(futureDate),
-            time: randomTime(),
+            time: getSessionTime(1),
             type: 'free_consultation',
             status: 'confirmed',
           }).select().single();
@@ -201,7 +203,7 @@ export async function POST() {
             therapist_user_id: assignedTherapist?.id || adminTherapist?.id,
             therapist_name: assignedTherapist?.full_name || adminTherapist?.full_name,
             date: formatDate(pastDate),
-            time: randomTime(),
+            time: getSessionTime(1),
             type: 'free_consultation',
             status: 'completed',
             meeting_link: meetLink1,
@@ -241,7 +243,7 @@ export async function POST() {
                 therapist_id: assignedTherapist?.id || adminTherapist?.id,
                 session_number: i,
                 date: formatDate(sessionDate),
-                time: randomTime(),
+                time: getSessionTime(i),
                 status: i <= 3 ? 'completed' : 'scheduled',
                 is_complete: i <= 3,
                 development_form_submitted: i <= 3,
@@ -283,7 +285,7 @@ export async function POST() {
                 therapist_id: adminTherapist?.id,
                 session_number: i,
                 date: formatDate(sessionDate),
-                time: randomTime(),
+                time: getSessionTime(i),
                 status: 'completed',
                 is_complete: true,
                 development_form_submitted: true,

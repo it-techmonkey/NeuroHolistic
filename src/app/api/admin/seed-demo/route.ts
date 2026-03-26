@@ -106,9 +106,10 @@ function getPastDate(daysAgo: number): string {
   return date.toISOString().split('T')[0];
 }
 
-function getRandomTime(): string {
-  const hours = [9, 10, 11, 14, 15, 16, 17];
-  return `${String(hours[Math.floor(Math.random() * hours.length)]).padStart(2, '0')}:00`;
+// Session-specific times (consistent for each session number)
+const SESSION_TIMES = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+function getSessionTime(sessionNum: number): string {
+  return SESSION_TIMES[(sessionNum - 1) % SESSION_TIMES.length];
 }
 
 export async function POST() {
@@ -285,7 +286,7 @@ export async function POST() {
                 therapist_id: therapistUser?.id,
                 session_number: i,
                 date: getPastDate(45 - i * 4),
-                time: getRandomTime(),
+                time: getSessionTime(i),
                 status: 'completed',
                 is_complete: true,
                 development_form_submitted: true,
@@ -367,7 +368,7 @@ export async function POST() {
                 therapist_id: therapistUser?.id,
                 session_number: i,
                 date: isCompleted ? getPastDate(21 - i * 4) : getFutureDate((i - 4) * 4),
-                time: getRandomTime(),
+                time: getSessionTime(i),
                 status: isCompleted ? 'completed' : 'scheduled',
                 is_complete: isCompleted,
                 development_form_submitted: isCompleted,
@@ -447,7 +448,7 @@ export async function POST() {
                 therapist_id: therapistUser?.id,
                 session_number: i,
                 date: isCompleted ? getPastDate(35 - i * 4) : getFutureDate((i - 7) * 7),
-                time: getRandomTime(),
+                time: getSessionTime(i),
                 status: isCompleted ? 'completed' : 'scheduled',
                 is_complete: isCompleted,
                 development_form_submitted: isCompleted,

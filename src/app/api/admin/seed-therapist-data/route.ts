@@ -23,9 +23,10 @@ function getPastDate(days: number): string {
   return new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
 }
 
-function getRandomTime(): string {
-  const times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
-  return times[Math.floor(Math.random() * times.length)];
+// Session-specific times (consistent for each session number)
+const SESSION_TIMES = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+function getSessionTime(sessionNum: number): string {
+  return SESSION_TIMES[(sessionNum - 1) % SESSION_TIMES.length];
 }
 
 export async function POST() {
@@ -67,7 +68,7 @@ export async function POST() {
 
     // 2. Create clients and their data
     const clients = [
-      { email: 'demo.full-program@email.com', name: 'Sarah Ahmad', phone: '+971501234570', state: 'completed_program' },
+      { email: 'demo.full-program@email.com', name: 'Sarah Ahmad', phone: '+971501234570', state: 'active_program' },
       { email: 'demo.active-program@email.com', name: 'Mohammed Khalid', phone: '+971501234571', state: 'active_program' },
       { email: 'demo.mid-program@email.com', name: 'Layla Hussein', phone: '+961701234570', state: 'mid_program' },
       { email: 'demo.consultation-done@email.com', name: 'Omar Farouk', phone: '+201001234570', state: 'consultation_done' },
@@ -109,6 +110,14 @@ export async function POST() {
 
       // Create data based on state
       if (client.state === 'completed_program' || client.state === 'active_program' || client.state === 'mid_program') {
+        // Delete existing data for this client to avoid duplicates
+        await supabase.from('session_materials').delete().eq('client_id', clientId);
+        await supabase.from('session_development_forms').delete().eq('client_id', clientId);
+        await supabase.from('diagnostic_assessments').delete().eq('client_id', clientId);
+        await supabase.from('sessions').delete().eq('client_id', clientId);
+        await supabase.from('bookings').delete().eq('user_id', clientId);
+        await supabase.from('programs').delete().eq('user_id', clientId);
+        
         const completedSessions = client.state === 'completed_program' ? 10 : client.state === 'active_program' ? 4 : 7;
         const status = client.state === 'completed_program' ? 'completed' : 'active';
 
@@ -133,17 +142,82 @@ export async function POST() {
           results.created.push({ type: 'program', client: client.email, status, revenue: 7700 });
 
           // Create sessions
+          const sessionIds = [];
           for (let i = 1; i <= 10; i++) {
             const isCompleted = i <= completedSessions;
-            await supabase.from('sessions').insert({
+            const { data: sessionData } = await supabase.from('sessions').insert({
               program_id: program.id, client_id: clientId, therapist_id: therapistId,
               session_number: i, date: isCompleted ? getPastDate(30 - i * 3) : getFutureDate((i - completedSessions) * 7),
-              time: getRandomTime(), status: isCompleted ? 'completed' : 'scheduled',
+              time: getSessionTime(i), status: isCompleted ? 'completed' : 'scheduled',
               is_complete: isCompleted, development_form_submitted: isCompleted,
               meet_link: generateMeetLink(),
-            });
+            }).select().single();
+            
+            if (sessionData) {
+              sessionIds.push(sessionData.id);
+            }
           }
           results.created.push({ type: 'sessions', count: 10, for: client.email });
+          
+          // Add session materials for completed sessions
+          const sessionMaterials = [
+            { session: 1, type: 'pdf', name: 'Welcome Guide', description: 'Introduction to NeuroHolistic therapy approach' },
+            { session: 1, type: 'pdf', name: 'Breathing Exercises', description: '4-7-8 breathing technique with illustrations' },
+            { session: 2, type: 'pdf', name: 'Nervous System Basics', description: 'Understanding fight/flight/freeze responses' },
+            { session: 2, type: 'audio', name: 'Body Scan Meditation', description: '15-minute guided meditation' },
+            { session: 3, type: 'pdf', name: 'Emotional Awareness Worksheet', description: 'Identifying and naming emotions' },
+            { session: 3, type: 'video', name: 'Grounding Techniques', description: '5-4-3-2-1 sensory grounding method' },
+            { session: 4, type: 'pdf', name: 'Boundary Setting Guide', description: 'How to establish healthy boundaries' },
+          ];
+          
+          for (let i = 0; i < completedSessions && i < sessionMaterials.length; i++) {
+            const material = sessionMaterials[i];
+            const sessionId = sessionIds[material.session - 1];
+            if (sessionId) {
+              await supabase.from('session_materials').insert({
+                session_id: sessionId,
+                type: material.type,
+                url: `https://neuroholistic-materials.example.com/${material.type}/${material.name.toLowerCase().replace(/\s+/g, '-')}.${material.type === 'pdf' ? 'pdf' : material.type === 'video' ? 'mp4' : 'mp3'}`,
+                filename: `${material.name}.${material.type === 'pdf' ? 'pdf' : material.type === 'video' ? 'mp4' : 'mp3'}`,
+                description: material.description,
+                uploaded_by: therapistId,
+              });
+            }
+          }
+          results.created.push({ type: 'session_materials', count: Math.min(completedSessions, 7) });
+          
+          // Add session development forms for completed sessions
+          const sessionDevForms = [
+            { session: 1, notes: 'Initial assessment. Client presenting with anxiety and stress. Established therapeutic rapport.', readiness: 42, nervous: 7, emotional: 7, cognitive: 6, body: 5, behavioral: 6, functioning: 7, improvements: 'Initial session', challenges: 'High anxiety', interventions: 'Clinical interview, intake assessment' },
+            { session: 2, notes: 'Explored anxiety triggers. Introduced breathing techniques. Client engaged well.', readiness: 38, nervous: 6, emotional: 6, cognitive: 6, body: 5, behavioral: 6, functioning: 6, improvements: 'Completed session 1', challenges: 'Ongoing anxiety', interventions: 'Breathing exercises, psychoeducation' },
+            { session: 3, notes: 'Worked on nervous system regulation. Client beginning to notice patterns.', readiness: 35, nervous: 6, emotional: 5, cognitive: 5, body: 4, behavioral: 5, functioning: 6, improvements: 'Completed session 2', challenges: 'Pattern recognition', interventions: 'Nervous system mapping, somatic awareness' },
+            { session: 4, notes: 'Explored family dynamics. Emotional breakthrough. Good progress.', readiness: 32, nervous: 5, emotional: 5, cognitive: 5, body: 4, behavioral: 5, functioning: 5, improvements: 'Completed session 3', challenges: 'Family patterns', interventions: 'Family systems exploration, emotional processing' },
+          ];
+          
+          for (let i = 0; i < completedSessions && i < sessionDevForms.length; i++) {
+            const devForm = sessionDevForms[i];
+            await supabase.from('session_development_forms').insert({
+              client_id: clientId,
+              therapist_id: therapistId,
+              session_number: devForm.session,
+              session_date: getPastDate(30 - devForm.session * 3),
+              integration_notes: devForm.notes,
+              therapist_internal_notes: devForm.notes,
+              nervous_system_score: devForm.nervous,
+              emotional_state_score: devForm.emotional,
+              cognitive_patterns_score: devForm.cognitive,
+              body_symptoms_score: devForm.body,
+              behavioral_patterns_score: devForm.behavioral,
+              life_functioning_score: devForm.functioning,
+              goal_readiness_score: devForm.readiness,
+              status: 'submitted',
+              submitted_at: getPastDate(30 - devForm.session * 3),
+              previous_session_improvements: devForm.improvements,
+              previous_session_challenges: devForm.challenges,
+              key_interventions: devForm.interventions,
+            });
+          }
+          results.created.push({ type: 'dev_forms', count: completedSessions });
 
           // Assessment
           await supabase.from('diagnostic_assessments').insert({
