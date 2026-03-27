@@ -21,12 +21,14 @@ const PRIMARY_LINKS = [
     ],
   },
   { href: "/academy", label: "Academy" },
+  { href: "/resources", label: "Resources" },
 ] as const;
 
 const COMPANY_LINKS = [
   { href: "/research", label: "Research" },
   { href: "/about", label: "About" },
   { href: "/team", label: "Team" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 const CONTACT_INFO = {
@@ -114,6 +116,8 @@ export default function Navbar() {
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
             <span className="opacity-60 whitespace-nowrap hidden sm:inline">EN / العربية</span>
+            <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Book a Session</Link>
+            <Link href="/academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Apply to Academy</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">FAQ</Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">

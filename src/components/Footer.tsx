@@ -13,9 +13,12 @@ const NAV_INDEX = [
 
 const PROGRAM_INDEX = [
   { label: "Private Sessions", href: "/programs/private" },
-  { label: "Group Programs", href: "/events" },
+  { label: "Group Programs", href: "/programs" },
   { label: "Retreats", href: "/retreats" },
   { label: "Corporate Strategy", href: "/corporate-wellbeing" },
+  { label: "Book a Consultation", href: "/consultation/book" },
+  { label: "Apply to Academy", href: "/academy" },
+  { label: "Arabic / English", href: "#" },
 ];
 
 export default function Footer() {
