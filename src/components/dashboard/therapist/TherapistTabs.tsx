@@ -82,8 +82,8 @@ export function SessionsTab({
     return documents.filter(d => d.session_id === sessionId);
   };
 
-  const handleUploadClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
+  const handleUploadClick = (sessionId?: string) => {
+    setSelectedSessionId(sessionId || null);
     fileInputRef.current?.click();
   };
 
@@ -94,9 +94,14 @@ export function SessionsTab({
     }
   };
 
+  // Hide free consultation entries in this tab
+  const visibleSessions = sessions.filter(s => s.type !== 'free_consultation');
+  const freeConsultations = sessions.filter(s => s.type === 'free_consultation');
+  const upcomingFreeConsultations = freeConsultations.filter(s => s.status !== 'completed');
+
   // Separate completed and upcoming sessions
-  const completedSessions = sessions.filter(s => s.status === 'completed');
-  const upcomingSessions = sessions.filter(s => s.status !== 'completed');
+  const completedSessions = visibleSessions.filter(s => s.status === 'completed');
+  const upcomingSessions = visibleSessions.filter(s => s.status !== 'completed');
 
   return (
     <div className="space-y-6">
@@ -106,7 +111,12 @@ export function SessionsTab({
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
           <p className="text-sm text-indigo-600 font-medium">Total Sessions</p>
-          <p className="text-2xl font-bold text-indigo-700 mt-1">{sessions.length}</p>
+          <p className="text-2xl font-bold text-indigo-700 mt-1">{visibleSessions.length}</p>
+          {freeConsultations.length > 0 && (
+            <p className="text-xs text-indigo-500 mt-1">
+              + {freeConsultations.length} free consultation
+            </p>
+          )}
         </div>
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
           <p className="text-sm text-green-600 font-medium">Completed</p>
@@ -115,6 +125,11 @@ export function SessionsTab({
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
           <p className="text-sm text-amber-600 font-medium">Upcoming</p>
           <p className="text-2xl font-bold text-amber-700 mt-1">{upcomingSessions.length}</p>
+          {upcomingFreeConsultations.length > 0 && (
+            <p className="text-xs text-amber-600 mt-1">
+              + {upcomingFreeConsultations.length} free consultation
+            </p>
+          )}
         </div>
       </div>
 
@@ -136,7 +151,7 @@ export function SessionsTab({
                 onOpenAssessment={() => onOpenAssessment(s)}
                 onOpenDevForm={() => onOpenDevForm(s)}
                 onRefresh={onRefresh}
-                onUploadDocument={() => handleUploadClick(s.id)}
+                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : s.id)}
                 uploadingDoc={uploadingDoc}
               />
             ))}
@@ -162,7 +177,7 @@ export function SessionsTab({
                 onOpenAssessment={() => onOpenAssessment(s)}
                 onOpenDevForm={() => onOpenDevForm(s)}
                 onRefresh={onRefresh}
-                onUploadDocument={() => handleUploadClick(s.id)}
+                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : s.id)}
                 uploadingDoc={uploadingDoc}
                 isCompleted
               />
@@ -171,7 +186,7 @@ export function SessionsTab({
         </div>
       )}
 
-      {sessions.length === 0 && (
+      {visibleSessions.length === 0 && (
         <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200">
           <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-500 font-medium">No sessions yet</p>
@@ -208,7 +223,9 @@ function SessionCard({
   const isConsultation = session.type === 'free_consultation';
   const devFormRequired = !isConsultation && session.program_id;
   const devFormComplete = session.development_form_submitted;
-  const sessionDocs = documents.filter(d => d.session_id === session.id);
+  const sessionDocs = documents.filter(
+    (d) => d.session_id === session.id || (isConsultation && !d.session_id)
+  );
 
   return (
     <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${
@@ -390,12 +407,6 @@ export function ReportsTab({
   const [selectedComparison, setSelectedComparison] = useState<number>(0);
 
   const baseline = assessments.find((a: any) => a.is_baseline);
-  const latest = assessments[assessments.length - 1];
-
-  // Calculate progress metrics
-  const firstScore = baseline?.goal_readiness_score || assessments[0]?.goal_readiness_score || 0;
-  const lastScore = latest?.goal_readiness_score || 0;
-  const improvement = firstScore - lastScore;
 
   // Build unified timeline data combining assessments and dev forms
   const buildTimelineData = () => {
@@ -450,6 +461,9 @@ export function ReportsTab({
   };
 
   const timelineData = buildTimelineData();
+  const firstScore = timelineData[0]?.score || baseline?.goal_readiness_score || assessments[0]?.goal_readiness_score || 0;
+  const lastScore = timelineData[timelineData.length - 1]?.score || firstScore;
+  const improvement = firstScore - lastScore;
 
   // Build comparison pairs (baseline vs session 1, session 1 vs session 2, etc.)
   const buildComparisons = () => {

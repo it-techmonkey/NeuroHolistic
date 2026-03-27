@@ -28,12 +28,67 @@ function ScheduleSessionContent() {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
 
   const [schedulingError, setSchedulingError] = useState('');
   const [schedulingSuccess, setSchedulingSuccess] = useState(false);
+
+  const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const getMonthLabel = (date: Date) =>
+    date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const toDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const buildCalendarDays = (month: Date) => {
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    const startOffset = firstDay.getDay();
+    const totalCells = 42; // 6 weeks
+    const cells: Array<Date | null> = [];
+
+    for (let i = 0; i < startOffset; i++) {
+      cells.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      cells.push(new Date(month.getFullYear(), month.getMonth(), day));
+    }
+
+    while (cells.length < totalCells) {
+      cells.push(null);
+    }
+
+    return cells;
+  };
+
+  const todayValue = toDateValue(new Date());
+  const calendarDays = buildCalendarDays(calendarMonth);
+
+  const handleSelectCalendarDay = (date: Date) => {
+    const value = toDateValue(date);
+    if (value < todayValue) return;
+    setSelectedDate(value);
+  };
+
+  const goToPreviousMonth = () => {
+    const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const prev = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+    if (prev < currentMonthStart) return;
+    setCalendarMonth(prev);
+  };
+
+  const goToNextMonth = () => {
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
+  };
 
   // 1. Check Auth & Load Program/Session
   useEffect(() => {
@@ -205,13 +260,67 @@ function ScheduleSessionContent() {
           {/* Date Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Select Date</label>
-            <input
-              type="date"
-              className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
-              min={new Date().toISOString().split('T')[0]}
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
+            <div className="mt-1 border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={goToPreviousMonth}
+                  disabled={
+                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1) <=
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+                  }
+                  className="px-3 py-1.5 text-sm border border-slate-200 rounded-md text-slate-700 hover:border-indigo-300 disabled:text-slate-300 disabled:border-slate-100 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                <div className="text-sm font-medium text-slate-800">{getMonthLabel(calendarMonth)}</div>
+                <button
+                  type="button"
+                  onClick={goToNextMonth}
+                  className="px-3 py-1.5 text-sm border border-slate-200 rounded-md text-slate-700 hover:border-indigo-300"
+                >
+                  Next
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {weekdayLabels.map((label) => (
+                  <div key={label} className="text-xs font-medium text-slate-500 text-center py-1">
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {calendarDays.map((date, index) => {
+                  if (!date) {
+                    return <div key={`blank-${index}`} className="h-10" />;
+                  }
+
+                  const value = toDateValue(date);
+                  const isPast = value < todayValue;
+                  const isSelected = selectedDate === value;
+
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleSelectCalendarDay(date)}
+                      disabled={isPast}
+                      className={`h-10 rounded-md text-sm border transition-colors ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : isPast
+                          ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                      }`}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Time Slots */}

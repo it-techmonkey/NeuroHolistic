@@ -227,7 +227,24 @@ export default function TherapistDashboardPage() {
       const clientsData = await clientsRes.json();
 
       const allSessions: Session[] = sessionsData.sessions || [];
-      const allClients: Client[] = clientsData.clients || [];
+      const allClients: Client[] = (clientsData.clients || []).map((client: any) => {
+        const program = client.program
+          ? {
+              ...client.program,
+              totalSessions: client.program.totalSessions ?? client.program.total_sessions ?? 10,
+              completedSessions:
+                client.program.completedSessions ??
+                client.program.sessions_completed ??
+                client.program.used_sessions ??
+                0,
+            }
+          : client.program;
+
+        return {
+          ...client,
+          program,
+        };
+      });
 
       const now = new Date();
       const today = now.toISOString().split('T')[0];
@@ -567,11 +584,9 @@ export default function TherapistDashboardPage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <StatCard icon={Users} label="Total Clients" value={stats?.totalClients || 0} color="slate" />
-              <StatCard icon={TrendingUp} label="Active Programs" value={stats?.activeProgramClients || 0} color="green" />
               <StatCard icon={Clock} label="Today" value={stats?.todaySessions || 0} color="indigo" />
               <StatCard icon={Calendar} label="Upcoming" value={stats?.upcomingSessions || 0} color="blue" />
               <StatCard icon={CheckCircle} label="Completed" value={stats?.completedSessions || 0} color="emerald" />
-              <StatCard icon={AlertCircle} label="Pending Forms" value={stats?.pendingAssessments || 0} color="amber" />
             </div>
 
             {/* Client Progress Overview */}
@@ -1258,6 +1273,75 @@ function ClientDetailView({
   ];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const progressSessionScores = (detail?.devForms || [])
+    .map((form: any) => ({
+      sessionNumber: form.session_number || 1,
+      date: form.session_date || form.created_at || '',
+      nervous_system: form.nervous_system_score || 0,
+      emotional_state: form.emotional_state_score || 0,
+      cognitive_patterns: form.cognitive_patterns_score || 0,
+      body_symptoms: form.body_symptoms_score || 0,
+      behavioral_patterns: form.behavioral_patterns_score || 0,
+      life_functioning: form.life_functioning_score || 0,
+      goal_readiness:
+        (form.nervous_system_score || 0) +
+        (form.emotional_state_score || 0) +
+        (form.cognitive_patterns_score || 0) +
+        (form.body_symptoms_score || 0) +
+        (form.behavioral_patterns_score || 0) +
+        (form.life_functioning_score || 0),
+    }))
+    .sort((a: any, b: any) => a.sessionNumber - b.sessionNumber);
+  const overviewBaseline = detail?.assessments?.find((a: any) => a.is_baseline);
+  const overviewTimelineData: Array<{
+    date: string;
+    score: number;
+    label: string;
+    type: 'baseline' | 'assessment' | 'session';
+    data: any;
+  }> = [];
+
+  if (overviewBaseline) {
+    overviewTimelineData.push({
+      date: overviewBaseline.assessed_at || overviewBaseline.created_at,
+      score: overviewBaseline.goal_readiness_score || 0,
+      label: 'Baseline (Free Consult)',
+      type: 'baseline',
+      data: overviewBaseline,
+    });
+  }
+
+  (detail?.assessments || [])
+    .filter((a: any) => !a.is_baseline)
+    .forEach((a: any) => {
+      overviewTimelineData.push({
+        date: a.assessed_at || a.created_at,
+        score: a.goal_readiness_score || 0,
+        label: 'Assessment',
+        type: 'assessment',
+        data: a,
+      });
+    });
+
+  (detail?.devForms || []).forEach((f: any, idx: number) => {
+    const totalScore =
+      (f.nervous_system_score || 0) +
+      (f.emotional_state_score || 0) +
+      (f.cognitive_patterns_score || 0) +
+      (f.body_symptoms_score || 0) +
+      (f.behavioral_patterns_score || 0) +
+      (f.life_functioning_score || 0);
+
+    overviewTimelineData.push({
+      date: f.created_at,
+      score: totalScore,
+      label: `Session ${f.session_number || idx + 1}`,
+      type: 'session',
+      data: f,
+    });
+  });
+
+  overviewTimelineData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
     <div className="space-y-6">
@@ -1348,29 +1432,31 @@ function ClientDetailView({
                   </div>
 
                   {/* Progress Timeline Chart */}
-                  {detail?.assessments?.length > 0 && (
+                  {overviewTimelineData.length > 0 && (
                     <div className="bg-white border border-slate-200 rounded-xl p-6">
                       <h4 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
                         <TrendingUp className="w-4 h-4 text-indigo-600" />
                         Progress Timeline
                       </h4>
-                      <div className="h-48 w-full">
+                      <div className="h-64 w-full">
                         <Line
                           data={{
-                            labels: [...detail.assessments].reverse().map((a: any) =>
-                              new Date(a.assessed_at || a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            labels: overviewTimelineData.map((d) =>
+                              new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                             ),
                             datasets: [{
-                              label: 'Score',
-                              data: [...detail.assessments].reverse().map((a: any) => a.goal_readiness_score || 0),
+                              label: 'Wellbeing Score',
+                              data: overviewTimelineData.map((d) => d.score),
                               borderColor: '#6366F1',
                               backgroundColor: '#EEF2FF',
                               fill: true,
                               tension: 0.4,
-                              pointBackgroundColor: '#6366F1',
+                              pointBackgroundColor: overviewTimelineData.map((d) =>
+                                d.type === 'baseline' ? '#F59E0B' : d.type === 'session' ? '#10B981' : '#6366F1'
+                              ),
                               pointBorderColor: '#fff',
                               pointBorderWidth: 2,
-                              pointRadius: 4,
+                              pointRadius: 6,
                             }]
                           }}
                           options={{
@@ -1387,14 +1473,18 @@ function ClientDetailView({
                                 padding: 12,
                                 cornerRadius: 8,
                                 callbacks: {
-                                  label: (context: any) => `${context.raw}/60`
+                                  title: (items: any) => {
+                                    const idx = items[0].dataIndex;
+                                    return overviewTimelineData[idx]?.label || '';
+                                  },
+                                  label: (context: any) => `Score: ${context.raw}/60`
                                 }
                               }
                             },
                             scales: {
                               x: {
                                 grid: { display: false },
-                                ticks: { color: '#94A3B8', font: { size: 12 } }
+                                ticks: { color: '#94A3B8', font: { size: 11 } }
                               },
                               y: {
                                 min: 0,
@@ -1405,6 +1495,20 @@ function ClientDetailView({
                             }
                           }}
                         />
+                      </div>
+                      <div className="flex gap-4 mt-4 justify-center text-xs">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                          <span className="text-slate-600">Baseline</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                          <span className="text-slate-600">Assessment</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                          <span className="text-slate-600">Session</span>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 text-center mt-2">Lower scores indicate improvement</p>
                     </div>
@@ -1551,6 +1655,30 @@ function ClientDetailView({
                     onUploadDocument={onUploadDocument}
                     uploadingDoc={uploadingDoc}
                   />
+                </div>
+              )}
+
+              {activeTab === 'progress' && (
+                <div className="space-y-6">
+                  {baselineScores ? (
+                    <ProgressComparison
+                      baselineScores={{
+                        nervous_system: baselineScores.nervous_system_score || 0,
+                        emotional_state: baselineScores.emotional_state_score || 0,
+                        cognitive_patterns: baselineScores.cognitive_patterns_score || 0,
+                        body_symptoms: baselineScores.body_symptoms_score || 0,
+                        behavioral_patterns: baselineScores.behavioral_patterns_score || 0,
+                        life_functioning: baselineScores.life_functioning_score || 0,
+                        goal_readiness: baselineScores.goal_readiness_score || 0,
+                      }}
+                      sessionScores={progressSessionScores}
+                    />
+                  ) : (
+                    <div className="text-center py-12 border border-slate-200 rounded-xl">
+                      <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">No baseline assessment available yet</p>
+                    </div>
+                  )}
                 </div>
               )}
 

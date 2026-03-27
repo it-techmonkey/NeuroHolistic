@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { headers } from 'next/headers';
 
 /**
  * Sign in with Google OAuth
@@ -9,10 +10,16 @@ import { getServiceSupabase } from '@/lib/supabase/service';
  */
 export async function signInWithGoogle(redirectTo?: string) {
   const supabase = await createClient();
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host');
+  const protocol = requestHeaders.get('x-forwarded-proto') || 'https';
+  const baseUrl = host
+    ? `${protocol}://${host}`
+    : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
   const callbackUrl = redirectTo
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(redirectTo)}`
-    : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`;
+    ? `${baseUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+    : `${baseUrl}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

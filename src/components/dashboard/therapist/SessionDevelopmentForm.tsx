@@ -364,8 +364,8 @@ export default function SessionDevelopmentForm({
                       ? 'text-red-600'
                       : 'text-slate-600'
                   }`}>
-                    {form.post_session_intensity - form.pre_session_intensity > 0 ? '+' : ''}
-                    {form.post_session_intensity - form.pre_session_intensity}
+                    {form.pre_session_intensity - form.post_session_intensity > 0 ? '+' : ''}
+                    {form.pre_session_intensity - form.post_session_intensity}
                     {form.post_session_intensity < form.pre_session_intensity && ' (Improved)'}
                     {form.post_session_intensity > form.pre_session_intensity && ' (Worsened)'}
                   </span>
@@ -465,7 +465,6 @@ export default function SessionDevelopmentForm({
                               }`}>
                                 {change > 0 ? '+' : ''}{change}
                                 {change > 0 && <span className="text-xs ml-1">(Improved)</span>}
-                                {change < 0 && <span className="text-xs ml-1">(Needs attention)</span>}
                               </td>
                             </tr>
                           );

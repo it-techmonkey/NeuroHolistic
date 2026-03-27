@@ -17,7 +17,7 @@ export default function MarkComplete({
 
   const handleComplete = async () => {
     if (!isReady || isCompleted) return;
-    if (!confirm('Mark session as complete? Using default notification logic.')) return;
+    if (!confirm('Mark session as complete?')) return;
 
     setLoading(true);
     try {
