@@ -110,6 +110,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If a program/session context exists, always treat booking as a program session.
+    // This prevents accidental free consultation records during paid-session scheduling.
+    const bookingType: 'free_consultation' | 'program' =
+      type === 'program' || !!programId || !!sessionId ? 'program' : 'free_consultation';
+
     const supabase = getServiceSupabase();
 
     // Get or create user account
@@ -125,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing free consultation if creating one
-    if (type === 'free_consultation') {
+    if (bookingType === 'free_consultation') {
       // Check by user_id if provided
       if (userId) {
         const { data: existingBooking } = await supabase
@@ -179,7 +184,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For program sessions: Validate client is only scheduling the immediate next session
-    if (type === 'program' && programId && sessionNumber) {
+    if (bookingType === 'program' && programId && sessionNumber) {
       // Get all sessions for this program to determine which one can be scheduled
       const { data: allSessions } = await supabase
         .from('sessions')
@@ -236,8 +241,8 @@ export async function POST(request: NextRequest) {
       console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime, therapistId });
       
       const result = await createMeetEvent({
-        summary: `NeuroHolistic ${type === 'free_consultation' ? 'Free Consultation' : 'Session'}${sessionNumber ? ` #${sessionNumber}` : ''} - ${name}`,
-        description: `${type === 'free_consultation' ? 'Free consultation' : 'Program session'} via NeuroHolistic platform`,
+        summary: `NeuroHolistic ${bookingType === 'free_consultation' ? 'Free Consultation' : 'Session'}${sessionNumber ? ` #${sessionNumber}` : ''} - ${name}`,
+        description: `${bookingType === 'free_consultation' ? 'Free consultation' : 'Program session'} via NeuroHolistic platform`,
         startDateTime,
         endDateTime,
         attendeeEmails: [email],
@@ -271,7 +276,7 @@ export async function POST(request: NextRequest) {
         therapist_name: therapistName,
         date,
         time,
-        type,
+        type: bookingType,
         program_id: programId || null,
         session_number: sessionNumber || null,
         meeting_link: meetLink || null,

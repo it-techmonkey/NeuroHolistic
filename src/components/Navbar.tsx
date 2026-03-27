@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 const PRIMARY_LINKS = [
   { href: "/method", label: "Method" },
   { href: "/programs", label: "Programs" },
+  { href: "/research", label: "Research" },
   {
     href: "/events",
     label: "Experience",
@@ -25,10 +26,8 @@ const PRIMARY_LINKS = [
 ] as const;
 
 const COMPANY_LINKS = [
-  { href: "/research", label: "Research" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "About Us" },
   { href: "/team", label: "Team" },
-  { href: "/contact", label: "Contact" },
 ] as const;
 
 const CONTACT_INFO = {
@@ -204,7 +203,7 @@ export default function Navbar() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button className={`px-3 sm:px-4 py-2 text-[12px] sm:text-[13px] font-medium opacity-60 hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center gap-1.5 ${textColor}`}>
-                Company
+                About
                 <ChevronIcon isOpen={openDropdown === 'company'} />
               </button>
               <AnimatePresence>

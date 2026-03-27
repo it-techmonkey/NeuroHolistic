@@ -582,7 +582,7 @@ export default function TherapistDashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon={Users} label="Total Clients" value={stats?.totalClients || 0} color="slate" />
               <StatCard icon={Clock} label="Today" value={stats?.todaySessions || 0} color="indigo" />
               <StatCard icon={Calendar} label="Upcoming" value={stats?.upcomingSessions || 0} color="blue" />

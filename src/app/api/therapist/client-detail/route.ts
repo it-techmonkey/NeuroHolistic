@@ -74,29 +74,43 @@ export async function GET(request: NextRequest) {
     // Combine bookings and sessions into unified array for SessionsTab
     // Bookings schema: user_id, therapist_id (TEXT), meeting_link, status, type
     // Sessions schema: client_id, therapist_id (UUID), meet_link, status, development_form_submitted
-    const mappedBookings = (bookings ?? []).map(b => ({
-      ...b,
-      id: b.id,
-      client_id: b.user_id,
-      meet_link: b.meeting_link,
-      development_form_submitted: false,
-      session_number: null,
-    }));
+    const mappedBookings = (bookings ?? []).map(b => {
+      const linkedSession = (sessions ?? []).find((s: any) => s.booking_id === b.id);
+      return {
+        ...b,
+        id: b.id,
+        session_ref_id: linkedSession?.id || null,
+        client_id: b.user_id,
+        meet_link: b.meeting_link,
+        development_form_submitted: linkedSession?.development_form_submitted ?? false,
+        session_number: linkedSession?.session_number ?? b.session_number ?? null,
+      };
+    });
 
-    const mappedSessions = (sessions ?? []).map(s => ({
+    const mappedSessions = (sessions ?? [])
+      .filter((s: any) => !s.booking_id)
+      .map(s => ({
       ...s,
       id: s.id,
+      session_ref_id: s.id,
       client_id: s.client_id,
       meet_link: s.meet_link,
       development_form_submitted: s.development_form_submitted ?? false,
-    }));
+      }));
 
     // Combine and sort by date (newest first)
-    const combinedSessions = [...mappedBookings, ...mappedSessions].sort((a, b) => {
+    const combinedSessions = [...mappedBookings, ...mappedSessions]
+      .filter((item: any) => {
+        // Show only actual scheduled/completed sessions in therapist UI
+        const hasSchedule = !!item.date && !!item.time;
+        const allowedStatus = ['scheduled', 'confirmed', 'completed'].includes(item.status);
+        return hasSchedule && allowedStatus;
+      })
+      .sort((a, b) => {
       const dateA = new Date(a.date || a.created_at || 0);
       const dateB = new Date(b.date || b.created_at || 0);
       return dateB.getTime() - dateA.getTime();
-    });
+      });
 
     return NextResponse.json({
       bookings: bookings ?? [],

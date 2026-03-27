@@ -12,7 +12,7 @@ const JOURNEY = [
       "More than twenty years ago, Dr. Fawzia Yassmina began working closely with individuals facing complex emotional and psychological challenges. Through thousands of hours of observation, deeper patterns of human perception and transformation began to reveal themselves.",
       "These early experiences laid the foundation for what would eventually become the NeuroHolistic Method™.",
     ],
-    image: "https://images.unsplash.com/photo-1577401132921-cb39c1af033e?w=1400&q=80",
+    image: "/images/team/Fawzia%20Yassmina.jpeg",
   },
   {
     title: "Years of Exploration",
@@ -36,14 +36,14 @@ export default function AboutPage() {
   return (
     <div className="w-full bg-white">
       <PageHero
-        eyebrow="Identity"
+        eyebrow="About Us"
         title={
           <>
-            Two decades of exploration <br />
-            <span className="italic text-white/60 font-normal">& discovery.</span>
+            
+            <span className="italic text-white/60 font-normal">Redefining How Real Change Happens <br /></span>
           </>
         }
-        description="The story behind the NeuroHolistic Method™ and its evolution from applied practice into a structured framework for transformation."
+        description="The Evolution of the NeuroHolistic Method™"
         imageSrc="/images/pages/about.jpg"
         imageAlt="Premium wellbeing consultation environment"
         metaTags={["20+ Years", "Applied Practice", "Interdisciplinary"]}
@@ -81,8 +81,13 @@ export default function AboutPage() {
                 className={`lg:col-span-7 ${i % 2 === 1 ? "lg:order-1" : ""}`}
               >
                 <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-                  <div className="relative aspect-[16/11] w-full overflow-hidden grayscale-[20%] transition-all duration-1000 group-hover:grayscale-0">
-                    <Image src={block.image} alt={block.title} fill className="object-cover" />
+                  <div className="relative aspect-[16/11] w-full overflow-hidden grayscale-[20%] transition-all duration-1000 group-hover:grayscale-0 bg-white">
+                    <Image
+                      src={block.image}
+                      alt={block.title}
+                      fill
+                      className={block.title === "The Beginning" ? "object-contain" : "object-cover"}
+                    />
                   </div>
                 </div>
               </motion.div>
@@ -125,8 +130,8 @@ export default function AboutPage() {
             </motion.div>
             <div className="lg:col-span-7">
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-                <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0 rounded-lg">
-                  <Image src="/images/team/Fawzia%20Yassmina.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-cover" />
+                <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0 rounded-lg bg-white">
+                  <Image src="/images/team/Fawzia%20Yassmina.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-contain" />
                 </div>
               </div>
             </div>

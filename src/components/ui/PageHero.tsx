@@ -63,7 +63,7 @@ export default function PageHero({
           {/* Label */}
           <div className="mb-5 flex items-center gap-4 md:mb-8">
             <span className="font-mono text-[10px] tracking-[0.4em] text-white/40 uppercase">
-              Identity // {eyebrow}
+              {eyebrow}
             </span>
           </div>
 

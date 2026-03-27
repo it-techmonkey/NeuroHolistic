@@ -45,6 +45,11 @@ export async function GET() {
     // Get programs
     const { data: programs } = await supabase.from('programs').select('*');
 
+    // Get sessions for accurate program completion counts
+    const { data: sessions } = await supabase
+      .from('sessions')
+      .select('id, program_id, client_id, status');
+
     // Build unique client list from bookings OR users
     const clientMap = new Map<string, any>();
     
@@ -88,9 +93,23 @@ export async function GET() {
 
       // Find program (latest one)
       const clientPrograms = (programs ?? []).filter((p: any) => p.user_id === clientId);
-      client.program = clientPrograms.sort((a: any, b: any) => 
+      const latestProgram = clientPrograms.sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0] || null;
+
+      if (latestProgram) {
+        const completedFromSessions = (sessions ?? []).filter(
+          (s: any) => s.program_id === latestProgram.id && s.status === 'completed'
+        ).length;
+
+        client.program = {
+          ...latestProgram,
+          totalSessions: latestProgram.total_sessions ?? latestProgram.totalSessions ?? 10,
+          completedSessions: completedFromSessions,
+        };
+      } else {
+        client.program = null;
+      }
 
       // Find next session
       const now = new Date();

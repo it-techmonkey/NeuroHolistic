@@ -50,7 +50,7 @@ export default function ResearchPage() {
         description="Developing a deeper understanding of human systems through interdisciplinary scientific inquiry and applied practice."
         imageSrc="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1920&q=80"
         imageAlt="Neuroscience research environment"
-        metaTags={["Interdisciplinary", "Practice-Based", "Applied Science"]}
+        metaTags={[]}
         primaryAction={{ label: "Inquire for Collaboration", href: "mailto:info@neuroholistic.com" }}
       />
 

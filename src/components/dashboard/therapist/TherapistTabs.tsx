@@ -36,6 +36,7 @@ import MarkComplete from './MarkComplete';
 // Types
 type Session = {
   id: string;
+  session_ref_id?: string | null;
   client_id: string;
   client_name?: string;
   clients?: { full_name?: string; email?: string };
@@ -94,8 +95,10 @@ export function SessionsTab({
     }
   };
 
-  // Hide free consultation entries in this tab
-  const visibleSessions = sessions.filter(s => s.type !== 'free_consultation');
+  // Hide free consultation entries and unscheduled placeholders in this tab
+  const visibleSessions = sessions.filter(
+    s => s.type !== 'free_consultation' && !!s.date && !!s.time && ['scheduled', 'confirmed', 'completed'].includes(s.status)
+  );
   const freeConsultations = sessions.filter(s => s.type === 'free_consultation');
   const upcomingFreeConsultations = freeConsultations.filter(s => s.status !== 'completed');
 
@@ -151,7 +154,7 @@ export function SessionsTab({
                 onOpenAssessment={() => onOpenAssessment(s)}
                 onOpenDevForm={() => onOpenDevForm(s)}
                 onRefresh={onRefresh}
-                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : s.id)}
+                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : (s.session_ref_id || s.id))}
                 uploadingDoc={uploadingDoc}
               />
             ))}
@@ -177,7 +180,7 @@ export function SessionsTab({
                 onOpenAssessment={() => onOpenAssessment(s)}
                 onOpenDevForm={() => onOpenDevForm(s)}
                 onRefresh={onRefresh}
-                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : s.id)}
+                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : (s.session_ref_id || s.id))}
                 uploadingDoc={uploadingDoc}
                 isCompleted
               />
@@ -221,10 +224,11 @@ function SessionCard({
   isCompleted?: boolean;
 }) {
   const isConsultation = session.type === 'free_consultation';
+  const effectiveSessionId = session.session_ref_id || session.id;
   const devFormRequired = !isConsultation && session.program_id;
   const devFormComplete = session.development_form_submitted;
   const sessionDocs = documents.filter(
-    (d) => d.session_id === session.id || (isConsultation && !d.session_id)
+    (d) => d.session_id === effectiveSessionId || (isConsultation && !d.session_id)
   );
 
   return (
@@ -324,7 +328,7 @@ function SessionCard({
             )}
             {!isCompleted && (
               <MarkComplete
-                sessionId={session.id}
+                sessionId={effectiveSessionId}
                 isReady={isConsultation ? true : (devFormComplete ?? false)}
                 isCompleted={session.status === 'completed'}
                 onComplete={onRefresh}
