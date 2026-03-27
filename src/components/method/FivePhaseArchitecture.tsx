@@ -7,31 +7,31 @@ const PHASES = [
   { 
     number: "01", 
     title: "Release", 
-    desc: "Releasing accumulated emotional and physiological tension within the nervous system. The system shifts from chronic stress toward safety and responsiveness.", 
+    desc: "Discharging the Symptoms. Releasing accumulated emotional charge from the body to restore nervous system balance.", 
     img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop" 
   },
   { 
     number: "02", 
-    title: "Developmental Repatterning", 
-    desc: "Updating outdated internal models by reorganizing deep imprints related to attachment, safety, and self-perception formed in early development.", 
+    title: "Subconscious Liberation", 
+    desc: "Removing the Root Cause. Dissolving the subconscious patterns and programming which created the symptoms.", 
     img: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=2070&auto=format&fit=crop" 
   },
   { 
     number: "03", 
-    title: "Neuroplastic Rewiring", 
-    desc: "Restructuring neural and cognitive patterns through the brain's natural capacity for adaptation, forming new pathways for regulation and behavior.", 
+    title: "Neural Expansion", 
+    desc: "Breaking the loop. Freeing and expanding neural pathways to move beyond fixed responses and limitations.", 
     img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=2070&auto=format&fit=crop" 
   },
   { 
     number: "04", 
     title: "Targeted Transformation", 
-    desc: "Intentionally applying increased internal coherence to specific areas such as relationships, health, or personal direction for meaningful change.", 
+    desc: "Creating the new state. Designing and reinforcing neural pathways aligned with the desired state and identity.", 
     img: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067&auto=format&fit=crop" 
   },
   { 
     number: "05", 
     title: "Integration & Stabilization", 
-    desc: "Consolidating transformation so new patterns become sustainable. The system learns to maintain coherence and flexibility independently.", 
+    desc: "Stabilizing the transformation. Anchoring the transformation into a stable, embodied way of being.", 
     img: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070&auto=format&fit=crop" 
   },
 ];

@@ -4,8 +4,8 @@ export default function AcademyHero() {
   return (
     <PageHero
       eyebrow="Academy"
-      title="Training the next generation of NeuroHolistic practitioners."
-      description=" "
+      title="Master the NeuroHolistic Method™"
+      description="NeuroHolistic Applied Psychology Mastery"
       imageSrc="/images/pages/academy.jpg"
       imageAlt="Wellness education cohort in a training session"
       metaTags={[]}

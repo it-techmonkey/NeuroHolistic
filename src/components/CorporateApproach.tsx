@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function CorporateApproach() {
   return (
@@ -41,7 +42,14 @@ export default function CorporateApproach() {
               <p className="text-[16px] leading-[1.8] text-[#64748B]">
                 We focus on building resilience and sustainable performance without relying on short-term fixes. By working with the human system as a whole, we help individuals think more clearly and perform under pressure without depletion.
               </p>
-
+              <div className="mt-8 relative h-[260px] md:h-[320px] rounded-2xl overflow-hidden border border-slate-200">
+                <Image
+                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                  alt="Corporate approach"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
           </motion.div>
 

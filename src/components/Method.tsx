@@ -70,28 +70,28 @@ export default function MethodHero() {
 const phases = [
   {
     label: "Release",
-    desc: "Release",
-    details: "Releasing stored emotional and physiological tension to move from chronic stress toward safety and openness.",
+    desc: "Discharging the Symptoms",
+    details: "Releasing accumulated emotional charge from the body to restore nervous system balance.",
   },
   {
-    label: "Developmental Repatterning",
-    desc: "Repatterning",
-    details: "Reorganizing deep neural patterns that have kept the system locked in old adaptations.",
+    label: "Subconscious Liberation",
+    desc: "Removing the Root Cause",
+    details: "Dissolving the subconscious patterns and programming which created the symptoms.",
   },
   {
-    label: "Neuroplastic Rewiring",
-    desc: "Integration",
-    details: "Stabilizing new neural pathways so that regulation becomes the default state.",
+    label: "Neural Expansion",
+    desc: "Breaking the loop",
+    details: "Freeing and expanding neural pathways to move beyond fixed responses and limitations.",
   },
   {
     label: "Targeted Transformation",
-    desc: "Regulation",
-    details: "Strengthening the nervous system's capacity for self-regulation and resilience.",
+    desc: "Creating the new state",
+    details: "Designing and reinforcing neural pathways aligned with the desired state and identity.",
   },
   {
-    label: " Integration & Stabilization",
-    desc: "Expansion",
-    details: "Embedding transformation into identity, supporting the expansion of human potential.",
+    label: "Integration & Stabilization",
+    desc: "Stabilizing the transformation",
+    details: "Anchoring the transformation into a stable, embodied way of being.",
   },
 ];
 

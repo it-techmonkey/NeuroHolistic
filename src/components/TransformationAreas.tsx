@@ -34,22 +34,22 @@ const Icons = {
 const AREAS = [
   {
     title: "Health",
-    description: "Shifting the nervous system from chronic stress into regulation and physiological balance.",
+    description: "Restore balance in your body, release built-up tension, and experience a renewed sense of energy, ease, and physical well-being.",
     Icon: Icons.Health,
   },
   {
-    title: "Mind",
-    description: "Reorganizing neural patterns to increase clarity and reduce emotional reactivity.",
+    title: "Mind & Heart",
+    description: "Quiet the noise, gain clarity, and feel lighter, free from emotional weight and mental loops that have been holding you back.",
     Icon: Icons.Mind,
   },
   {
     title: "Relationships",
-    description: "Fostering internal coherence to deepen communication and authentic connection.",
+    description: "Shift how you connect, communicate, and respond, creating more ease, depth, and harmony in how you relate to others.",
     Icon: Icons.Relationships,
   },
   {
     title: "Potential",
-    description: "Redirecting stress-consumed energy toward creativity, purpose, and growth.",
+    description: "Move beyond limitations, think with clarity, and step into a stronger, more expanded version of yourself and what you are capable of.",
     Icon: Icons.Potential,
   },
 ];
@@ -67,7 +67,7 @@ export default function TransformationAreas() {
             viewport={{ once: true }}
             className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl"
           >
-            Areas of Transformation
+            Where You Transform
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -76,8 +76,7 @@ export default function TransformationAreas() {
             transition={{ delay: 0.1 }}
             className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-500"
           >
-            When internal systems return to balance, change appears across multiple dimensions of life, 
-            altering how we think, feel, and engage with the world.
+            The NeuroHolistic Method is for those ready to create real change in how they feel, think, and live in these core areas.
           </motion.p>
         </div>
 

@@ -45,14 +45,14 @@ export default function Philosophy() {
               variants={itemVariants}
               className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px]"
             >
-              It begins when the internal system returns to balance and coherence.
+              It begins when the system shifts at its core.
             </motion.p>
 
             <motion.p
               variants={itemVariants}
               className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px] mt-3"
             >
-              The <strong className="font-semibold text-[#0B1028]">NeuroHolistic Method™</strong> restores alignment across the nervous system, cognition, and emotional processes, creating the conditions for deep and lasting transformation.
+              The <strong className="font-semibold text-[#0B1028]">NeuroHolistic Method™</strong> works at the root—realigning the nervous system, cognition, and emotional patterns to create lasting transformation.
             </motion.p>
           </div>
 

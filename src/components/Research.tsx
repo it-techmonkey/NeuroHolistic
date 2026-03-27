@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Research() {
   const containerVariants = {
@@ -25,16 +26,14 @@ export default function Research() {
 
   return (
     <section className="w-full bg-white py-16 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-[900px] px-6 md:px-12">
-        <div className="text-center">
-          
-          {/* ── Centered Editorial Text ── */}
+      <div className="mx-auto max-w-[1200px] px-6 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className=""
+            className="text-left"
           >
             <motion.div variants={itemVariants} className="mb-8 flex items-center justify-center gap-3">
 
@@ -63,7 +62,7 @@ export default function Research() {
               Through observation, case studies, and continuous refinement of the NeuroHolistic Method™, we aim to contribute to a deeper understanding of how internal systems can be restored to coherence and support meaningful, lasting change.
             </motion.p>
 
-            <motion.div variants={itemVariants} className="flex justify-center">
+            <motion.div variants={itemVariants} className="flex justify-start">
               <Link
                 href="/research"
                 className="group inline-flex items-center gap-2 border-b border-[#0F172A] pb-1 text-[13px] font-semibold uppercase tracking-widest text-[#0F172A] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
@@ -72,6 +71,20 @@ export default function Research() {
                 <span className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">↗</span>
               </Link>
             </motion.div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200"
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1400&q=80"
+              alt="Research and systems development"
+              fill
+              className="object-cover"
+            />
           </motion.div>
         </div>
       </div>

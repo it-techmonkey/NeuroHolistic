@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import Section from '@/components/ui/Section';
 import BookNowButton from '@/components/booking/BookNowButton';
 
@@ -71,17 +70,11 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
           </ul>
         </div>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* CTA */}
+        <div className="flex">
           <BookNowButton className="flex-1 inline-flex items-center justify-center px-6 py-3 rounded-xl border-2 border-[#2B2F55] text-[#2B2F55] font-semibold text-[14px] hover:bg-[#2B2F55] hover:text-white transition-all duration-200">
-            Book Free Consultation
+            Book Consultation
           </BookNowButton>
-          <Link
-            href="/booking/payment-options"
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2B2F55] text-white font-semibold text-[14px] hover:bg-[#3d4270] transition-all duration-200 shadow-md"
-          >
-            Book Program →
-          </Link>
         </div>
       </div>
     </div>
@@ -93,9 +86,6 @@ export default function ProgramsSection() {
     <Section padding="lg" background="white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 md:mb-16">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#6366F1] mb-3">
-            Two Pathways
-          </p>
           <h2 className="text-[32px] md:text-[42px] font-medium leading-[1.2] text-[#0B1028] mb-4">
             Choose Your Transformation Path
           </h2>

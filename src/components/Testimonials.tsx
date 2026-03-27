@@ -146,14 +146,14 @@ export default function Testimonials() {
             variants={itemVariants} 
             className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
           >
-            Clinical precision with <span className="italic text-[#64748B]">human warmth.</span>
+            Client Experiences
           </motion.h2>
 
           <motion.p 
             variants={itemVariants} 
             className="max-w-[600px] text-[17px] leading-[1.7] text-[#475569]"
           >
-            These outcomes reflect sustained improvements in nervous system regulation, executive presence, and decision quality.
+            98% of Clients Experience Meaningful Transformation • 7,400+ Clients Worldwide • Working at the root to create lasting change.
           </motion.p>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ScientificFoundation() {
   const itemVariants = {
@@ -15,19 +16,15 @@ export default function ScientificFoundation() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="relative z-10 mx-auto max-w-[900px] px-6 md:px-12"
+        className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
       >
-        <div className="text-center">
-          
-          <motion.div variants={itemVariants} className="mb-6 flex items-center justify-center gap-3">
-
-          </motion.div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div className="text-left">
           <motion.h2
             variants={itemVariants}
             className="mb-8 text-[36px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
           >
-            Scientific & Theoretical <span className="italic text-[#64748B]">Foundations</span>
+            Scientific <span className="italic text-[#64748B]">Foundation</span>
           </motion.h2>
 
           <motion.p
@@ -53,7 +50,15 @@ export default function ScientificFoundation() {
               <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
           </motion.div>
-
+          </div>
+          <motion.div variants={itemVariants} className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200">
+            <Image
+              src="https://images.unsplash.com/photo-1554475901-4538ddfbccc2?w=1400&q=80"
+              alt="Scientific foundation"
+              fill
+              className="object-cover"
+            />
+          </motion.div>
         </div>
       </motion.div>
     </section>

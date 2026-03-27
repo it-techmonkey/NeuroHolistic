@@ -1,6 +1,5 @@
 import ProgramsHero from "@/components/ProgramsHero";
 import ProgramsSection from "@/components/ProgramsSection";
-import TransformationPathway from "@/components/TransformationPathway";
 
 export const metadata = {
   title: "Programs | NeuroHolistic",
@@ -13,7 +12,6 @@ export default function ProgramsPage() {
     <div className="w-full">
       <ProgramsHero />
       <ProgramsSection />
-      <TransformationPathway />
     </div>
   );
 }
