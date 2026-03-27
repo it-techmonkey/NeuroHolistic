@@ -64,12 +64,47 @@ export async function GET(request: NextRequest) {
       materials = materialsData ?? [];
     }
 
+    // Fetch client profile for auto-fill
+    const { data: clientProfile } = await supabase
+      .from('users')
+      .select('full_name, email, phone, country')
+      .eq('id', clientId)
+      .single();
+
+    // Combine bookings and sessions into unified array for SessionsTab
+    // Bookings schema: user_id, therapist_id (TEXT), meeting_link, status, type
+    // Sessions schema: client_id, therapist_id (UUID), meet_link, status, development_form_submitted
+    const mappedBookings = (bookings ?? []).map(b => ({
+      ...b,
+      id: b.id,
+      client_id: b.user_id,
+      meet_link: b.meeting_link,
+      development_form_submitted: false,
+      session_number: null,
+    }));
+
+    const mappedSessions = (sessions ?? []).map(s => ({
+      ...s,
+      id: s.id,
+      client_id: s.client_id,
+      meet_link: s.meet_link,
+      development_form_submitted: s.development_form_submitted ?? false,
+    }));
+
+    // Combine and sort by date (newest first)
+    const combinedSessions = [...mappedBookings, ...mappedSessions].sort((a, b) => {
+      const dateA = new Date(a.date || a.created_at || 0);
+      const dateB = new Date(b.date || b.created_at || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     return NextResponse.json({
       bookings: bookings ?? [],
-      sessions: sessions ?? [],
+      sessions: combinedSessions,
       assessments: assessments ?? [],
       devForms: devForms ?? [],
       materials,
+      clientProfile: clientProfile ?? null,
     });
   } catch (error) {
     console.error('[Therapist Client Detail]', error);

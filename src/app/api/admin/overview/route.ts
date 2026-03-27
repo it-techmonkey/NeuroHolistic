@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
-
-function getServiceSupabase() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function GET() {
   try {

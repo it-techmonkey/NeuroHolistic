@@ -35,15 +35,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ documents: documents ?? [] });
+    // Transform documents to include full URL from R2 if needed
+    const transformedDocs = (documents ?? []).map((doc: any) => ({
+      ...doc,
+      // Use file_url directly, it should contain the full R2 URL or Supabase storage URL
+      file_url: doc.file_url || (doc.file_key && process.env.R2_PUBLIC_URL 
+        ? `https://${process.env.R2_PUBLIC_URL}/${doc.file_key}` 
+        : null),
+    }));
+
+    return NextResponse.json({ documents: transformedDocs });
   } catch (error) {
     console.error('[Documents GET]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST - Upload document metadata (file should be uploaded to storage first)
-// Only therapists can upload documents for clients
+// POST - Create document metadata (use with presigned URL flow)
+// After client uploads via presigned URL, call this to save metadata
 export async function POST(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -53,10 +62,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { client_id, session_id, type, file_url, file_name, description } = body;
+    const { 
+      client_id, 
+      session_id, 
+      type, 
+      file_url, 
+      file_key,
+      file_name, 
+      description,
+      file_size
+    } = body;
 
-    if (!client_id || !file_url || !type) {
+    if (!client_id || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Must have either file_url or file_key
+    if (!file_url && !file_key) {
+      return NextResponse.json({ error: 'file_url or file_key is required' }, { status: 400 });
     }
 
     const supabase = getServiceSupabase();
@@ -86,6 +109,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized to upload for this client' }, { status: 403 });
     }
 
+    // Check if session is completed (if session_id provided)
+    if (session_id) {
+      const { data: session } = await supabase
+        .from('sessions')
+        .select('status')
+        .eq('id', session_id)
+        .single();
+
+      if (session?.status === 'completed') {
+        return NextResponse.json({ error: 'Cannot upload documents to a completed session' }, { status: 403 });
+      }
+    }
+
+    // Determine the final file URL
+    let finalFileUrl = file_url;
+    if (!finalFileUrl && file_key && process.env.R2_PUBLIC_URL) {
+      finalFileUrl = `https://${process.env.R2_PUBLIC_URL}/${file_key}`;
+    }
+
     const { data: document, error } = await supabase
       .from('documents')
       .insert({
@@ -93,14 +135,17 @@ export async function POST(request: NextRequest) {
         session_id: session_id || null,
         therapist_id: user.id,
         type,
-        file_url,
+        file_url: finalFileUrl,
+        file_key: file_key || null,
         file_name: file_name || 'Untitled',
+        file_size: file_size || null,
         description: description || null,
       })
       .select()
       .single();
 
     if (error) {
+      console.error('[Document Save Error]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -111,7 +156,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Delete a document
+// DELETE - Delete a document (also deletes from R2)
 export async function DELETE(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -129,10 +174,10 @@ export async function DELETE(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // Verify ownership
+    // Get document details including file_key and session_id for R2 deletion and session status check
     const { data: doc } = await supabase
       .from('documents')
-      .select('id, therapist_id')
+      .select('id, therapist_id, file_key, session_id')
       .eq('id', documentId)
       .single();
 
@@ -140,6 +185,37 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Check if session is completed
+    if (doc.session_id) {
+      const { data: session } = await supabase
+        .from('sessions')
+        .select('status')
+        .eq('id', doc.session_id)
+        .single();
+
+      if (session?.status === 'completed') {
+        return NextResponse.json({ error: 'Cannot delete documents from a completed session' }, { status: 403 });
+      }
+    }
+
+    // Delete from R2 if file_key exists
+    if (doc.file_key) {
+      try {
+        const getR2Client = (await import('@/lib/r2/client')).default;
+        const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+        const { R2_BUCKET_NAME } = await import('@/lib/r2/client');
+        
+        await getR2Client().send(new DeleteObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: doc.file_key,
+        }));
+      } catch (r2Error) {
+        console.error('[R2 Delete Error]', r2Error);
+        // Continue with database deletion even if R2 delete fails
+      }
+    }
+
+    // Delete from database
     const { error } = await supabase
       .from('documents')
       .delete()

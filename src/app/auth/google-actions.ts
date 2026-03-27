@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/auth/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 /**
  * Sign in with Google OAuth
@@ -37,7 +38,7 @@ export async function signInWithGoogle(redirectTo?: string) {
  */
 export async function handleGoogleCallback() {
   const supabase = await createClient();
-  const serviceSupabase = getServiceClient();
+  const serviceSupabase = getServiceSupabase();
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -76,13 +77,4 @@ export async function handleGoogleCallback() {
   }
 
   return { success: true, user };
-}
-
-// Helper to get service role client
-function getServiceClient() {
-  const { createClient: createServiceClient } = require('@supabase/supabase-js');
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 }

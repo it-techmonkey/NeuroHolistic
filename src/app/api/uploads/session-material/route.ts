@@ -58,15 +58,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // Verify session exists
+    // Verify session exists and check status
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('id, therapist_id')
+      .select('id, therapist_id, status')
       .eq('id', sessionId)
       .single();
 
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    // Check if session is completed
+    if (session.status === 'completed') {
+      return NextResponse.json({ error: 'Cannot upload materials to a completed session' }, { status: 403 });
     }
 
     // Ensure bucket exists

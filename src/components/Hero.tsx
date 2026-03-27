@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import LandingBookingCTA from "@/components/booking/LandingBookingCTA";
+import HeroBookingForm from "@/components/booking/HeroBookingForm";
 
 export default function Hero() {
 
@@ -39,11 +39,7 @@ export default function Hero() {
             <p className="mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] leading-[1.7] text-[#C3CBE8] lg:text-[17.5px]">
               The NeuroHolistic Method™ is a science-based approach that restores balance within the human system, supporting deep, long-lasting transformation.
             </p>
-            <LandingBookingCTA
-              containerClassName="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
-              primaryClassName="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
-              secondaryClassName="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15"
-            />
+            <HeroBookingForm />
           </motion.div>
 
           <motion.div

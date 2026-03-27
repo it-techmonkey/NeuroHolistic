@@ -1,23 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { TEAM_PROFILES } from '@/components/team/team-profiles';
-
-function getServiceSupabase() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function GET() {
   try {
     const supabase = getServiceSupabase();
     
-    // First try to get therapists from database
+    // First try to get therapists from database (exclude admin)
     const { data: dbTherapists, error } = await supabase
       .from('users')
       .select('id,full_name,email,role')
-      .in('role', ['therapist', 'admin'])
+      .eq('role', 'therapist')
       .order('full_name', { ascending: true });
 
     let therapists: any[] = [];

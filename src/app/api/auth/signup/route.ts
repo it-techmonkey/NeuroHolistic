@@ -24,59 +24,119 @@ export async function POST(request: NextRequest) {
     const validRoles = ['client', 'therapist', 'admin'];
     const userRole = validRoles.includes(role) ? role : 'client';
 
-    // Create auth user via admin SDK
+    // Create admin client
     const supabaseAdmin = createSupabaseAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // Check if user already exists by listing users and finding by email
+    const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+    let userId: string;
+    let isNewUser = false;
+
+    if (existingUser) {
+      // User already exists - update their password and ensure email is confirmed
+      userId = existingUser.id;
+      
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password: password,
+          email_confirm: true,
+          user_metadata: {
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            country,
+          },
+        }
+      );
+
+      if (updateError) {
+        console.error('[Auth Signup] Failed to update user password:', updateError);
+        return NextResponse.json({ error: 'Failed to update account. Please try again.' }, { status: 500 });
+      }
+    } else {
+      // Create new user
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: userRole === 'client',
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          country,
+        },
+      });
+
+      if (authError) {
+        console.error('[Auth Signup] Failed to create user:', authError);
+        return NextResponse.json({ error: authError.message }, { status: 400 });
+      }
+
+      if (!authData.user) {
+        return NextResponse.json({ error: 'Failed to create auth user.' }, { status: 500 });
+      }
+
+      userId = authData.user.id;
+      isNewUser = true;
+    }
+
+    // Create or update record in users table
+    const supabase = getServiceSupabase();
+    if (isNewUser) {
+      const { error: profileError } = await supabase.from('users').insert({
+        id: userId,
+        email,
+        role: userRole,
+        full_name: `${firstName} ${lastName}`.trim(),
+        phone: phone ?? null,
+        country: country ?? null,
+      });
+
+      if (profileError) {
+        console.error('[Auth Signup] Failed to create user profile:', profileError);
+      }
+    } else {
+      // Update existing user profile
+      await supabase.from('users').upsert({
+        id: userId,
+        email,
+        role: userRole,
+        full_name: `${firstName} ${lastName}`.trim(),
+        phone: phone ?? null,
+        country: country ?? null,
+      }, { onConflict: 'id' });
+    }
+
+    // Sign in the user to get a session
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password,
-      email_confirm: userRole === 'client', // Auto-confirm for clients during free consultation
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        country,
-      },
     });
 
-    if (authError) {
-      // Handle duplicate email
-      if (authError.message?.includes('already been registered') || authError.message?.includes('already exists')) {
-        return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 });
-      }
-      return NextResponse.json({ error: authError.message }, { status: 400 });
-    }
-
-    if (!authData.user) {
-      return NextResponse.json({ error: 'Failed to create auth user.' }, { status: 500 });
-    }
-
-    // Create record in users table
-    const supabase = getServiceSupabase();
-    const { error: profileError } = await supabase.from('users').insert({
-      id: authData.user.id,
-      email,
-      role: userRole,
-      full_name: `${firstName} ${lastName}`.trim(),
-      phone: phone ?? null,
-      country: country ?? null,
-    });
-
-    if (profileError) {
-      console.error('[Auth Signup] Failed to create user profile:', profileError);
-      // Don't fail the request — auth user was created, profile can be retried
+    if (signInError) {
+      console.error('[Auth Signup] Auto sign-in failed:', signInError);
+      return NextResponse.json({ 
+        error: 'Account created but sign-in failed. Please try logging in manually.' 
+      }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      userId: authData.user.id,
-      email: authData.user.email,
+      userId: userId,
+      email: email,
       role: userRole,
-    }, { status: 201 });
+      session: {
+        access_token: signInData.session?.access_token,
+        refresh_token: signInData.session?.refresh_token,
+      },
+    }, { status: 200 });
   } catch (error) {
     console.error('[Auth Signup]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

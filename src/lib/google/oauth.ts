@@ -14,17 +14,19 @@ export const GOOGLE_OAUTH_CONFIG = {
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
   redirectUri: `${process.env.NEXT_PUBLIC_APP_URL}/api/google/callback`,
   
-  // Scopes for Google Calendar
+  // Scopes for Google Calendar and Meet
   scopes: [
     'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/calendar.events',
+    'https://www.googleapis.com/auth/meetings.space.created', // For direct Meet space creation
   ],
-  
+
   // Google OAuth endpoints
   authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
   revokeEndpoint: 'https://oauth2.googleapis.com/revoke',
   calendarEndpoint: 'https://www.googleapis.com/calendar/v3',
+  meetEndpoint: 'https://meet.googleapis.com/v2',
 };
 
 /**

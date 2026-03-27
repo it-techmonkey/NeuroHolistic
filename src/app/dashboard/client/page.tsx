@@ -76,6 +76,8 @@ type DashboardData = {
   pendingSessions?: Session[];
   programStatus: string;
   hasActiveProgram: boolean;
+  hasCompletedFreeConsult?: boolean;
+  hasCompletedAllSessions?: boolean;
   assessments: Assessment[];
   devForms: DevForm[];
   materials: any[];
@@ -91,6 +93,7 @@ export default function ClientDashboardPage() {
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   // Session detail state
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
@@ -113,6 +116,7 @@ export default function ClientDashboardPage() {
           if (refreshedUser) {
             setUserInfo(refreshedUser);
             await fetchDashboardData(refreshedUser.id);
+            await fetchUserProfile(refreshedUser.id);
             return;
           }
         }
@@ -122,10 +126,23 @@ export default function ClientDashboardPage() {
 
       setUserInfo(user);
       await fetchDashboardData(user.id);
+      await fetchUserProfile(user.id);
     }
 
     init();
   }, [router]);
+
+  async function fetchUserProfile(userId: string) {
+    try {
+      const res = await fetch(`/api/users/profile?userId=${userId}`);
+      if (res.ok) {
+        const profileData = await res.json();
+        setUserProfile(profileData);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+    }
+  }
 
   // Close account menu on outside click
   useEffect(() => {
@@ -217,7 +234,7 @@ export default function ClientDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-slate-900">User Dashboard</h1>
+              <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
             </div>
 
             {/* Navigation Tabs */}
@@ -330,12 +347,40 @@ export default function ClientDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-semibold">
-                    Welcome back, {userInfo?.user_metadata?.full_name?.split(' ')[0] || 'Client'}
+                    Welcome back, {userProfile?.full_name?.split(' ')[0] || userInfo?.user_metadata?.first_name || userInfo?.user_metadata?.full_name?.split(' ')[0] || userInfo?.email?.split('@')[0] || 'there'}
                   </h2>
                   <p className="text-white/80">Track your wellness journey</p>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
+                {/* Conditional CTA based on user's booking state */}
+                {data?.programStatus === 'none' && !data?.hasCompletedFreeConsult && (
+                  <a
+                    href="/consultation/book"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Book Free Consultation
+                  </a>
+                )}
+                {data?.programStatus === 'consultation_done' && (
+                  <a
+                    href="/programs"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Book a Paid Program
+                  </a>
+                )}
+                {data?.programStatus === 'active' && (
+                  <a
+                    href="/booking/schedule-session"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Book Next Session
+                  </a>
+                )}
                 {data?.programStatus === 'active' && (
                   <button
                     onClick={() => setViewMode('sessions')}

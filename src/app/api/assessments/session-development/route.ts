@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
     const bodySymptomsScore = data.body_symptoms_score ?? 5;
     const behavioralPatternsScore = data.behavioral_patterns_score ?? 5;
     const lifeFunctioningScore = data.life_functioning_score ?? 5;
-    const goalReadinessScore = nervousSystemScore + emotionalStateScore + cognitivePatternsScore + 
-                               bodySymptomsScore + behavioralPatternsScore + lifeFunctioningScore;
+    // goal_readiness_score is GENERATED ALWAYS - do NOT include in insert
+    // PostgreSQL automatically calculates it from the sum of the other scores
 
     // Store all structured data properly
     const insertData: Record<string, any> = {
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       body_symptoms_score: bodySymptomsScore,
       behavioral_patterns_score: behavioralPatternsScore,
       life_functioning_score: lifeFunctioningScore,
-      goal_readiness_score: goalReadinessScore,
+      // NOTE: goal_readiness_score is NOT included - it's a GENERATED ALWAYS column
       
       // Therapist internal notes (NOT visible to client)
       therapist_internal_notes: data.therapist_internal_notes || null,

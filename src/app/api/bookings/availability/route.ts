@@ -168,9 +168,14 @@ export async function GET(request: NextRequest) {
     let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
 
     // Filter out past time slots if booking for today
-    const today = new Date().toISOString().split('T')[0];
+    // Use local timezone for date comparison (matching client-side format)
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const todayDay = String(now.getDate()).padStart(2, '0');
+    const today = `${todayYear}-${todayMonth}-${todayDay}`;
+    
     if (date === today) {
-      const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       

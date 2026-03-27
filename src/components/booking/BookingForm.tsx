@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { generateGoogleCalendarUrl } from '@/lib/calendar-utils';
+import { Calendar } from 'lucide-react';
 
 type Therapist = {
   id: string;
@@ -535,6 +537,31 @@ export default function BookingForm({ onClose, bookingType = 'consultation' }: B
                 Set Password & Go to Dashboard
               </button>
             </div>
+          )}
+
+          {/* Add to Calendar Button */}
+          {bookingResult.date && bookingResult.time && (
+            <button
+              onClick={() => {
+                const [hours, minutes] = bookingResult.time.split(':').map(Number);
+                const dateParts = bookingResult.date.split('-').map(Number);
+                const startDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes);
+                const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+                
+                const url = generateGoogleCalendarUrl({
+                  title: `Therapy Session with ${bookingResult.therapistName || 'NeuroHolistic'}`,
+                  description: `Therapy session at NeuroHolistic.\n\n${bookingResult.meetLink ? `Google Meet: ${bookingResult.meetLink}` : ''}`,
+                  startDate,
+                  endDate,
+                  location: bookingResult.meetLink || 'Online - NeuroHolistic',
+                });
+                window.open(url, '_blank');
+              }}
+              className="w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              Add to Google Calendar
+            </button>
           )}
 
           {!bookingResult.tempPassword && (

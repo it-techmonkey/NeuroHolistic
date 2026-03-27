@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { getServiceClient } from '@/lib/services/supabase-admin';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
@@ -221,7 +221,7 @@ export async function logNotification(
   errorMessage?: string
 ): Promise<void> {
   try {
-    const supabase = getServiceClient();
+    const supabase = getServiceSupabase();
     await supabase.from('notifications_log').insert({
       booking_id: bookingId,
       user_id: userId,
@@ -243,7 +243,7 @@ export async function checkAlreadySent(
   triggerType: TriggerType,
   channel: Channel
 ): Promise<boolean> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
   const { data } = await supabase
     .from('notifications_log')
     .select('id')

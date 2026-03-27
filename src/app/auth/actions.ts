@@ -2,15 +2,7 @@
 
 import { createClient } from '@/lib/auth/server';
 import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
-
-// Helper to get service role client for admin operations
-function getServiceClient() {
-  const { createClient: createServiceClient } = require('@supabase/supabase-js');
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 export async function signUp(formData: {
   firstName: string;
@@ -37,7 +29,7 @@ export async function signUp(formData: {
   }
 
   const supabase = await createClient();
-  const serviceSupabase = getServiceClient();
+  const serviceSupabase = getServiceSupabase();
 
   const emailRedirectTo = formData.redirectTo
     ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(formData.redirectTo)}`

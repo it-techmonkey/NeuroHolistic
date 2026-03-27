@@ -1,4 +1,4 @@
-import { getServiceClient } from '@/lib/services/supabase-admin';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { isValidSlot, BOOKING_TIME_SLOTS } from '@/lib/booking/slots';
 import { getNextConfirmedSession, toDubaiDateTime } from '@/lib/booking/session-flow';
 import { createMeetEvent, updateMeetEvent } from '@/lib/meeting/google-meet';
@@ -45,7 +45,7 @@ function isDubaiWithin24Hours(date: string, time: string): boolean {
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<BookingResult> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
 
   if (!isValidSlot(input.time)) {
     return { success: false, error: `Invalid time slot: ${input.time}` };
@@ -186,6 +186,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     startDateTime: `${input.date}T${input.time}:00`,
     endDateTime: `${input.date}T${input.time.split(':')[0] + 1}:00:00`,
     attendeeEmails: [input.email],
+    therapistId: effectiveTherapist.therapistUserId ?? undefined,
   });
 
   const bookingType = input.type === 'consultation' ? 'free_consultation' : 'program';
@@ -282,7 +283,7 @@ export async function rescheduleBooking(
   newDate: string,
   newTime: string
 ): Promise<BookingResult> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
 
   if (!isValidSlot(newTime)) {
     return { success: false, error: `Invalid time slot: ${newTime}` };
@@ -375,7 +376,7 @@ export async function cancelBooking(
   bookingId: string,
   userId: string
 ): Promise<BookingResult> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
 
   const { data: booking, error: fetchErr } = await supabase
     .from('bookings')
@@ -448,7 +449,7 @@ export async function getAvailableSlots(
   date: string,
   excludeBookingId?: string
 ): Promise<string[]> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
 
   let query = supabase
     .from('bookings')

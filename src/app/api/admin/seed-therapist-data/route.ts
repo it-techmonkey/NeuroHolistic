@@ -1,12 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
-
-function getServiceSupabase() {
-  return createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 const DEMO_PASSWORD = 'NeuroHolistic2024!';
 

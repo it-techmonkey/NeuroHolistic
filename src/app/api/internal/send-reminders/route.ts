@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServiceClient } from '@/lib/services/supabase-admin';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import {
   sendNotification,
   checkAlreadySent,
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
   const nowUtc = Date.now();
 
   // On free Vercel plan: once per day, so we only send 24-hour reminders

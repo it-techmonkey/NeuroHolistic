@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Add sessions (and merge with bookings if booking_id exists)
+    // Only include sessions that are scheduled (not pending) or have a booking_id
     (sessions ?? []).forEach(session => {
       const existingIndex = combinedSessions.findIndex(s => s.id === session.booking_id);
       if (existingIndex >= 0) {
@@ -99,8 +100,9 @@ export async function GET(request: NextRequest) {
           is_complete: session.is_complete ?? false,
           session_status: session.status,
         };
-      } else {
-        // Standalone session entry
+      } else if (session.status !== 'pending') {
+        // Standalone session entry - only if not pending
+        // Pending sessions are not yet scheduled and should not be shown
         combinedSessions.push({
           id: session.id,
           source: 'session',
@@ -123,10 +125,13 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Filter out sessions that are not yet scheduled (no date or time)
+    const scheduledSessions = combinedSessions.filter(s => s.date && s.time);
+    
     // Sort by date
-    combinedSessions.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
+    scheduledSessions.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
 
-    return NextResponse.json({ sessions: combinedSessions });
+    return NextResponse.json({ sessions: scheduledSessions });
   } catch (error) {
     console.error('[Therapist Sessions]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

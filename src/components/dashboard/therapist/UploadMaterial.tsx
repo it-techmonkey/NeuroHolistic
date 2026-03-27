@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Upload, Loader2, Check } from 'lucide-react';
+import { Upload, Loader2, Check, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
-export default function UploadMaterial({ sessionId, onUploadComplete }: { sessionId: string, onUploadComplete: () => void }) {
+export default function UploadMaterial({ sessionId, onUploadComplete, isCompleted = false }: { sessionId: string, onUploadComplete: () => void, isCompleted?: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [completed, setCompleted] = useState(false);
 
@@ -58,6 +58,17 @@ export default function UploadMaterial({ sessionId, onUploadComplete }: { sessio
       setUploading(false);
     }
   };
+
+  if (isCompleted) {
+    return (
+      <div className="relative inline-block">
+        <span className="inline-flex items-center px-3 py-1.5 border border-slate-200 text-xs font-medium rounded bg-slate-100 text-slate-400 cursor-not-allowed">
+          <Lock className="w-3 h-3 mr-1" />
+          Locked
+        </span>
+      </div>
+    );
+  }
 
   return (
      <div className="relative inline-block">

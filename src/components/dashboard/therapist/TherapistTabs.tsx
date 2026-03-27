@@ -5,8 +5,32 @@ import {
   Loader2, Video, FileText, User, Mail, TrendingUp, ChevronRight,
   X, Upload, Eye, Download, BarChart3, File, Image, CheckCircle,
   Stethoscope, Activity, Brain, Heart, Shield, Award, Calendar,
-  TrendingUp as TrendUp, Printer, Share2, FileSpreadsheet
+  TrendingUp as TrendUp, Printer, Share2, FileSpreadsheet, TrendingDown,
+  Lock
 } from 'lucide-react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 import MarkComplete from './MarkComplete';
 
 // Types
@@ -47,7 +71,7 @@ export function SessionsTab({
   onOpenAssessment: (s: Session) => void;
   onOpenDevForm: (s: Session) => void;
   onRefresh: () => void;
-  onUploadDocument: (file: File) => void;
+  onUploadDocument: (file: File, sessionId?: string) => void;
   uploadingDoc: boolean;
 }) {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
@@ -66,7 +90,7 @@ export function SessionsTab({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && selectedSessionId) {
-      onUploadDocument(file);
+      onUploadDocument(file, selectedSessionId);
     }
   };
 
@@ -204,8 +228,9 @@ function SessionCard({
                   {session.session_number ? `Session #${session.session_number}` : 'Free Consultation'}
                 </p>
                 {isCompleted && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                    Completed
+                  <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    Locked
                   </span>
                 )}
               </div>
@@ -255,19 +280,20 @@ function SessionCard({
                 <Video className="w-4 h-4" /> Join Session
               </a>
             )}
-            <button onClick={onOpenAssessment}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isConsultation ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}>
-              <FileText className="w-4 h-4" /> Assessment Form
-              {isConsultation && <span className="text-xs">(Required)</span>}
-            </button>
+            {/* Only show Assessment button for free consultations */}
+            {isConsultation && (
+              <button onClick={onOpenAssessment}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-100 text-red-700 border border-red-200 hover:bg-red-200">
+                <FileText className="w-4 h-4" /> Assessment Form
+                <span className="text-xs">(Required)</span>
+              </button>
+            )}
             {devFormRequired && (
               <button onClick={onOpenDevForm}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   devFormComplete ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                 }`}>
-                <FileText className="w-4 h-4" /> Dev Form
+                <FileText className="w-4 h-4" /> {devFormComplete ? 'View Dev Form' : 'Dev Form'}
                 {!devFormComplete && <span className="text-xs">(Required)</span>}
                 {devFormComplete && <CheckCircle className="w-4 h-4" />}
               </button>
@@ -279,10 +305,10 @@ function SessionCard({
                 <Upload className="w-4 h-4" /> {uploadingDoc ? 'Uploading...' : 'Upload Document'}
               </button>
             )}
-            {devFormRequired && !isCompleted && (
+            {!isCompleted && (
               <MarkComplete
                 sessionId={session.id}
-                isReady={devFormComplete ?? false}
+                isReady={isConsultation ? true : (devFormComplete ?? false)}
                 isCompleted={session.status === 'completed'}
                 onComplete={onRefresh}
               />
@@ -293,6 +319,11 @@ function SessionCard({
           <div>
             <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
               <File className="w-4 h-4" /> Documents & Attachments
+              {isCompleted && (
+                <span className="text-xs font-normal text-slate-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> Session locked
+                </span>
+              )}
             </h4>
             {sessionDocs.length > 0 ? (
               <div className="grid gap-3 md:grid-cols-2">
@@ -351,6 +382,11 @@ export function ReportsTab({
   const latest = assessments[assessments.length - 1];
   const currentAssessment = selectedAssessment || latest;
 
+  // Calculate progress metrics
+  const firstScore = baseline?.goal_readiness_score || assessments[0]?.goal_readiness_score || 0;
+  const lastScore = latest?.goal_readiness_score || 0;
+  const improvement = firstScore - lastScore;
+
   if (assessments.length === 0 && devForms.length === 0) {
     return (
       <div className="text-center py-16 border border-slate-200 rounded-xl">
@@ -386,6 +422,102 @@ export function ReportsTab({
           <Activity className="w-4 h-4" /> Development Report
         </button>
       </div>
+
+      {/* Progress Summary */}
+      {assessments.length > 0 && (
+        <div className={`border rounded-lg p-6 ${
+          improvement >= 0 ? 'bg-white border-slate-200' : 'bg-amber-50 border-amber-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm uppercase tracking-wider ${
+                improvement >= 0 ? 'text-green-600' : 'text-amber-600'
+              }`}>
+                {improvement >= 0 ? 'Symptom Reduction' : 'Symptom Increase'}
+              </p>
+              <p className={`text-3xl font-bold mt-1 ${
+                improvement >= 0 ? 'text-green-700' : 'text-amber-700'
+              }`}>
+                {improvement >= 0 ? '+' : ''}{improvement} points
+              </p>
+              <p className="text-sm text-slate-600 mt-1">
+                From {firstScore} to {lastScore}/60
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Lower scores indicate improved wellbeing
+              </p>
+            </div>
+            <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
+              improvement >= 0 ? 'bg-green-100' : 'bg-amber-100'
+            }`}>
+              {improvement >= 0 ? (
+                <TrendingDown className="w-8 h-8 text-green-600" />
+              ) : (
+                <TrendingUp className="w-8 h-8 text-amber-600" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Progress Timeline Chart */}
+      {assessments.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Progress Timeline</h3>
+          <div className="h-64 w-full">
+            <Line
+              data={{
+                labels: assessments.map((a: any, i: number) =>
+                  new Date(a.assessed_at || a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Score',
+                  data: assessments.map((a: any) => a.goal_readiness_score || 0),
+                  borderColor: '#6366F1',
+                  backgroundColor: '#EEF2FF',
+                  fill: true,
+                  tension: 0.4,
+                  pointBackgroundColor: '#6366F1',
+                  pointBorderColor: '#fff',
+                  pointBorderWidth: 2,
+                  pointRadius: 4,
+                }]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: '#1E293B',
+                    bodyColor: '#475569',
+                    borderColor: '#E2E8F0',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                      label: (context: any) => `${context.raw}/60`
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: '#94A3B8', font: { size: 12 } }
+                  },
+                  y: {
+                    min: 0,
+                    max: 60,
+                    grid: { color: '#E2E8F0' },
+                    ticks: { color: '#94A3B8', font: { size: 12 } }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Assessment Report */}
       {activeReport === 'assessment' && (

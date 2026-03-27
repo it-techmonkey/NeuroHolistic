@@ -1,4 +1,4 @@
-import { getServiceClient } from '@/lib/services/supabase-admin';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 export type EligibilityResult = {
   canBookConsultation: boolean;
@@ -19,7 +19,7 @@ export type EligibilityResult = {
 };
 
 export async function checkEligibility(email: string): Promise<EligibilityResult> {
-  const supabase = getServiceClient();
+  const supabase = getServiceSupabase();
 
   const result: EligibilityResult = {
     canBookConsultation: true,

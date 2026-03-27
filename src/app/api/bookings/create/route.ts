@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
       
       console.log('[CreateBooking] Meet result:', result);
       meetLink = result.meetLink;
-      calendarEventId = result.calendarEventId;
+      calendarEventId = result.calendarEventId ?? '';
     } catch (meetError) {
       console.error('[CreateBooking] Google Meet error:', meetError);
       

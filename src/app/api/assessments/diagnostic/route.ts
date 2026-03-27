@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     const bodySymptomsScore = data.body_symptoms_score ?? 5;
     const behavioralPatternsScore = data.behavioral_patterns_score ?? 5;
     const lifeFunctioningScore = data.life_functioning_score ?? 5;
-    const goalReadinessScore = nervousSystemScore + emotionalStateScore + cognitivePatternsScore + 
-                               bodySymptomsScore + behavioralPatternsScore + lifeFunctioningScore;
+    // goal_readiness_score is GENERATED ALWAYS - do NOT include in insert
+    // PostgreSQL automatically calculates it from the sum of the other scores
 
     // The assessment data to save - includes ALL form fields
     const assessmentData = {
@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
       therapist_focus: data.therapist_focus || null,
       therapy_goal: data.therapy_goal || null,
       
-      // Calculated score
-      goal_readiness_score: goalReadinessScore,
+      // NOTE: goal_readiness_score is NOT included - it's a GENERATED ALWAYS column
+      // PostgreSQL automatically calculates it from the sum of domain scores
       
       status: 'submitted',
       assessed_at: new Date().toISOString(),

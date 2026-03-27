@@ -9,6 +9,19 @@ interface SessionDevelopmentFormProps {
   sessionNumber: number;
   sessionDate: string;
   existingForm?: any;
+  // Comparison baseline - either the consultation assessment (for session 1)
+  // or the previous session's development form (for session 2+)
+  comparisonBaseline?: {
+    nervous_system_score: number;
+    emotional_state_score: number;
+    cognitive_patterns_score: number;
+    body_symptoms_score: number;
+    behavioral_patterns_score: number;
+    life_functioning_score: number;
+    goal_readiness_score: number;
+    source: 'assessment' | 'session'; // Indicates if baseline is from assessment or previous session
+    sessionNumber?: number; // If source is 'session', which session
+  } | null;
   onClose: () => void;
   onSave: (form: any) => void;
 }
@@ -41,6 +54,7 @@ export default function SessionDevelopmentForm({
   sessionNumber,
   sessionDate,
   existingForm,
+  comparisonBaseline,
   onClose,
   onSave,
 }: SessionDevelopmentFormProps) {
@@ -62,12 +76,12 @@ export default function SessionDevelopmentForm({
     client_feedback: existingForm?.client_feedback ?? '',
     integration_notes: existingForm?.integration_notes ?? '',
     therapist_internal_notes: existingForm?.therapist_internal_notes ?? '',
-    nervous_system_score: existingForm?.nervous_system_score ?? 5,
-    emotional_state_score: existingForm?.emotional_state_score ?? 5,
-    cognitive_patterns_score: existingForm?.cognitive_patterns_score ?? 5,
-    body_symptoms_score: existingForm?.body_symptoms_score ?? 5,
-    behavioral_patterns_score: existingForm?.behavioral_patterns_score ?? 5,
-    life_functioning_score: existingForm?.life_functioning_score ?? 5,
+    nervous_system_score: existingForm?.nervous_system_score ?? 0,
+    emotional_state_score: existingForm?.emotional_state_score ?? 0,
+    cognitive_patterns_score: existingForm?.cognitive_patterns_score ?? 0,
+    body_symptoms_score: existingForm?.body_symptoms_score ?? 0,
+    behavioral_patterns_score: existingForm?.behavioral_patterns_score ?? 0,
+    life_functioning_score: existingForm?.life_functioning_score ?? 0,
   });
 
   const updateField = (field: string, value: any) => {
@@ -403,6 +417,99 @@ export default function SessionDevelopmentForm({
                   <span className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>
+
+              {/* Previous Session Comparison */}
+              {comparisonBaseline && (
+                <div className="border-t border-slate-200 pt-6 mt-6">
+                  <h4 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                    {comparisonBaseline.source === 'assessment'
+                      ? 'Baseline (Consultation) Comparison'
+                      : `Session ${comparisonBaseline.sessionNumber} Comparison`}
+                  </h4>
+                  <p className="text-xs text-slate-500 mb-4">
+                    {comparisonBaseline.source === 'assessment'
+                      ? `Comparing Session ${sessionNumber} scores against baseline assessment from consultation.`
+                      : `Comparing Session ${sessionNumber} scores against Session ${comparisonBaseline.sessionNumber} development form.`}
+                  </p>
+
+                  <div className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-100">
+                          <th className="text-left py-2 px-3 font-medium text-slate-700">Domain</th>
+                          <th className="text-center py-2 px-3 font-medium text-slate-500">
+                            {comparisonBaseline.source === 'assessment' ? 'Baseline' : `Session ${comparisonBaseline.sessionNumber}`}
+                          </th>
+                          <th className="text-center py-2 px-3 font-medium text-slate-700">Session {sessionNumber}</th>
+                          <th className="text-center py-2 px-3 font-medium text-slate-700">Change</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {[
+                          { label: 'Nervous System', baseline: comparisonBaseline.nervous_system_score, current: form.nervous_system_score },
+                          { label: 'Emotional State', baseline: comparisonBaseline.emotional_state_score, current: form.emotional_state_score },
+                          { label: 'Cognitive Patterns', baseline: comparisonBaseline.cognitive_patterns_score, current: form.cognitive_patterns_score },
+                          { label: 'Body Symptoms', baseline: comparisonBaseline.body_symptoms_score, current: form.body_symptoms_score },
+                          { label: 'Behavioral Patterns', baseline: comparisonBaseline.behavioral_patterns_score, current: form.behavioral_patterns_score },
+                          { label: 'Life Functioning', baseline: comparisonBaseline.life_functioning_score, current: form.life_functioning_score },
+                        ].map((row) => {
+                          const change = row.current - row.baseline;
+                          return (
+                            <tr key={row.label} className="hover:bg-slate-100/50">
+                              <td className="py-2 px-3 text-slate-700">{row.label}</td>
+                              <td className="py-2 px-3 text-center text-slate-500">{row.baseline}/10</td>
+                              <td className="py-2 px-3 text-center font-medium text-slate-900">{row.current}/10</td>
+                              <td className={`py-2 px-3 text-center font-medium ${
+                                change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-slate-500'
+                              }`}>
+                                {change > 0 ? '+' : ''}{change}
+                                {change > 0 && <span className="text-xs ml-1">(Improved)</span>}
+                                {change < 0 && <span className="text-xs ml-1">(Needs attention)</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="bg-slate-100 font-semibold">
+                          <td className="py-2 px-3 text-slate-900">Total Wellbeing</td>
+                          <td className="py-2 px-3 text-center text-slate-600">{comparisonBaseline.goal_readiness_score}/60</td>
+                          <td className="py-2 px-3 text-center text-indigo-600">{goalReadinessScore}/60</td>
+                          <td className={`py-2 px-3 text-center ${
+                            (goalReadinessScore - comparisonBaseline.goal_readiness_score) > 0 ? 'text-green-600' :
+                            (goalReadinessScore - comparisonBaseline.goal_readiness_score) < 0 ? 'text-red-600' : 'text-slate-500'
+                          }`}>
+                            {goalReadinessScore - comparisonBaseline.goal_readiness_score > 0 ? '+' : ''}
+                            {goalReadinessScore - comparisonBaseline.goal_readiness_score}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Progress Summary */}
+                  <div className={`mt-4 p-4 rounded-lg border ${
+                    goalReadinessScore > comparisonBaseline.goal_readiness_score
+                      ? 'bg-green-50 border-green-200'
+                      : goalReadinessScore < comparisonBaseline.goal_readiness_score
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <p className={`text-sm font-medium ${
+                      goalReadinessScore > comparisonBaseline.goal_readiness_score
+                        ? 'text-green-800'
+                        : goalReadinessScore < comparisonBaseline.goal_readiness_score
+                        ? 'text-amber-800'
+                        : 'text-slate-800'
+                    }`}>
+                      {goalReadinessScore > comparisonBaseline.goal_readiness_score
+                        ? `Client shows improvement of ${goalReadinessScore - comparisonBaseline.goal_readiness_score} points compared to ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`}.`
+                        : goalReadinessScore < comparisonBaseline.goal_readiness_score
+                        ? `Client's wellbeing score is ${comparisonBaseline.goal_readiness_score - goalReadinessScore} points below ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`}. Consider reviewing treatment approach.`
+                        : `Client is maintaining ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`} levels.`}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

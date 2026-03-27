@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { TEAM_PROFILES } from '@/components/team/team-profiles';
-
-function getServiceSupabase() {
-  return createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 interface SeedData {
   therapistEmail: string;

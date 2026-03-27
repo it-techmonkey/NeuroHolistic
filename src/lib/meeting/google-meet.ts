@@ -1,28 +1,16 @@
 /**
- * Google Meet link generation via Google Calendar API.
+ * Google Meet link generation using hybrid approach.
  * 
- * Supports two modes:
- * 1. Therapist's connected Google OAuth account (if available)
- * 2. Service account fallback (existing behavior)
+ * Strategy:
+ * 1. Try Direct Meet API (faster, no calendar event, Workspace only)
+ * 2. Fall back to Calendar API (works for both Workspace and personal Gmail)
+ * 
+ * Note: Service account fallback is removed as it's blocked by org policy.
  */
 
 import { google } from 'googleapis';
 import { getValidAccessToken, isGoogleCalendarConnected } from '@/lib/google/token-service';
-
-const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-
-/**
- * Get calendar client using service account (fallback)
- */
-function getServiceAccountCalendarClient() {
-  const auth = new google.auth.JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
-    scopes: SCOPES,
-  });
-
-  return google.calendar({ version: 'v3', auth });
-}
+import { createDirectMeetSpace } from './direct-meet';
 
 /**
  * Get calendar client using therapist's OAuth token
@@ -44,68 +32,104 @@ interface MeetEventInput {
 
 interface MeetEventResult {
   meetLink: string;
-  calendarEventId: string;
+  calendarEventId: string | null;
   usedTherapistCalendar: boolean;
+  usedDirectMeet: boolean;
 }
 
 /**
- * Create a Google Calendar event with an auto-generated Google Meet link.
- * Uses therapist's connected Google account if available, otherwise falls back to service account.
+ * Create a Google Meet link using hybrid approach.
+ * 
+ * For therapists with Google Workspace:
+ * - Tries Direct Meet API first (faster, no calendar clutter)
+ * - Falls back to Calendar API if Direct Meet fails
+ * 
+ * For therapists with personal Gmail:
+ * - Uses Calendar API directly (Direct Meet only works with Workspace)
  */
 export async function createMeetEvent(input: MeetEventInput): Promise<MeetEventResult> {
-  const calendarId = process.env.GOOGLE_CALENDAR_ID ?? 'primary';
-  
-  // Try to use therapist's connected Google account first
-  if (input.therapistId) {
-    try {
-      const isConnected = await isGoogleCalendarConnected(input.therapistId);
-      if (isConnected) {
+  // If no therapist ID, we can't use OAuth - this should not happen in production
+  if (!input.therapistId) {
+    throw new Error('therapistId is required for creating Meet events');
+  }
+
+  try {
+    const isConnected = await isGoogleCalendarConnected(input.therapistId);
+    
+    if (!isConnected) {
+      throw new Error('Therapist has not connected their Google account');
+    }
+
+    // Step 1: Try Direct Meet API (Workspace accounts)
+    console.log('[CreateMeetEvent] Attempting Direct Meet API...');
+    const directMeetResult = await createDirectMeetSpace({
+      therapistId: input.therapistId,
+      startTime: input.startDateTime,
+      endTime: input.endDateTime,
+      title: input.summary,
+    });
+
+    if (directMeetResult) {
+      // Direct Meet API succeeded (Workspace account)
+      console.log('[CreateMeetEvent] Direct Meet API succeeded:', directMeetResult.meetLink);
+      
+      // Create calendar event for the booking record (optional, for visibility)
+      // This ensures the therapist can see the booking in their calendar
+      try {
         const accessToken = await getValidAccessToken(input.therapistId);
         const calendar = getOAuthCalendarClient(accessToken);
-
-        const event = await calendar.events.insert({
-          calendarId: 'primary', // Use therapist's primary calendar
-          conferenceDataVersion: 1,
-          sendUpdates: 'all', // Send invites to attendees
+        
+        await calendar.events.insert({
+          calendarId: 'primary',
           requestBody: {
             summary: input.summary,
-            description: input.description ?? '',
+            description: `${input.description ?? ''}\n\nJoin: ${directMeetResult.meetLink}`,
             start: { dateTime: input.startDateTime, timeZone: 'Asia/Dubai' },
             end: { dateTime: input.endDateTime, timeZone: 'Asia/Dubai' },
             attendees: (input.attendeeEmails ?? []).map((email) => ({ email })),
-            conferenceData: {
-              createRequest: {
-                requestId: `nh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                conferenceSolutionKey: { type: 'hangoutsMeet' },
-              },
-            },
+            location: directMeetResult.meetLink,
+            guestsCanSeeOtherGuests: false,
           },
         });
-
-        const meetLink =
-          event.data.hangoutLink ??
-          event.data.conferenceData?.entryPoints?.find((ep) => ep.entryPointType === 'video')?.uri ??
-          '';
-
-        console.log('[CreateMeetEvent] Using therapist\'s Google Calendar');
-        return {
-          meetLink,
-          calendarEventId: event.data.id ?? '',
-          usedTherapistCalendar: true,
-        };
+      } catch (calError) {
+        // Non-fatal: calendar event creation failed but Meet link is valid
+        console.warn('[CreateMeetEvent] Failed to create calendar event for visibility:', calError);
       }
-    } catch (error) {
-      console.warn('[CreateMeetEvent] Failed to use therapist calendar, falling back to service account:', error);
+
+      return {
+        meetLink: directMeetResult.meetLink,
+        calendarEventId: null, // Direct Meet doesn't create a calendar event with ID
+        usedTherapistCalendar: true,
+        usedDirectMeet: true,
+      };
     }
+
+    // Step 2: Fall back to Calendar API (works for both Workspace and Gmail)
+    console.log('[CreateMeetEvent] Direct Meet API not available, using Calendar API...');
+    return await createMeetEventViaCalendar(input);
+
+  } catch (error) {
+    console.error('[CreateMeetEvent] Failed to create Meet event:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a Meet link via Google Calendar API.
+ * This approach works for both Google Workspace and personal Gmail accounts.
+ */
+async function createMeetEventViaCalendar(input: MeetEventInput): Promise<MeetEventResult> {
+  if (!input.therapistId) {
+    throw new Error('therapistId is required');
   }
 
-  // Fallback to service account
-  console.log('[CreateMeetEvent] Using service account');
-  const calendar = getServiceAccountCalendarClient();
+  const accessToken = await getValidAccessToken(input.therapistId);
+  const calendar = getOAuthCalendarClient(accessToken);
 
   const event = await calendar.events.insert({
-    calendarId,
+    calendarId: 'primary',
     conferenceDataVersion: 1,
+    sendUpdates: 'all',
     requestBody: {
       summary: input.summary,
       description: input.description ?? '',
@@ -126,83 +150,63 @@ export async function createMeetEvent(input: MeetEventInput): Promise<MeetEventR
     event.data.conferenceData?.entryPoints?.find((ep) => ep.entryPointType === 'video')?.uri ??
     '';
 
+  console.log('[CreateMeetEvent] Created Meet event via Calendar API:', meetLink);
+  
   return {
     meetLink,
     calendarEventId: event.data.id ?? '',
-    usedTherapistCalendar: false,
+    usedTherapistCalendar: true,
+    usedDirectMeet: false,
   };
 }
 
 /**
  * Update an existing Google Calendar event (e.g. for rescheduling).
- * Uses therapist's connected Google account if available.
+ * Uses therapist's connected Google account.
  */
 export async function updateMeetEvent(
   calendarEventId: string,
   input: Partial<MeetEventInput>
 ): Promise<MeetEventResult> {
-  const calendarId = process.env.GOOGLE_CALENDAR_ID ?? 'primary';
-
-  // Try to use therapist's connected Google account first
-  if (input.therapistId) {
-    try {
-      const isConnected = await isGoogleCalendarConnected(input.therapistId);
-      if (isConnected) {
-        const accessToken = await getValidAccessToken(input.therapistId);
-        const calendar = getOAuthCalendarClient(accessToken);
-
-        const updateData: Record<string, unknown> = {};
-        if (input.startDateTime) updateData.start = { dateTime: input.startDateTime, timeZone: 'Asia/Dubai' };
-        if (input.endDateTime) updateData.end = { dateTime: input.endDateTime, timeZone: 'Asia/Dubai' };
-        if (input.summary) updateData.summary = input.summary;
-        if (input.description) updateData.description = input.description;
-
-        const event = await calendar.events.patch({
-          calendarId: 'primary',
-          eventId: calendarEventId,
-          sendUpdates: 'all',
-          requestBody: updateData,
-        });
-
-        const meetLink =
-          event.data.hangoutLink ??
-          event.data.conferenceData?.entryPoints?.find((ep) => ep.entryPointType === 'video')?.uri ??
-          '';
-
-        return {
-          meetLink,
-          calendarEventId: event.data.id ?? '',
-          usedTherapistCalendar: true,
-        };
-      }
-    } catch (error) {
-      console.warn('[UpdateMeetEvent] Failed to use therapist calendar, falling back to service account:', error);
-    }
+  if (!input.therapistId) {
+    throw new Error('therapistId is required for updating Meet events');
   }
 
-  // Fallback to service account
-  const calendar = getServiceAccountCalendarClient();
+  try {
+    const isConnected = await isGoogleCalendarConnected(input.therapistId);
+    if (!isConnected) {
+      throw new Error('Therapist has not connected their Google account');
+    }
 
-  const updateData: Record<string, unknown> = {};
-  if (input.startDateTime) updateData.start = { dateTime: input.startDateTime, timeZone: 'Asia/Dubai' };
-  if (input.endDateTime) updateData.end = { dateTime: input.endDateTime, timeZone: 'Asia/Dubai' };
-  if (input.summary) updateData.summary = input.summary;
-  if (input.description) updateData.description = input.description;
+    const accessToken = await getValidAccessToken(input.therapistId);
+    const calendar = getOAuthCalendarClient(accessToken);
 
-  const event = await calendar.events.patch({
-    calendarId,
-    eventId: calendarEventId,
-    requestBody: updateData,
-  });
+    const updateData: Record<string, unknown> = {};
+    if (input.startDateTime) updateData.start = { dateTime: input.startDateTime, timeZone: 'Asia/Dubai' };
+    if (input.endDateTime) updateData.end = { dateTime: input.endDateTime, timeZone: 'Asia/Dubai' };
+    if (input.summary) updateData.summary = input.summary;
+    if (input.description) updateData.description = input.description;
 
-  const meetLink =
-    event.data.hangoutLink ??
-    event.data.conferenceData?.entryPoints?.find((ep) => ep.entryPointType === 'video')?.uri ??
-    '';
+    const event = await calendar.events.patch({
+      calendarId: 'primary',
+      eventId: calendarEventId,
+      sendUpdates: 'all',
+      requestBody: updateData,
+    });
 
-  return {
-    meetLink,
-    calendarEventId: event.data.id ?? '',
-    usedTherapistCalendar: false,
-  };
+    const meetLink =
+      event.data.hangoutLink ??
+      event.data.conferenceData?.entryPoints?.find((ep) => ep.entryPointType === 'video')?.uri ??
+      '';
+
+    return {
+      meetLink,
+      calendarEventId: event.data.id ?? '',
+      usedTherapistCalendar: true,
+      usedDirectMeet: false,
+    };
+  } catch (error) {
+    console.error('[UpdateMeetEvent] Failed to update Meet event:', error);
+    throw error;
+  }
 }

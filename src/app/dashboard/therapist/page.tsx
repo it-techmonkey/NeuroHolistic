@@ -8,13 +8,39 @@ import {
   Video, FileText, User, Mail, TrendingUp, ChevronRight,
   X, Filter, Search, BarChart3, Phone, Settings, LogOut,
   UserCircle, ChevronDown, Plus, Trash2, Upload, Download,
-  Eye, Edit2, File, Image, Music
+  Eye, Edit2, File, Image, Music, TrendingDown
 } from 'lucide-react';
+import CalendarView from '@/components/dashboard/therapist/CalendarView';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 import DiagnosticAssessmentForm from '@/components/dashboard/therapist/DiagnosticAssessmentForm';
 import SessionDevelopmentForm from '@/components/dashboard/therapist/SessionDevelopmentForm';
 import MarkComplete from '@/components/dashboard/therapist/MarkComplete';
 import UploadMaterial from '@/components/dashboard/therapist/UploadMaterial';
 import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/TherapistTabs';
+import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
+import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
 
 // Types
 type Session = {
@@ -126,9 +152,30 @@ export default function TherapistDashboardPage() {
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [availability, setAvailability] = useState<Availability[]>([]);
 
+  // Google Calendar modal
+  const [showGoogleCalendarModal, setShowGoogleCalendarModal] = useState(false);
+  
+  // Calendar visibility
+  const [showCalendar, setShowCalendar] = useState(false);
+
   // Documents
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // Baseline assessment data for comparison
+  const [baselineScores, setBaselineScores] = useState<{
+    nervous_system_score: number;
+    emotional_state_score: number;
+    cognitive_patterns_score: number;
+    body_symptoms_score: number;
+    behavioral_patterns_score: number;
+    life_functioning_score: number;
+    goal_readiness_score: number;
+    source: 'assessment' | 'session';
+    sessionNumber?: number;
+  } | null>(null);
+  const [baselineExists, setBaselineExists] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -251,6 +298,26 @@ export default function TherapistDashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setClientDetail(data);
+
+        // Extract baseline assessment for comparison
+        const baseline = data.assessments?.find((a: any) => a.is_baseline);
+        if (baseline) {
+          setBaselineExists(true);
+          setBaselineScores({
+            nervous_system_score: baseline.nervous_system_score ?? 0,
+            emotional_state_score: baseline.emotional_state_score ?? 0,
+            cognitive_patterns_score: baseline.cognitive_patterns_score ?? 0,
+            body_symptoms_score: baseline.body_symptoms_score ?? 0,
+            behavioral_patterns_score: baseline.behavioral_patterns_score ?? 0,
+            life_functioning_score: baseline.life_functioning_score ?? 0,
+            goal_readiness_score: baseline.goal_readiness_score ?? 0,
+            source: 'assessment' as const,
+          });
+        } else {
+          setBaselineExists(false);
+          setBaselineScores(null);
+        }
+
         // Also fetch documents for this client
         fetchClientDocuments(client.userId);
       }
@@ -294,46 +361,36 @@ export default function TherapistDashboardPage() {
     router.push('/auth/login');
   };
 
-  const handleUploadDocument = async (file: File) => {
+  // Upload document using server-side R2 upload (bypasses CORS)
+  const handleUploadDocument = async (file: File, sessionId?: string) => {
     if (!selectedClient) return;
     setUploadingDoc(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${file.name}`;
-      const filePath = `documents/${selectedClient.userId}/${fileName}`;
+      // Build form data with file
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('clientId', selectedClient.userId);
+      if (sessionId) formData.append('sessionId', sessionId);
 
-      const { error: uploadError } = await supabase.storage
-        .from('therapist-files')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('therapist-files')
-        .getPublicUrl(filePath);
-
-      let docType: Document['type'] = 'other';
-      if (file.type === 'application/pdf') docType = 'pdf';
-      else if (file.type.startsWith('video/')) docType = 'video';
-      else if (file.type.startsWith('image/')) docType = 'image';
-
-      const res = await fetch('/api/documents', {
+      // Upload via server-side route (handles R2 upload + DB save)
+      const res = await fetch('/api/documents/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: selectedClient.userId,
-          type: docType,
-          file_url: urlData.publicUrl,
-          file_name: file.name,
-        }),
+        body: formData,
       });
 
-      if (!res.ok) throw new Error('Failed to save document');
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.error('Upload error response:', data);
+        throw new Error(data.error || 'Failed to upload document');
+      }
 
       await fetchClientDocuments(selectedClient.userId);
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload document');
+      alert('Failed to upload document: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setUploadingDoc(false);
     }
@@ -424,6 +481,13 @@ export default function TherapistDashboardPage() {
                     Manage Availability
                   </button>
                   <button
+                    onClick={() => { setShowAccountMenu(false); setShowGoogleCalendarModal(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Video className="w-4 h-4" />
+                    Google Calendar
+                  </button>
+                  <button
                     onClick={() => { setShowAccountMenu(false); }}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   >
@@ -509,6 +573,30 @@ export default function TherapistDashboardPage() {
               <StatCard icon={CheckCircle} label="Completed" value={stats?.completedSessions || 0} color="emerald" />
               <StatCard icon={AlertCircle} label="Pending Forms" value={stats?.pendingAssessments || 0} color="amber" />
             </div>
+
+            {/* Calendar View - Hidden by default */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowCalendar(!showCalendar)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                <Calendar className="w-4 h-4" />
+                {showCalendar ? 'Hide Calendar' : 'View Calendar'}
+              </button>
+            </div>
+            
+            {showCalendar && (
+              <CalendarView
+                sessions={[...todaySessions, ...upcomingSessions, ...pastSessions] as any[]}
+                onSessionClick={(session) => {
+                  const client = clients.find(c => c.userId === (session as any).client_id);
+                  if (client) {
+                    setViewMode('clients');
+                    fetchClientDetail(client);
+                  }
+                }}
+              />
+            )}
 
             {/* Today's Sessions - Presentation View */}
             {todaySessions.length > 0 && (
@@ -639,13 +727,15 @@ export default function TherapistDashboardPage() {
                 detailLoading={detailLoading}
                 activeTab={clientTab}
                 onTabChange={setClientTab}
-                onBack={() => { setSelectedClient(null); setClientDetail(null); setDocuments([]); }}
+                onBack={() => { setSelectedClient(null); setClientDetail(null); setDocuments([]); setBaselineScores(null); setBaselineExists(false); }}
                 onOpenAssessment={(s) => openForm(s, 'diagnostic')}
                 onOpenDevForm={(s) => openForm(s, 'development')}
                 onRefresh={() => therapistId && fetchAllData(therapistId)}
                 documents={documents}
                 onUploadDocument={handleUploadDocument}
                 uploadingDoc={uploadingDoc}
+                uploadSuccess={uploadSuccess}
+                baselineScores={baselineScores}
               />
             ) : (
               <>
@@ -771,15 +861,14 @@ export default function TherapistDashboardPage() {
                           <Video className="w-4 h-4" /> Join
                         </a>
                       )}
-                      <button onClick={() => openForm(session, 'diagnostic')}
-                        className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg ${
-                          session.type === 'free_consultation'
-                            ? 'bg-red-100 text-red-700 border border-red-300'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}>
-                        <FileText className="w-4 h-4" />
-                        Assessment {session.type === 'free_consultation' && <span className="text-xs">(Required)</span>}
-                      </button>
+                      {/* Only show Assessment button for free consultations */}
+                      {session.type === 'free_consultation' && (
+                        <button onClick={() => openForm(session, 'diagnostic')}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-red-100 text-red-700 border border-red-300">
+                          <FileText className="w-4 h-4" />
+                          Assessment <span className="text-xs">(Required)</span>
+                        </button>
+                      )}
                       {session.type !== 'free_consultation' && session.program_id && (
                         <button onClick={() => openForm(session, 'development')}
                           className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg ${
@@ -788,14 +877,16 @@ export default function TherapistDashboardPage() {
                               : 'bg-green-100 text-green-700'
                           }`}>
                           <FileText className="w-4 h-4" />
-                          Dev Form {!session.development_form_submitted && <span className="text-xs">(Required)</span>}
-                          {session.development_form_submitted && <span className="text-xs">✓</span>}
+                          {session.development_form_submitted ? 'View Dev Form' : 'Dev Form'}
+                          {!session.development_form_submitted && <span className="text-xs">(Required)</span>}
+                          {session.development_form_submitted && <span className="text-xs ml-1">✓</span>}
                         </button>
                       )}
-                      {session.type !== 'free_consultation' && session.program_id && (
+                      {/* Mark Complete - for all sessions */}
+                      {session.status !== 'completed' && (
                         <MarkComplete
                           sessionId={session.id}
-                          isReady={session.development_form_submitted || false}
+                          isReady={session.type === 'free_consultation' || session.development_form_submitted || false}
                           isCompleted={session.status === 'completed'}
                           onComplete={() => therapistId && fetchAllData(therapistId)}
                         />
@@ -819,6 +910,24 @@ export default function TherapistDashboardPage() {
         />
       )}
 
+      {/* Google Calendar Modal */}
+      {showGoogleCalendarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-slate-50 rounded-xl shadow-2xl w-full max-w-lg relative">
+            <button
+              onClick={() => setShowGoogleCalendarModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Google Calendar Settings</h2>
+              <GoogleCalendarConnect />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Form Modals */}
       {activeSession && modalType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
@@ -832,6 +941,14 @@ export default function TherapistDashboardPage() {
                   clientId={activeSession.client_id}
                   therapistId={therapistId!}
                   sessionId={activeSession.id}
+                  baselineExists={baselineExists}
+                  existingAssessment={clientDetail?.assessments?.find((a: any) => a.is_baseline)}
+                  clientData={clientDetail?.clientProfile ? {
+                    full_name: clientDetail.clientProfile.full_name,
+                    email: clientDetail.clientProfile.email,
+                    phone: clientDetail.clientProfile.phone,
+                    country: clientDetail.clientProfile.country,
+                  } : undefined}
                   onClose={() => closeForm(false)}
                   onSave={() => closeForm(true)}
                 />
@@ -843,6 +960,7 @@ export default function TherapistDashboardPage() {
                   therapistId={therapistId!}
                   sessionNumber={activeSession.session_number || 1}
                   sessionDate={activeSession.date || new Date().toISOString().split('T')[0]}
+                   comparisonBaseline={baselineScores}
                   onClose={() => closeForm(false)}
                   onSave={() => closeForm(true)}
                 />
@@ -931,14 +1049,21 @@ function TodaySessionCard({
             <Video className="w-4 h-4" /> Join
           </a>
         )}
-        <button onClick={onAssessment}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
-          <FileText className="w-4 h-4" /> Assessment
-        </button>
+        {/* Only show Assessment button for free consultations */}
+        {isConsultation && (
+          <button onClick={onAssessment}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
+            <FileText className="w-4 h-4" /> Assessment
+          </button>
+        )}
         {devFormRequired && (
           <button onClick={onDevForm}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
-            <FileText className="w-4 h-4" /> Dev Form
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              devFormComplete 
+                ? 'bg-green-500/20 text-green-200 hover:bg-green-500/30' 
+                : 'bg-white/20 text-white hover:bg-white/30'
+            }`}>
+            <FileText className="w-4 h-4" /> {devFormComplete ? 'View Dev Form' : 'Dev Form'}
           </button>
         )}
       </div>
@@ -956,6 +1081,8 @@ function SessionCard({
   variant?: 'default' | 'highlighted';
 }) {
   const isHighlighted = variant === 'highlighted';
+  const isConsultation = session.type === 'free_consultation';
+  const devFormComplete = session.development_form_submitted;
 
   return (
     <div className={`rounded-lg p-4 ${
@@ -981,16 +1108,23 @@ function SessionCard({
             <Video className="w-3 h-3" /> Join
           </a>
         )}
-        <button onClick={onAssessment}
-          className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
-            isHighlighted ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-          }`}>
-          <FileText className="w-3 h-3" /> Assessment
-        </button>
-        {session.type !== 'free_consultation' && !session.development_form_submitted && (
+        {/* Only show Assessment button for free consultations */}
+        {isConsultation && (
+          <button onClick={onAssessment}
+            className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+              isHighlighted ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+            }`}>
+            <FileText className="w-3 h-3" /> Assessment
+          </button>
+        )}
+        {session.type !== 'free_consultation' && (
           <button onClick={onDevForm}
-            className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-amber-500 text-white">
-            <FileText className="w-3 h-3" /> Dev Form
+            className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${
+              devFormComplete 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-amber-500 text-white'
+            }`}>
+            <FileText className="w-3 h-3" /> {devFormComplete ? 'View Dev Form' : 'Dev Form'}
           </button>
         )}
       </div>
@@ -1040,7 +1174,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
 function ClientDetailView({
   client, detail, detailLoading, activeTab, onTabChange,
   onBack, onOpenAssessment, onOpenDevForm, onRefresh,
-  documents, onUploadDocument, uploadingDoc
+  documents, onUploadDocument, uploadingDoc, uploadSuccess, baselineScores
 }: {
   client: Client;
   detail: any;
@@ -1052,12 +1186,15 @@ function ClientDetailView({
   onOpenDevForm: (session: Session) => void;
   onRefresh: () => void;
   documents: Document[];
-  onUploadDocument: (file: File) => void;
+  onUploadDocument: (file: File, sessionId?: string) => void;
   uploadingDoc: boolean;
+  uploadSuccess: boolean;
+  baselineScores: any;
 }) {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'sessions', label: 'Sessions', icon: Calendar },
+    { id: 'progress', label: 'Progress', icon: TrendingUp },
     { id: 'assessments', label: 'Assessments', icon: FileText },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
   ];
@@ -1151,6 +1288,69 @@ function ClientDetailView({
                       </p>
                     </div>
                   </div>
+
+                  {/* Progress Timeline Chart */}
+                  {detail?.assessments?.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-xl p-6">
+                      <h4 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-4 h-4 text-indigo-600" />
+                        Progress Timeline
+                      </h4>
+                      <div className="h-48 w-full">
+                        <Line
+                          data={{
+                            labels: [...detail.assessments].reverse().map((a: any) =>
+                              new Date(a.assessed_at || a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            ),
+                            datasets: [{
+                              label: 'Score',
+                              data: [...detail.assessments].reverse().map((a: any) => a.goal_readiness_score || 0),
+                              borderColor: '#6366F1',
+                              backgroundColor: '#EEF2FF',
+                              fill: true,
+                              tension: 0.4,
+                              pointBackgroundColor: '#6366F1',
+                              pointBorderColor: '#fff',
+                              pointBorderWidth: 2,
+                              pointRadius: 4,
+                            }]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                backgroundColor: '#fff',
+                                titleColor: '#1E293B',
+                                bodyColor: '#475569',
+                                borderColor: '#E2E8F0',
+                                borderWidth: 1,
+                                padding: 12,
+                                cornerRadius: 8,
+                                callbacks: {
+                                  label: (context: any) => `${context.raw}/60`
+                                }
+                              }
+                            },
+                            scales: {
+                              x: {
+                                grid: { display: false },
+                                ticks: { color: '#94A3B8', font: { size: 12 } }
+                              },
+                              y: {
+                                min: 0,
+                                max: 60,
+                                grid: { color: '#E2E8F0' },
+                                ticks: { color: '#94A3B8', font: { size: 12 } }
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 text-center mt-2">Lower scores indicate improvement</p>
+                    </div>
+                  )}
 
                   {/* Latest Assessment Overview */}
                   {detail?.assessments?.length > 0 ? (
@@ -1277,15 +1477,23 @@ function ClientDetailView({
               )}
 
               {activeTab === 'sessions' && (
-                <SessionsTab
-                  sessions={(detail?.sessions || []) as Session[]}
-                  documents={documents}
-                  onOpenAssessment={(s: Session) => onOpenAssessment(s)}
-                  onOpenDevForm={(s: Session) => onOpenDevForm(s)}
-                  onRefresh={onRefresh}
-                  onUploadDocument={onUploadDocument}
-                  uploadingDoc={uploadingDoc}
-                />
+                <div className="relative">
+                  {uploadSuccess && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">Document uploaded successfully!</span>
+                    </div>
+                  )}
+                  <SessionsTab
+                    sessions={(detail?.sessions || []) as Session[]}
+                    documents={documents}
+                    onOpenAssessment={(s: Session) => onOpenAssessment(s)}
+                    onOpenDevForm={(s: Session) => onOpenDevForm(s)}
+                    onRefresh={onRefresh}
+                    onUploadDocument={onUploadDocument}
+                    uploadingDoc={uploadingDoc}
+                  />
+                </div>
               )}
 
               {activeTab === 'assessments' && (
