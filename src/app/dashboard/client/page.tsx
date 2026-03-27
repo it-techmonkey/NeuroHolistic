@@ -193,7 +193,9 @@ export default function ClientDashboardPage() {
   };
 
   const getSessionDocuments = (sessionId: string) => {
-    return documents.filter(d => d.session_id === sessionId);
+    // Filter documents by session_id or if the document's session_id is null/undefined
+    // This handles cases where documents were uploaded without a specific session
+    return documents.filter(d => d.session_id === sessionId || !d.session_id);
   };
 
   const getDocIcon = (type: string) => {
@@ -570,6 +572,50 @@ export default function ClientDashboardPage() {
                 <p className="text-slate-500 text-sm mt-1">Book a consultation to get started.</p>
               </div>
             )}
+
+            {/* All Documents Section */}
+            {documents.length > 0 && (
+              <section className="mt-8">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <File className="w-5 h-5 text-indigo-600" />
+                  All Documents ({documents.length})
+                </h2>
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {documents.map(doc => (
+                      <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-200">
+                          {doc.type === 'pdf' ? <FileText className="w-5 h-5 text-red-500" /> :
+                           doc.type === 'video' ? <Video className="w-5 h-5 text-purple-500" /> :
+                           doc.type === 'image' ? <Image className="w-5 h-5 text-green-500" /> :
+                           <File className="w-5 h-5 text-slate-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
+                          <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/documents/${doc.id}/view`);
+                              const data = await res.json();
+                              if (data.url) {
+                                window.open(data.url, '_blank');
+                              }
+                            } catch (error) {
+                              console.error('Failed to get document URL:', error);
+                            }
+                          }}
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
         )}
 
@@ -771,25 +817,45 @@ function SessionDetailCard({
                     <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-200">
                       {getDocIcon(doc.type)}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-0">
                       <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
                       <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</p>
                     </div>
-                    <a
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/documents/${doc.id}/view`);
+                          const data = await res.json();
+                          if (data.url) {
+                            window.open(data.url, '_blank');
+                          }
+                        } catch (error) {
+                          console.error('Failed to get document URL:', error);
+                        }
+                      }}
                       className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                    </a>
-                    <a
-                      href={doc.file_url}
-                      download
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/documents/${doc.id}/view`);
+                          const data = await res.json();
+                          if (data.url) {
+                            const a = document.createElement('a');
+                            a.href = data.url;
+                            a.download = doc.file_name;
+                            a.click();
+                          }
+                        } catch (error) {
+                          console.error('Failed to download document:', error);
+                        }
+                      }}
                       className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                     >
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>

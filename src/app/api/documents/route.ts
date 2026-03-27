@@ -19,6 +19,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
     }
 
+    // Check user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const isTherapist = userData?.role === 'therapist' || userData?.role === 'admin';
+    const isClientAccessingOwnDocs = user.id === clientId;
+
+    // Only allow therapists or clients accessing their own documents
+    if (!isTherapist && !isClientAccessingOwnDocs) {
+      return NextResponse.json({ error: 'Unauthorized to view these documents' }, { status: 403 });
+    }
+
     let query = supabase
       .from('documents')
       .select('*')
@@ -26,28 +41,21 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (sessionId) {
-      query = query.eq('session_id', sessionId);
+      // Try matching by session_id directly, or by booking_id if it's a booking reference
+      query = query.or(`session_id.eq.${sessionId},session_id.in.(select id from sessions where booking_id.eq.${sessionId})`);
     }
 
     const { data: documents, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[Documents GET] Query error:', error);
+      return NextResponse.json({ error: error.message, documents: [] }, { status: 500 });
     }
 
-    // Transform documents to include full URL from R2 if needed
-    const transformedDocs = (documents ?? []).map((doc: any) => ({
-      ...doc,
-      // Use file_url directly, it should contain the full R2 URL or Supabase storage URL
-      file_url: doc.file_url || (doc.file_key && process.env.R2_PUBLIC_URL 
-        ? `https://${process.env.R2_PUBLIC_URL}/${doc.file_key}` 
-        : null),
-    }));
-
-    return NextResponse.json({ documents: transformedDocs });
+    return NextResponse.json({ documents: documents ?? [] });
   } catch (error) {
     console.error('[Documents GET]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', documents: [] }, { status: 500 });
   }
 }
 

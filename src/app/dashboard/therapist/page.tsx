@@ -574,6 +574,64 @@ export default function TherapistDashboardPage() {
               <StatCard icon={AlertCircle} label="Pending Forms" value={stats?.pendingAssessments || 0} color="amber" />
             </div>
 
+            {/* Client Progress Overview */}
+            {clients.length > 0 && (
+              <section className="bg-white rounded-xl border border-slate-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-indigo-600" />
+                    Active Client Progress
+                  </h2>
+                  <button
+                    onClick={() => setViewMode('clients')}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                  >
+                    View all <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {clients.filter(c => c.program && c.program.status === 'active').slice(0, 6).map(client => (
+                    <div 
+                      key={client.userId} 
+                      className="p-4 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setViewMode('clients');
+                        fetchClientDetail(client);
+                      }}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <User className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900 text-sm">{client.fullName}</p>
+                          <p className="text-xs text-slate-500">Active Program</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-500">Progress</span>
+                        <span className="font-medium text-indigo-600">
+                          {client.program?.completedSessions || 0}/{client.program?.totalSessions || 10} sessions
+                        </span>
+                      </div>
+                      <div className="mt-2 w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-600 h-2 rounded-full transition-all"
+                          style={{ width: `${Math.min(((client.program?.completedSessions || 0) / (client.program?.totalSessions || 10)) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {clients.filter(c => c.program && c.program.status === 'active').length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No active clients with programs</p>
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* Calendar View - Hidden by default */}
             <div className="flex justify-end">
               <button

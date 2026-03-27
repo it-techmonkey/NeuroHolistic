@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 
 // POST - Upload file directly to R2 server-side (bypasses CORS)
@@ -159,13 +160,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'R2 upload failed', logs }, { status: 500 });
     }
 
-    // Build the public URL
-    const fileUrl = R2_PUBLIC_URL
-      ? `https://${R2_PUBLIC_URL}/${fileKey}`
-      : '';
-    logs.push(`12. File URL: ${fileUrl}`);
+    // Store file key - URL will be generated on-demand via signed URLs
+    // We don't store a direct URL since the bucket requires authentication
+    logs.push(`12. File key: ${fileKey}`);
 
     // Save document metadata to database
+    // Note: file_url is null since we use signed URLs on-demand for private buckets
     logs.push('13. Saving document metadata to database');
     const { data: document, error } = await supabase
       .from('documents')
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         session_id: sessionId || null,
         therapist_id: user.id,
         type: docType,
-        file_url: fileUrl,
+        file_url: null, // URL generated on-demand via signed URLs
         file_key: fileKey,
         file_name: file.name,
         file_size: file.size,

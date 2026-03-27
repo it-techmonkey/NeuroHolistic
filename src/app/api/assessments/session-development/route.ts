@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate goal readiness score (sum of all domain scores)
-    const nervousSystemScore = data.nervous_system_score ?? 5;
-    const emotionalStateScore = data.emotional_state_score ?? 5;
-    const cognitivePatternsScore = data.cognitive_patterns_score ?? 5;
-    const bodySymptomsScore = data.body_symptoms_score ?? 5;
-    const behavioralPatternsScore = data.behavioral_patterns_score ?? 5;
-    const lifeFunctioningScore = data.life_functioning_score ?? 5;
+    const nervousSystemScore = data.nervous_system_score ?? 0;
+    const emotionalStateScore = data.emotional_state_score ?? 0;
+    const cognitivePatternsScore = data.cognitive_patterns_score ?? 0;
+    const bodySymptomsScore = data.body_symptoms_score ?? 0;
+    const behavioralPatternsScore = data.behavioral_patterns_score ?? 0;
+    const lifeFunctioningScore = data.life_functioning_score ?? 0;
     // goal_readiness_score is GENERATED ALWAYS - do NOT include in insert
     // PostgreSQL automatically calculates it from the sum of the other scores
 
@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
       previous_session_improvements: data.previous_session_improvements || null,
       previous_session_challenges: data.previous_session_challenges || null,
       pre_session_symptoms: data.pre_session_symptoms || [],
-      pre_session_intensity: data.pre_session_intensity ?? 5,
-      pre_session_energy: data.pre_session_intensity ?? 5,
-      pre_session_mood: data.pre_session_mood ?? 5,
-      pre_session_anxiety: data.pre_session_anxiety ?? data.pre_session_intensity ?? 5,
+      pre_session_intensity: data.pre_session_intensity ?? 0,
+      pre_session_energy: data.pre_session_intensity ?? 0,
+      pre_session_mood: data.pre_session_mood ?? 0,
+      pre_session_anxiety: data.pre_session_anxiety ?? data.pre_session_intensity ?? 0,
       
       // Session data
       techniques_used: data.techniques_used || [],
@@ -94,10 +94,10 @@ export async function POST(request: NextRequest) {
       
       // Post-session data
       post_session_symptoms: data.post_session_symptoms || [],
-      post_session_intensity: data.post_session_intensity ?? 5,
-      post_session_energy: data.post_session_energy ?? data.post_session_intensity ?? 5,
-      post_session_mood: data.post_session_mood ?? 5,
-      post_session_anxiety: data.post_session_anxiety ?? data.post_session_intensity ?? 5,
+      post_session_intensity: data.post_session_intensity ?? 0,
+      post_session_energy: data.post_session_energy ?? data.post_session_intensity ?? 0,
+      post_session_mood: data.post_session_mood ?? 0,
+      post_session_anxiety: data.post_session_anxiety ?? data.post_session_intensity ?? 0,
       shift_observed: data.shift_observed || null,
       client_feedback: data.client_feedback || null,
       
