@@ -25,7 +25,7 @@ export default function Research() {
   ];
 
   return (
-    <section className="w-full bg-white py-16 md:py-20 lg:py-24">
+    <section className="w-full bg-white pt-0 pb-16 md:pb-20 lg:pb-24">
       <div className="mx-auto max-w-[1200px] px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <motion.div

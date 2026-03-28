@@ -31,7 +31,7 @@ export default function Team() {
             className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
             Practitioners of the <br/>
-            <span className="font-semibold text-[#2B2F55]">NeuroHolistic Method.</span>
+            <span className="font-semibold text-[#2B2F55]">NeuroHolistic Team.</span>
           </motion.h2>
         </div>
 

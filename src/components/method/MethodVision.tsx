@@ -37,7 +37,7 @@ export default function MethodVision() {
                 alt="The Vision Behind the Method"
                 fill
                 priority
-                className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
+                className="object-cover transition-all duration-700 group-hover:scale-105"
                 sizes="(max-width: 1024px) 100vw, 550px"
               />
               <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl pointer-events-none" />
@@ -65,26 +65,24 @@ export default function MethodVision() {
                   variants={itemVariants}
                   className="text-[16px] leading-relaxed text-slate-500"
                 >
-                  The NeuroHolistic Method™ emerged from years of therapeutic work and careful observation of the deeper mechanisms that shape human experience. 
+                  The NeuroHolistic Method™ emerged from a long exploration of the deeper mechanisms that shape human experience. Over years of therapeutic work and observation, it became increasingly clear that many human challenges cannot be understood through isolated symptoms alone. They arise from complex interactions between the nervous system, cognition, emotional memory, and deeper layers of human awareness.
                 </motion.p>
-                
+
                 <motion.p
                   variants={itemVariants}
                   className="text-[16px] leading-relaxed text-slate-500"
                 >
-                  It reflects a vision of transformation that goes beyond symptom management—one that restores the internal system to balance and coherence, creating the conditions for lasting change.
+                  Traditional approaches often address these dimensions separately. The vision behind the NeuroHolistic Method™ was to create a structured framework capable of working with the human system as an integrated whole, restoring coherence across its different levels while supporting meaningful and lasting transformation.
+                </motion.p>
+
+                <motion.p
+                  variants={itemVariants}
+                  className="text-[16px] leading-relaxed text-slate-500"
+                >
+                  By bringing together insights from neuroscience, psychology, and systemic approaches to human development, the method offers a pathway that not only helps resolve inner struggles but also expands the individual's capacity for awareness, resilience, and conscious living.
                 </motion.p>
               </div>
 
-              <motion.div variants={itemVariants} className="mt-10">
-                <Link
-                  href="/about"
-                  className="group inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-900 transition-colors hover:text-indigo-600"
-                >
-                  Read Full Story
-                  <span className="text-lg leading-none transition-transform duration-300 group-hover:translate-x-1">→</span>
-                </Link>
-              </motion.div>
             </div>
           </motion.div>
 

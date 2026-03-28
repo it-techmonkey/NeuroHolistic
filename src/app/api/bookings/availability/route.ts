@@ -6,6 +6,9 @@ function getTherapistFromSlug(slug: string) {
   return TEAM_PROFILES.find(p => p.slug === slug);
 }
 
+// Default time slots matching BOOKING_TIME_SLOTS + extended evening slots
+const DEFAULT_TIME_SLOTS = ['09:00', '11:00', '14:00', '16:00', '18:00', '20:00'];
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -18,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'therapistId and date are required.' }, { status: 400 });
     }
 
-    // If therapistId is a slug (like "dr-fawzia-yassmina"), resolve to UUID
+    // If therapistId is a slug (like "fawzia-yassmina"), resolve to UUID
     const profile = getTherapistFromSlug(therapistId);
     if (profile) {
       // This is a slug - check if there's a user record in the database
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
         .eq('full_name', profile.name)
         .eq('role', 'therapist')
         .maybeSingle();
-      
+
       if (therapistUser) {
         therapistId = therapistUser.id;
       } else {
@@ -61,9 +64,9 @@ export async function GET(request: NextRequest) {
     const dayOfWeek = new Date(`${date}T12:00:00`).getDay();
     console.log('[Availability] Day of week:', dayOfWeek);
 
-    // Generate time slots - always use defaults if no availability configured
+    // Generate time slots - use defaults if no availability configured
     const allSlots: string[] = [];
-    
+
     // Try to get availability if we have a valid UUID
     let availability = [];
     if (therapistId) {
@@ -77,25 +80,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (availability.length > 0) {
-      // Use configured availability windows
+      // Use configured availability windows - generate 2-hour interval slots
       for (const window of availability) {
         const [startH, startM] = window.start_time.split(':').map(Number);
         const [endH, endM] = window.end_time.split(':').map(Number);
         const startMinutes = startH * 60 + startM;
         const endMinutes = endH * 60 + endM;
 
-        for (let mins = startMinutes; mins + 60 <= endMinutes; mins += 60) {
+        // Generate slots at 2-hour intervals (matching BOOKING_TIME_SLOTS pattern)
+        for (let mins = startMinutes; mins + 120 <= endMinutes; mins += 120) {
           const h = Math.floor(mins / 60);
           const m = mins % 60;
           allSlots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
         }
       }
     } else {
-      // No availability configured - generate default slots 9 AM - 6 PM
-      console.log('[Availability] Using default slots 9-6');
-      for (let h = 9; h < 18; h++) {
-        allSlots.push(`${String(h).padStart(2, '0')}:00`);
-      }
+      // No availability configured - use default time slots
+      console.log('[Availability] Using default slots');
+      allSlots.push(...DEFAULT_TIME_SLOTS);
     }
 
     console.log('[Availability] All slots:', allSlots);
@@ -103,14 +105,10 @@ export async function GET(request: NextRequest) {
     // If we don't have a valid therapistId, return default slots
     if (!therapistId) {
       return NextResponse.json({
-        slots: allSlots.map((time) => {
-          const [h, m] = time.split(':');
-          const hr = parseInt(h, 10);
-          return {
-            time,
-            display: `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`,
-          };
-        }),
+        slots: allSlots.map((time) => ({
+          time,
+          display: formatTimeDisplay(time),
+        })),
       });
     }
 
@@ -131,7 +129,7 @@ export async function GET(request: NextRequest) {
       .neq('status', 'cancelled');
 
     const bookedTimes = new Set<string>();
-    
+
     for (const b of existingBookings ?? []) {
       if (b.time) bookedTimes.add(b.time);
     }
@@ -168,57 +166,47 @@ export async function GET(request: NextRequest) {
     let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
 
     // Filter out past time slots if booking for today
-    // Use local timezone for date comparison (matching client-side format)
     const now = new Date();
     const todayYear = now.getFullYear();
     const todayMonth = String(now.getMonth() + 1).padStart(2, '0');
     const todayDay = String(now.getDate()).padStart(2, '0');
     const today = `${todayYear}-${todayMonth}-${todayDay}`;
-    
+
     if (date === today) {
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
       availableSlots = availableSlots.filter((slot) => {
         const [slotHour, slotMinute] = slot.split(':').map(Number);
-        // Only show slots that are at least 1 hour in the future
-        if (slotHour > currentHour) return true;
-        if (slotHour === currentHour && slotMinute > currentMinute + 60) return true;
-        return false;
+        const slotMinutes = slotHour * 60 + slotMinute;
+        // Only show slots that are at least 1 hour (60 minutes) in the future
+        return slotMinutes >= currentMinutes + 60;
       });
-      
-      console.log('[Availability] Filtered past slots for today. Current time:', `${currentHour}:${currentMinute}`, 'Available:', availableSlots);
-    }
 
-    // If no slots available, still return default slots (for testing)
-    if (availableSlots.length === 0 && allSlots.length > 0) {
-      console.log('[Availability] No slots available, returning defaults anyway');
-      availableSlots = allSlots;
+      console.log('[Availability] Filtered past slots for today. Current time:', `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`, 'Available:', availableSlots);
     }
 
     console.log('[Availability] Available slots:', availableSlots);
 
     return NextResponse.json({
-      slots: availableSlots.map((time) => {
-        const [h, m] = time.split(':');
-        const hr = parseInt(h, 10);
-        return {
-          time,
-          display: `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`,
-        };
-      }),
+      slots: availableSlots.map((time) => ({
+        time,
+        display: formatTimeDisplay(time),
+      })),
     });
   } catch (error) {
     console.error('[Bookings Availability] Error:', error);
     // Return default slots on error to avoid blocking the user
     return NextResponse.json({
-      slots: Array.from({ length: 9 }, (_, i) => {
-        const h = i + 9;
-        return {
-          time: `${String(h).padStart(2, '0')}:00`,
-          display: `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`,
-        };
-      }),
+      slots: DEFAULT_TIME_SLOTS.map((time) => ({
+        time,
+        display: formatTimeDisplay(time),
+      })),
     });
   }
+}
+
+function formatTimeDisplay(time: string): string {
+  const [h, m] = time.split(':');
+  const hr = parseInt(h, 10);
+  return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
 }

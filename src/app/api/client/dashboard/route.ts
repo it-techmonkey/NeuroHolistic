@@ -58,6 +58,32 @@ export async function GET(request: NextRequest) {
       .eq('status', 'pending')
       .order('session_number', { ascending: true });
 
+    // 1.2 Fetch all sessions to build mappings
+    const { data: allClientSessionsFull } = await supabase
+      .from('sessions')
+      .select('id, booking_id, session_number, status')
+      .eq('client_id', clientId);
+
+    // Build booking_id -> session_id mapping
+    const bookingToSessionMap = new Map<string, string>();
+    // Build set of completed session IDs for filtering
+    const completedSessionIds = new Set<string>();
+    
+    (allClientSessionsFull ?? []).forEach((s: any) => {
+      if (s.booking_id && s.id) {
+        bookingToSessionMap.set(s.booking_id, s.id);
+      }
+      if (s.status === 'completed' && s.id) {
+        completedSessionIds.add(s.id);
+      }
+    });
+
+    // Add session_id to bookings for document filtering
+    const addSessionId = (booking: any) => ({
+      ...booking,
+      session_id: bookingToSessionMap.get(booking.id) || null,
+    });
+
     // 2. Fetch diagnostic assessments
     const { data: assessments } = await supabase
       .from('diagnostic_assessments')
@@ -65,18 +91,31 @@ export async function GET(request: NextRequest) {
       .eq('client_id', clientId)
       .order('assessed_at', { ascending: true });
 
+    // 2. Build session_number lookup map from already fetched sessions
+    const sessionNumberMap = new Map<string, number>();
+    (allClientSessionsFull ?? []).forEach((s: any) => {
+      if (s.id && s.session_number) {
+        sessionNumberMap.set(s.id, s.session_number);
+      }
+    });
+
     // 3. Fetch session development forms (strip therapist_internal_notes)
-    // Note: Using actual column names from the database schema
     const { data: devFormsRaw } = await supabase
       .from('session_development_forms')
-      .select('id, session_id, client_id, therapist_id, pre_session_energy, pre_session_mood, pre_session_anxiety, post_session_energy, post_session_mood, post_session_anxiety, techniques_used, created_at, updated_at')
+      .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: true });
 
-    // Strip therapist_internal_notes - clients should never see this
-    const devForms = (devFormsRaw ?? []).map(({ therapist_internal_notes, ...rest }: any) => rest);
+    // Filter dev forms to only include those from completed sessions
+    // Strip therapist_internal_notes and add session_number from map
+    const devForms = (devFormsRaw ?? [])
+      .filter((form: any) => completedSessionIds.has(form.session_id))
+      .map(({ therapist_internal_notes, ...rest }: any) => ({
+        ...rest,
+        session_number: sessionNumberMap.get(rest.session_id) ?? null,
+      }));
 
-    // 4. Fetch session materials - get all session IDs for this client
+    // 5. Fetch session materials - get all session IDs for this client
     const { data: clientSessions } = await supabase
       .from('sessions')
       .select('id')
@@ -149,15 +188,21 @@ export async function GET(request: NextRequest) {
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // 6.2 Determine user's program status for UI
-    const hasCompletedFreeConsult = (bookings ?? []).some(b => 
+    const hasCompletedFreeConsult = (bookings ?? []).some(b =>
       b.type === 'free_consultation' && b.status === 'completed'
     );
-    
+
+    // Check if there's a booked free consultation that's not completed yet
+    const bookedFreeConsult = (bookings ?? []).find(b =>
+      b.type === 'free_consultation' && (b.status === 'confirmed' || b.status === 'scheduled')
+    );
+    const hasBookedFreeConsult = !!bookedFreeConsult;
+
     const hasActiveProgram = !!program;
-    const hasCompletedAllSessions = (completedPrograms ?? []).some(p => 
+    const hasCompletedAllSessions = (completedPrograms ?? []).some(p =>
       p.used_sessions >= p.total_sessions
     );
-    
+
     // Determine what action user should see
     let programStatus = 'none';
     if (hasActiveProgram) {
@@ -176,8 +221,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     return NextResponse.json({
-      upcomingSessions: upcomingBookings,
-      pastSessions: pastBookings,
+      upcomingSessions: upcomingBookings.map(addSessionId),
+      pastSessions: pastBookings.map(addSessionId),
       pendingSessions: pendingSessions ?? [],
       materials,
       progress: progressData,
@@ -188,7 +233,10 @@ export async function GET(request: NextRequest) {
       completedPrograms: completedPrograms ?? [],
       programStatus, // 'active', 'completed', 'consultation_done', or 'none'
       hasCompletedFreeConsult,
+      hasBookedFreeConsult,
+      bookedFreeConsult: bookedFreeConsult ? addSessionId(bookedFreeConsult) : null, // The booking details for the upcoming consultation
       hasCompletedAllSessions,
+      completedSessionIds: Array.from(completedSessionIds), // For filtering documents on client side
       debug: {
         allPrograms: allPrograms.data || [],
         activeProgram: program || null,

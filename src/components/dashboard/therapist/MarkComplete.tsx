@@ -2,16 +2,18 @@
 import { useState } from 'react';
 import { CheckCircle, Circle, Loader2 } from 'lucide-react';
 
-export default function MarkComplete({ 
-  sessionId, 
-  isReady, 
-  isCompleted, 
-  onComplete 
-}: { 
+export default function MarkComplete({
+  sessionId,
+  isReady,
+  isCompleted,
+  onComplete,
+  tooltip,
+}: {
   sessionId: string;
   isReady: boolean;
   isCompleted: boolean;
   onComplete: () => void;
+  tooltip?: string;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -54,10 +56,10 @@ export default function MarkComplete({
     <button
       onClick={handleComplete}
       disabled={!isReady || loading}
-      title={!isReady ? "Complete development form first" : "Mark session complete"}
+      title={!isReady ? (tooltip || "Complete required form first") : "Mark session complete"}
       className={`inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded transition ${
-        !isReady 
-          ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed' 
+        !isReady
+          ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
           : 'border-indigo-600 text-indigo-600 bg-white hover:bg-indigo-50'
       }`}
     >

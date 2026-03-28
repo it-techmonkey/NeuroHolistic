@@ -10,7 +10,7 @@ const RESOURCE_SECTIONS = [
     desc: "Curated interviews, educational clips, and practical guidance from the NeuroHolistic ecosystem.",
   },
   {
-    title: "Downloads",
+    title: "Audios",
     desc: "Practical worksheets and reflection tools to support integration between sessions.",
   },
 ];

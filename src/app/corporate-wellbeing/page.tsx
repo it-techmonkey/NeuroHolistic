@@ -2,6 +2,7 @@ import CorporateHero from "@/components/CorporateHero";
 import WhyItMatters from "@/components/WhyItMatters";
 import CorporateApproach from "@/components/CorporateApproach";
 import ProgramFocusAreas from "@/components/ProgramFocusAreas";
+import CorporateProgramFormats from "@/components/CorporateProgramFormats";
 import OrganizationalImpact from "@/components/OrganizationalImpact";
 import CorporateCTA from "@/components/CorporateCTA";
 
@@ -18,6 +19,7 @@ export default function CorporateWellbeingPage() {
       <WhyItMatters />
       <CorporateApproach />
       <ProgramFocusAreas />
+      <CorporateProgramFormats />
       <OrganizationalImpact />
       <CorporateCTA />
     </div>

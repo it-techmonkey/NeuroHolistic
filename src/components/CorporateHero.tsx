@@ -5,12 +5,11 @@ export default function CorporateHero() {
     <PageHero
       eyebrow="Corporate Wellbeing"
       title="The State Behind Performance"
-      description="Your team’s performance reflects their state. Clear minds. Strong teams. Better decisions."
+      description={<>Your team's performance reflects their state.<br/><strong>Clear minds.</strong> <em>Strong teams.</em><br/><strong>Better decisions.</strong></>}
       imageSrc="/images/pages/corportate_wellbeing.jpg"
       imageAlt="Corporate team in a wellbeing strategy workshop"
       metaTags={["Leadership Cohorts", "Team Resilience", "Culture Health"]}
-      primaryAction={{ label: "Schedule a Consultation", kind: "modal" }}
-      secondaryAction={{ label: "Contact Us", href: "/contact" }}
+      primaryAction={{ label: "Contact Us", href: "/contact" }}
     />
   );
 }

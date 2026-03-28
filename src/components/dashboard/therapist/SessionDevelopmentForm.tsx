@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SessionDevelopmentFormProps {
   sessionId: string;
@@ -67,11 +67,13 @@ export default function SessionDevelopmentForm({
     previous_session_challenges: existingForm?.previous_session_challenges ?? '',
     pre_session_symptoms: existingForm?.pre_session_symptoms ?? [],
     pre_session_intensity: existingForm?.pre_session_intensity ?? 5,
+    pre_session_mood: existingForm?.pre_session_mood ?? 5,
     techniques_used: existingForm?.techniques_used ?? [],
     key_interventions: existingForm?.key_interventions ?? '',
     breakthroughs_resistance: existingForm?.breakthroughs_resistance ?? '',
     post_session_symptoms: existingForm?.post_session_symptoms ?? [],
     post_session_intensity: existingForm?.post_session_intensity ?? 5,
+    post_session_mood: existingForm?.post_session_mood ?? 5,
     shift_observed: existingForm?.shift_observed ?? '',
     client_feedback: existingForm?.client_feedback ?? '',
     integration_notes: existingForm?.integration_notes ?? '',
@@ -83,6 +85,35 @@ export default function SessionDevelopmentForm({
     behavioral_patterns_score: existingForm?.behavioral_patterns_score ?? 0,
     life_functioning_score: existingForm?.life_functioning_score ?? 0,
   });
+
+  // Update form when existingForm changes (e.g., after fetching)
+  useEffect(() => {
+    if (existingForm) {
+      setForm({
+        previous_session_improvements: existingForm.previous_session_improvements ?? '',
+        previous_session_challenges: existingForm.previous_session_challenges ?? '',
+        pre_session_symptoms: existingForm.pre_session_symptoms ?? [],
+        pre_session_intensity: existingForm.pre_session_intensity ?? 5,
+        pre_session_mood: existingForm.pre_session_mood ?? 5,
+        techniques_used: existingForm.techniques_used ?? [],
+        key_interventions: existingForm.key_interventions ?? '',
+        breakthroughs_resistance: existingForm.breakthroughs_resistance ?? '',
+        post_session_symptoms: existingForm.post_session_symptoms ?? [],
+        post_session_intensity: existingForm.post_session_intensity ?? 5,
+        post_session_mood: existingForm.post_session_mood ?? 5,
+        shift_observed: existingForm.shift_observed ?? '',
+        client_feedback: existingForm.client_feedback ?? '',
+        integration_notes: existingForm.integration_notes ?? '',
+        therapist_internal_notes: existingForm.therapist_internal_notes ?? '',
+        nervous_system_score: existingForm.nervous_system_score ?? 0,
+        emotional_state_score: existingForm.emotional_state_score ?? 0,
+        cognitive_patterns_score: existingForm.cognitive_patterns_score ?? 0,
+        body_symptoms_score: existingForm.body_symptoms_score ?? 0,
+        behavioral_patterns_score: existingForm.behavioral_patterns_score ?? 0,
+        life_functioning_score: existingForm.life_functioning_score ?? 0,
+      });
+    }
+  }, [existingForm]);
 
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -193,7 +224,14 @@ export default function SessionDevelopmentForm({
         <div className="p-6 border-b border-slate-100">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">Session Development Form</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-slate-900">Session Development Form</h2>
+                {existingForm && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                    Viewing Existing
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500 mt-1">Session {sessionNumber} — {sessionDate}</p>
             </div>
             <div className="text-right">
@@ -422,16 +460,22 @@ export default function SessionDevelopmentForm({
               {comparisonBaseline && (
                 <div className="border-t border-slate-200 pt-6 mt-6">
                   <h4 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                    <span className={`w-2 h-2 rounded-full ${comparisonBaseline.source === 'assessment' ? 'bg-amber-400' : 'bg-emerald-400'}`}></span>
                     {comparisonBaseline.source === 'assessment'
-                      ? 'Baseline (Consultation) Comparison'
-                      : `Session ${comparisonBaseline.sessionNumber} Comparison`}
+                      ? 'Baseline Assessment Comparison'
+                      : `Previous Session (Session ${comparisonBaseline.sessionNumber || '?'}) Comparison`}
                   </h4>
-                  <p className="text-xs text-slate-500 mb-4">
-                    {comparisonBaseline.source === 'assessment'
-                      ? `Comparing Session ${sessionNumber} scores against baseline assessment from consultation.`
-                      : `Comparing Session ${sessionNumber} scores against Session ${comparisonBaseline.sessionNumber} development form.`}
-                  </p>
+                  <div className={`rounded-lg p-3 mb-4 ${
+                    comparisonBaseline.source === 'assessment'
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-emerald-50 border border-emerald-200'
+                  }`}>
+                    <p className={`text-xs ${comparisonBaseline.source === 'assessment' ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      {comparisonBaseline.source === 'assessment'
+                        ? `Comparing Session ${sessionNumber} against your initial baseline assessment from the consultation.`
+                        : `Comparing Session ${sessionNumber} against Session ${comparisonBaseline.sessionNumber || 'your previous session'} to track progress.`}
+                    </p>
+                  </div>
 
                   <div className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
                     <table className="w-full text-sm">
@@ -439,7 +483,7 @@ export default function SessionDevelopmentForm({
                         <tr className="bg-slate-100">
                           <th className="text-left py-2 px-3 font-medium text-slate-700">Domain</th>
                           <th className="text-center py-2 px-3 font-medium text-slate-500">
-                            {comparisonBaseline.source === 'assessment' ? 'Baseline' : `Session ${comparisonBaseline.sessionNumber}`}
+                            {comparisonBaseline.source === 'assessment' ? 'Baseline' : `Session ${comparisonBaseline.sessionNumber || '?'}`}
                           </th>
                           <th className="text-center py-2 px-3 font-medium text-slate-700">Session {sessionNumber}</th>
                           <th className="text-center py-2 px-3 font-medium text-slate-700">Change</th>
@@ -447,12 +491,12 @@ export default function SessionDevelopmentForm({
                       </thead>
                       <tbody className="divide-y divide-slate-200">
                         {[
-                          { label: 'Nervous System', baseline: comparisonBaseline.nervous_system_score, current: form.nervous_system_score },
-                          { label: 'Emotional State', baseline: comparisonBaseline.emotional_state_score, current: form.emotional_state_score },
-                          { label: 'Cognitive Patterns', baseline: comparisonBaseline.cognitive_patterns_score, current: form.cognitive_patterns_score },
-                          { label: 'Body Symptoms', baseline: comparisonBaseline.body_symptoms_score, current: form.body_symptoms_score },
-                          { label: 'Behavioral Patterns', baseline: comparisonBaseline.behavioral_patterns_score, current: form.behavioral_patterns_score },
-                          { label: 'Life Functioning', baseline: comparisonBaseline.life_functioning_score, current: form.life_functioning_score },
+                          { label: 'Nervous System', baseline: comparisonBaseline.nervous_system_score ?? 0, current: form.nervous_system_score },
+                          { label: 'Emotional State', baseline: comparisonBaseline.emotional_state_score ?? 0, current: form.emotional_state_score },
+                          { label: 'Cognitive Patterns', baseline: comparisonBaseline.cognitive_patterns_score ?? 0, current: form.cognitive_patterns_score },
+                          { label: 'Body Symptoms', baseline: comparisonBaseline.body_symptoms_score ?? 0, current: form.body_symptoms_score },
+                          { label: 'Behavioral Patterns', baseline: comparisonBaseline.behavioral_patterns_score ?? 0, current: form.behavioral_patterns_score },
+                          { label: 'Life Functioning', baseline: comparisonBaseline.life_functioning_score ?? 0, current: form.life_functioning_score },
                         ].map((row) => {
                           const change = row.current - row.baseline;
                           return (
@@ -471,14 +515,14 @@ export default function SessionDevelopmentForm({
                         })}
                         <tr className="bg-slate-100 font-semibold">
                           <td className="py-2 px-3 text-slate-900">Total Wellbeing</td>
-                          <td className="py-2 px-3 text-center text-slate-600">{comparisonBaseline.goal_readiness_score}/60</td>
+                          <td className="py-2 px-3 text-center text-slate-600">{comparisonBaseline.goal_readiness_score ?? 0}/60</td>
                           <td className="py-2 px-3 text-center text-indigo-600">{goalReadinessScore}/60</td>
                           <td className={`py-2 px-3 text-center ${
-                            (goalReadinessScore - comparisonBaseline.goal_readiness_score) > 0 ? 'text-green-600' :
-                            (goalReadinessScore - comparisonBaseline.goal_readiness_score) < 0 ? 'text-red-600' : 'text-slate-500'
+                            (goalReadinessScore - (comparisonBaseline.goal_readiness_score ?? 0)) > 0 ? 'text-green-600' :
+                            (goalReadinessScore - (comparisonBaseline.goal_readiness_score ?? 0)) < 0 ? 'text-red-600' : 'text-slate-500'
                           }`}>
-                            {goalReadinessScore - comparisonBaseline.goal_readiness_score > 0 ? '+' : ''}
-                            {goalReadinessScore - comparisonBaseline.goal_readiness_score}
+                            {goalReadinessScore - (comparisonBaseline.goal_readiness_score ?? 0) > 0 ? '+' : ''}
+                            {goalReadinessScore - (comparisonBaseline.goal_readiness_score ?? 0)}
                           </td>
                         </tr>
                       </tbody>

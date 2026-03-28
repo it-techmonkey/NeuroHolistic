@@ -1,21 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft } from 'lucide-react';
-
-// Pricing constants
-const PRIVATE_FULL_PROGRAM_AED = 7700;
-const PRIVATE_PER_SESSION_AED = 800;
-const GROUP_FULL_PROGRAM_AED = 4500;
-const GROUP_PER_SESSION_AED = 500;
-
-type ProgramType = 'private' | 'group';
-type PaymentOption = 'full' | 'per_session';
+import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope } from 'lucide-react';
+import {
+  type ProgramType,
+  type PaymentOption,
+  getPrice,
+  getZiinaLink,
+  getPerSessionFromFull,
+  isDrFawzia,
+} from '@/lib/payments/pricing';
 
 interface PaidProgramBookingFormProps {
   userEmail: string;
   userName: string;
+}
+
+interface TherapistInfo {
+  name: string;
+  slug?: string;
 }
 
 export default function PaidProgramBookingForm({ userEmail, userName }: PaidProgramBookingFormProps) {
@@ -25,6 +29,42 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOption | null>(null);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [therapist, setTherapist] = useState<TherapistInfo | null>(null);
+  const [loadingTherapist, setLoadingTherapist] = useState(true);
+
+  // Fetch assigned therapist on mount
+  useEffect(() => {
+    async function fetchTherapist() {
+      try {
+        const res = await fetch('/api/client/assigned-therapist');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.therapist) {
+            setTherapist(data.therapist);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch therapist:', err);
+      } finally {
+        setLoadingTherapist(false);
+      }
+    }
+
+    // Check if user returned from Ziina with pending payment
+    const pendingPayment = sessionStorage.getItem('pendingPayment');
+    if (pendingPayment) {
+      const payment = JSON.parse(pendingPayment);
+      setSelectedProgramType(payment.programType);
+      setSelectedPaymentOption(payment.option);
+      setShowConfirmPayment(true);
+    }
+
+    fetchTherapist();
+  }, []);
+
+  const isFawzia = isDrFawzia(therapist?.name, therapist?.slug);
+  const [showConfirmPayment, setShowConfirmPayment] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   const handleProgramTypeSelect = (type: ProgramType) => {
     setSelectedProgramType(type);
@@ -36,45 +76,64 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
     setSelectedPaymentOption(null);
   };
 
-  const getPrice = (type: ProgramType, option: PaymentOption) => {
-    if (type === 'private') {
-      return option === 'full' ? PRIVATE_FULL_PROGRAM_AED : PRIVATE_PER_SESSION_AED;
-    }
-    return option === 'full' ? GROUP_FULL_PROGRAM_AED : GROUP_PER_SESSION_AED;
+  const getPriceForDisplay = (type: ProgramType, option: PaymentOption) => {
+    return getPrice(type, option, therapist?.name, therapist?.slug);
   };
 
   const handlePayment = async (option: PaymentOption) => {
     if (!selectedProgramType) return;
-    
-    setSelectedPaymentOption(option);
-    setProcessing(true);
 
+    setSelectedPaymentOption(option);
+
+    // Get the Ziina link and redirect directly
+    const ziinaLink = getZiinaLink(selectedProgramType, option, therapist?.name, therapist?.slug);
+    
+    // Store payment context for confirmation
+    sessionStorage.setItem('pendingPayment', JSON.stringify({
+      programType: selectedProgramType,
+      option,
+      amount: getPriceForDisplay(selectedProgramType, option),
+      therapistName: therapist?.name,
+    }));
+
+    // Redirect to Ziina
+    window.location.href = ziinaLink;
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedProgramType) return;
+    
+    setConfirmingPayment(true);
+    
     try {
+      // Create the program in our system
       const res = await fetch('/api/bookings/purchase-program', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planType: option === 'full' 
+          planType: selectedPaymentOption === 'full'
             ? (selectedProgramType === 'private' ? 'private' : 'group_full')
             : (selectedProgramType === 'private' ? 'session_by_session' : 'group_session'),
           programType: selectedProgramType,
-          amount: getPrice(selectedProgramType, option),
+          amount: getPriceForDisplay(selectedProgramType, selectedPaymentOption || 'full') * 100,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to process');
+        throw new Error(data.error || 'Failed to activate program');
       }
 
+      sessionStorage.removeItem('pendingPayment');
       setSuccess(true);
       
       setTimeout(() => {
         router.push('/booking/schedule-session');
       }, 2000);
     } catch (err: any) {
-      alert(err.message || 'Something went wrong');
-      setProcessing(false);
+      alert(err.message || 'Failed to activate program');
+    } finally {
+      setConfirmingPayment(false);
     }
   };
 
@@ -84,27 +143,117 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-bold text-green-800 mb-2">Booking Confirmed!</h3>
+        <h3 className="text-xl font-bold text-green-800 mb-2">Program Activated!</h3>
         <p className="text-green-600 text-sm mb-4">
-          Your {selectedProgramType === 'private' ? 'Private' : 'Group'} Program has been confirmed.
-          {selectedPaymentOption === 'full' ? ' Full program' : ' Session-by-session'} payment selected.
+          Your {selectedProgramType === 'private' ? 'Private' : 'Group'} Program has been activated.
+          Your therapist will verify the payment and schedule your sessions.
         </p>
         <p className="text-green-500 text-xs">Redirecting to schedule your first session...</p>
       </div>
     );
   }
 
+  // Show payment confirmation after returning from Ziina
+  if (showConfirmPayment) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="w-8 h-8 text-indigo-600" />
+          </div>
+          <h3 className="text-xl font-bold text-indigo-900 mb-2">Complete Your Payment</h3>
+          <p className="text-indigo-600 text-sm mb-4">
+            You've been redirected to Ziina to complete your payment for the{' '}
+            {selectedProgramType === 'private' ? 'Private' : 'Group'} Program.
+          </p>
+          <p className="text-slate-600 text-sm mb-6">
+            Amount: <strong>{getPriceForDisplay(selectedProgramType || 'private', selectedPaymentOption || 'full').toLocaleString()} AED</strong>
+          </p>
+        </div>
+
+        {therapist && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-indigo-900">Your Therapist</p>
+                <p className="text-lg font-semibold text-indigo-800">{therapist.name}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-sm text-amber-800">
+            <strong>Important:</strong> Once you've completed the payment on Ziina, click the button below to activate your program.
+            Your therapist will verify the payment separately.
+          </p>
+        </div>
+
+        <button
+          onClick={handleConfirmPayment}
+          disabled={confirmingPayment}
+          className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-lg transition-all flex items-center justify-center gap-2"
+        >
+          {confirmingPayment ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Activating...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-5 h-5" />
+              I've Completed the Payment
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={() => {
+            sessionStorage.removeItem('pendingPayment');
+            setShowConfirmPayment(false);
+            setSelectedProgramType(null);
+            setSelectedPaymentOption(null);
+          }}
+          className="w-full py-3 text-slate-600 hover:text-slate-800 text-sm font-medium"
+        >
+          Cancel and go back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {/* Demo Mode Notice */}
-      <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-center">
-        <p className="text-amber-800 text-sm font-medium">
-          Demo Mode — Payment integration is in progress
-        </p>
-        <p className="text-amber-600 text-xs mt-1">
-          Click "Proceed" to continue without actual payment
-        </p>
-      </div>
+      {/* Loading therapist info */}
+      {loadingTherapist && (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-600 mr-2" />
+          <span className="text-sm text-slate-500">Loading your therapist info...</span>
+        </div>
+      )}
+
+      {/* Assigned Therapist Info */}
+      {therapist && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+              <Stethoscope className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-indigo-900">Your Assigned Therapist</p>
+              <p className="text-lg font-semibold text-indigo-800">{therapist.name}</p>
+              {isFawzia && (
+                <p className="text-xs text-indigo-600 mt-0.5">Premium Specialist</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Step 1: Program Type Selection */}
       {step === 'program_type' && (
@@ -140,10 +289,14 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
               </p>
               <div className="border-t border-slate-100 pt-4 mt-auto">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-slate-900">7,700</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {getPriceForDisplay('private', 'full').toLocaleString()}
+                  </span>
                   <span className="text-slate-500 text-sm">AED</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-1">10 sessions · Full program</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  10 sessions · {getPerSessionFromFull(getPriceForDisplay('private', 'full'))} AED/session
+                </p>
               </div>
             </button>
 
@@ -170,10 +323,14 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
               </p>
               <div className="border-t border-slate-100 pt-4 mt-auto">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-slate-900">4,500</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {getPriceForDisplay('group', 'full').toLocaleString()}
+                  </span>
                   <span className="text-slate-500 text-sm">AED</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-1">10 sessions · Full program</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  10 sessions · {getPerSessionFromFull(getPriceForDisplay('group', 'full'))} AED/session
+                </p>
               </div>
             </button>
           </div>
@@ -248,33 +405,23 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
-                  {getPrice(selectedProgramType, 'full').toLocaleString()}
+                  {getPriceForDisplay(selectedProgramType, 'full').toLocaleString()}
                 </span>
                 <span className="text-slate-500 text-base ml-1">AED</span>
                 <p className="text-slate-500 text-sm mt-1">
-                  10 sessions · {Math.round(getPrice(selectedProgramType, 'full') / 10).toLocaleString()} AED / session
+                  10 sessions · {getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session
                 </p>
               </div>
               <button
                 onClick={() => handlePayment('full')}
-                disabled={processing}
                 className={`w-full py-3.5 rounded-xl text-white font-semibold text-[15px] transition-all flex items-center justify-center gap-2 ${
                   selectedProgramType === 'private'
                     ? 'bg-indigo-600 hover:bg-indigo-700'
                     : 'bg-emerald-600 hover:bg-emerald-700'
                 }`}
               >
-                {processing && selectedPaymentOption === 'full' ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4" />
-                    Proceed to Payment
-                  </>
-                )}
+                <CreditCard className="w-4 h-4" />
+                Proceed to Ziina Payment
               </button>
             </div>
 
@@ -294,7 +441,7 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
-                  {getPrice(selectedProgramType, 'per_session').toLocaleString()}
+                  {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
                 </span>
                 <span className="text-slate-500 text-base ml-1">AED</span>
                 <p className="text-slate-500 text-sm mt-1">per session</p>

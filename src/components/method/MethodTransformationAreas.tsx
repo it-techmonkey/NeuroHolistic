@@ -34,22 +34,22 @@ const Icons = {
 const AREAS = [
   {
     title: "Health",
-    description: "Shifting the nervous system from chronic stress into regulation and physiological balance.",
+    description: "As the body moves out of chronic stress patterns, many individuals experience improvements in sleep, energy, and overall physical well-being. The nervous system regains its natural capacity for regulation, recovery, and resilience.",
     Icon: Icons.Health,
   },
   {
     title: "Mind",
-    description: "Reorganizing neural patterns to increase clarity and reduce emotional reactivity.",
+    description: "With new neural pathways forming, mental clarity increases and emotional reactivity begins to soften. Patterns of anxiety, overthinking, or inner tension gradually give way to greater stability, awareness, and cognitive flexibility.",
     Icon: Icons.Mind,
   },
   {
     title: "Relationships",
-    description: "Fostering internal coherence to deepen communication and authentic connection.",
+    description: "As internal balance grows, relational patterns often shift as well. Communication becomes clearer, boundaries healthier, and connections with others more authentic and supportive.",
     Icon: Icons.Relationships,
   },
   {
-    title: "Potential",
-    description: "Redirecting stress-consumed energy toward creativity, purpose, and growth.",
+    title: "Human Potential",
+    description: "When energy is no longer consumed by unresolved internal conflict, it becomes available for creativity, purpose, and meaningful engagement with life. Many individuals rediscover a deeper sense of direction and the confidence to pursue what truly matters to them.",
     Icon: Icons.Potential,
   },
 ];

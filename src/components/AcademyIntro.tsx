@@ -18,19 +18,23 @@ export default function AcademyIntro() {
             className="lg:col-span-5"
           >
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-              The first generation of <br/>
-              <span className="italic text-[#64748B] font-normal">NeuroHolistic practitioners.</span>
+              The First Generation of <br/>
+              <span className="italic text-[#64748B] font-normal">NeuroHolistic Practitioners.</span>
             </h2>
 
             <div className="space-y-8">
               <p className="text-[17px] leading-[1.8] text-[#475569] md:text-[18px]">
-                The NeuroHolistic Academy exists to train practitioners who integrate neuroscience, psychology, and systemic human development into a coherent framework for applied practice. 
+                The NeuroHolistic Method™ introduces a new integrative framework for understanding and facilitating human transformation.
               </p>
-              
+
               <div className="h-px w-12 bg-[#E2E8F0]" />
 
               <p className="text-[16px] leading-[1.8] text-[#64748B]">
-                Practitioners trained through the academy are among the first professionals applying this integrative framework—working in applied psychology, emotional regulation, and wellbeing contexts with a method grounded in science and human systems thinking.
+                Practitioners trained through the Academy are among the first professionals to apply this approach in practice, integrating insights from neuroscience, psychology, and systemic human development.
+              </p>
+
+              <p className="text-[16px] leading-[1.8] text-[#64748B]">
+                NeuroHolistic therapists represent a new generation of practitioners working at the intersection of science, awareness, and transformative human work.
               </p>
             </div>
 

@@ -4,6 +4,7 @@ export const BOOKING_TIME_SLOTS = [
   '14:00',
   '16:00',
   '18:00',
+  '20:00',
 ] as const;
 
 export function toDisplayTime(time: string): string {

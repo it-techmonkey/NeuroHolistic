@@ -17,17 +17,10 @@ export default function TransformationPathway() {
           For many individuals, the NeuroHolistic Method™ becomes not only a process of healing, but a pathway toward a more conscious, balanced, and empowered way of living.
         </p>
 
-        <div className="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+        <div className="mb-6 flex flex-col items-center justify-center gap-3">
           <Link
-            href="/method"
+            href="/consultation/book"
             className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 text-[14.5px] font-medium text-white transition-all hover:bg-[#1E293B] hover:shadow-[0_8px_20px_rgba(15,23,42,0.15)]"
-          >
-            Experience the Method
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </Link>
-          <Link
-            href="/programs"
-            className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#0F172A] bg-white px-8 text-[14.5px] font-medium text-[#0F172A] transition-all hover:bg-[#F8FAFC]"
           >
             Book a Consultation
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>

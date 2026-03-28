@@ -14,41 +14,92 @@ export async function POST(request: NextRequest) {
 
     // First, check if this is a session ID or booking ID
     let session: any = null;
-    
+
     // Try to find in sessions table
     const { data: sessionData } = await supabase
       .from('sessions')
-      .select('id, development_form_submitted, status, booking_id, client_id, therapist_id, session_number')
+      .select('id, development_form_submitted, status, booking_id, client_id, therapist_id, session_number, program_id')
       .or(`id.eq.${sessionId},booking_id.eq.${sessionId}`)
       .maybeSingle();
 
     session = sessionData;
 
-    if (!session) {
-      // Try to find booking and update it directly
-      const { data: booking } = await supabase
-        .from('bookings')
-        .select('id, user_id, therapist_id, status')
-        .eq('id', sessionId)
+    // Also check if this is a booking (free consultation or otherwise)
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('id, user_id, therapist_id, status, type')
+      .eq('id', sessionId)
+      .maybeSingle();
+
+    // Determine if this is a free consultation or program session
+    const isFreeConsultation = booking?.type === 'free_consultation';
+    const isProgramSession = !!session?.program_id || (booking && !isFreeConsultation);
+
+    // SERVER-SIDE VALIDATION: Check required forms before allowing completion
+
+    // For free consultations: Diagnostic assessment must be filled
+    if (isFreeConsultation && booking?.user_id) {
+      const { data: assessment } = await supabase
+        .from('diagnostic_assessments')
+        .select('id')
+        .eq('client_id', booking.user_id)
+        .eq('status', 'submitted')
+        .limit(1)
         .maybeSingle();
 
-      if (booking) {
-        // Update booking status directly
-        const { error: updateError } = await supabase
-          .from('bookings')
-          .update({ 
-            status: 'completed',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', sessionId);
+      if (!assessment) {
+        return NextResponse.json({
+          error: 'Cannot complete free consultation without diagnostic assessment. Please fill the assessment form first.',
+          code: 'ASSESSMENT_REQUIRED',
+        }, { status: 400 });
+      }
+    }
 
-        if (updateError) {
-          return NextResponse.json({ error: updateError.message }, { status: 500 });
+    // For program sessions: Development form must be submitted
+    if (session && isProgramSession && !session.development_form_submitted) {
+      return NextResponse.json({
+        error: 'Cannot complete program session without development form. Please fill the development form first.',
+        code: 'DEVELOPMENT_FORM_REQUIRED',
+      }, { status: 400 });
+    }
+
+    // Handle case where we only have a booking (no session record)
+    if (!session && booking) {
+      // For free consultation booking without session record
+      if (isFreeConsultation && booking.user_id) {
+        const { data: assessment } = await supabase
+          .from('diagnostic_assessments')
+          .select('id')
+          .eq('client_id', booking.user_id)
+          .eq('status', 'submitted')
+          .limit(1)
+          .maybeSingle();
+
+        if (!assessment) {
+          return NextResponse.json({
+            error: 'Cannot complete free consultation without diagnostic assessment. Please fill the assessment form first.',
+            code: 'ASSESSMENT_REQUIRED',
+          }, { status: 400 });
         }
-
-        return NextResponse.json({ success: true, message: 'Booking marked as completed' });
       }
 
+      // Update booking status directly
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', sessionId);
+
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Booking marked as completed' });
+    }
+
+    if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
@@ -56,11 +107,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Session is already completed', success: true });
     }
 
-    // Update session status - allow completion even without development form
-    // The development form requirement is for full progress tracking, not blocking completion
+    // Update session status
     const { error: updateError } = await supabase
       .from('sessions')
-      .update({ 
+      .update({
         status: 'completed',
         is_complete: true,
         updated_at: new Date().toISOString(),

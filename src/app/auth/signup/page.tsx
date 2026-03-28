@@ -59,27 +59,7 @@ function SignUpForm() {
     } else if ((result as { redirectTo?: string }).redirectTo) {
       window.location.href = (result as { redirectTo: string }).redirectTo;
     } else if (result.success) {
-      // Create lead record for free consultation signup
-      if (intent === 'consultation' || !intent) {
-        try {
-          await fetch('/api/consultation/create-lead', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `${firstName} ${lastName}`.trim(), mobile: phone, email, country }),
-          });
-        } catch {
-          // Non-critical, continue to booking
-        }
-        window.location.href = '/consultation/book';
-        return;
-      }
-      setSuccess(result.message || 'Account created successfully. Check your email to verify your account.');
-      setFirstName('');
-      setLastName('');
-      setPhone('');
-      setEmail('');
-      setPassword('');
-      setPasswordConfirm('');
+      window.location.href = '/auth/login';
     }
   }
 

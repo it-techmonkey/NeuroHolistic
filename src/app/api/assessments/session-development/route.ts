@@ -77,33 +77,29 @@ export async function POST(request: NextRequest) {
       session_id: actualSessionId,
       client_id: clientId,
       therapist_id: therapistId,
-      
+
       // Pre-session data
       previous_session_improvements: data.previous_session_improvements || null,
       previous_session_challenges: data.previous_session_challenges || null,
       pre_session_symptoms: data.pre_session_symptoms || [],
       pre_session_intensity: data.pre_session_intensity ?? 0,
-      pre_session_energy: data.pre_session_intensity ?? 0,
       pre_session_mood: data.pre_session_mood ?? 0,
-      pre_session_anxiety: data.pre_session_anxiety ?? data.pre_session_intensity ?? 0,
-      
+
       // Session data
       techniques_used: data.techniques_used || [],
       key_interventions: data.key_interventions || null,
       breakthroughs_resistance: data.breakthroughs_resistance || null,
-      
+
       // Post-session data
       post_session_symptoms: data.post_session_symptoms || [],
       post_session_intensity: data.post_session_intensity ?? 0,
-      post_session_energy: data.post_session_energy ?? data.post_session_intensity ?? 0,
       post_session_mood: data.post_session_mood ?? 0,
-      post_session_anxiety: data.post_session_anxiety ?? data.post_session_intensity ?? 0,
       shift_observed: data.shift_observed || null,
       client_feedback: data.client_feedback || null,
-      
+
       // Integration notes (visible to client)
       integration_notes: data.integration_notes || null,
-      
+
       // Progress tracking scores (0-10)
       nervous_system_score: nervousSystemScore,
       emotional_state_score: emotionalStateScore,
@@ -112,42 +108,49 @@ export async function POST(request: NextRequest) {
       behavioral_patterns_score: behavioralPatternsScore,
       life_functioning_score: lifeFunctioningScore,
       // NOTE: goal_readiness_score is NOT included - it's a GENERATED ALWAYS column
-      
+
       // Therapist internal notes (NOT visible to client)
       therapist_internal_notes: data.therapist_internal_notes || null,
-      
-      // Legacy fields for backward compatibility
-      pre_session_notes: [
-        data.previous_session_improvements ? `Improvements: ${data.previous_session_improvements}` : '',
-        data.previous_session_challenges ? `Challenges: ${data.previous_session_challenges}` : '',
-        data.pre_session_symptoms?.length ? `Symptoms: ${data.pre_session_symptoms.join(', ')}` : '',
-      ].filter(Boolean).join('\n') || null,
-      post_session_notes: [
-        data.shift_observed ? `Shift: ${data.shift_observed}` : '',
-        data.client_feedback ? `Feedback: ${data.client_feedback}` : '',
-        data.integration_notes ? `Integration: ${data.integration_notes}` : '',
-      ].filter(Boolean).join('\n') || null,
-      key_insights: [
-        data.key_interventions ? `Interventions: ${data.key_interventions}` : '',
-        data.breakthroughs_resistance ? `Breakthroughs/Resistance: ${data.breakthroughs_resistance}` : '',
-      ].filter(Boolean).join('\n') || null,
-      
-      homework_assigned: null,
-      homework_completed: false,
-      
+
       // Timestamps
       filled_by_therapist_at: new Date().toISOString(),
     };
 
-    const { data: form, error } = await supabase
+    // Check if a form already exists for this session
+    const { data: existingFormData } = await supabase
       .from('session_development_forms')
-      .insert(insertData)
-      .select()
-      .single();
+      .select('id')
+      .eq('session_id', actualSessionId)
+      .maybeSingle();
 
-    if (error) {
-      console.error('[Session Development] Insert error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    let form;
+    if (existingFormData) {
+      // Update existing form
+      const { data: updatedForm, error: updateError } = await supabase
+        .from('session_development_forms')
+        .update(insertData)
+        .eq('id', existingFormData.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('[Session Development] Update error:', updateError);
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+      form = updatedForm;
+    } else {
+      // Insert new form
+      const { data: newForm, error: insertError } = await supabase
+        .from('session_development_forms')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[Session Development] Insert error:', insertError);
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+      form = newForm;
     }
 
     // Update the session to mark development form as submitted
@@ -179,27 +182,76 @@ export async function GET(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
+    // Map booking ID to session ID if needed
+    let actualSessionId = sessionId;
+    if (sessionId) {
+      // Check if this is a booking ID and find the corresponding session
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, program_id')
+        .eq('id', sessionId)
+        .single();
+
+      if (booking) {
+        // This is a booking ID, find the corresponding session
+        const { data: existingSession } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('booking_id', sessionId)
+          .single();
+
+        if (existingSession) {
+          actualSessionId = existingSession.id;
+        }
+        // If no session exists, actualSessionId remains booking ID (no dev forms yet)
+      }
+    }
+
+    // Fetch dev forms
     let query = supabase
       .from('session_development_forms')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
 
-    if (sessionId) {
-      query = query.eq('session_id', sessionId);
+    if (actualSessionId) {
+      query = query.eq('session_id', actualSessionId);
     }
 
     if (therapistId) {
       query = query.eq('therapist_id', therapistId);
     }
 
-    const { data: forms, error } = await query;
+    const { data: formsRaw, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ forms: forms || [] });
+    // Fetch sessions to build session_number map
+    const sessionIds = (formsRaw ?? []).map((f: any) => f.session_id).filter(Boolean);
+    let sessionNumberMap = new Map<string, number>();
+
+    if (sessionIds.length > 0) {
+      const { data: sessionsData } = await supabase
+        .from('sessions')
+        .select('id, session_number')
+        .in('id', sessionIds);
+
+      (sessionsData ?? []).forEach((s: any) => {
+        if (s.id && s.session_number) {
+          sessionNumberMap.set(s.id, s.session_number);
+        }
+      });
+    }
+
+    // Add session_number to each form
+    const forms = (formsRaw ?? []).map((f: any) => ({
+      ...f,
+      session_number: sessionNumberMap.get(f.session_id) ?? null,
+    }));
+
+    return NextResponse.json({ forms });
   } catch (error) {
     console.error('[Session Development] GET Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -29,62 +29,83 @@ export async function signUp(formData: {
     return { error: 'Invalid email format' };
   }
 
-  const supabase = await createClient();
   const serviceSupabase = getServiceSupabase();
 
-  const emailRedirectTo = formData.redirectTo
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(formData.redirectTo)}`
-    : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`;
+  // Check if user already exists
+  const { data: usersList } = await serviceSupabase.auth.admin.listUsers();
+  const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === formData.email.toLowerCase());
 
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: formData.email,
-    password: formData.password,
-    options: {
-      data: {
+  let userId: string;
+
+  if (existingUser) {
+    // User already exists - update their password and ensure email is confirmed
+    const { error: updateError } = await serviceSupabase.auth.admin.updateUserById(
+      existingUser.id,
+      {
+        password: formData.password,
+        email_confirm: true,
+        user_metadata: {
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          phone: formData.phone.trim(),
+          country: formData.country?.trim() ?? '',
+        },
+      }
+    );
+
+    if (updateError) {
+      console.error('[SignUp] Failed to update existing user:', updateError);
+      return { error: 'Failed to update account. Please try again.' };
+    }
+
+    userId = existingUser.id;
+  } else {
+    // Create new user with admin client - email is auto-confirmed
+    const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
+      email: formData.email,
+      password: formData.password,
+      email_confirm: true,
+      user_metadata: {
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
         full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         phone: formData.phone.trim(),
         country: formData.country?.trim() ?? '',
       },
-      emailRedirectTo,
-    },
+    });
+
+    if (authError) {
+      console.error('[SignUp] Failed to create user:', authError);
+      return { error: authError.message };
+    }
+
+    if (!authData.user) {
+      return { error: 'Failed to create account.' };
+    }
+
+    userId = authData.user.id;
+  }
+
+  // Create or update user record in public.users table
+  const { error: insertError } = await serviceSupabase.from('users').upsert({
+    id: userId,
+    email: formData.email,
+    role: 'client',
+    full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+    phone: formData.phone.trim() || null,
+    country: formData.country?.trim() ?? null,
+  }, {
+    onConflict: 'id',
   });
 
-  if (authError) {
-    return { error: authError.message };
-  }
-
-  // Create user record in public.users with role='client'
-  // Use service client to bypass RLS, and upsert to handle existing users
-  if (authData.user?.id) {
-    const { error: insertError } = await serviceSupabase.from('users').upsert({
-      id: authData.user.id,
-      email: formData.email,
-      role: 'client',
-      full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-      phone: formData.phone.trim() || null,
-      country: formData.country?.trim() ?? null,
-    }, {
-      onConflict: 'id',
-      ignoreDuplicates: true,
-    });
-    
-    if (insertError) {
-      console.error('[SignUp] Error creating user record:', insertError);
-    }
-  }
-
-  if (authData.session && formData.redirectTo) {
-    return {
-      success: true,
-      redirectTo: formData.redirectTo,
-    };
+  if (insertError) {
+    console.error('[SignUp] Error creating user record:', insertError);
   }
 
   return {
     success: true,
-    message: 'Account created! Check your email to verify your account before logging in.',
+    message: 'Account created successfully.',
   };
 }
 

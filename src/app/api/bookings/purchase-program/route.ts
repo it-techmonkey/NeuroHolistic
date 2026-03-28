@@ -12,8 +12,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Normalize program type for storage
-    // planType values: 'private', 'session_by_session', 'group_full', 'group_session'
-    // programType values: 'private' | 'group' (from the selection step)
     const normalizedProgramType = programType || (planType.includes('group') ? 'group' : 'private');
 
     // Auth check
@@ -35,9 +33,9 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (existingProgram) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'You already have an active or completed program.',
-        programId: existingProgram.id 
+        programId: existingProgram.id
       }, { status: 409 });
     }
 
@@ -52,8 +50,8 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    const therapistId = booking?.therapist_user_id;
-    const therapistName = booking?.therapist_name;
+    let therapistId = booking?.therapist_user_id;
+    let resolvedTherapistName = booking?.therapist_name || 'Assigned Therapist';
 
     // Get user details
     const { data: userData } = await supabase
@@ -62,20 +60,20 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    // Create the program
+    // Create the program (user confirmed they paid via Ziina)
     const { data: program, error: programError } = await supabase
       .from('programs')
       .insert({
         user_id: user.id,
         therapist_user_id: therapistId,
-        therapist_name: therapistName || 'Assigned Therapist',
+        therapist_name: resolvedTherapistName,
         total_sessions: 10,
         used_sessions: 0,
         sessions_completed: 0,
         status: 'active',
-        payment_id: `DEMO-${Date.now()}`,
+        payment_id: `ZIINA-${Date.now()}`,
         program_type: normalizedProgramType,
-        price_paid: amount,
+        price_paid: Math.round(amount / 100), // Convert fils back to AED
         client_name: userData?.full_name || 'Client',
         client_email: userData?.email || user.email,
       })

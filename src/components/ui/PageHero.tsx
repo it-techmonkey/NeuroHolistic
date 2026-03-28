@@ -13,8 +13,8 @@ interface HeroAction {
 
 interface PageHeroProps {
   eyebrow: string;
-  title: React.ReactNode; 
-  description: string;
+  title: React.ReactNode;
+  description: React.ReactNode;
   imageSrc: string;
   imageAlt: string;
   metaTags?: string[];
@@ -34,7 +34,7 @@ export default function PageHero({
 }: PageHeroProps) {
   
   return (
-    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-14 sm:min-h-[85vh] sm:pt-32 sm:pb-16 md:min-h-[90vh] md:pt-40 md:pb-24">
+    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-36 pb-14 sm:min-h-[85vh] sm:pt-40 sm:pb-16 md:min-h-[90vh] md:pt-48 md:pb-24">
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">

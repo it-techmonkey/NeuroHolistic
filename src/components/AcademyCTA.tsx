@@ -41,7 +41,7 @@ export default function AcademyCTA() {
               </div>
 
               <h2 className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[56px]">
-                Become a Therapist
+                The NeuroHolistic Academy
               </h2>
             </div>
 
@@ -54,7 +54,7 @@ export default function AcademyCTA() {
                 href="/academy"
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-white px-8 text-[15px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
               >
-                Linked to Academy Page
+                Become a Therapist
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
             </div>

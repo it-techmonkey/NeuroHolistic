@@ -13,14 +13,17 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
   const [filter, setFilter] = useState<'upcoming' | 'completed' | 'all'>('upcoming');
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  
+
   // Google Calendar state
   const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
   const [connectingGoogle, setConnectingGoogle] = useState(false);
-  
+
   // Modal State
   const [activeSession, setActiveSession] = useState<any>(null);
   const [modalType, setModalType] = useState<'diagnostic' | 'development' | null>(null);
+
+  // Track which clients have completed diagnostic assessments
+  const [clientsWithAssessments, setClientsWithAssessments] = useState<Set<string>>(new Set());
 
   // Check Google Calendar status
   const checkGoogleStatus = async () => {
@@ -64,6 +67,20 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
       const res = await fetch(`/api/therapist/sessions?therapistId=${therapistId}`);
       const data = await res.json();
       setSessions(data.sessions || []);
+
+      // Fetch assessment status for all clients
+      const clientIds = [...new Set((data.sessions || []).map((s: any) => s.client_id).filter(Boolean))];
+      if (clientIds.length > 0) {
+        const assessmentRes = await fetch('/api/assessments/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientIds }),
+        });
+        if (assessmentRes.ok) {
+          const assessmentData = await assessmentRes.json();
+          setClientsWithAssessments(new Set(assessmentData.clientsWithAssessments || []));
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -435,13 +452,24 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
                         
                         <UploadMaterial sessionId={session.id} onUploadComplete={() => {}} />
                         
-                        {/* For free consultations, allow completion without development form */}
+                        {/* For free consultations, require diagnostic assessment */}
                         {/* For program sessions, require development form */}
-                        <MarkComplete 
-                          sessionId={session.id} 
-                          isReady={session.type === 'free_consultation' || !session.program_id || session.development_form_submitted} 
+                        <MarkComplete
+                          sessionId={session.id}
+                          isReady={
+                            session.type === 'free_consultation'
+                              ? clientsWithAssessments.has(session.client_id)
+                              : !session.program_id || session.development_form_submitted
+                          }
                           isCompleted={session.status === 'completed'}
                           onComplete={() => fetchSessions()}
+                          tooltip={
+                            session.type === 'free_consultation' && !clientsWithAssessments.has(session.client_id)
+                              ? 'Complete diagnostic assessment first'
+                              : !session.program_id || session.development_form_submitted
+                                ? undefined
+                                : 'Complete development form first'
+                          }
                         />
                       </div>
                     </div>

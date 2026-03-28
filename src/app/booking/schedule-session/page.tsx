@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client';
 type Therapist = {
   id: string;
   name: string;
+  role?: string;
 };
 
 type Slot = {
@@ -127,18 +128,37 @@ function ScheduleSessionContent() {
         setSession(loadedSession);
       }
 
-      // Load therapists
+      // Load therapists and assigned therapist in parallel
+      let therapistList: Therapist[] = [];
+      let assignedTherapistId: string | null = null;
+
       try {
-        const res = await fetch('/api/therapist/list');
-        if (res.ok) {
-          const data = await res.json();
-          setTherapists(data.therapists || []);
-          if (data.therapists?.length > 0) {
-            setSelectedTherapist(data.therapists[0].id);
+        const [therapistsRes, assignedTherapistRes] = await Promise.all([
+          fetch('/api/therapist/list'),
+          fetch('/api/client/assigned-therapist'),
+        ]);
+
+        if (therapistsRes.ok) {
+          const data = await therapistsRes.json();
+          therapistList = data.therapists || [];
+          setTherapists(therapistList);
+        }
+
+        if (assignedTherapistRes.ok) {
+          const therapistData = await assignedTherapistRes.json();
+          if (therapistData.therapist) {
+            assignedTherapistId = therapistData.therapist.slug || therapistData.therapist.id;
           }
         }
       } catch (err) {
         console.error('Failed to load therapists:', err);
+      }
+
+      // Set the selected therapist using the fetched list directly
+      if (assignedTherapistId) {
+        setSelectedTherapist(assignedTherapistId);
+      } else if (therapistList.length > 0) {
+        setSelectedTherapist(therapistList[0].id);
       }
 
       setLoading(false);
@@ -288,14 +308,21 @@ function ScheduleSessionContent() {
                 <button
                   key={therapist.id}
                   onClick={() => setSelectedTherapist(therapist.id)}
-                  className={`p-4 border rounded-lg text-left transition-all ${
+                  className={`p-4 border rounded-lg text-left transition-all relative ${
                     selectedTherapist === therapist.id
                       ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
                       : 'border-slate-200 hover:border-indigo-300'
                   }`}
                 >
+                  {therapist.role === 'Founder & Lead Practitioner' && (
+                    <span className="absolute top-2 right-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-medium rounded-full">
+                      Founder
+                    </span>
+                  )}
                   <div className="font-medium text-slate-900">{therapist.name}</div>
-                  <div className="text-xs text-slate-500 mt-1">NeuroHolistic Specialist</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {therapist.role || 'NeuroHolistic Specialist'}
+                  </div>
                 </button>
               ))}
             </div>

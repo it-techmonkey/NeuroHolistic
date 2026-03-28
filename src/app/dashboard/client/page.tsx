@@ -25,6 +25,7 @@ type Session = {
   therapist_user_id?: string;
   program_id?: string;
   development_form_submitted?: boolean;
+  session_id?: string | null; // Actual session ID for document filtering
 };
 
 type Assessment = {
@@ -77,14 +78,18 @@ type DashboardData = {
   programStatus: string;
   hasActiveProgram: boolean;
   hasCompletedFreeConsult?: boolean;
+  hasBookedFreeConsult?: boolean;
+  bookedFreeConsult?: Session;
   hasCompletedAllSessions?: boolean;
   assessments: Assessment[];
   devForms: DevForm[];
   materials: any[];
+  completedSessionIds?: string[];
   user?: any;
 };
 
 type ViewMode = 'overview' | 'sessions' | 'progress' | 'account';
+type SessionFilter = 'all' | 'upcoming' | 'completed';
 
 export default function ClientDashboardPage() {
   const router = useRouter();
@@ -98,6 +103,9 @@ export default function ClientDashboardPage() {
   // Session detail state
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
+
+  // Session filter state
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all');
 
   // Account menu state
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -192,10 +200,25 @@ export default function ClientDashboardPage() {
     router.push('/auth/login');
   };
 
-  const getSessionDocuments = (sessionId: string) => {
-    // Filter documents by session_id or if the document's session_id is null/undefined
-    // This handles cases where documents were uploaded without a specific session
-    return documents.filter(d => d.session_id === sessionId || !d.session_id);
+  const getSessionDocuments = (session: Session) => {
+    // Documents are stored with session_id pointing to sessions table ID
+    // We can only show documents if we have a valid session_id
+    const effectiveSessionId = session.session_id;
+    
+    // No session_id means no documents can be shown (session not yet created/mapped)
+    if (!effectiveSessionId) {
+      return [];
+    }
+    
+    // Only show documents if the session is completed
+    const completedIds = data?.completedSessionIds || [];
+    const isSessionCompleted = completedIds.includes(effectiveSessionId);
+    
+    if (!isSessionCompleted) {
+      return [];
+    }
+    
+    return documents.filter(d => d.session_id === effectiveSessionId);
   };
 
   const getDocIcon = (type: string) => {
@@ -356,7 +379,28 @@ export default function ClientDashboardPage() {
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 {/* Conditional CTA based on user's booking state */}
-                {data?.programStatus === 'none' && !data?.hasCompletedFreeConsult && (
+                {/* Free consultation booked but not completed - show Join button */}
+                {data?.hasBookedFreeConsult && data?.bookedFreeConsult && !data?.hasCompletedFreeConsult && (
+                  <div className="flex flex-wrap gap-3">
+                    {data.bookedFreeConsult.meeting_link && (
+                      <a
+                        href={data.bookedFreeConsult.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                      >
+                        <Video className="w-4 h-4" />
+                        Join Free Consultation
+                      </a>
+                    )}
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm text-white/90">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(data.bookedFreeConsult.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {data.bookedFreeConsult.time}
+                    </div>
+                  </div>
+                )}
+                {/* No free consultation booked - show Book button */}
+                {data?.programStatus === 'none' && !data?.hasCompletedFreeConsult && !data?.hasBookedFreeConsult && (
                   <a
                     href="/consultation/book"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
@@ -365,6 +409,7 @@ export default function ClientDashboardPage() {
                     Book Free Consultation
                   </a>
                 )}
+                {/* Free consultation completed - show Book Paid Program */}
                 {data?.programStatus === 'consultation_done' && (
                   <a
                     href="/booking/paid-program-booking"
@@ -404,10 +449,40 @@ export default function ClientDashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard icon={Calendar} label="Upcoming" value={data?.upcomingSessions?.length || 0} color="indigo" />
-              <StatCard icon={CheckCircle} label="Completed" value={completedSessions.length} color="green" />
-              <StatCard icon={FileText} label="Assessments" value={data?.assessments?.length || 0} color="purple" />
-              <StatCard icon={BarChart3} label="Dev Forms" value={data?.devForms?.length || 0} color="amber" />
+              <button
+                onClick={() => { setSessionFilter('upcoming'); setViewMode('sessions'); }}
+                className="text-left bg-white rounded-xl border border-slate-200 p-4 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900">{data?.upcomingSessions?.length || 0}</p>
+                <p className="text-sm text-slate-500">Upcoming</p>
+              </button>
+              <button
+                onClick={() => { setSessionFilter('completed'); setViewMode('sessions'); }}
+                className="text-left bg-white rounded-xl border border-slate-200 p-4 hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mb-3">
+                  <CheckCircle className="w-5 h-5" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900">{completedSessions.length}</p>
+                <p className="text-sm text-slate-500">Completed</p>
+              </button>
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-3">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900">{data?.assessments?.length || 0}</p>
+                <p className="text-sm text-slate-500">Assessments</p>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mb-3">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900">{data?.devForms?.length || 0}</p>
+                <p className="text-sm text-slate-500">Dev Forms</p>
+              </div>
             </div>
 
             {/* Upcoming Sessions */}
@@ -437,7 +512,7 @@ export default function ClientDashboardPage() {
                         key={session.id}
                         session={session}
                         isHighlighted
-                        documents={getSessionDocuments(session.id)}
+                        documents={getSessionDocuments(session)}
                       />
                     ))}
                   </div>
@@ -469,28 +544,44 @@ export default function ClientDashboardPage() {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                  {[
-                    { label: 'Stress & Anxiety', key: 'nervous_system_score' },
-                    { label: 'Emotional Balance', key: 'emotional_state_score' },
-                    { label: 'Thought Patterns', key: 'cognitive_patterns_score' },
-                    { label: 'Physical Wellbeing', key: 'body_symptoms_score' },
-                    { label: 'Habits & Behaviors', key: 'behavioral_patterns_score' },
-                    { label: 'Daily Life', key: 'life_functioning_score' },
-                  ].map(metric => (
-                    <div key={metric.key} className="bg-slate-50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-500">{metric.label}</p>
-                      <p className="text-lg font-semibold text-slate-900 mt-1">
-                        {data.assessments[data.assessments.length - 1]?.[metric.key as keyof Assessment] || 0}
-                        <span className="text-sm font-normal text-slate-400">/10</span>
-                      </p>
-                    </div>
-                  ))}
+                  {(() => {
+                    // Get latest scores from devForms if available, otherwise from assessments
+                    const latestDevForm = data?.devForms?.[data.devForms.length - 1];
+                    const latestAssessment = data?.assessments?.[data.assessments.length - 1];
+                    const source = latestDevForm || latestAssessment || {};
+                    
+                    return [
+                      { label: 'Stress & Anxiety', key: 'nervous_system_score' },
+                      { label: 'Emotional Balance', key: 'emotional_state_score' },
+                      { label: 'Thought Patterns', key: 'cognitive_patterns_score' },
+                      { label: 'Physical Wellbeing', key: 'body_symptoms_score' },
+                      { label: 'Habits & Behaviors', key: 'behavioral_patterns_score' },
+                      { label: 'Daily Life', key: 'life_functioning_score' },
+                    ].map(metric => (
+                      <div key={metric.key} className="bg-slate-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-slate-500">{metric.label}</p>
+                        <p className="text-lg font-semibold text-slate-900 mt-1">
+                          {(source as any)?.[metric.key] || 0}
+                          <span className="text-sm font-normal text-slate-400">/10</span>
+                        </p>
+                      </div>
+                    ));
+                  })()}
                 </div>
                 <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-indigo-900">Goal Readiness Score</span>
                     <span className="text-2xl font-bold text-indigo-700">
-                      {data.assessments[data.assessments.length - 1]?.goal_readiness_score || 0}/60
+                      {(() => {
+                        const latestDevForm = data?.devForms?.[data.devForms.length - 1];
+                        if (latestDevForm) {
+                          const score = (latestDevForm.nervous_system_score || 0) + (latestDevForm.emotional_state_score || 0) +
+                            (latestDevForm.cognitive_patterns_score || 0) + (latestDevForm.body_symptoms_score || 0) +
+                            (latestDevForm.behavioral_patterns_score || 0) + (latestDevForm.life_functioning_score || 0);
+                          return score;
+                        }
+                        return data?.assessments?.[data.assessments.length - 1]?.goal_readiness_score || 0;
+                      })()}/60
                     </span>
                   </div>
                   <p className="text-xs text-indigo-600 mt-1">Lower scores indicate improved wellbeing</p>
@@ -503,27 +594,69 @@ export default function ClientDashboardPage() {
         {/* SESSIONS VIEW */}
         {viewMode === 'sessions' && (
           <div className="space-y-6">
-            {/* Session Stats */}
+            {/* Session Stats - Clickable */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-                <Calendar className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+              <button
+                onClick={() => setSessionFilter('all')}
+                className={`rounded-xl border p-4 text-center transition-all cursor-pointer ${
+                  sessionFilter === 'all'
+                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <Calendar className={`w-8 h-8 mx-auto mb-2 ${sessionFilter === 'all' ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <p className="text-2xl font-bold text-slate-900">{allSessions.length}</p>
                 <p className="text-sm text-slate-500">Total Sessions</p>
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              </button>
+              <button
+                onClick={() => setSessionFilter('completed')}
+                className={`rounded-xl border p-4 text-center transition-all cursor-pointer ${
+                  sessionFilter === 'completed'
+                    ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <CheckCircle className={`w-8 h-8 mx-auto mb-2 ${sessionFilter === 'completed' ? 'text-green-600' : 'text-slate-400'}`} />
                 <p className="text-2xl font-bold text-slate-900">{completedSessions.length}</p>
                 <p className="text-sm text-slate-500">Completed</p>
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-                <Clock className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              </button>
+              <button
+                onClick={() => setSessionFilter('upcoming')}
+                className={`rounded-xl border p-4 text-center transition-all cursor-pointer ${
+                  sessionFilter === 'upcoming'
+                    ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-200'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <Clock className={`w-8 h-8 mx-auto mb-2 ${sessionFilter === 'upcoming' ? 'text-amber-600' : 'text-slate-400'}`} />
                 <p className="text-2xl font-bold text-slate-900">{data?.upcomingSessions?.length || 0}</p>
                 <p className="text-sm text-slate-500">Upcoming</p>
-              </div>
+              </button>
             </div>
 
-            {/* Upcoming Sessions */}
-            {data?.upcomingSessions && data.upcomingSessions.length > 0 && (
+            {/* Filter Tabs */}
+            <div className="flex gap-2 border-b border-slate-200 pb-2">
+              {[
+                { id: 'all' as SessionFilter, label: 'All Sessions', count: allSessions.length },
+                { id: 'upcoming' as SessionFilter, label: 'Upcoming', count: data?.upcomingSessions?.length || 0 },
+                { id: 'completed' as SessionFilter, label: 'Completed', count: completedSessions.length },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSessionFilter(tab.id)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    sessionFilter === tab.id
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
+
+            {/* Sessions List - Filtered */}
+            {sessionFilter === 'upcoming' && data?.upcomingSessions && data.upcomingSessions.length > 0 && (
               <section>
                 <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-indigo-600" />
@@ -536,36 +669,99 @@ export default function ClientDashboardPage() {
                       session={session}
                       isExpanded={expandedSession === session.id}
                       onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
-                      documents={getSessionDocuments(session.id)}
+                      documents={getSessionDocuments(session)}
                     />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Past Sessions */}
-            {data?.pastSessions && data.pastSessions.length > 0 && (
+            {sessionFilter === 'completed' && data?.pastSessions && data.pastSessions.filter(s => s.status === 'completed').length > 0 && (
               <section>
                 <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-slate-400" />
-                  Past Sessions ({data.pastSessions.length})
+                  <Clock className="w-5 h-5 text-green-600" />
+                  Completed Sessions ({data.pastSessions.filter(s => s.status === 'completed').length})
                 </h2>
                 <div className="space-y-4">
-                  {data.pastSessions.map(session => (
+                  {data.pastSessions.filter(s => s.status === 'completed').map(session => (
                     <SessionDetailCard
                       key={session.id}
                       session={session}
                       isExpanded={expandedSession === session.id}
                       onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
-                      documents={getSessionDocuments(session.id)}
-                      isCompleted={session.status === 'completed'}
+                      documents={getSessionDocuments(session)}
+                      isCompleted={true}
                     />
                   ))}
                 </div>
               </section>
             )}
 
-            {allSessions.length === 0 && (
+            {sessionFilter === 'all' && (
+              <>
+                {/* Upcoming Sessions */}
+                {data?.upcomingSessions && data.upcomingSessions.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-indigo-600" />
+                      Upcoming Sessions ({data.upcomingSessions.length})
+                    </h2>
+                    <div className="space-y-4">
+                      {data.upcomingSessions.map(session => (
+                        <SessionDetailCard
+                          key={session.id}
+                          session={session}
+                          isExpanded={expandedSession === session.id}
+                          onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
+                          documents={getSessionDocuments(session)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Past Sessions */}
+                {data?.pastSessions && data.pastSessions.length > 0 && (
+                  <section>
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-slate-400" />
+                      Past Sessions ({data.pastSessions.length})
+                    </h2>
+                    <div className="space-y-4">
+                      {data.pastSessions.map(session => (
+                        <SessionDetailCard
+                          key={session.id}
+                          session={session}
+                          isExpanded={expandedSession === session.id}
+                          onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
+                          documents={getSessionDocuments(session)}
+                          isCompleted={session.status === 'completed'}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+
+            {/* Empty states */}
+            {sessionFilter === 'upcoming' && (!data?.upcomingSessions || data.upcomingSessions.length === 0) && (
+              <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+                <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-slate-900 font-medium">No upcoming sessions</h3>
+                <p className="text-slate-500 text-sm mt-1">Book a session to get started.</p>
+              </div>
+            )}
+
+            {sessionFilter === 'completed' && (!data?.pastSessions || data.pastSessions.filter(s => s.status === 'completed').length === 0) && (
+              <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+                <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-slate-900 font-medium">No completed sessions yet</h3>
+                <p className="text-slate-500 text-sm mt-1">Complete a session to see it here.</p>
+              </div>
+            )}
+
+            {sessionFilter === 'all' && allSessions.length === 0 && (
               <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
                 <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-slate-900 font-medium">No sessions yet</h3>
@@ -573,16 +769,21 @@ export default function ClientDashboardPage() {
               </div>
             )}
 
-            {/* All Documents Section */}
-            {documents.length > 0 && (
+            {/* All Documents Section - Only show documents from completed sessions */}
+            {(() => {
+              const completedIds = data?.completedSessionIds || [];
+              // Only show documents that have a session_id AND that session is completed
+              const visibleDocs = documents.filter(d => d.session_id && completedIds.includes(d.session_id));
+              if (visibleDocs.length === 0) return null;
+              return (
               <section className="mt-8">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <File className="w-5 h-5 text-indigo-600" />
-                  All Documents ({documents.length})
+                  All Documents ({visibleDocs.length})
                 </h2>
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {documents.map(doc => (
+                    {visibleDocs.map(doc => (
                       <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
                         <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-200">
                           {doc.type === 'pdf' ? <FileText className="w-5 h-5 text-red-500" /> :
@@ -615,7 +816,8 @@ export default function ClientDashboardPage() {
                   </div>
                 </div>
               </section>
-            )}
+              );
+            })()}
           </div>
         )}
 

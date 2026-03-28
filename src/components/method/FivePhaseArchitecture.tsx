@@ -37,12 +37,23 @@ const PHASES = [
 ];
 
 export default function FivePhaseArchitecture() {
+  // Split description into title and body
+  const formatDesc = (desc: string) => {
+    const parts = desc.split('. ');
+    if (parts.length >= 2) {
+      const title = parts[0] + '.';
+      const body = parts.slice(1).join('. ');
+      return { title, body };
+    }
+    return { title: '', body: desc };
+  };
+
   return (
-    <section className="bg-white py-20 lg:py-32">
+    <section className="bg-white pt-0 pb-20 lg:pb-32">
       <div className="mx-auto max-w-[1100px] px-6">
-        
+
         {/* Compact Header */}
-        <div className="mb-20 text-center">
+        <div className="mb-12 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
             The Five-Phase Architecture
           </h2>
@@ -52,29 +63,30 @@ export default function FivePhaseArchitecture() {
         </div>
 
         {/* Sequential Vertical Layout */}
-        <div className="space-y-24 md:space-y-32">
+        <div className="space-y-12 md:space-y-16">
           {PHASES.map((phase, i) => {
             const isEven = i % 2 === 1;
-            
+            const { title, body } = formatDesc(phase.desc);
+
             return (
-              <div 
+              <div
                 key={phase.number}
                 className={`flex flex-col lg:flex-row items-center gap-10 lg:gap-16 ${isEven ? 'lg:flex-row-reverse' : ''}`}
               >
                 {/* Image Section */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="w-full lg:w-1/2"
                 >
                   <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 group">
-                    <Image 
-                      src={phase.img} 
-                      alt={phase.title} 
-                      fill 
+                    <Image
+                      src={phase.img}
+                      alt={phase.title}
+                      fill
                       priority={i === 0}
-                      className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105" 
+                      className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
                     />
                   </div>
                 </motion.div>
@@ -88,8 +100,13 @@ export default function FivePhaseArchitecture() {
                     <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                       {phase.title}
                     </h3>
+                    {title && (
+                      <p className="text-[14px] text-slate-600 italic font-medium">
+                        {title}
+                      </p>
+                    )}
                     <p className="text-[16px] text-slate-500 leading-relaxed font-normal">
-                      {phase.desc}
+                      {body}
                     </p>
                     <div className="h-0.5 w-8 bg-slate-200" />
                   </div>

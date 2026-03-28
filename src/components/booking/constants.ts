@@ -12,8 +12,8 @@ import type { Therapist, TimeSlot } from "./types";
  */
 export const THERAPISTS: Therapist[] = [
   {
-    id: "dr-fawzia-yassmina",
-    name: "Dr. Fawzia Yassmina",
+    id: "fawzia-yassmina",
+    name: "Fawzia Yassmina",
     role: "Founder & Creator of the NeuroHolistic Method™",
     description: "Founder with 20+ years of experience in neurological wellness and personal transformation.",
   },

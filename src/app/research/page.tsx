@@ -70,10 +70,10 @@ export default function ResearchPage() {
               </h2>
               <div className="space-y-8 border-l border-[#E2E8F0] pl-8">
                 <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  The NeuroHolistic Institute is committed to developing a scientific understanding of how human perception and behavioral change emerge from the interaction of biological and experiential systems.
+                  The NeuroHolistic Institute is committed to developing a deeper scientific understanding of how human perception, emotional patterns, and behavioral change emerge from the interaction of biological, psychological, and experiential systems.
                 </p>
                 <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  Our research explores how integrative approaches support sustainable transformation in individuals and communities, grounded in rigorous observation.
+                  Our research explores how integrative approaches can support meaningful and sustainable transformation in individuals and communities.
                 </p>
               </div>
             </motion.div>
@@ -85,7 +85,7 @@ export default function ResearchPage() {
               className="lg:col-span-6"
             >
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-                <div className="relative aspect-[16/11] w-full overflow-hidden grayscale-[40%] transition-all duration-1000 group-hover:grayscale-0">
+                <div className="relative aspect-[16/11] w-full overflow-hidden transition-all duration-1000">
                   <Image
                     src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1400&q=80"
                     alt="Scientific data visualization"
@@ -134,12 +134,12 @@ export default function ResearchPage() {
                 The Institute develops research through structured observation of applied work. Case documentation and practitioner inquiry contribute to building a body of knowledge around the mechanisms of human transformation.
               </p>
             </div>
-            <div className="border-l border-[#E2E8F0] pl-10 lg:mt-20">
+            <div className="border-l border-[#E2E8F0] pl-10">
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
                 Academic <br/><span className="italic text-[#64748B]">Collaboration.</span>
               </h3>
               <p className="mt-6 text-[16px] leading-[1.8] text-[#4B5563]">
-                The Institute collaborates with universities and academic institutions interested in advancing interdisciplinary research on applied psychology, neuroscience, and wellbeing.
+                The Institute aims to collaborate with universities, researchers, and academic institutions interested in advancing interdisciplinary research on human transformation, applied psychology, and wellbeing.
               </p>
             </div>
           </div>

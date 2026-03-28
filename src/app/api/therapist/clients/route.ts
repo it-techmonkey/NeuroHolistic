@@ -37,10 +37,28 @@ export async function GET() {
       .order('assessed_at', { ascending: false });
 
     // Get session development forms
-    const { data: devForms } = await supabase
+    const { data: devFormsRaw } = await supabase
       .from('session_development_forms')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Get sessions to build session_number map
+    const { data: allSessions } = await supabase
+      .from('sessions')
+      .select('id, session_number');
+
+    const sessionNumberMap = new Map<string, number>();
+    (allSessions ?? []).forEach((s: any) => {
+      if (s.id && s.session_number) {
+        sessionNumberMap.set(s.id, s.session_number);
+      }
+    });
+
+    // Add session_number to each dev form
+    const devForms = (devFormsRaw ?? []).map((f: any) => ({
+      ...f,
+      session_number: sessionNumberMap.get(f.session_id) ?? null,
+    }));
 
     // Get programs
     const { data: programs } = await supabase.from('programs').select('*');

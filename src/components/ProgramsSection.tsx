@@ -38,9 +38,9 @@ const PROGRAMS = [
 
 function ProgramCard(props: (typeof PROGRAMS)[0]) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-8 md:p-10 transition-all duration-500 hover:border-[#D1D5DB] hover:shadow-xl hover:-translate-y-1">
+    <div className="group relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-8 md:p-10 transition-all duration-500 hover:border-[#D1D5DB] hover:shadow-xl hover:-translate-y-1 flex flex-col">
       <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col flex-1">
         {/* Header */}
         <div className="mb-8 flex items-start gap-4">
           <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white flex items-center justify-center text-2xl shadow-md">
@@ -70,8 +70,8 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
           </ul>
         </div>
 
-        {/* CTA */}
-        <div className="flex">
+        {/* CTA - Pushed to bottom */}
+        <div className="flex mt-auto">
           <BookNowButton className="flex-1 inline-flex items-center justify-center px-6 py-3 rounded-xl border-2 border-[#2B2F55] text-[#2B2F55] font-semibold text-[14px] hover:bg-[#2B2F55] hover:text-white transition-all duration-200">
             Book Consultation
           </BookNowButton>

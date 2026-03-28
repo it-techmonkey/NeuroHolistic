@@ -11,8 +11,8 @@ export type TeamProfile = {
 
 export const TEAM_PROFILES: TeamProfile[] = [
   {
-    slug: "dr-fawzia-yassmina",
-    name: "Dr. Fawzia Yassmina",
+    slug: "fawzia-yassmina",
+    name: "Fawzia Yassmina",
     role: "Founder of the NeuroHolistic Institute™ and Creator of the NeuroHolistic Method™",
     heroTitle: "Dr. Fawzia Yassmina",
     shortBio:
@@ -31,9 +31,9 @@ export const TEAM_PROFILES: TeamProfile[] = [
   },
   {
     slug: "mariam-al-kaisi",
-    name: "Mariam Al Kaisi",
+    name: "Mariam Al Kaissi",
     role: "NeuroHolistic Certified Practitioner",
-    heroTitle: "Mariam Al Kaisi",
+    heroTitle: "Mariam Al Kaissi",
     shortBio:
       "A grounded practitioner known for calm presence, deep attentiveness, and a clear, structured approach to transformation.",
     paragraphs: [

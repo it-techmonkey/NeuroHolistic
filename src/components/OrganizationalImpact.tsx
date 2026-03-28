@@ -28,6 +28,11 @@ const IMPACTS = [
     description:
       "Helping individuals maintain stability and performance during periods of change.",
   },
+  {
+    title: "Absenteeism and Burnout Reduction",
+    description:
+      "Supporting nervous system regulation and recovery from chronic stress patterns.",
+  },
 ];
 
 export default function OrganizationalImpact() {

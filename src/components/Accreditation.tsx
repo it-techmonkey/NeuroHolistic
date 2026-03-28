@@ -25,14 +25,23 @@ export default function Accreditation() {
         {/* ── Editorial Header ── */}
         <div className="mb-16 text-center">
 
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-[32px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]"
           >
-            Accreditation & Professional <span className="italic text-[#64748B] font-normal">recognition.</span>
+            Accreditation & Professional <span className="italic text-[#64748B] font-normal">Recognition.</span>
           </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="mt-6 text-[16px] leading-[1.8] text-[#475569] max-w-[600px] mx-auto"
+          >
+            The NeuroHolistic Applied Psychology Mastery for Practitioners is issued by the NeuroHolistic Institute and supported by international professional accreditation bodies.
+          </motion.p>
         </div>
 
         {/* ── The Seal Matrix ── */}

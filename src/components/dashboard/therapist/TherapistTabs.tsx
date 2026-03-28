@@ -6,7 +6,7 @@ import {
   X, Upload, Eye, Download, BarChart3, File, Image, CheckCircle,
   Stethoscope, Activity, Brain, Heart, Shield, Award, Calendar,
   TrendingUp as TrendUp, Printer, Share2, FileSpreadsheet, TrendingDown,
-  Lock
+  Lock, Trash2
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -65,7 +65,7 @@ type Document = {
 
 // Sessions Tab Component - Shows session-level data with documents and forms
 export function SessionsTab({
-  sessions, documents, onOpenAssessment, onOpenDevForm, onRefresh, onUploadDocument, uploadingDoc
+  sessions, documents, onOpenAssessment, onOpenDevForm, onRefresh, onUploadDocument, uploadingDoc, onDeleteDocument
 }: {
   sessions: Session[];
   documents: Document[];
@@ -74,6 +74,7 @@ export function SessionsTab({
   onRefresh: () => void;
   onUploadDocument: (file: File, sessionId?: string) => void;
   uploadingDoc: boolean;
+  onDeleteDocument?: (documentId: string) => Promise<void>;
 }) {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +157,7 @@ export function SessionsTab({
                 onRefresh={onRefresh}
                 onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : (s.session_ref_id || s.id))}
                 uploadingDoc={uploadingDoc}
+                onDeleteDocument={onDeleteDocument}
               />
             ))}
           </div>
@@ -180,9 +182,10 @@ export function SessionsTab({
                 onOpenAssessment={() => onOpenAssessment(s)}
                 onOpenDevForm={() => onOpenDevForm(s)}
                 onRefresh={onRefresh}
-                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : (s.session_ref_id || s.id))}
-                uploadingDoc={uploadingDoc}
-                isCompleted
+                onUploadDocument={() => {}}
+                uploadingDoc={false}
+                isCompleted={true}
+                onDeleteDocument={onDeleteDocument}
               />
             ))}
           </div>
@@ -210,7 +213,8 @@ function SessionCard({
   onRefresh,
   onUploadDocument,
   uploadingDoc,
-  isCompleted = false
+  isCompleted = false,
+  onDeleteDocument
 }: {
   session: Session;
   documents: Document[];
@@ -222,6 +226,7 @@ function SessionCard({
   onUploadDocument: () => void;
   uploadingDoc: boolean;
   isCompleted?: boolean;
+  onDeleteDocument?: (documentId: string) => Promise<void>;
 }) {
   const isConsultation = session.type === 'free_consultation';
   const effectiveSessionId = session.session_ref_id || session.id;
@@ -365,22 +370,38 @@ function SessionCard({
                       <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
                       <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</p>
                     </div>
-                    <button
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        try {
-                          const res = await fetch(`/api/documents/${doc.id}/view`);
-                          const data = await res.json();
-                          if (data.url) {
-                            window.open(data.url, '_blank');
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          try {
+                            const res = await fetch(`/api/documents/${doc.id}/view`);
+                            const data = await res.json();
+                            if (data.url) {
+                              window.open(data.url, '_blank');
+                            }
+                          } catch (error) {
+                            console.error('Failed to get document URL:', error);
                           }
-                        } catch (error) {
-                          console.error('Failed to get document URL:', error);
-                        }
-                      }}
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </button>
+                        }}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      {!isCompleted && onDeleteDocument && (
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            if (confirm('Delete this document? This cannot be undone.')) {
+                              await onDeleteDocument(doc.id);
+                              onRefresh();
+                            }
+                          }}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete document">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

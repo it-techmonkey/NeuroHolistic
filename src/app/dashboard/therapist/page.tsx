@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -82,6 +82,11 @@ type Client = {
   } | null;
   assessmentCount?: number;
   devFormsCount?: number;
+  sessionStats?: {
+    upcoming: number;
+    completed: number;
+    total: number;
+  };
 };
 
 type Document = {
@@ -176,6 +181,61 @@ export default function TherapistDashboardPage() {
     sessionNumber?: number;
   } | null>(null);
   const [baselineExists, setBaselineExists] = useState(false);
+  const [fetchedDevForm, setFetchedDevForm] = useState<any>(null);
+
+  // Map booking ID to session ID for dev form lookup
+  const sessionIdMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (clientDetail?.sessions || []).forEach((s: any) => {
+      // For standalone sessions (no booking), s.id is session ID
+      if (s.booking_id) {
+        map.set(s.booking_id, s.id);
+      }
+      // For bookings, s.session_ref_id is the linked session ID
+      if (s.session_ref_id) {
+        map.set(s.id, s.session_ref_id);
+      }
+      // Always map session ID to itself
+      map.set(s.id, s.id);
+    });
+    return map;
+  }, [clientDetail?.sessions]);
+
+  // Fetch dev form when opening modal for a session
+  useEffect(() => {
+    if (modalType === 'development' && activeSession) {
+      // Fetch dev forms for this client and session
+      const clientId = activeSession.client_id;
+      const sessionId = activeSession.booking_id || activeSession.id;
+      fetch(`/api/assessments/session-development?clientId=${clientId}&sessionId=${sessionId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.forms && data.forms.length > 0) {
+            // The API already filtered by sessionId (booking or session), so take the first
+            setFetchedDevForm(data.forms[0]);
+          } else {
+            setFetchedDevForm(null);
+          }
+        })
+        .catch(() => setFetchedDevForm(null));
+    } else {
+      setFetchedDevForm(null);
+    }
+  }, [modalType, activeSession]);
+
+  const effectiveExistingForm = useMemo(() => {
+    if (!activeSession) return null;
+    if (clientDetail?.devForms) {
+      const found = clientDetail.devForms.find((f: any) => {
+        const sessionId = activeSession.booking_id 
+          ? sessionIdMap.get(activeSession.booking_id) || activeSession.id
+          : sessionIdMap.get(activeSession.id) || activeSession.id;
+        return f.session_id === sessionId;
+      });
+      if (found) return found;
+    }
+    return fetchedDevForm;
+  }, [clientDetail?.devForms, fetchedDevForm, activeSession, sessionIdMap]);
 
   useEffect(() => {
     async function init() {
@@ -227,6 +287,23 @@ export default function TherapistDashboardPage() {
       const clientsData = await clientsRes.json();
 
       const allSessions: Session[] = sessionsData.sessions || [];
+      // Calculate session stats per client
+      const clientSessionStats: Record<string, { upcoming: number; completed: number; total: number }> = {};
+      allSessions.forEach((session: Session) => {
+        const clientId = session.client_id;
+        if (!clientId) return;
+
+        if (!clientSessionStats[clientId]) {
+          clientSessionStats[clientId] = { upcoming: 0, completed: 0, total: 0 };
+        }
+        clientSessionStats[clientId].total++;
+        if (session.status === 'completed') {
+          clientSessionStats[clientId].completed++;
+        } else if (!['cancelled', 'no_show'].includes(session.status)) {
+          clientSessionStats[clientId].upcoming++;
+        }
+      });
+
       const allClients: Client[] = (clientsData.clients || []).map((client: any) => {
         const program = client.program
           ? {
@@ -240,9 +317,12 @@ export default function TherapistDashboardPage() {
             }
           : client.program;
 
+        const stats = clientSessionStats[client.userId] || { upcoming: 0, completed: 0, total: 0 };
+
         return {
           ...client,
           program,
+          sessionStats: stats,
         };
       });
 
@@ -318,18 +398,66 @@ export default function TherapistDashboardPage() {
 
         // Extract baseline assessment for comparison
         const baseline = data.assessments?.find((a: any) => a.is_baseline);
+        const devForms = data.devForms || [];
+
         if (baseline) {
           setBaselineExists(true);
-          setBaselineScores({
-            nervous_system_score: baseline.nervous_system_score ?? 0,
-            emotional_state_score: baseline.emotional_state_score ?? 0,
-            cognitive_patterns_score: baseline.cognitive_patterns_score ?? 0,
-            body_symptoms_score: baseline.body_symptoms_score ?? 0,
-            behavioral_patterns_score: baseline.behavioral_patterns_score ?? 0,
-            life_functioning_score: baseline.life_functioning_score ?? 0,
-            goal_readiness_score: baseline.goal_readiness_score ?? 0,
-            source: 'assessment' as const,
-          });
+
+          // For session 1: compare with baseline
+          // For session 2+: compare with the previous session's dev form
+          const currentSession = data.sessions?.find((s: any) => s.status !== 'completed');
+          const currentSessionNum = currentSession?.session_number || 1;
+
+          if (currentSessionNum > 1 && devForms.length > 0) {
+            // Get the previous session's dev form
+            // Filter out forms with null session_number and those >= current session
+            const previousSessionForms = devForms
+              .filter((f: any) => f.session_number != null && f.session_number < currentSessionNum)
+              .sort((a: any, b: any) => (b.session_number || 0) - (a.session_number || 0));
+
+            if (previousSessionForms.length > 0) {
+              const prevForm = previousSessionForms[0];
+              // Use the stored session_number, fallback to currentSessionNum - 1
+              const prevSessionNum = prevForm.session_number ?? (currentSessionNum - 1);
+              setBaselineScores({
+                nervous_system_score: prevForm.nervous_system_score ?? 0,
+                emotional_state_score: prevForm.emotional_state_score ?? 0,
+                cognitive_patterns_score: prevForm.cognitive_patterns_score ?? 0,
+                body_symptoms_score: prevForm.body_symptoms_score ?? 0,
+                behavioral_patterns_score: prevForm.behavioral_patterns_score ?? 0,
+                life_functioning_score: prevForm.life_functioning_score ?? 0,
+                goal_readiness_score: (prevForm.nervous_system_score ?? 0) + (prevForm.emotional_state_score ?? 0) +
+                  (prevForm.cognitive_patterns_score ?? 0) + (prevForm.body_symptoms_score ?? 0) +
+                  (prevForm.behavioral_patterns_score ?? 0) + (prevForm.life_functioning_score ?? 0),
+                source: 'session' as const,
+                sessionNumber: prevSessionNum,
+              });
+            } else {
+              // No previous dev form, use baseline
+              setBaselineScores({
+                nervous_system_score: baseline.nervous_system_score ?? 0,
+                emotional_state_score: baseline.emotional_state_score ?? 0,
+                cognitive_patterns_score: baseline.cognitive_patterns_score ?? 0,
+                body_symptoms_score: baseline.body_symptoms_score ?? 0,
+                behavioral_patterns_score: baseline.behavioral_patterns_score ?? 0,
+                life_functioning_score: baseline.life_functioning_score ?? 0,
+                goal_readiness_score: baseline.goal_readiness_score ?? 0,
+                source: 'assessment' as const,
+              });
+            }
+          } else {
+            // Session 1 or no session number - use baseline
+            setBaselineScores({
+              nervous_system_score: baseline.nervous_system_score ?? 0,
+              emotional_state_score: baseline.emotional_state_score ?? 0,
+              cognitive_patterns_score: baseline.cognitive_patterns_score ?? 0,
+              body_symptoms_score: baseline.body_symptoms_score ?? 0,
+              behavioral_patterns_score: baseline.behavioral_patterns_score ?? 0,
+              life_functioning_score: baseline.life_functioning_score ?? 0,
+              goal_readiness_score: baseline.goal_readiness_score ?? 0,
+              source: 'assessment' as const,
+            });
+          }
         } else {
           setBaselineExists(false);
           setBaselineScores(null);
@@ -410,6 +538,26 @@ export default function TherapistDashboardPage() {
       alert('Failed to upload document: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setUploadingDoc(false);
+    }
+  };
+
+  // Delete document
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!selectedClient) return;
+    try {
+      const res = await fetch(`/api/documents?id=${documentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete document');
+      }
+
+      await fetchClientDocuments(selectedClient.userId);
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('Failed to delete document: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -809,6 +957,7 @@ export default function TherapistDashboardPage() {
                 uploadingDoc={uploadingDoc}
                 uploadSuccess={uploadSuccess}
                 baselineScores={baselineScores}
+                onDeleteDocument={handleDeleteDocument}
               />
             ) : (
               <>
@@ -1023,7 +1172,7 @@ export default function TherapistDashboardPage() {
                     country: clientDetail.clientProfile.country,
                   } : undefined}
                   onClose={() => closeForm(false)}
-                  onSave={() => closeForm(true)}
+                  onSave={() => closeForm(false)}
                 />
               )}
               {modalType === 'development' && (
@@ -1033,9 +1182,24 @@ export default function TherapistDashboardPage() {
                   therapistId={therapistId!}
                   sessionNumber={activeSession.session_number || 1}
                   sessionDate={activeSession.date || new Date().toISOString().split('T')[0]}
-                   comparisonBaseline={baselineScores}
+                  comparisonBaseline={baselineScores}
+                  existingForm={effectiveExistingForm}
                   onClose={() => closeForm(false)}
-                  onSave={() => closeForm(true)}
+                  onSave={(savedForm) => {
+                    // Update local state with saved form
+                    setFetchedDevForm(savedForm);
+                    if (clientDetail) {
+                      const updatedDevForms = [...(clientDetail.devForms || [])];
+                      const existingIndex = updatedDevForms.findIndex((f: any) => f.session_id === savedForm.session_id);
+                      if (existingIndex >= 0) {
+                        updatedDevForms[existingIndex] = savedForm;
+                      } else {
+                        updatedDevForms.push(savedForm);
+                      }
+                      setClientDetail({ ...clientDetail, devForms: updatedDevForms });
+                    }
+                    closeForm(true);
+                  }}
                 />
               )}
             </div>
@@ -1206,6 +1370,8 @@ function SessionCard({
 }
 
 function ClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
+  const stats = client.sessionStats || { upcoming: 0, completed: 0, total: 0 };
+
   return (
     <button
       onClick={onClick}
@@ -1229,7 +1395,24 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
           )}
         </div>
       </div>
-      <div className="mt-4 pt-4 border-t border-slate-100">
+
+      {/* Session Stats */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="bg-blue-50 rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-blue-700">{stats.upcoming}</p>
+          <p className="text-[10px] text-blue-600 font-medium">Upcoming</p>
+        </div>
+        <div className="bg-green-50 rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-green-700">{stats.completed}</p>
+          <p className="text-[10px] text-green-600 font-medium">Completed</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-slate-700">{stats.total}</p>
+          <p className="text-[10px] text-slate-600 font-medium">Total</p>
+        </div>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-slate-100">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           client.program?.status === 'active' ? 'bg-green-100 text-green-800' :
           client.program?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
@@ -1247,7 +1430,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
 function ClientDetailView({
   client, detail, detailLoading, activeTab, onTabChange,
   onBack, onOpenAssessment, onOpenDevForm, onRefresh,
-  documents, onUploadDocument, uploadingDoc, uploadSuccess, baselineScores
+  documents, onUploadDocument, uploadingDoc, uploadSuccess, baselineScores, onDeleteDocument
 }: {
   client: Client;
   detail: any;
@@ -1263,6 +1446,7 @@ function ClientDetailView({
   uploadingDoc: boolean;
   uploadSuccess: boolean;
   baselineScores: any;
+  onDeleteDocument?: (documentId: string) => Promise<void>;
 }) {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: User },
@@ -1273,24 +1457,40 @@ function ClientDetailView({
   ];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Build session_number lookup from sessions data
+  const sessionNumberLookup = new Map<string, number>();
+  (detail?.sessions || []).forEach((s: any) => {
+    if (s.id && s.session_number) {
+      sessionNumberLookup.set(s.id, s.session_number);
+    }
+  });
+
   const progressSessionScores = (detail?.devForms || [])
-    .map((form: any) => ({
-      sessionNumber: form.session_number || 1,
-      date: form.session_date || form.created_at || '',
-      nervous_system: form.nervous_system_score || 0,
-      emotional_state: form.emotional_state_score || 0,
-      cognitive_patterns: form.cognitive_patterns_score || 0,
-      body_symptoms: form.body_symptoms_score || 0,
-      behavioral_patterns: form.behavioral_patterns_score || 0,
-      life_functioning: form.life_functioning_score || 0,
-      goal_readiness:
-        (form.nervous_system_score || 0) +
-        (form.emotional_state_score || 0) +
-        (form.cognitive_patterns_score || 0) +
-        (form.body_symptoms_score || 0) +
-        (form.behavioral_patterns_score || 0) +
-        (form.life_functioning_score || 0),
-    }))
+    .map((form: any, index: number) => {
+      // Get session_number from lookup, or fall back to form's session_number, or use index+1 as last resort
+      const sessionNumber = sessionNumberLookup.get(form.session_id) ?? form.session_number ?? (index + 1);
+      return {
+        sessionNumber,
+        date: form.session_date || form.created_at || '',
+        nervous_system: form.nervous_system_score || 0,
+        emotional_state: form.emotional_state_score || 0,
+        cognitive_patterns: form.cognitive_patterns_score || 0,
+        body_symptoms: form.body_symptoms_score || 0,
+        behavioral_patterns: form.behavioral_patterns_score || 0,
+        life_functioning: form.life_functioning_score || 0,
+        goal_readiness:
+          (form.nervous_system_score || 0) +
+          (form.emotional_state_score || 0) +
+          (form.cognitive_patterns_score || 0) +
+          (form.body_symptoms_score || 0) +
+          (form.behavioral_patterns_score || 0) +
+          (form.life_functioning_score || 0),
+      };
+    })
+    .filter((item: any, index: number, arr: any[]) => {
+      // Remove duplicates by sessionNumber, keeping the first occurrence
+      return arr.findIndex((x: any) => x.sessionNumber === item.sessionNumber) === index;
+    })
     .sort((a: any, b: any) => a.sessionNumber - b.sessionNumber);
   const overviewBaseline = detail?.assessments?.find((a: any) => a.is_baseline);
   const overviewTimelineData: Array<{
@@ -1654,6 +1854,7 @@ function ClientDetailView({
                     onRefresh={onRefresh}
                     onUploadDocument={onUploadDocument}
                     uploadingDoc={uploadingDoc}
+                    onDeleteDocument={onDeleteDocument}
                   />
                 </div>
               )}

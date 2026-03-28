@@ -5,17 +5,33 @@ export default function MethodDifference() {
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-20">
           <div className="lg:col-span-5 lg:sticky lg:top-32 h-fit">
             <h2 className="text-[34px] font-medium leading-[1.15] text-[#0F172A] md:text-[46px]">
-              What makes the <br/>Method <span className="italic text-[#64748B]">different.</span>
+              What Makes the <br/>NeuroHolistic Method <span className="italic text-[#64748B]">Different.</span>
             </h2>
+            <p className="mt-6 text-[16px] leading-[1.8] text-[#475569]">
+              While many approaches focus on managing symptoms or addressing isolated aspects of human experience, the NeuroHolistic Method™ works with the human system as an integrated whole.
+            </p>
+            <p className="mt-4 text-[16px] leading-[1.8] text-[#475569]">
+              Human challenges rarely arise from a single cause. They emerge from complex interactions between neural patterns, emotional memory, physiological regulation, and deeper layers of perception. By working with these dimensions simultaneously, the NeuroHolistic Method™ allows transformation to occur at a deeper and more sustainable level.
+            </p>
+            <p className="mt-4 text-[16px] leading-[1.8] text-[#475569]">
+              Unlike linear therapeutic models, the method follows a structured five-phase architecture that gradually restores internal coherence. Each phase prepares the system for the next, allowing emotional release, cognitive restructuring, and behavioral change to unfold in a stable and integrative way.
+            </p>
+            <p className="mt-4 text-[16px] leading-[1.8] text-[#475569]">
+              Another distinguishing aspect of the NeuroHolistic Method™ is its emphasis on systemic coherence. Rather than focusing only on individual thoughts or behaviors, the method addresses the dynamic relationship between the brain, body, emotional memory, and internal awareness. When these systems begin to realign, many aspects of life naturally begin to change.
+            </p>
+            <p className="mt-4 text-[16px] leading-[1.8] text-[#475569]">
+              As a result, the work often extends beyond resolving specific challenges. Individuals frequently experience broader shifts in clarity, resilience, relationships, and their capacity to engage with life more consciously and intentionally.
+            </p>
           </div>
           <div className="lg:col-span-7">
+            <h3 className="mb-6 text-[18px] font-semibold text-[#0F172A]">Key Distinctions</h3>
             <ul className="border-t border-[#E2E8F0]">
               {[
                 "Works with the human system as an integrated whole",
-                "Addresses root patterns rather than symptoms",
+                "Addresses root patterns rather than isolated symptoms",
                 "Structured five-phase transformation process",
-                "Integrates neuroscience with development",
-                "Supports both healing and expansion"
+                "Integrates neuroscience with systemic human development",
+                "Supports both healing and expansion of human potential"
               ].map((item, i) => (
                 <li key={i} className="flex items-center justify-between border-b border-[#E2E8F0] py-8 text-[18px] text-[#475569] md:text-[20px]">
                   <span className="max-w-[80%]">{item}</span>

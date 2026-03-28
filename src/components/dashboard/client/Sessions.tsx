@@ -10,6 +10,7 @@ type Slot = {
 };
 
 type ProgramStatus = 'active' | 'completed' | 'consultation_done' | 'none';
+type SessionFilter = 'all' | 'upcoming' | 'completed';
 
 export default function Sessions({
   upcoming,
@@ -35,6 +36,7 @@ export default function Sessions({
   const [selectedSlot, setSelectedSlot] = useState('');
   const [rescheduleError, setRescheduleError] = useState('');
   const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all');
 
   useEffect(() => {
     if (!reschedulingSession || !selectedDate) {
@@ -104,6 +106,11 @@ export default function Sessions({
   const scheduledConsultation = upcoming.find((s: any) => s.type === 'free_consultation' && s.status === 'confirmed');
   const hasScheduledConsultation = !!scheduledConsultation;
 
+  // Filtered past sessions for completed filter
+  const filteredPast = sessionFilter === 'completed'
+    ? past.filter(s => s.status === 'completed')
+    : past;
+
   // Calculate progress metrics
   // Note: goal_readiness_score is a symptom severity score (0=optimal, 60=severe)
   // Lower scores = improvement, so we calculate firstScore - lastScore for positive improvement
@@ -170,22 +177,36 @@ export default function Sessions({
 
   return (
     <div className="space-y-8">
-      {/* Session Statistics */}
+      {/* Session Statistics - Clickable */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+        <button
+          onClick={() => setSessionFilter(sessionFilter === 'upcoming' ? 'all' : 'upcoming')}
+          className={`text-left bg-gradient-to-br rounded-xl p-4 border transition-all cursor-pointer ${
+            sessionFilter === 'upcoming'
+              ? 'from-indigo-100 to-purple-100 border-indigo-300 ring-2 ring-indigo-200'
+              : 'from-indigo-50 to-purple-50 border-indigo-100 hover:border-indigo-200'
+          }`}
+        >
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-indigo-600" />
             <span className="text-sm text-indigo-600 font-medium">Upcoming</span>
           </div>
           <p className="text-2xl font-bold text-indigo-700">{upcoming.length}</p>
-        </div>
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+        </button>
+        <button
+          onClick={() => setSessionFilter(sessionFilter === 'completed' ? 'all' : 'completed')}
+          className={`text-left bg-gradient-to-br rounded-xl p-4 border transition-all cursor-pointer ${
+            sessionFilter === 'completed'
+              ? 'from-green-100 to-emerald-100 border-green-300 ring-2 ring-green-200'
+              : 'from-green-50 to-emerald-50 border-green-100 hover:border-green-200'
+          }`}
+        >
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-4 h-4 text-green-600" />
             <span className="text-sm text-green-600 font-medium">Completed</span>
           </div>
           <p className="text-2xl font-bold text-green-700">{past.filter(s => s.status === 'completed').length}</p>
-        </div>
+        </button>
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-amber-600" />
@@ -200,6 +221,27 @@ export default function Sessions({
           </div>
           <p className="text-2xl font-bold text-purple-700">{assessments?.length || 0}</p>
         </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 pb-2">
+        {[
+          { id: 'all' as SessionFilter, label: 'All Sessions', count: upcoming.length + past.length },
+          { id: 'upcoming' as SessionFilter, label: 'Upcoming', count: upcoming.length },
+          { id: 'completed' as SessionFilter, label: 'Completed', count: past.filter(s => s.status === 'completed').length },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setSessionFilter(tab.id)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              sessionFilter === tab.id
+                ? 'bg-indigo-100 text-indigo-700'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
       </div>
 
       {/* Progress Summary Card */}
@@ -314,75 +356,77 @@ export default function Sessions({
         </section>
       )}
 
-      {/* Upcoming Sessions */}
-      <section>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-          <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
-          Upcoming Sessions
-        </h2>
-        {upcoming.length === 0 ? (
-          <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 text-center">
-            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No upcoming sessions scheduled.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {upcoming.map(session => (
-              <div key={session.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl ${
-                      session.type === 'free_consultation' ? 'bg-purple-100' : 'bg-indigo-100'
-                    }`}>
-                      <User className={`w-6 h-6 ${
-                        session.type === 'free_consultation' ? 'text-purple-600' : 'text-indigo-600'
-                      }`} />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900">
-                        {session.type === 'free_consultation' ? 'Free Consultation' :
-                         session.session_number ? `Session #${session.session_number}` : 'Session'}
+      {/* Upcoming Sessions - Filtered */}
+      {(sessionFilter === 'all' || sessionFilter === 'upcoming') && (
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
+            Upcoming Sessions
+          </h2>
+          {upcoming.length === 0 ? (
+            <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 text-center">
+              <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500">No upcoming sessions scheduled.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {upcoming.map(session => (
+                <div key={session.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${
+                        session.type === 'free_consultation' ? 'bg-purple-100' : 'bg-indigo-100'
+                      }`}>
+                        <User className={`w-6 h-6 ${
+                          session.type === 'free_consultation' ? 'text-purple-600' : 'text-indigo-600'
+                        }`} />
                       </div>
-                      <div className="text-sm text-slate-600 flex items-center space-x-4 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {session.time}
-                        </span>
+                      <div>
+                        <div className="font-semibold text-slate-900">
+                          {session.type === 'free_consultation' ? 'Free Consultation' :
+                           session.session_number ? `Session #${session.session_number}` : 'Session'}
+                        </div>
+                        <div className="text-sm text-slate-600 flex items-center space-x-4 mt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {session.time}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">Therapist: {session.therapist_name || 'Assigned'}</div>
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">Therapist: {session.therapist_name || 'Assigned'}</div>
                     </div>
-                  </div>
-                  <div className="flex space-x-3">
-                    {session.meeting_link && (
-                      <a
-                        href={session.meeting_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
-                      >
-                        <Video className="w-4 h-4 mr-2" />
-                        Join Session
-                      </a>
-                    )}
-                    {hasActiveProgram && (
-                      <button
-                        onClick={() => setReschedulingSession(session)}
-                        className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50"
-                      >
-                        Reschedule
-                      </button>
-                    )}
+                    <div className="flex space-x-3">
+                      {session.meeting_link && (
+                        <a
+                          href={session.meeting_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+                        >
+                          <Video className="w-4 h-4 mr-2" />
+                          Join Session
+                        </a>
+                      )}
+                      {hasActiveProgram && (
+                        <button
+                          onClick={() => setReschedulingSession(session)}
+                          className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50"
+                        >
+                          Reschedule
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Pending Sessions - Only show for active programs */}
       {hasActiveProgram && pending && pending.length > 0 && (
@@ -408,50 +452,128 @@ export default function Sessions({
         </section>
       )}
 
-      {/* Past Sessions */}
-      <section>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-          <Clock className="w-5 h-5 mr-2 text-slate-400" />
-          Past Sessions
-        </h2>
-        {past.length === 0 ? (
-          <div className="text-center text-slate-500 py-8">No completed sessions yet.</div>
-        ) : (
-          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-            {past.map(session => (
-              <div key={session.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${
-                    session.status === 'completed' ? 'bg-green-100' : 'bg-slate-100'
-                  }`}>
-                    {session.status === 'completed' ? (
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <X className="w-4 h-4 text-slate-400" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">
-                      {session.type === 'free_consultation' ? 'Free Consultation' :
-                       session.session_number ? `Session #${session.session_number}` : 'Session'}
+      {/* Past Sessions - Filtered */}
+      {(sessionFilter === 'all' || sessionFilter === 'completed') && (
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-slate-400" />
+            {sessionFilter === 'completed' ? 'Completed Sessions' : 'Past Sessions'}
+          </h2>
+          {filteredPast.length === 0 ? (
+            <div className="text-center text-slate-500 py-8">
+              {sessionFilter === 'completed' ? 'No completed sessions yet.' : 'No past sessions.'}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+              {filteredPast.map(session => (
+                <div key={session.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      session.status === 'completed' ? 'bg-green-100' : 'bg-slate-100'
+                    }`}>
+                      {session.status === 'completed' ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <X className="w-4 h-4 text-slate-400" />
+                      )}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {new Date(session.date).toLocaleDateString()} at {session.time}
+                    <div>
+                      <div className="text-sm font-medium text-slate-900">
+                        {session.type === 'free_consultation' ? 'Free Consultation' :
+                         session.session_number ? `Session #${session.session_number}` : 'Session'}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {new Date(session.date).toLocaleDateString()} at {session.time}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    session.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-slate-100 text-slate-800'
+                  }`}>
+                    {session.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Dev Forms Section */}
+      {devForms && devForms.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+            <FileText className="w-5 h-5 mr-2 text-purple-600" />
+            Session Progress Notes
+          </h2>
+          <div className="space-y-4">
+            {devForms.map((form: any) => (
+              <div key={form.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-purple-50 px-4 py-3 border-b border-slate-200">
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium text-slate-900">
+                      Session {form.session_number || '?'}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {new Date(form.session_date || form.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 space-y-4">
+                  {/* Integration Notes */}
+                  {form.integration_notes && (
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Integration Notes</p>
+                      <p className="text-sm text-slate-700">{form.integration_notes}</p>
+                    </div>
+                  )}
+
+                  {/* Shift Observed */}
+                  {form.shift_observed && (
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Shift Observed</p>
+                      <p className="text-sm text-slate-700">{form.shift_observed}</p>
+                    </div>
+                  )}
+
+                  {/* Client Feedback */}
+                  {form.client_feedback && (
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Your Feedback</p>
+                      <p className="text-sm text-slate-700">{form.client_feedback}</p>
+                    </div>
+                  )}
+
+                  {/* Session Scores */}
+                  <div className="pt-3 border-t border-slate-100">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Session Scores</p>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-green-50 rounded-lg p-2">
+                        <p className="text-lg font-bold text-green-700">
+                          {(form.nervous_system_score ?? 0) + (form.emotional_state_score ?? 0) +
+                           (form.cognitive_patterns_score ?? 0) + (form.body_symptoms_score ?? 0) +
+                           (form.behavioral_patterns_score ?? 0) + (form.life_functioning_score ?? 0)}/60
+                        </p>
+                        <p className="text-[10px] text-green-600">Wellbeing</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-2">
+                        <p className="text-lg font-bold text-blue-700">{form.post_session_mood ?? 0}/10</p>
+                        <p className="text-[10px] text-blue-600">Mood</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-2">
+                        <p className="text-lg font-bold text-purple-700">{form.post_session_intensity ?? 0}/10</p>
+                        <p className="text-[10px] text-purple-600">Intensity</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  session.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                  'bg-slate-100 text-slate-800'
-                }`}>
-                  {session.status}
-                </span>
               </div>
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Reschedule Modal */}
       {reschedulingSession && (

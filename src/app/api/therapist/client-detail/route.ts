@@ -45,12 +45,26 @@ export async function GET(request: NextRequest) {
       .eq('client_id', clientId)
       .order('assessed_at', { ascending: true });
 
-    // Fetch session development forms (include internal notes for therapist/admin)
-    const { data: devForms } = await supabase
+    // Fetch session development forms
+    const { data: devFormsRaw } = await supabase
       .from('session_development_forms')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: true });
+
+    // Map session_id to session_number using the sessions we already fetched
+    const sessionNumberMap = new Map<string, number>();
+    (sessions ?? []).forEach((s: any) => {
+      if (s.id && s.session_number) {
+        sessionNumberMap.set(s.id, s.session_number);
+      }
+    });
+
+    // Add session_number to each dev form
+    const devForms = (devFormsRaw ?? []).map((f: any) => ({
+      ...f,
+      session_number: sessionNumberMap.get(f.session_id) ?? null,
+    }));
 
     // Fetch materials
     const sessionIds = (sessions ?? []).map(s => s.id);
