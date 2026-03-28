@@ -35,6 +35,7 @@ function ScheduleSessionContent() {
 
   const [schedulingError, setSchedulingError] = useState('');
   const [schedulingSuccess, setSchedulingSuccess] = useState(false);
+  const [needsConsultFirst, setNeedsConsultFirst] = useState(false);
 
   const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -102,12 +103,28 @@ function ScheduleSessionContent() {
 
       // Load user's program
       const programRes = await fetch('/api/users/check-program');
+      let loadedProgram: any = null;
+      let loadedSession: any = null;
       if (programRes.ok) {
         const data = await programRes.json();
         if (data.program) {
-          setProgram(data.program);
-          setSession(data.firstPendingSession);
+          loadedProgram = data.program;
+          loadedSession = data.firstPendingSession;
         }
+      }
+
+      const dashRes = await fetch('/api/client/dashboard');
+      let completedFreeConsult = false;
+      if (dashRes.ok) {
+        const dash = await dashRes.json();
+        completedFreeConsult = !!dash.hasCompletedFreeConsult;
+      }
+
+      if (loadedProgram && !completedFreeConsult) {
+        setNeedsConsultFirst(true);
+      } else {
+        setProgram(loadedProgram);
+        setSession(loadedSession);
       }
 
       // Load therapists
@@ -195,6 +212,33 @@ function ScheduleSessionContent() {
 
   if (loading && !user) {
     return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>;
+  }
+
+  if (needsConsultFirst) {
+    return (
+      <div className="min-h-screen bg-slate-50 pt-28 sm:pt-32 md:pt-40 px-4 sm:px-6 lg:px-8 pb-16 flex flex-col items-center justify-center">
+        <div className="max-w-lg mx-auto text-center space-y-4">
+          <h1 className="text-2xl font-light text-slate-900">Complete your free consultation first</h1>
+          <p className="text-slate-600 leading-relaxed">
+            Program sessions unlock after your free consultation is completed. Book or finish your consultation, then return here to schedule.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+            <Link
+              href="/consultation/book"
+              className="inline-flex justify-center px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
+            >
+              Book free consultation
+            </Link>
+            <Link
+              href="/dashboard/client"
+              className="inline-flex justify-center px-6 py-3 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
+            >
+              Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (schedulingSuccess) {

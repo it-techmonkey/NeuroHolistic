@@ -112,9 +112,20 @@ export async function GET(request: NextRequest) {
       return dateB.getTime() - dateA.getTime();
       });
 
+    // At most one free-consultation row per client (avoid duplicate booking/session entries)
+    const seenFreeConsultClient = new Set<string>();
+    const dedupedSessions = combinedSessions.filter((item: any) => {
+      if (item.type !== 'free_consultation') return true;
+      const cid = item.client_id || item.user_id;
+      if (!cid) return true;
+      if (seenFreeConsultClient.has(cid)) return false;
+      seenFreeConsultClient.add(cid);
+      return true;
+    });
+
     return NextResponse.json({
       bookings: bookings ?? [],
-      sessions: combinedSessions,
+      sessions: dedupedSessions,
       assessments: assessments ?? [],
       devForms: devForms ?? [],
       materials,

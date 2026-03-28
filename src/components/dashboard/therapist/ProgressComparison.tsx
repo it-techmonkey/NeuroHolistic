@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface ScoreData {
   nervous_system: number;
@@ -18,7 +18,7 @@ interface SessionScore extends ScoreData {
 }
 
 interface ProgressComparisonProps {
-  baselineScores: ScoreData; // Consultation assessment scores
+  baselineScores: ScoreData; // Free consultation / baseline assessment
   sessionScores: SessionScore[];
 }
 
@@ -40,178 +40,209 @@ const SCORE_DOMAINS = [
   'life_functioning',
 ] as const;
 
+/** Lower scores = better wellbeing. Recovery delta = previous − current (positive ⇒ improvement). */
+function getRecoveryIndicator(previous: number, current: number) {
+  const recovery = previous - current;
+  if (recovery > 0) {
+    return {
+      value: recovery,
+      display: `+${recovery}`,
+      color: 'text-green-700',
+      bg: 'bg-green-100',
+      isImprovement: true,
+    };
+  }
+  if (recovery < 0) {
+    return {
+      value: Math.abs(recovery),
+      display: `${recovery}`,
+      color: 'text-amber-700',
+      bg: 'bg-amber-100',
+      isImprovement: false,
+    };
+  }
+  return {
+    value: 0,
+    display: '0',
+    color: 'text-slate-600',
+    bg: 'bg-slate-100',
+    isImprovement: false,
+  };
+}
+
 export default function ProgressComparison({ baselineScores, sessionScores }: ProgressComparisonProps) {
-  const [selectedSession, setSelectedSession] = useState<number | null>(
-    sessionScores.length > 0 ? sessionScores[sessionScores.length - 1].sessionNumber : null
+  const sortedSessions = useMemo(
+    () => [...sessionScores].sort((a, b) => a.sessionNumber - b.sessionNumber),
+    [sessionScores]
   );
 
-  // Find the comparison baseline for a given session
-  // Session 1 compares against consultation baseline
-  // Session 2+ compares against previous session
-  const getComparisonBaseline = (sessionNumber: number): ScoreData & { label: string } => {
+  const [selectedSession, setSelectedSession] = useState<number | null>(
+    sortedSessions.length > 0 ? sortedSessions[sortedSessions.length - 1].sessionNumber : null
+  );
+
+  useEffect(() => {
+    if (sortedSessions.length === 0) return;
+    const lastN = sortedSessions[sortedSessions.length - 1].sessionNumber;
+    setSelectedSession((prev) =>
+      prev !== null && sessionScores.some((s) => s.sessionNumber === prev) ? prev : lastN
+    );
+  }, [sortedSessions, sessionScores]);
+
+  // Session 1 → free consultation baseline; later sessions → previous numbered session, or nearest earlier session, else baseline
+  const getComparisonReference = (sessionNumber: number): ScoreData & { label: string } => {
     if (sessionNumber === 1) {
-      return { ...baselineScores, label: 'Baseline (Consultation)' };
+      return { ...baselineScores, label: 'Free consultation (baseline)' };
     }
-    const previousSession = sessionScores.find(s => s.sessionNumber === sessionNumber - 1);
-    if (previousSession) {
-      return { ...previousSession, label: `Session ${sessionNumber - 1}` };
+    const directPrev = sessionScores.find((s) => s.sessionNumber === sessionNumber - 1);
+    if (directPrev) {
+      return { ...directPrev, label: `Session ${sessionNumber - 1}` };
     }
-    return { ...baselineScores, label: 'Baseline (Consultation)' };
+    const earlier = sortedSessions.filter((s) => s.sessionNumber < sessionNumber);
+    const fallback = earlier.length ? earlier[earlier.length - 1] : null;
+    if (fallback) {
+      return { ...fallback, label: `Session ${fallback.sessionNumber}` };
+    }
+    return { ...baselineScores, label: 'Free consultation (baseline)' };
   };
 
-  const selectedSessionData = sessionScores.find(s => s.sessionNumber === selectedSession);
-  const comparisonBaseline = selectedSession ? getComparisonBaseline(selectedSession) : null;
+  const selectedSessionData = sessionScores.find((s) => s.sessionNumber === selectedSession);
+  const comparisonRef = selectedSession ? getComparisonReference(selectedSession) : null;
 
-  const getChangeIndicator = (baseline: number, current: number) => {
-    const change = current - baseline;
-    if (change > 0) return { value: change, label: '+', color: 'text-green-600', bg: 'bg-green-100' };
-    if (change < 0) return { value: Math.abs(change), label: '-', color: 'text-red-600', bg: 'bg-red-100' };
-    return { value: 0, label: '=', color: 'text-slate-500', bg: 'bg-slate-100' };
-  };
+  const calculateRollingProgress = () => {
+    if (sortedSessions.length === 0) return null;
 
-  // Calculate cumulative progress from baseline
-  const calculateCumulativeProgress = () => {
-    if (sessionScores.length === 0) return null;
-    
-    const sortedSessions = [...sessionScores].sort((a, b) => a.sessionNumber - b.sessionNumber);
-    let currentBaseline = baselineScores;
-    const progressData: Array<{
+    let previous: ScoreData & { label: string } = {
+      ...baselineScores,
+      label: 'Free consultation',
+    };
+    const rows: Array<{
       sessionNumber: number;
       comparisonLabel: string;
-      change: number;
+      recovery: number;
       currentScore: number;
     }> = [];
 
     for (const session of sortedSessions) {
-      const change = session.goal_readiness - currentBaseline.goal_readiness;
-      progressData.push({
+      const recovery = previous.goal_readiness - session.goal_readiness;
+      rows.push({
         sessionNumber: session.sessionNumber,
-        comparisonLabel: session.sessionNumber === 1 ? 'Baseline' : `Session ${session.sessionNumber - 1}`,
-        change,
+        comparisonLabel: previous.label,
+        recovery,
         currentScore: session.goal_readiness,
       });
-      // For next iteration, the baseline becomes this session
-      currentBaseline = session;
+      previous = { ...session, label: `Session ${session.sessionNumber}` };
     }
 
-    return progressData;
+    return rows;
   };
 
-  const cumulativeProgress = calculateCumulativeProgress();
+  const rollingProgress = calculateRollingProgress();
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      {/* Header */}
       <div className="p-6 border-b border-slate-100">
-        <h3 className="text-lg font-semibold text-slate-900">Session Progress (Rolling Comparison)</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Session progress (rolling comparison)</h3>
         <p className="text-sm text-slate-500 mt-1">
-          Each session is compared against the previous one. Session 1 uses the consultation baseline.
+          Each session is compared to the previous step: Session 1 vs your free consultation report; later sessions vs the
+          prior session. Lower scores mean improved wellbeing — a positive change is points of recovery (previous score minus
+          current score).
         </p>
 
-        {/* Session Selector */}
-        {sessionScores.length > 0 && (
+        {sortedSessions.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedSession(1)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedSession === 1
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Session 1 <span className="text-xs opacity-70">(vs Baseline)</span>
-            </button>
-            {sessionScores.filter(s => s.sessionNumber > 1).map((session) => (
-              <button
-                key={session.sessionNumber}
-                onClick={() => setSelectedSession(session.sessionNumber)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedSession === session.sessionNumber
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Session {session.sessionNumber} <span className="text-xs opacity-70">(vs S{session.sessionNumber - 1})</span>
-              </button>
-            ))}
+            {sortedSessions.map((s) => {
+              const ref = getComparisonReference(s.sessionNumber);
+              return (
+                <button
+                  key={s.sessionNumber}
+                  type="button"
+                  onClick={() => setSelectedSession(s.sessionNumber)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedSession === s.sessionNumber
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Session {s.sessionNumber}{' '}
+                  <span className="text-xs opacity-80">(vs {ref.label})</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Comparison Table */}
-      {selectedSessionData && comparisonBaseline ? (
+      {selectedSessionData && comparisonRef ? (
         <div className="p-6">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50">
                   <th className="text-left py-3 px-4 font-medium text-slate-700 rounded-tl-lg">Domain</th>
-                  <th className="text-center py-3 px-4 font-medium text-slate-500">
-                    {comparisonBaseline.label}
-                  </th>
-                  <th className="text-center py-3 px-4 font-medium text-slate-700">
-                    Session {selectedSession}
-                  </th>
-                  <th className="text-center py-3 px-4 font-medium text-slate-700 rounded-tr-lg">Change</th>
+                  <th className="text-center py-3 px-4 font-medium text-slate-500">{comparisonRef.label}</th>
+                  <th className="text-center py-3 px-4 font-medium text-slate-700">Session {selectedSession}</th>
+                  <th className="text-center py-3 px-4 font-medium text-slate-700 rounded-tr-lg">Recovery / change</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {SCORE_DOMAINS.map((domain) => {
-                  const baseline = comparisonBaseline[domain];
-                  const current = selectedSessionData[domain];
-                  const change = getChangeIndicator(baseline, current);
+                  const prevVal = comparisonRef[domain];
+                  const currVal = selectedSessionData[domain];
+                  const ind = getRecoveryIndicator(prevVal, currVal);
 
                   return (
                     <tr key={domain} className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 text-slate-700">{SCORE_LABELS[domain]}</td>
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-medium">
-                          {baseline}
+                          {prevVal}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${change.bg} ${change.color} font-medium`}>
-                          {current}
+                        <span
+                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-medium ${
+                            ind.isImprovement ? 'bg-green-100 text-green-800' : ind.value === 0 ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {currVal}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${change.bg} ${change.color}`}>
-                          {change.label}{change.value}
-                          {change.value > 0 && ' ↑'}
-                          {change.value < 0 && ' ↓'}
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${ind.bg} ${ind.color}`}>
+                          {ind.display}
                         </span>
                       </td>
                     </tr>
                   );
                 })}
                 <tr className="bg-slate-50 font-semibold">
-                  <td className="py-3 px-4 text-slate-900">Total Wellbeing</td>
+                  <td className="py-3 px-4 text-slate-900">Total wellbeing</td>
                   <td className="py-3 px-4 text-center">
                     <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
-                      {comparisonBaseline.goal_readiness}/60
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full ${
-                      (selectedSessionData.goal_readiness - comparisonBaseline.goal_readiness) > 0 ? 'bg-green-100 text-green-700' :
-                      (selectedSessionData.goal_readiness - comparisonBaseline.goal_readiness) < 0 ? 'bg-red-100 text-red-700' :
-                      'bg-slate-200 text-slate-700'
-                    } font-bold`}>
-                      {selectedSessionData.goal_readiness}/60
+                      {comparisonRef.goal_readiness}/60
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center">
                     {(() => {
-                      const totalChange = selectedSessionData.goal_readiness - comparisonBaseline.goal_readiness;
+                      const ind = getRecoveryIndicator(comparisonRef.goal_readiness, selectedSessionData.goal_readiness);
                       return (
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${
-                          totalChange > 0 ? 'bg-green-100 text-green-700' :
-                          totalChange < 0 ? 'bg-red-100 text-red-700' :
-                          'bg-slate-200 text-slate-700'
-                        }`}>
-                          {totalChange > 0 ? '+' : ''}{totalChange}
-                          {totalChange > 0 && ' ↑'}
-                          {totalChange < 0 && ' ↓'}
+                        <span
+                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full font-bold ${
+                            ind.isImprovement ? 'bg-green-100 text-green-800' : ind.value === 0 ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {selectedSessionData.goal_readiness}/60
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {(() => {
+                      const ind = getRecoveryIndicator(comparisonRef.goal_readiness, selectedSessionData.goal_readiness);
+                      return (
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${ind.bg} ${ind.color}`}>
+                          {ind.display}
+                          {ind.isImprovement ? ' recovery' : ind.value !== 0 ? ' higher' : ''}
                         </span>
                       );
                     })()}
@@ -221,25 +252,24 @@ export default function ProgressComparison({ baselineScores, sessionScores }: Pr
             </table>
           </div>
 
-          {/* Progress Summary */}
           {(() => {
-            const totalChange = selectedSessionData.goal_readiness - comparisonBaseline.goal_readiness;
+            const ind = getRecoveryIndicator(comparisonRef.goal_readiness, selectedSessionData.goal_readiness);
             return (
-              <div className={`mt-6 p-4 rounded-lg border ${
-                totalChange > 0 ? 'bg-green-50 border-green-200' :
-                totalChange < 0 ? 'bg-amber-50 border-amber-200' :
-                'bg-slate-50 border-slate-200'
-              }`}>
-                <p className={`text-sm font-medium ${
-                  totalChange > 0 ? 'text-green-800' :
-                  totalChange < 0 ? 'text-amber-800' :
-                  'text-slate-800'
-                }`}>
-                  {totalChange > 0
-                    ? `Session ${selectedSession} shows improvement of ${totalChange} points compared to ${comparisonBaseline.label}.`
-                    : totalChange < 0
-                    ? `Session ${selectedSession} is ${Math.abs(totalChange)} points below ${comparisonBaseline.label}. Review treatment approach.`
-                    : `Session ${selectedSession} is maintaining ${comparisonBaseline.label} levels.`}
+              <div
+                className={`mt-6 p-4 rounded-lg border ${
+                  ind.isImprovement ? 'bg-green-50 border-green-200' : ind.value === 0 ? 'bg-slate-50 border-slate-200' : 'bg-amber-50 border-amber-200'
+                }`}
+              >
+                <p
+                  className={`text-sm font-medium ${
+                    ind.isImprovement ? 'text-green-900' : ind.value === 0 ? 'text-slate-800' : 'text-amber-900'
+                  }`}
+                >
+                  {ind.isImprovement
+                    ? `Session ${selectedSession} is ${ind.value} points lower than ${comparisonRef.label} (${comparisonRef.goal_readiness}/60 → ${selectedSessionData.goal_readiness}/60). Lower scores indicate improved wellbeing — that is ${ind.value} points of recovery.`
+                    : ind.value === 0
+                    ? `Session ${selectedSession} matches ${comparisonRef.label} on total wellbeing (${selectedSessionData.goal_readiness}/60).`
+                    : `Session ${selectedSession} is ${ind.value} points higher than ${comparisonRef.label}. Scores moved away from the recovery direction; consider reviewing the treatment focus.`}
                 </p>
               </div>
             );
@@ -248,39 +278,42 @@ export default function ProgressComparison({ baselineScores, sessionScores }: Pr
       ) : (
         <div className="p-8 text-center text-slate-500">
           <p>No session data available yet.</p>
-          <p className="text-sm mt-1">Complete a session and fill out the Development Form to see progress.</p>
+          <p className="text-sm mt-1">Complete a session and fill out the development form to see progress.</p>
         </div>
       )}
 
-      {/* Cumulative Progress Timeline */}
-      {cumulativeProgress && cumulativeProgress.length > 0 && (
+      {rollingProgress && rollingProgress.length > 0 && (
         <div className="border-t border-slate-200 p-6">
-          <h4 className="font-medium text-slate-900 mb-4">Cumulative Progress Timeline</h4>
+          <h4 className="font-medium text-slate-900 mb-2">Rolling progress timeline</h4>
           <p className="text-xs text-slate-500 mb-4">
-            Each session compared to the previous one. Cumulative shows overall progress from baseline.
+            Each row compares that session to the step in “Compared to” (Session 1 vs free consultation; Session 2 vs Session 1;
+            etc.). A positive change is recovery (points dropped toward better wellbeing).
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50">
                   <th className="text-left py-2 px-3 font-medium text-slate-700">Session</th>
-                  <th className="text-center py-2 px-3 font-medium text-slate-500">Compared To</th>
+                  <th className="text-center py-2 px-3 font-medium text-slate-500">Compared to</th>
                   <th className="text-center py-2 px-3 font-medium text-slate-700">Score</th>
-                  <th className="text-center py-2 px-3 font-medium text-slate-700">Change</th>
+                  <th className="text-center py-2 px-3 font-medium text-slate-700">Change (recovery)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {cumulativeProgress.map((item) => (
+                {rollingProgress.map((item) => (
                   <tr key={item.sessionNumber} className="hover:bg-slate-50/50">
                     <td className="py-2 px-3 font-medium text-slate-900">Session {item.sessionNumber}</td>
                     <td className="py-2 px-3 text-center text-slate-500">{item.comparisonLabel}</td>
                     <td className="py-2 px-3 text-center font-medium text-indigo-600">{item.currentScore}/60</td>
-                    <td className={`py-2 px-3 text-center font-medium ${
-                      item.change > 0 ? 'text-green-600' : item.change < 0 ? 'text-red-600' : 'text-slate-500'
-                    }`}>
-                      {item.change > 0 ? '+' : ''}{item.change}
-                      {item.change > 0 && ' ↑'}
-                      {item.change < 0 && ' ↓'}
+                    <td
+                      className={`py-2 px-3 text-center font-medium ${
+                        item.recovery > 0 ? 'text-green-600' : item.recovery < 0 ? 'text-amber-600' : 'text-slate-500'
+                      }`}
+                    >
+                      {item.recovery > 0 ? '+' : ''}
+                      {item.recovery}
+                      {item.recovery > 0 && ' recovery'}
+                      {item.recovery < 0 && ' (higher)'}
                     </td>
                   </tr>
                 ))}
@@ -288,21 +321,21 @@ export default function ProgressComparison({ baselineScores, sessionScores }: Pr
             </table>
           </div>
 
-          {/* Overall Progress from Baseline */}
-          {cumulativeProgress.length > 0 && (
-            <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-indigo-900">Overall Progress from Baseline</span>
-                <span className="text-lg font-bold text-indigo-600">
-                  {(() => {
-                    const lastSession = sessionScores[sessionScores.length - 1];
-                    const totalChange = lastSession.goal_readiness - baselineScores.goal_readiness;
-                    return `${totalChange > 0 ? '+' : ''}${totalChange} points (${baselineScores.goal_readiness} → ${lastSession.goal_readiness})`;
-                  })()}
-                </span>
-              </div>
+          <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-sm font-medium text-indigo-900">Overall change from free consultation to latest session</span>
+              <span className="text-lg font-bold text-indigo-600">
+                {(() => {
+                  const lastSession = sortedSessions[sortedSessions.length - 1];
+                  const totalRecovery = baselineScores.goal_readiness - lastSession.goal_readiness;
+                  return `${totalRecovery > 0 ? '+' : ''}${totalRecovery} pts (${baselineScores.goal_readiness}/60 → ${lastSession.goal_readiness}/60)`;
+                })()}
+              </span>
             </div>
-          )}
+            <p className="text-xs text-indigo-700/80 mt-2">
+              Positive total = lower score at latest session than at consultation (improved wellbeing on this scale).
+            </p>
+          </div>
         </div>
       )}
     </div>

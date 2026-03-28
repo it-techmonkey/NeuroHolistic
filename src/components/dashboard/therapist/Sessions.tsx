@@ -470,6 +470,16 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
                   clientId={activeSession.client_id}
                   therapistId={therapistId}
                   sessionId={activeSession.id}
+                  clientData={
+                    activeSession.clients
+                      ? {
+                          full_name: activeSession.clients.full_name,
+                          email: activeSession.clients.email,
+                          phone: activeSession.clients.phone,
+                          country: activeSession.clients.country,
+                        }
+                      : undefined
+                  }
                   onClose={() => closeForm(false)}
                   onSave={() => closeForm(true)}
                 />

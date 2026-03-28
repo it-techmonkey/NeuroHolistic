@@ -139,6 +139,24 @@ export default function DiagnosticAssessmentForm({
     therapy_goal: existingAssessment?.therapy_goal ?? '',
   });
 
+  useEffect(() => {
+    if (existingAssessment?.status === 'submitted') return;
+    if (!clientData) return;
+    setForm((prev) => ({
+      ...prev,
+      client_name: prev.client_name || clientData.full_name || '',
+      client_email: prev.client_email || clientData.email || '',
+      client_phone: prev.client_phone || clientData.phone || '',
+      client_country: prev.client_country || clientData.country || '',
+    }));
+  }, [
+    existingAssessment?.status,
+    clientData?.full_name,
+    clientData?.email,
+    clientData?.phone,
+    clientData?.country,
+  ]);
+
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };

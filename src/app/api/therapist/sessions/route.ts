@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     if (allClientIds.size > 0) {
       const { data: clients } = await supabase
         .from('users')
-        .select('id, full_name, email, phone')
+        .select('id, full_name, email, phone, country')
         .in('id', Array.from(allClientIds));
       
       clientMap = Object.fromEntries((clients ?? []).map(c => [c.id, c]));
@@ -127,11 +127,28 @@ export async function GET(request: NextRequest) {
 
     // Filter out sessions that are not yet scheduled (no date or time)
     const scheduledSessions = combinedSessions.filter(s => s.date && s.time);
+
+    // One free-consultation entry per client (keep latest by date/time)
+    const freeBestByClient = new Map<string, (typeof scheduledSessions)[0]>();
+    for (const s of scheduledSessions) {
+      if (s.type !== 'free_consultation' || !s.client_id) continue;
+      const prev = freeBestByClient.get(s.client_id);
+      const t = new Date(`${s.date}T${s.time || '00:00'}`).getTime();
+      const pt = prev ? new Date(`${prev.date}T${prev.time || '00:00'}`).getTime() : -1;
+      if (!prev || t >= pt) freeBestByClient.set(s.client_id, s);
+    }
+    const keepFreeIds = new Set(
+      [...freeBestByClient.values()].map((s) => s.id)
+    );
+    const dedupedSessions = scheduledSessions.filter((s) => {
+      if (s.type !== 'free_consultation' || !s.client_id) return true;
+      return keepFreeIds.has(s.id);
+    });
     
     // Sort by date
-    scheduledSessions.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
+    dedupedSessions.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
 
-    return NextResponse.json({ sessions: scheduledSessions });
+    return NextResponse.json({ sessions: dedupedSessions });
   } catch (error) {
     console.error('[Therapist Sessions]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
