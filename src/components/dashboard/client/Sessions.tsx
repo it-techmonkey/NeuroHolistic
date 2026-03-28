@@ -132,7 +132,7 @@ export default function Sessions({
         return (
           <div className="flex space-x-3">
             <Link
-              href="/booking/payment-options"
+              href="/booking/paid-program-booking"
               className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all"
             >
               <Calendar className="w-4 h-4 mr-2" />
@@ -144,7 +144,7 @@ export default function Sessions({
         return (
           <div className="flex space-x-3">
             <Link
-              href="/booking/payment-options"
+              href="/booking/paid-program-booking"
               className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all"
             >
               <Calendar className="w-4 h-4 mr-2" />

@@ -5,11 +5,16 @@ import { getServiceSupabase } from '@/lib/supabase/service';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { planType, amount } = body;
+    const { planType, programType, amount } = body;
 
     if (!planType || !amount) {
       return NextResponse.json({ error: 'Missing planType or amount' }, { status: 400 });
     }
+
+    // Normalize program type for storage
+    // planType values: 'private', 'session_by_session', 'group_full', 'group_session'
+    // programType values: 'private' | 'group' (from the selection step)
+    const normalizedProgramType = programType || (planType.includes('group') ? 'group' : 'private');
 
     // Auth check
     const authClient = await createClient();
@@ -69,7 +74,7 @@ export async function POST(request: NextRequest) {
         sessions_completed: 0,
         status: 'active',
         payment_id: `DEMO-${Date.now()}`,
-        program_type: planType,
+        program_type: normalizedProgramType,
         price_paid: amount,
         client_name: userData?.full_name || 'Client',
         client_email: userData?.email || user.email,

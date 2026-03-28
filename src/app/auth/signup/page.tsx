@@ -48,7 +48,7 @@ function SignUpForm() {
       passwordConfirm,
       country,
       redirectTo: intent === 'program'
-        ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${next || '/booking/payment-options'}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${next || '/booking/paid-program-booking'}`
         : undefined,
     });
 
@@ -131,7 +131,7 @@ function SignUpForm() {
               <p className="text-xs text-emerald-700">
                 After verifying your email,{' '}
                 <Link
-                  href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/payment-options')}` : '/auth/login'}
+                  href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/paid-program-booking')}` : '/auth/login'}
                   className="underline font-semibold hover:text-emerald-900"
                 >
                   log in here
@@ -317,7 +317,7 @@ function SignUpForm() {
           <p className="text-center text-xs text-slate-400">
             Already have an account?{' '}
             <Link
-              href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/payment-options')}` : '/auth/login'}
+              href={intent === 'program' ? `/auth/login?next=${encodeURIComponent(next || '/booking/paid-program-booking')}` : '/auth/login'}
               className="text-slate-900 font-medium underline underline-offset-4 hover:text-indigo-600 transition-colors"
             >
               Log in

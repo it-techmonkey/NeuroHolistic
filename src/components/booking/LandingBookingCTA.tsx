@@ -136,7 +136,7 @@ export default function LandingBookingCTA({
   if (eligibility?.consultationStatus === 'completed' && !eligibility?.hasActiveProgram) {
     return (
       <div className={containerClassName}>
-        <a href="/booking/payment-options" className={primaryClassName}>
+        <a href="/booking/paid-program-booking" className={primaryClassName}>
           Book Paid Program <span aria-hidden="true">→</span>
         </a>
       </div>

@@ -30,7 +30,7 @@ export default function BookNowButton({
     } else {
       // Fallback: navigate to booking page
       if (bookingType === "program") {
-        router.push("/booking/payment-options");
+        router.push("/booking/paid-program-booking");
       } else {
         router.push("/consultation/book");
       }

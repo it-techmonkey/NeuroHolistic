@@ -367,7 +367,7 @@ export default function ClientDashboardPage() {
                 )}
                 {data?.programStatus === 'consultation_done' && (
                   <a
-                    href="/programs"
+                    href="/booking/paid-program-booking"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
                   >
                     <Calendar className="w-4 h-4" />
