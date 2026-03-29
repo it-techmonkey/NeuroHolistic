@@ -29,7 +29,7 @@ export async function sendBookingEmail(payload: NotificationPayload): Promise<{ 
 
   try {
     const { error: emailError } = await resend.emails.send({
-      from: 'NeuroHolistic <notifications@neuroholistic.com>',
+      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
       to: payload.recipientEmail,
       subject: 'Your session is confirmed — NeuroHolistic',
       html: `

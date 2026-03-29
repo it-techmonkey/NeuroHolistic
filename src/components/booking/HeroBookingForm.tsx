@@ -240,8 +240,8 @@ export default function HeroBookingForm() {
         >
           Book Free Consultation <span aria-hidden="true">→</span>
         </button>
-        <a href="/programs" className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15">
-          View Programs
+        <a href="/booking/paid-program-booking" className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15">
+          Book Paid Program <span aria-hidden="true">→</span>
         </a>
       </motion.div>
 
@@ -252,7 +252,7 @@ export default function HeroBookingForm() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4"
           >
             {/* Backdrop */}
             <motion.div
@@ -410,7 +410,7 @@ export default function HeroBookingForm() {
                     {/* Therapist Selection */}
                     <div>
                       <label className="block text-xs font-medium text-white/70 mb-2">Select Therapist</label>
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {therapists.map(therapist => (
                           <button
                             key={therapist.id}
@@ -419,14 +419,14 @@ export default function HeroBookingForm() {
                               setSelectedTherapist(therapist.id);
                               setSelectedSlot('');
                             }}
-                            className={`w-full p-3 border rounded-lg text-left transition-all ${
+                            className={`p-2.5 border rounded-lg text-left transition-all ${
                               selectedTherapist === therapist.id
                                 ? 'border-indigo-400 bg-indigo-400/10'
                                 : 'border-white/20 hover:border-white/30'
                             }`}
                           >
-                            <span className="font-medium text-white text-sm">{therapist.name}</span>
-                            <span className="block text-xs text-white/50 mt-0.5">NeuroHolistic Specialist</span>
+                            <span className="font-medium text-white text-xs block truncate">{therapist.name}</span>
+                            <span className="block text-[10px] text-white/50 mt-0.5">Specialist</span>
                           </button>
                         ))}
                       </div>

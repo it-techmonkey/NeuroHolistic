@@ -1,13 +1,14 @@
 'use client';
 
 import Section from '@/components/ui/Section';
-import BookNowButton from '@/components/booking/BookNowButton';
 import { User, Users, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 const PROGRAMS = [
   {
     icon: <User className="w-6 h-6" />,
     title: 'Private Program',
+    type: 'private' as const,
     description:
       'The Private Program offers a personalized journey through the NeuroHolistic Method™. Working one-on-one allows the process to be fully adapted to your unique history, patterns, and goals.',
     descriptionSecondary:
@@ -23,6 +24,7 @@ const PROGRAMS = [
   {
     icon: <Users className="w-6 h-6" />,
     title: 'Group Program',
+    type: 'group' as const,
     description:
       'The Group Program offers the opportunity to experience the NeuroHolistic Method™ within a guided group setting. Participants move through the transformational process together.',
     descriptionSecondary:
@@ -84,9 +86,12 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
 
         {/* CTA - mt-auto ensures this stays at the absolute bottom */}
         <div className="mt-auto">
-          <BookNowButton className="w-full inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#2D5A43] text-white font-bold text-[13px] uppercase tracking-widest shadow-lg shadow-[#2D5A43]/10 hover:opacity-90 active:scale-[0.98] transition-all">
+          <Link
+            href={`/booking/paid-program-booking?type=${props.type}`}
+            className="w-full inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#2D5A43] text-white font-bold text-[13px] uppercase tracking-widest shadow-lg shadow-[#2D5A43]/10 hover:opacity-90 active:scale-[0.98] transition-all"
+          >
             Book Consultation
-          </BookNowButton>
+          </Link>
         </div>
       </div>
     </div>

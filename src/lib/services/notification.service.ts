@@ -265,7 +265,7 @@ async function sendEmail(payload: SendPayload): Promise<void> {
   }
 
   const resend = new Resend(apiKey);
-  const fromAddress = process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <onboarding@resend.dev>';
+  const fromAddress = process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>';
 
   try {
     await resend.emails.send({

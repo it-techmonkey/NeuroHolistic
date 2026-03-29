@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope } from 'lucide-react';
 import {
   type ProgramType,
@@ -15,6 +15,7 @@ import {
 interface PaidProgramBookingFormProps {
   userEmail: string;
   userName: string;
+  isAuthenticated?: boolean;
 }
 
 interface TherapistInfo {
@@ -22,25 +23,50 @@ interface TherapistInfo {
   slug?: string;
 }
 
-export default function PaidProgramBookingForm({ userEmail, userName }: PaidProgramBookingFormProps) {
+export default function PaidProgramBookingForm({ userEmail, userName, isAuthenticated = true }: PaidProgramBookingFormProps) {
   const router = useRouter();
-  const [step, setStep] = useState<'program_type' | 'payment'>('program_type');
-  const [selectedProgramType, setSelectedProgramType] = useState<ProgramType | null>(null);
+  const searchParams = useSearchParams();
+  const preselectedType = searchParams.get('type') as ProgramType | null;
+  const [step, setStep] = useState<'program_type' | 'payment' | 'details'>(
+    preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type'
+  );
+  const [selectedProgramType, setSelectedProgramType] = useState<ProgramType | null>(
+    preselectedType === 'private' || preselectedType === 'group' ? preselectedType : null
+  );
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOption | null>(null);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [therapist, setTherapist] = useState<TherapistInfo | null>(null);
   const [loadingTherapist, setLoadingTherapist] = useState(true);
+  const [hasActiveProgram, setHasActiveProgram] = useState(false);
+  
+  // Inline signup form data (for unauthenticated users)
+  const [formData, setFormData] = useState({
+    name: userName || '',
+    email: userEmail || '',
+    phone: '',
+    password: '',
+  });
+  const [formError, setFormError] = useState('');
+  const [pendingPaymentOption, setPendingPaymentOption] = useState<PaymentOption | null>(null);
 
-  // Fetch assigned therapist on mount
+  // Fetch assigned therapist and check active program on mount
   useEffect(() => {
     async function fetchTherapist() {
       try {
-        const res = await fetch('/api/client/assigned-therapist');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.therapist) {
-            setTherapist(data.therapist);
+        if (isAuthenticated) {
+          const res = await fetch('/api/client/assigned-therapist');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.therapist) {
+              setTherapist(data.therapist);
+            }
+          }
+          // Check for active program
+          const progRes = await fetch('/api/users/check-program');
+          if (progRes.ok) {
+            const progData = await progRes.json();
+            setHasActiveProgram(progData.hasProgram ?? false);
           }
         }
       } catch (err) {
@@ -60,7 +86,7 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
     }
 
     fetchTherapist();
-  }, []);
+  }, [isAuthenticated]);
 
   const isFawzia = isDrFawzia(therapist?.name, therapist?.slug);
   const [showConfirmPayment, setShowConfirmPayment] = useState(false);
@@ -82,6 +108,13 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
 
   const handlePayment = async (option: PaymentOption) => {
     if (!selectedProgramType) return;
+
+    // If not authenticated, show details step first
+    if (!isAuthenticated) {
+      setPendingPaymentOption(option);
+      setStep('details');
+      return;
+    }
 
     setSelectedPaymentOption(option);
 
@@ -149,6 +182,27 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
           Your therapist will verify the payment and schedule your sessions.
         </p>
         <p className="text-green-500 text-xs">Redirecting to schedule your first session...</p>
+      </div>
+    );
+  }
+
+  // Show active program guard
+  if (hasActiveProgram && isAuthenticated) {
+    return (
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-8 text-center">
+        <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-indigo-600" />
+        </div>
+        <h3 className="text-xl font-bold text-indigo-900 mb-2">You Already Have an Active Program</h3>
+        <p className="text-indigo-600 text-sm mb-6">
+          You already have an active program. Visit your dashboard to manage sessions and track progress.
+        </p>
+        <button
+          onClick={() => router.push('/dashboard/client')}
+          className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
+        >
+          Go to Dashboard
+        </button>
       </div>
     );
   }
@@ -465,6 +519,197 @@ export default function PaidProgramBookingForm({ userEmail, userName }: PaidProg
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Step 3: User Details (unauthenticated users only) */}
+      {step === 'details' && selectedProgramType && pendingPaymentOption && (
+        <div className="space-y-6">
+          {/* Back Button */}
+          <button
+            onClick={() => setStep('payment')}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back to pricing</span>
+          </button>
+
+          {/* Summary */}
+          <div className={`rounded-xl p-4 border ${
+            selectedProgramType === 'private' 
+              ? 'bg-indigo-50 border-indigo-200' 
+              : 'bg-emerald-50 border-emerald-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  selectedProgramType === 'private' ? 'bg-indigo-100' : 'bg-emerald-100'
+                }`}>
+                  {selectedProgramType === 'private' ? (
+                    <User className="w-5 h-5 text-indigo-600" />
+                  ) : (
+                    <Users className="w-5 h-5 text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {selectedProgramType === 'private' ? 'Private' : 'Group'} Program
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {pendingPaymentOption === 'full' ? 'Full payment' : 'Per session'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xl font-bold text-slate-900">
+                {getPriceForDisplay(selectedProgramType, pendingPaymentOption).toLocaleString()} AED
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center mb-2">
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">Your Details</h2>
+            <p className="text-slate-500 text-sm">Create your account to proceed with payment</p>
+          </div>
+
+          {formError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+              {formError}
+            </div>
+          )}
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setFormError('');
+              if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+                setFormError('Please fill in all fields');
+                return;
+              }
+              if (formData.password.length < 8) {
+                setFormError('Password must be at least 8 characters');
+                return;
+              }
+
+              setProcessing(true);
+              try {
+                // Create account
+                const signupRes = await fetch('/api/auth/signup', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    firstName: formData.name.split(' ')[0] || formData.name,
+                    lastName: formData.name.split(' ').slice(1).join(' ') || '',
+                    email: formData.email,
+                    password: formData.password,
+                    phone: formData.phone,
+                    role: 'client',
+                  }),
+                });
+
+                const signupData = await signupRes.json();
+                
+                // 409 means user already exists - try to sign in
+                if (!signupRes.ok && signupRes.status !== 409) {
+                  throw new Error(signupData.error || 'Failed to create account');
+                }
+
+                // Now proceed to payment with Ziina
+                const link = getZiinaLink(selectedProgramType!, pendingPaymentOption!, therapist?.name, therapist?.slug);
+                if (link) {
+                  sessionStorage.setItem('pendingPayment', JSON.stringify({
+                    programType: selectedProgramType,
+                    option: pendingPaymentOption,
+                    email: formData.email,
+                  }));
+                  window.open(link, '_blank');
+                  setSelectedPaymentOption(pendingPaymentOption);
+                  setShowConfirmPayment(true);
+                  setStep('payment');
+                } else {
+                  throw new Error('Payment link not available');
+                }
+              } catch (err: any) {
+                setFormError(err.message || 'Something went wrong');
+              } finally {
+                setProcessing(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="Your full name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email *</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone *</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="+971 50 000 0000"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Create Password *</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="At least 8 characters"
+                required
+                minLength={8}
+              />
+              <p className="text-[11px] text-slate-400 mt-1">You'll use this to access your dashboard</p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={processing || !formData.name || !formData.email || !formData.phone || !formData.password}
+              className={`w-full py-3.5 rounded-xl text-white font-semibold text-[15px] transition-all flex items-center justify-center gap-2 ${
+                processing || !formData.name || !formData.email || !formData.phone || !formData.password
+                  ? 'bg-slate-300 cursor-not-allowed'
+                  : selectedProgramType === 'private'
+                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  Create Account & Proceed to Payment
+                </>
+              )}
+            </button>
+          </form>
         </div>
       )}
     </div>

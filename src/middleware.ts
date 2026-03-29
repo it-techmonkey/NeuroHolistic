@@ -21,6 +21,7 @@ const PUBLIC_PREFIXES = [
   '/privacy',
   '/terms',
   '/consultation',
+  '/booking/paid-program-booking',
 ];
 
 const AUTH_REQUIRED_PREFIXES = ['/dashboard', '/therapist', '/admin', '/booking'];

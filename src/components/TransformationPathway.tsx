@@ -25,6 +25,13 @@ export default function TransformationPathway() {
             Book a Consultation
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
+          <Link
+            href="/booking/paid-program-booking"
+            className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#0F172A] bg-white px-8 text-[14.5px] font-medium text-[#0F172A] transition-all hover:bg-[#F8FAFC]"
+          >
+            Book Paid Program
+            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          </Link>
         </div>
 
         <p className="text-[13px] text-[#94A3B8]">

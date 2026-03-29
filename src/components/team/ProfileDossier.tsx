@@ -62,13 +62,20 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
                 ))}
               </div>
 
-              {/* Book Button */}
-              <div className="mt-12">
+              {/* Book Options */}
+              <div className="mt-12 flex flex-col sm:flex-row gap-3">
                 <Link
                   href={`/consultation/book?therapist=${profile.slug}`}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0F172A] px-8 py-3.5 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#1E293B] hover:shadow-lg"
                 >
-                  {buttonLabel}
+                  Free Consultation
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+                <Link
+                  href="/booking/paid-program-booking"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#0F172A] bg-white px-8 py-3.5 text-[15px] font-semibold text-[#0F172A] transition-all duration-300 hover:bg-[#F8FAFC]"
+                >
+                  Paid Program
                   <span className="transition-transform group-hover:translate-x-1">→</span>
                 </Link>
               </div>

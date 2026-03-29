@@ -85,22 +85,9 @@ export default function LandingBookingCTA({
     );
   }
 
-  // Not logged in -> Book Free Consultation
-  if (!isAuthenticated) {
-    return (
-      <div className={containerClassName}>
-        <BookNowButton bookingType="consultation" className={primaryClassName}>
-          Book Free Consultation <span aria-hidden="true">→</span>
-        </BookNowButton>
-        <a href="/programs" className={secondaryClassName}>
-          View Programs
-        </a>
-      </div>
-    );
-  }
 
   // Role-based routing for therapists and admins
-  if (eligibility?.role === 'therapist') {
+  if (eligibility?.role === 'therapist' && isAuthenticated) {
     return (
       <div className={containerClassName}>
         <a href="/dashboard/therapist" className={primaryClassName}>
@@ -155,7 +142,7 @@ export default function LandingBookingCTA({
   }
 
   // 4. No consultation yet -> Book Free Consultation
-  if (eligibility?.canBookConsultation) {
+  if (eligibility?.canBookConsultation && isAuthenticated == false) {
     return (
       <div className={containerClassName}>
         <a href="/consultation/book" className={primaryClassName}>

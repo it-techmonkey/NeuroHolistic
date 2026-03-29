@@ -27,24 +27,17 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [modalView, setModalView] = useState<ModalView>('chooser');
-
-  // State for the chooser
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [hasUsedFreeConsult, setHasUsedFreeConsult] = useState(false);
   const [hasActiveProgram, setHasActiveProgram] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const openBookingModal = useCallback(
     (type?: 'consultation' | 'program' | null) => {
       if (type === 'consultation') {
-        // Direct to consultation form
         setModalView('consultation');
       } else if (type === 'program') {
-        // Direct to paid program page
         router.push('/booking/paid-program-booking');
         return;
       } else {
-        // Show chooser
         setModalView('chooser');
       }
       setIsOpen(true);
@@ -60,46 +53,32 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
   // Fetch user state when modal opens as chooser
   useEffect(() => {
     if (!isOpen || modalView !== 'chooser') return;
-
     setLoading(true);
-    
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setIsLoggedIn(!!user);
-
         if (user) {
-          // Authenticated: use GET endpoint which reads session
           const res = await fetch('/api/users/check-program');
           if (res.ok) {
             const data = await res.json();
-            setHasUsedFreeConsult(data.hasUsedFreeConsultation ?? false);
             setHasActiveProgram(data.hasProgram ?? false);
           }
         } else {
-          // Not logged in: both options available
-          setHasUsedFreeConsult(false);
           setHasActiveProgram(false);
         }
-      } catch (err) {
-        console.error('Failed to check user state:', err);
+      } catch {
+        // ignore
       } finally {
         setLoading(false);
       }
     })();
   }, [isOpen, modalView]);
 
-  const handleChooseConsultation = () => {
-    setModalView('consultation');
-  };
+  const handleChooseConsultation = () => setModalView('consultation');
 
   const handleChooseProgram = () => {
     closeBookingModal();
-    if (isLoggedIn) {
-      router.push('/booking/paid-program-booking');
-    } else {
-      router.push('/auth/signup?intent=program&next=/booking/paid-program-booking');
-    }
+    router.push('/booking/paid-program-booking');
   };
 
   const value = useMemo(
@@ -110,7 +89,6 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
   return (
     <BookingModalContext.Provider value={value}>
       {children}
-
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -120,7 +98,6 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {/* backdrop */}
             <motion.div
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={closeBookingModal}
@@ -128,8 +105,6 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
-
-            {/* panel */}
             <motion.div
               className="relative w-full max-w-[500px] overflow-hidden rounded-3xl bg-white shadow-2xl"
               style={{ maxHeight: '90vh' }}
@@ -144,13 +119,7 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
                 className="absolute right-4 top-4 z-10 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 aria-label="Close"
               >
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
                 </svg>
               </button>
@@ -159,17 +128,13 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
                 {modalView === 'chooser' && (
                   <ChooserView
                     loading={loading}
-                    hasUsedFreeConsult={hasUsedFreeConsult}
                     hasActiveProgram={hasActiveProgram}
                     onChooseConsultation={handleChooseConsultation}
                     onChooseProgram={handleChooseProgram}
                   />
                 )}
                 {modalView === 'consultation' && (
-                  <BookingForm
-                    onClose={closeBookingModal}
-                    bookingType="consultation"
-                  />
+                  <BookingForm onClose={closeBookingModal} bookingType="consultation" />
                 )}
               </div>
             </motion.div>
@@ -183,13 +148,11 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
 /* ── Chooser View ── */
 function ChooserView({
   loading,
-  hasUsedFreeConsult,
   hasActiveProgram,
   onChooseConsultation,
   onChooseProgram,
 }: {
   loading: boolean;
-  hasUsedFreeConsult: boolean;
   hasActiveProgram: boolean;
   onChooseConsultation: () => void;
   onChooseProgram: () => void;
@@ -211,42 +174,31 @@ function ChooserView({
       </div>
 
       <div className="space-y-4">
-        {/* Free Consultation Option */}
-        {!hasUsedFreeConsult && (
-          <button
-            onClick={onChooseConsultation}
-            className="w-full text-left p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900">Free Consultation</h3>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[11px] font-bold rounded-full uppercase">Free</span>
-                </div>
-                <p className="text-sm text-slate-500 mt-1">
-                  A complimentary introduction session to understand your needs and explore how we can help.
-                </p>
-              </div>
-              <span className="text-slate-300 group-hover:text-indigo-500 transition-colors mt-3">→</span>
+        {/* Free Consultation — always available */}
+        <button
+          onClick={onChooseConsultation}
+          className="w-full text-left p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
             </div>
-          </button>
-        )}
-
-        {/* Already used free consult message */}
-        {hasUsedFreeConsult && (
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <p className="text-sm text-slate-500">
-              <span className="font-medium text-slate-700">✓ Free consultation used</span> — You've already had your complimentary session.
-            </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-900">Free Consultation</h3>
+                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[11px] font-bold rounded-full uppercase">Free</span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
+                A complimentary session to understand your needs and explore how we can help.
+              </p>
+            </div>
+            <span className="text-slate-300 group-hover:text-indigo-500 transition-colors mt-3">→</span>
           </div>
-        )}
+        </button>
 
-        {/* Paid Program Option */}
+        {/* Paid Program */}
         {!hasActiveProgram ? (
           <button
             onClick={onChooseProgram}
@@ -261,7 +213,7 @@ function ChooserView({
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-slate-900">Paid Program</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Choose between Private (1-on-1) or Group programs. View pricing and payment options.
+                  View pricing for Private (1-on-1) or Group programs and choose your plan.
                 </p>
               </div>
               <span className="text-slate-300 group-hover:text-indigo-500 transition-colors mt-3">→</span>

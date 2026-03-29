@@ -44,7 +44,7 @@ async function sendEmailNotification(payload: BookingNotificationPayload): Promi
   };
 
   await resend.emails.send({
-    from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <onboarding@resend.dev>',
+    from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
     to: payload.email,
     subject: subjectMap[payload.context],
     html: `

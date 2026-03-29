@@ -56,7 +56,7 @@ const AREAS = [
 
 export default function TransformationAreas() {
   return (
-    <section className="w-full bg-white py-16 md:py-20">
+    <section className="w-full bg-white py-12 md:py-16 lg:py-10">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* Header: Compact & Centered */}
