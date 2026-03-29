@@ -662,8 +662,8 @@ export default function TherapistDashboardPage() {
               {showAccountMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
                   <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-sm font-medium text-slate-900">{therapistInfo?.full_name}</p>
-                    <p className="text-xs text-slate-500">{therapistInfo?.email}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{therapistInfo?.full_name}</p>
+                    <p className="text-xs text-slate-500 truncate" title={therapistInfo?.email}>{therapistInfo?.email}</p>
                   </div>
                   <button
                     onClick={() => { setShowAccountMenu(false); setShowAvailabilityModal(true); }}

@@ -1,0 +1,37 @@
+export type AdminData = {
+  kpis: {
+    totalClients: number;
+    totalTherapists: number;
+    totalAdmins: number;
+    totalUsers: number;
+    activePrograms: number;
+    completedPrograms: number;
+    totalRevenue: number;
+    upcomingBookings: number;
+    todayBookings: number;
+    totalBookings: number;
+    totalLeads: number;
+    totalSessions: number;
+    completedSessions: number;
+    totalAssessments: number;
+    totalDocuments: number;
+    totalDevForms: number;
+    conversionRate: number;
+    sessionCompletionRate: number;
+    noShowRate: number;
+    cancelRate: number;
+  };
+  monthlyRevenue: { month: string; revenue: number; programs: number }[];
+  monthlyBookings: { month: string; total: number; completed: number; cancelled: number; noShow: number }[];
+  assessmentTrends: { month: string; avgScore: number; count: number }[];
+  bookingStatusCounts: Record<string, number>;
+  bookingTypeCounts: Record<string, number>;
+  countryDistribution: { country: string; count: number }[];
+  users: any[];
+  therapists: any[];
+  bookings: any[];
+  activeProgramsDetail: any[];
+  recentActivity: any[];
+  notificationStats: any;
+  leads: any[];
+};
