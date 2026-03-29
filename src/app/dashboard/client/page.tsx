@@ -534,13 +534,13 @@ export default function ClientDashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-slate-900 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-indigo-600" />
-                    Latest Assessment
+                    Progress Over Time
                   </h2>
                   <button
                     onClick={() => setViewMode('progress')}
                     className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                   >
-                    View all <ChevronRight className="w-4 h-4" />
+                    View details <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

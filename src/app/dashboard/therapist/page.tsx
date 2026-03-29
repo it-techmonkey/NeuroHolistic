@@ -81,6 +81,7 @@ type Client = {
     is_baseline: boolean;
   } | null;
   assessmentCount?: number;
+  hasFreeConsultation?: boolean;
   devFormsCount?: number;
   sessionStats?: {
     upcoming: number;
@@ -278,15 +279,26 @@ export default function TherapistDashboardPage() {
   async function fetchAllData(tid: string) {
     setLoading(true);
     try {
-      const [sessionsRes, clientsRes] = await Promise.all([
+      const [sessionsRes, clientsRes, assessmentsRes] = await Promise.all([
         fetch(`/api/therapist/sessions?therapistId=${tid}`),
-        fetch(`/api/therapist/clients`)
+        fetch(`/api/therapist/clients`),
+        fetch(`/api/assessments/diagnostic?therapistId=${tid}`)
       ]);
 
       const sessionsData = await sessionsRes.json();
       const clientsData = await clientsRes.json();
+      const assessmentsData = await assessmentsRes.json();
 
+      // Store assessments for use in SessionsTab
+      if (assessmentsData.assessments) {
+        setClientDetail((prev: any) => prev ? { ...prev, assessments: assessmentsData.assessments } : { assessments: assessmentsData.assessments });
+      }
+
+      console.log('[Therapist Dashboard] Sessions data:', JSON.stringify(sessionsData, null, 2));
+      
       const allSessions: Session[] = sessionsData.sessions || [];
+      console.log('[Therapist Dashboard] All sessions count:', allSessions.length);
+      console.log('[Therapist Dashboard] Free consultation sessions:', allSessions.filter(s => s.type === 'free_consultation').length);
       // Calculate session stats per client
       const clientSessionStats: Record<string, { upcoming: number; completed: number; total: number }> = {};
       allSessions.forEach((session: Session) => {
@@ -327,13 +339,19 @@ export default function TherapistDashboardPage() {
       });
 
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      // Get today's date in local timezone (DST format)
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      console.log('[Therapist Dashboard] Today date:', today);
+      console.log('[Therapist Dashboard] Current time:', now.toISOString());
+      console.log('[Therapist Dashboard] All sessions with dates:', allSessions.map(s => ({ id: s.id, type: s.type, status: s.status, date: s.date, time: s.time })));
 
       const todayList = allSessions.filter(s => {
         if (s.date !== today) return false;
         if (['completed', 'cancelled', 'no_show'].includes(s.status)) return false;
         return true;
       }).sort((a, b) => a.time.localeCompare(b.time));
+      console.log('[Therapist Dashboard] Today list:', todayList.length);
+      console.log('[Therapist Dashboard] Today list sessions:', JSON.stringify(todayList.map(s => ({ id: s.id, type: s.type, date: s.date, time: s.time })), null, 2));
 
       const upcomingList = allSessions.filter(s => {
         const sessionDate = new Date(s.date + 'T00:00:00');
@@ -342,6 +360,8 @@ export default function TherapistDashboardPage() {
         if (s.date === today) return false;
         return true;
       }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      console.log('[Therapist Dashboard] Upcoming list:', upcomingList.length);
+      console.log('[Therapist Dashboard] Upcoming list sessions:', JSON.stringify(upcomingList.map(s => ({ id: s.id, type: s.type, date: s.date, time: s.time })), null, 2));
 
       const pastList = allSessions.filter(s => {
         const sessionDate = new Date(s.date + 'T23:59:59');
@@ -494,7 +514,9 @@ export default function TherapistDashboardPage() {
     setActiveSession(null);
     setModalType(null);
     if (refresh && therapistId) {
+      // Always refresh all data to get updated assessments
       fetchAllData(therapistId);
+      // Also refresh client detail if selected
       if (selectedClient) {
         fetchClientDetail(selectedClient);
       }
@@ -576,6 +598,10 @@ export default function TherapistDashboardPage() {
       default: return true;
     }
   });
+
+  const isActiveForProgress = (c: Client): boolean => {
+    return c.program?.status === 'active' || (!!c.hasFreeConsultation && !c.program);
+  };
 
   if (loading) {
     return (
@@ -753,7 +779,7 @@ export default function TherapistDashboardPage() {
                   </button>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {clients.filter(c => c.program && c.program.status === 'active').slice(0, 6).map(client => (
+                  {clients.filter(isActiveForProgress).slice(0, 6).map(client => (
                     <div 
                       key={client.userId} 
                       className="p-4 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 cursor-pointer transition-colors"
@@ -768,28 +794,50 @@ export default function TherapistDashboardPage() {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900 text-sm">{client.fullName}</p>
-                          <p className="text-xs text-slate-500">Active Program</p>
+                          {client.program?.status === 'active' ? (
+                            <p className="text-xs text-slate-500">Active Program</p>
+                          ) : client.hasFreeConsultation ? (
+                            <p className="text-xs text-slate-500">Free Consultation</p>
+                          ) : (
+                            <p className="text-xs text-slate-500">Client</p>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Progress</span>
-                        <span className="font-medium text-indigo-600">
-                          {client.program?.completedSessions || 0}/{client.program?.totalSessions || 10} sessions
-                        </span>
-                      </div>
-                      <div className="mt-2 w-full bg-slate-200 rounded-full h-2">
-                        <div 
-                          className="bg-indigo-600 h-2 rounded-full transition-all"
-                          style={{ width: `${Math.min(((client.program?.completedSessions || 0) / (client.program?.totalSessions || 10)) * 100, 100)}%` }}
-                        />
-                      </div>
+                      {client.program?.status === 'active' ? (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-500">Progress</span>
+                            <span className="font-medium text-indigo-600">
+                              {client.program?.completedSessions || 0}/{client.program?.totalSessions || 10} sessions
+                            </span>
+                          </div>
+                          <div className="mt-2 w-full bg-slate-200 rounded-full h-2">
+                            <div 
+                              className="bg-indigo-600 h-2 rounded-full transition-all"
+                              style={{ width: `${Math.min(((client.program?.completedSessions || 0) / (client.program?.totalSessions || 10)) * 100, 100)}%` }}
+                            />
+                          </div>
+                        </>
+                      ) : client.hasFreeConsultation && client.nextSession ? (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-500">Next Consultation</span>
+                          <span className="font-medium text-indigo-600">
+                            {new Date(client.nextSession.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {client.nextSession.time}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-500">Status</span>
+                          <span className="font-medium text-slate-600">No active program</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-                {clients.filter(c => c.program && c.program.status === 'active').length === 0 && (
+                {clients.filter(isActiveForProgress).length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                    <p>No active clients with programs</p>
+                    <p>No active clients</p>
                   </div>
                 )}
               </section>
@@ -1170,9 +1218,15 @@ export default function TherapistDashboardPage() {
                     email: clientDetail.clientProfile.email,
                     phone: clientDetail.clientProfile.phone,
                     country: clientDetail.clientProfile.country,
-                  } : undefined}
+                  } : {
+                    // For free consultations without a user account, use session data
+                    full_name: activeSession.clients?.full_name || activeSession.client_name || '',
+                    email: '',
+                    phone: '',
+                    country: '',
+                  }}
                   onClose={() => closeForm(false)}
-                  onSave={() => closeForm(false)}
+                  onSave={() => closeForm(true)}
                 />
               )}
               {modalType === 'development' && (
@@ -1849,6 +1903,7 @@ function ClientDetailView({
                   <SessionsTab
                     sessions={(detail?.sessions || []) as Session[]}
                     documents={documents}
+                    assessments={detail?.assessments || []}
                     onOpenAssessment={(s: Session) => onOpenAssessment(s)}
                     onOpenDevForm={(s: Session) => onOpenDevForm(s)}
                     onRefresh={onRefresh}

@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function resolveAuthSnapshot() {
     const currentRequestSeq = ++requestSeqRef.current;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    const timeoutId = setTimeout(() => controller.abort(new Error("Timeout")), 7000);
 
     try {
       const response = await fetch('/api/auth/me', {
@@ -68,14 +68,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setRole(payload.role ?? 'client');
-    } catch (error) {
+    } catch (error: any) {
       if (!isMountedRef.current || currentRequestSeq !== requestSeqRef.current) {
         return;
       }
 
+      if (error?.name === 'AbortError') {
+        console.warn('[AuthContext] Auth snapshot payload timed out after 7000ms.');
+      } else {
+        console.error('[AuthContext] Failed to resolve server auth snapshot:', error);
+      }
+
       // If role resolution fails, keep app usable and rely on middleware for enforcement.
       setRole((prevRole) => prevRole ?? 'client');
-      console.error('[AuthContext] Failed to resolve server auth snapshot:', error);
     } finally {
       clearTimeout(timeoutId);
 

@@ -44,7 +44,7 @@ export default function CorporateCTA() {
                 <BookNowButton
                   className="inline-flex h-14 items-center justify-center bg-[#0F172A] px-10 text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1E293B] rounded-none active:scale-[0.98]"
                 >
-                  Schedule a Consultation
+                  Book a Consultation
                 </BookNowButton>
                 
                 <Link

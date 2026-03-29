@@ -7,7 +7,7 @@ const FAQS = [
   },
   {
     q: "How do I book a consultation?",
-    a: "Use the Book a Session / Book Now actions on the site to start your consultation flow.",
+    a: "Use the Book a Consultation actions on the site to start your consultation flow.",
   },
   {
     q: "Do you offer private and group formats?",

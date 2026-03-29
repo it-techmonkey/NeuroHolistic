@@ -56,13 +56,10 @@ function SignUpForm() {
 
     if (result.error) {
       setError(result.error);
-    } else {
-      const redirectUrl = (result as { redirectTo?: string }).redirectTo;
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else if (result.success) {
-        window.location.href = '/auth/login';
-      }
+    } else if ((result as unknown as { redirectTo?: string }).redirectTo) {
+      window.location.href = (result as unknown as { redirectTo: string }).redirectTo;
+    } else if (result.success) {
+      window.location.href = '/auth/login';
     }
   }
 

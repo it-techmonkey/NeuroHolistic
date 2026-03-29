@@ -30,9 +30,8 @@ const IMPACTS = [
   },
   {
     title: "Absenteeism and Burnout Reduction",
-    description:
-      "Supporting nervous system regulation and recovery from chronic stress patterns.",
-  },
+    description: "Supporting nervous system regulation and recovery from chronic stress patterns."
+  }
 ];
 
 export default function OrganizationalImpact() {
@@ -113,13 +112,6 @@ export default function OrganizationalImpact() {
               </div>
             </motion.div>
           ))}
-          
-          {/* Fill the empty grid spot on desktop to maintain the matrix lines */}
-          <div className="hidden lg:flex p-10 border-b border-white/10 items-center justify-center">
-             <span className="font-mono text-[10px] uppercase tracking-widest text-white/5">
-               NeuroHolistic Institute // Standards
-             </span>
-          </div>
         </div>
 
       </div>

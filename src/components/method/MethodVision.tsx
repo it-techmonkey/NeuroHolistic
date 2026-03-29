@@ -22,7 +22,7 @@ export default function MethodVision() {
     <section className="bg-white py-20 border-t border-slate-50">
       <div className="mx-auto max-w-[1100px] px-6">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          
+
           {/* ── Imagery ── */}
           <motion.div
             initial={{ opacity: 0, x: -15 }}
@@ -66,6 +66,7 @@ export default function MethodVision() {
                   className="text-[16px] leading-relaxed text-slate-500"
                 >
                   The NeuroHolistic Method™ emerged from a long exploration of the deeper mechanisms that shape human experience. Over years of therapeutic work and observation, it became increasingly clear that many human challenges cannot be understood through isolated symptoms alone. They arise from complex interactions between the nervous system, cognition, emotional memory, and deeper layers of human awareness.
+
                 </motion.p>
 
                 <motion.p
@@ -73,13 +74,16 @@ export default function MethodVision() {
                   className="text-[16px] leading-relaxed text-slate-500"
                 >
                   Traditional approaches often address these dimensions separately. The vision behind the NeuroHolistic Method™ was to create a structured framework capable of working with the human system as an integrated whole, restoring coherence across its different levels while supporting meaningful and lasting transformation.
+
                 </motion.p>
 
                 <motion.p
                   variants={itemVariants}
                   className="text-[16px] leading-relaxed text-slate-500"
                 >
-                  By bringing together insights from neuroscience, psychology, and systemic approaches to human development, the method offers a pathway that not only helps resolve inner struggles but also expands the individual's capacity for awareness, resilience, and conscious living.
+                  By bringing together insights from neuroscience, psychology, and systemic approaches to human development, the method offers a pathway that not only helps resolve inner struggles but also expands the individual’s capacity for awareness, resilience, and conscious living.
+
+
                 </motion.p>
               </div>
 

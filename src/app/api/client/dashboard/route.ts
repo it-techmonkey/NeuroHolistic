@@ -36,9 +36,9 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
     
-    // Upcoming: confirmed and in the future (or today with future time)
+    // Upcoming: confirmed or scheduled and in the future (or today with future time)
     const upcomingBookings = (bookings ?? []).filter(b => {
-      if (b.status !== 'confirmed') return false;
+      if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
       const bookingDateTime = new Date(`${b.date}T${b.time}`);
       return bookingDateTime >= now;
     });

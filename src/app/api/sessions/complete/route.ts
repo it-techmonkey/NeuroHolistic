@@ -38,14 +38,41 @@ export async function POST(request: NextRequest) {
     // SERVER-SIDE VALIDATION: Check required forms before allowing completion
 
     // For free consultations: Diagnostic assessment must be filled
-    if (isFreeConsultation && booking?.user_id) {
-      const { data: assessment } = await supabase
-        .from('diagnostic_assessments')
-        .select('id')
-        .eq('client_id', booking.user_id)
-        .eq('status', 'submitted')
-        .limit(1)
-        .maybeSingle();
+    if (isFreeConsultation) {
+      let assessment = null;
+      
+      // Check by client_id if available
+      if (booking?.user_id) {
+        const { data: byClientId } = await supabase
+          .from('diagnostic_assessments')
+          .select('id')
+          .eq('client_id', booking.user_id)
+          .eq('status', 'submitted')
+          .limit(1)
+          .maybeSingle();
+        assessment = byClientId;
+      }
+      
+      // If not found by client_id, check by client_name (for bookings without user account)
+      if (!assessment && booking) {
+        // Get booking name from bookings table
+        const { data: bookingWithName } = await supabase
+          .from('bookings')
+          .select('name')
+          .eq('id', sessionId)
+          .maybeSingle();
+        
+        if (bookingWithName?.name) {
+          const { data: byName } = await supabase
+            .from('diagnostic_assessments')
+            .select('id')
+            .eq('client_name', bookingWithName.name)
+            .eq('status', 'submitted')
+            .limit(1)
+            .maybeSingle();
+          assessment = byName;
+        }
+      }
 
       if (!assessment) {
         return NextResponse.json({
@@ -66,14 +93,40 @@ export async function POST(request: NextRequest) {
     // Handle case where we only have a booking (no session record)
     if (!session && booking) {
       // For free consultation booking without session record
-      if (isFreeConsultation && booking.user_id) {
-        const { data: assessment } = await supabase
-          .from('diagnostic_assessments')
-          .select('id')
-          .eq('client_id', booking.user_id)
-          .eq('status', 'submitted')
-          .limit(1)
-          .maybeSingle();
+      if (isFreeConsultation) {
+        let assessment = null;
+        
+        // Check by client_id if available
+        if (booking.user_id) {
+          const { data: byClientId } = await supabase
+            .from('diagnostic_assessments')
+            .select('id')
+            .eq('client_id', booking.user_id)
+            .eq('status', 'submitted')
+            .limit(1)
+            .maybeSingle();
+          assessment = byClientId;
+        }
+        
+        // If not found by client_id, check by client_name
+        if (!assessment) {
+          const { data: bookingWithName } = await supabase
+            .from('bookings')
+            .select('name')
+            .eq('id', sessionId)
+            .maybeSingle();
+          
+          if (bookingWithName?.name) {
+            const { data: byName } = await supabase
+              .from('diagnostic_assessments')
+              .select('id')
+              .eq('client_name', bookingWithName.name)
+              .eq('status', 'submitted')
+              .limit(1)
+              .maybeSingle();
+            assessment = byName;
+          }
+        }
 
         if (!assessment) {
           return NextResponse.json({

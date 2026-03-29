@@ -2,63 +2,48 @@
 
 import { motion } from "framer-motion";
 
-const FORMATS = [
-  "Executive workshops",
-  "Team development sessions",
-  "Leadership programs",
-  "Organizational wellbeing seminars",
-];
-
 export default function CorporateProgramFormats() {
   return (
-    <section className="bg-white py-16 md:py-20 lg:py-24">
+    <section className="bg-white py-16 md:py-24 border-y border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-24">
-          
-          {/* ── Heading Column (Spans 5) ── */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-5"
-          >
-            <span className="mb-4 block font-mono text-[11px] uppercase tracking-widest text-[#6366F1]">
-              Section 05
-            </span>
-            <h2 className="text-[34px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[46px]">
-              Program <br/>
-              <span className="italic text-[#64748B] font-normal">Formats.</span>
-            </h2>
-          </motion.div>
-
-          {/* ── Content Column (Spans 7) ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-7 lg:pt-8"
-          >
-            <p className="mb-8 text-[17px] leading-[1.8] text-[#475569]">
-              Corporate programs can be delivered through:
-            </p>
-            <ul className="space-y-4 border-t border-[#E2E8F0]">
-              {FORMATS.map((format, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-4 border-b border-[#E2E8F0] py-5 text-[17px] text-[#475569]"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+          <div className="lg:col-span-5 lg:sticky lg:top-32 h-fit">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-[34px] font-medium leading-[1.1] tracking-tight text-[#0F172A] md:text-[46px]">
+                Program <br/>
+                <span className="italic text-[#64748B]">Formats.</span>
+              </h2>
+              <p className="mt-6 text-[16px] leading-[1.8] text-[#475569]">
+                Corporate programs can be delivered through various structured mediums, and can be adapted to the specific needs of each organization.
+              </p>
+            </motion.div>
+          </div>
+          <div className="lg:col-span-7">
+            <ul className="border-t border-[#E2E8F0]">
+              {[
+                "Executive workshops",
+                "Team development sessions",
+                "Leadership programs",
+                "Organizational wellbeing seminars"
+              ].map((format, i) => (
+                <motion.li 
+                  key={format}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * i }}
+                  className="flex items-center justify-between border-b border-[#E2E8F0] py-6 md:py-8 text-[18px] md:text-[20px] text-[#475569]"
                 >
-                  <span className="text-[#6366F1]">•</span>
                   <span>{format}</span>
-                </li>
+                  <span className="text-[#6366F1] font-mono text-[14px]">0{i + 1}</span>
+                </motion.li>
               ))}
             </ul>
-            <p className="mt-8 text-[16px] leading-[1.8] text-[#64748B]">
-              Programs can be adapted to the needs of each organization.
-            </p>
-          </motion.div>
-
+          </div>
         </div>
       </div>
     </section>

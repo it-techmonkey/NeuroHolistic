@@ -49,6 +49,7 @@ type Session = {
   meeting_link?: string;
   program_id?: string;
   development_form_submitted?: boolean;
+  assessment_submitted?: boolean;
   is_complete?: boolean;
 };
 
@@ -65,10 +66,11 @@ type Document = {
 
 // Sessions Tab Component - Shows session-level data with documents and forms
 export function SessionsTab({
-  sessions, documents, onOpenAssessment, onOpenDevForm, onRefresh, onUploadDocument, uploadingDoc, onDeleteDocument
+  sessions, documents, assessments, onOpenAssessment, onOpenDevForm, onRefresh, onUploadDocument, uploadingDoc, onDeleteDocument
 }: {
   sessions: Session[];
   documents: Document[];
+  assessments?: any[];
   onOpenAssessment: (s: Session) => void;
   onOpenDevForm: (s: Session) => void;
   onRefresh: () => void;
@@ -76,6 +78,20 @@ export function SessionsTab({
   uploadingDoc: boolean;
   onDeleteDocument?: (documentId: string) => Promise<void>;
 }) {
+  // Track which sessions have completed assessments
+  // Check if assessment is submitted for a session
+  // For free consultations: use assessment_submitted field from API
+  // For program sessions: check by session_id in assessments
+  const hasAssessmentSubmitted = (sessionId: string, session?: Session) => {
+    // For free consultations, use the assessment_submitted field directly
+    if (session?.type === 'free_consultation') {
+      return session.assessment_submitted === true;
+    }
+    // For program sessions, check assessments by session_id
+    return assessments?.some((a: any) => 
+      a.session_id === sessionId && a.status === 'submitted'
+    ) ?? false;
+  };
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -91,17 +107,18 @@ export function SessionsTab({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && selectedSessionId) {
-      onUploadDocument(file, selectedSessionId);
+    if (file) {
+      onUploadDocument(file, selectedSessionId || undefined);
     }
   };
 
-  // Hide free consultation entries and unscheduled placeholders in this tab
+  // Include all sessions with date/time and valid status (including free consultations)
   const visibleSessions = sessions.filter(
-    s => s.type !== 'free_consultation' && !!s.date && !!s.time && ['scheduled', 'confirmed', 'completed'].includes(s.status)
+    s => !!s.date && !!s.time && ['scheduled', 'confirmed', 'completed'].includes(s.status)
   );
   const freeConsultations = sessions.filter(s => s.type === 'free_consultation');
   const upcomingFreeConsultations = freeConsultations.filter(s => s.status !== 'completed');
+  const completedFreeConsultations = freeConsultations.filter(s => s.status === 'completed');
 
   // Separate completed and upcoming sessions
   const completedSessions = visibleSessions.filter(s => s.status === 'completed');
@@ -116,11 +133,6 @@ export function SessionsTab({
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
           <p className="text-sm text-indigo-600 font-medium">Total Sessions</p>
           <p className="text-2xl font-bold text-indigo-700 mt-1">{visibleSessions.length}</p>
-          {freeConsultations.length > 0 && (
-            <p className="text-xs text-indigo-500 mt-1">
-              + {freeConsultations.length} free consultation
-            </p>
-          )}
         </div>
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
           <p className="text-sm text-green-600 font-medium">Completed</p>
@@ -129,11 +141,6 @@ export function SessionsTab({
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
           <p className="text-sm text-amber-600 font-medium">Upcoming</p>
           <p className="text-2xl font-bold text-amber-700 mt-1">{upcomingSessions.length}</p>
-          {upcomingFreeConsultations.length > 0 && (
-            <p className="text-xs text-amber-600 mt-1">
-              + {upcomingFreeConsultations.length} free consultation
-            </p>
-          )}
         </div>
       </div>
 
@@ -150,6 +157,7 @@ export function SessionsTab({
                 key={s.id}
                 session={s}
                 documents={documents}
+                assessmentSubmitted={hasAssessmentSubmitted(s.id, s)}
                 isExpanded={expandedSession === s.id}
                 onToggle={() => setExpandedSession(expandedSession === s.id ? null : s.id)}
                 onOpenAssessment={() => onOpenAssessment(s)}
@@ -177,6 +185,7 @@ export function SessionsTab({
                 key={s.id}
                 session={s}
                 documents={documents}
+                assessmentSubmitted={hasAssessmentSubmitted(s.id, s)}
                 isExpanded={expandedSession === s.id}
                 onToggle={() => setExpandedSession(expandedSession === s.id ? null : s.id)}
                 onOpenAssessment={() => onOpenAssessment(s)}
@@ -192,7 +201,36 @@ export function SessionsTab({
         </div>
       )}
 
-      {visibleSessions.length === 0 && (
+      {/* Completed Free Consultations */}
+      {completedFreeConsultations.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-purple-600" />
+            Completed Consultations
+          </h3>
+          <div className="space-y-4">
+            {completedFreeConsultations.map((s: Session) => (
+              <SessionCard
+                key={s.id}
+                session={s}
+                documents={documents}
+                assessmentSubmitted={hasAssessmentSubmitted(s.id, s)}
+                isExpanded={expandedSession === s.id}
+                onToggle={() => setExpandedSession(expandedSession === s.id ? null : s.id)}
+                onOpenAssessment={() => onOpenAssessment(s)}
+                onOpenDevForm={() => onOpenDevForm(s)}
+                onRefresh={onRefresh}
+                onUploadDocument={() => handleUploadClick(s.type === 'free_consultation' ? undefined : (s.session_ref_id || s.id))}
+                uploadingDoc={uploadingDoc}
+                isCompleted={true}
+                onDeleteDocument={onDeleteDocument}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {visibleSessions.length === 0 && freeConsultations.length === 0 && (
         <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-200">
           <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-500 font-medium">No sessions yet</p>
@@ -206,6 +244,7 @@ export function SessionsTab({
 function SessionCard({
   session,
   documents,
+  assessmentSubmitted = false,
   isExpanded,
   onToggle,
   onOpenAssessment,
@@ -218,6 +257,7 @@ function SessionCard({
 }: {
   session: Session;
   documents: Document[];
+  assessmentSubmitted?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   onOpenAssessment: () => void;
@@ -261,7 +301,7 @@ function SessionCard({
                 )}
               </div>
               <p className="text-sm text-slate-500 mt-0.5">
-                {session.date ? new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', {
+                {session.clients?.full_name || session.client_name || 'Client'} • {session.date ? new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', {
                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                 }) : 'Not scheduled'}
                 {session.time && ` at ${session.time}`}
@@ -280,8 +320,10 @@ function SessionCard({
                 </span>
               )}
               {isConsultation && (
-                <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg">
-                  Assessment Required
+                <span className={`px-2 py-1 text-xs font-medium rounded-lg ${
+                  assessmentSubmitted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {assessmentSubmitted ? 'Assessment Complete' : 'Assessment Required'}
                 </span>
               )}
             </div>
@@ -306,12 +348,17 @@ function SessionCard({
                 <Video className="w-4 h-4" /> Join Session
               </a>
             )}
-            {/* Only show Assessment button for free consultations */}
+            {/* Show Assessment button for free consultations */}
             {isConsultation && (
               <button onClick={onOpenAssessment}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-100 text-red-700 border border-red-200 hover:bg-red-200">
-                <FileText className="w-4 h-4" /> Assessment Form
-                <span className="text-xs">(Required)</span>
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  assessmentSubmitted 
+                    ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200' 
+                    : 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
+                }`}>
+                <FileText className="w-4 h-4" /> {assessmentSubmitted ? 'View Assessment Form' : 'Assessment Form'}
+                {!assessmentSubmitted && <span className="text-xs">(Required)</span>}
+                {assessmentSubmitted && <CheckCircle className="w-4 h-4" />}
               </button>
             )}
             {devFormRequired && (
@@ -334,7 +381,7 @@ function SessionCard({
             {!isCompleted && (
               <MarkComplete
                 sessionId={effectiveSessionId}
-                isReady={isConsultation ? true : (devFormComplete ?? false)}
+                isReady={isConsultation ? assessmentSubmitted : (devFormComplete ?? false)}
                 isCompleted={session.status === 'completed'}
                 onComplete={onRefresh}
               />
@@ -411,6 +458,121 @@ function SessionCard({
                 <p className="text-sm text-slate-400">No documents uploaded for this session</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Free Consultation Card Component
+function FreeConsultationCard({
+  session,
+  isExpanded,
+  onToggle,
+  onOpenAssessment,
+  onRefresh,
+}: {
+  session: Session;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onOpenAssessment: () => void;
+  onRefresh: () => void;
+}) {
+  const isCompleted = session.status === 'completed';
+
+  return (
+    <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+      isCompleted ? 'border-purple-200 bg-purple-50/30' : 'border-purple-200 bg-white'
+    } ${isExpanded ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}>
+      {/* Session Header */}
+      <div
+        className="p-4 cursor-pointer hover:bg-purple-50/50 transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ChevronRight className={`w-5 h-5 text-purple-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-slate-900">Free Consultation</p>
+                {isCompleted && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    Completed
+                  </span>
+                )}
+                {!isCompleted && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                    Assessment Required
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {session.date ? new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', {
+                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                }) : 'Not scheduled'}
+                {session.time && ` at ${session.time}`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {session.clients?.full_name && (
+              <p className="text-sm text-slate-600 mt-1">
+                Client: {session.clients.full_name}
+              </p>
+            )}
+            {!session.clients?.full_name && session.client_name && (
+              <p className="text-sm text-slate-600 mt-1">
+                Client: {session.client_name}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Session Content */}
+      {isExpanded && (
+        <div className="border-t border-purple-100 p-4 space-y-4 bg-white">
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-2">
+            {session.meet_link && !isCompleted && (
+              <a href={session.meet_link} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+                <Video className="w-4 h-4" /> Join Consultation
+              </a>
+            )}
+            {!isCompleted && (
+              <button onClick={onOpenAssessment}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-100 text-red-700 border border-red-200 hover:bg-red-200">
+                <FileText className="w-4 h-4" /> Assessment Form
+                <span className="text-xs">(Required)</span>
+              </button>
+            )}
+            {!isCompleted && (
+              <MarkComplete
+                sessionId={session.id}
+                isReady={true}
+                isCompleted={session.status === 'completed'}
+                onComplete={onRefresh}
+              />
+            )}
+          </div>
+
+          {/* Session Info */}
+          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+            <h4 className="text-sm font-semibold text-purple-900 mb-2">Consultation Details</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-purple-600 font-medium">Client</p>
+                <p className="text-slate-700">{session.clients?.full_name || session.client_name || 'Client'}</p>
+              </div>
+              <div>
+                <p className="text-purple-600 font-medium">Status</p>
+                <p className="text-slate-700 capitalize">{session.status}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -115,7 +115,7 @@ export default function Navbar() {
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
             <span className="opacity-60 whitespace-nowrap hidden sm:inline">EN / العربية</span>
-            <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Book a Session</Link>
+            <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Book a Consultation</Link>
             <Link href="/academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Apply to Academy</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">FAQ</Link>
           </div>

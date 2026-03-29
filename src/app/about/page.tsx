@@ -39,11 +39,11 @@ export default function AboutPage() {
         eyebrow="About Us"
         title={
           <>
-            The Evolution of the <br />
-            <span className="italic text-white/60 font-normal">NeuroHolistic Method™</span>
+            
+            <span className="italic text-white/60 font-normal">The Evolution of the NeuroHolistic Method™<br /></span>
           </>
         }
-        description="Redefining How Real Change Happens"
+        description="Redefining How Real Change Happens "
         imageSrc="/images/pages/about.jpg"
         imageAlt="Premium wellbeing consultation environment"
         metaTags={["20+ Years", "Applied Practice", "Interdisciplinary"]}
@@ -96,20 +96,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Section 05: Institute Functions (Registry Matrix) ── */}
+      {/* ── Section 02: Institute Functions (Registry Matrix) ── */}
       <section className="bg-[#FAFBFF] py-24 md:py-32 border-y border-[#E2E8F0]">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="mb-20">
-            <span className="mb-4 block font-mono text-[11px] uppercase tracking-widest text-[#6366F1]">
-              Section 05
-            </span>
-            <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">The Birth of the <br/> <span className="italic text-[#64748B]">NeuroHolistic Institute.</span></h2>
-            <p className="mt-6 text-[17px] leading-[1.8] text-[#475569] max-w-[600px]">
-              As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method.
-            </p>
-            <p className="mt-4 text-[16px] leading-[1.8] text-[#64748B]">
-              Today the Institute serves three main functions:
-            </p>
+          <div className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+              <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">The Birth of the <br/> <span className="italic text-[#64748B]">NeuroHolistic Institute.</span></h2>
+            </div>
+            <div className="flex flex-col justify-center space-y-6 text-[17px] leading-[1.8] text-[#475569]">
+              <p>As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method.</p>
+              <p>Today the Institute serves three main functions:</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 border-t border-[#E2E8F0]">
@@ -118,71 +115,79 @@ export default function AboutPage() {
               "Practitioner training through the NeuroHolistic Academy",
               "Research and development of the NeuroHolistic framework"
             ].map((text, i) => (
-              <div key={i} className="group border-b border-[#E2E8F0] p-10 transition-colors hover:bg-white md:border-r last:md:border-r-0">
-                <p className="text-[16px] font-semibold text-[#0F172A] leading-relaxed uppercase tracking-wide">{text}</p>
+              <div key={i} className="group flex flex-col justify-between border-b border-[#E2E8F0] p-10 transition-colors hover:bg-white md:border-r last:md:border-r-0">
+                <span className="mb-8 font-mono text-[12px] text-[#CBD5E1] group-hover:text-[#6366F1] transition-colors">[ 0{i+1} ]</span>
+                <p className="text-[17px] font-medium text-[#0F172A] leading-snug">{text}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Section 06: Founder (Editorial Spread) ── */}
+      {/* ── Section 03: Founder (Editorial Spread) ── */}
       <section className="py-24 md:py-32 lg:py-40 bg-white">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="mb-16">
-            <span className="mb-4 block font-mono text-[11px] uppercase tracking-widest text-[#6366F1]">
-              Section 06
-            </span>
-            <h2 className="text-[34px] font-light text-[#0F172A] md:text-[48px]">Dr. Fawzia <span className="italic text-[#64748B]">Yassmina.</span></h2>
-          </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            <div className="lg:col-span-5">
+            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} className="lg:col-span-6 lg:sticky lg:top-32">
+              <h2 className="mb-8 text-[34px] font-light text-[#0F172A] md:text-[48px]">Dr. Fawzia <span className="italic text-[#64748B]">Yassmina.</span></h2>
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0 rounded-lg bg-white">
-                  <Image src="/images/team/Fawzia%20Yassmina.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-contain" />
+                  <Image src="/images/team/Fawzia Yassmina Landing.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-cover object-top" />
                 </div>
               </div>
-            </div>
-            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} className="lg:col-span-7">
-              <div className="space-y-8 border-l border-[#E2E8F0] pl-8">
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="lg:col-span-6 lg:pt-4">
+              <div className="space-y-12 text-[17px] leading-[1.8] text-[#475569]">
+                
                 <div>
-                  <h3 className="mb-3 text-[20px] font-semibold text-[#0F172A]">Natural State of Being</h3>
-                  <p className="text-[17px] leading-[1.8] text-[#475569]">From a young age, I believed in the power within us. I knew we shape our own lives and never allowed myself to be limited by the beliefs of others. I was fortunate to grow up in a loving family that supported free thinking, allowing me to preserve my natural way of being.</p>
+                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">Natural State of Being</h3>
+                  <p>From a young age, I believed in the power within us. I knew we shape our own lives and never allowed myself to be limited by the beliefs of others. I was fortunate to grow up in a loving family that supported free thinking, allowing me to preserve my natural way of being.</p>
                 </div>
+
                 <div>
-                  <h3 className="mb-3 text-[20px] font-semibold text-[#0F172A]">Natural Access to Knowledge</h3>
-                  <p className="text-[17px] leading-[1.8] text-[#475569]">Much of what I later learned felt like something I already understood. I experienced knowledge before learning it and applied it naturally. This deepened my conviction that we have access to something far greater within us. I had a happy childhood and believed this was normal for everyone. I couldn't understand why people would say, "I can't."</p>
+                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">Natural Access to Knowledge</h3>
+                  <p>Much of what I later learned felt like something I already understood. I experienced knowledge before learning it and applied it naturally. This deepened my conviction that we have access to something far greater within us. I had a happy childhood and believed this was normal for everyone. I couldn’t understand why people would say, "I can’t."</p>
                 </div>
+
                 <div>
-                  <h3 className="mb-3 text-[20px] font-semibold text-[#0F172A]">Learn or Recycle</h3>
-                  <p className="text-[17px] leading-[1.8] text-[#475569]">Life shifted when my father passed away, yet I continued forward. As a young woman, I achieved things others found difficult with ease and a playful spirit. Still, I had not yet learned what life was preparing to show me.</p>
-                  <p className="mt-4 text-[17px] leading-[1.8] text-[#475569]">Then, within a few years, everything changed. I lost my home country, my nephew, my mother, my elder brother, and my younger brother, the last of my family.</p>
-                  <p className="mt-4 text-[17px] leading-[1.8] text-[#475569]">I found myself completely cut off. It was then that I understood what "I can't" truly means.</p>
+                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">Learn or Recycle</h3>
+                  <div className="space-y-4">
+                    <p>Life shifted when my father passed away, yet I continued forward. As a young woman, I achieved things others found difficult with ease and a playful spirit. Still, I had not yet learned what life was preparing to show me.</p>
+                    <p>Then, within a few years, everything changed. I lost my home country, my nephew, my mother, my elder brother, and my younger brother, the last of my family.</p>
+                    <p>I found myself completely cut off. It was then that I understood what "I can’t" truly means.</p>
+                  </div>
                 </div>
+
                 <div>
-                  <h3 className="mb-3 text-[20px] font-semibold text-[#0F172A]">It Is a Matter of Choice</h3>
-                  <p className="text-[17px] leading-[1.8] text-[#475569]">I stepped away from life for a time, but deep within, I still knew we decide the course of our lives.</p>
-                  <p className="mt-4 text-[17px] leading-[1.8] text-[#475569]">One night, I sat awake until sunrise, facing a decision, whether to follow those I had lost, or to continue.</p>
-                  <p className="mt-4 text-[17px] leading-[1.8] text-[#475569]">With the first light, I chose to live. Not only to live, but to expand what is possible within a human life. In that moment, I understood where "I can't" comes from, and how to move beyond it.</p>
+                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">It Is a Matter of Choice</h3>
+                  <div className="space-y-4">
+                    <p>I stepped away from life for a time, but deep within, I still knew we decide the course of our lives.</p>
+                    <p>One night, I sat awake until sunrise, facing a decision, whether to follow those I had lost, or to continue.</p>
+                    <p>With the first light, I chose to live. Not only to live, but to expand what is possible within a human life. In that moment, I understood where "I can’t" comes from, and how to move beyond it.</p>
+                  </div>
                 </div>
+
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ── Section 07: Vision (Dark Capstone) ── */}
+      {/* ── Section 04: Vision for the Future (Dark Capstone) ── */}
       <section className="bg-[#0F172A] py-24 md:py-32">
         <div className="mx-auto max-w-[900px] px-6 text-center">
-          <span className="mb-4 block font-mono text-[11px] uppercase tracking-widest text-[#8B8BFF]">
-            Section 07
-          </span>
-          <h2 className="mb-10 text-[32px] font-light text-white md:text-[48px]">Vision for the <span className="italic text-slate-400">Future.</span></h2>
-          <div className="space-y-6 text-[17px] leading-[1.8] text-slate-400">
-            <p>The NeuroHolistic Institute continues to expand the development and application of the NeuroHolistic Method™ through therapeutic work, practitioner training, and research.</p>
-            <p>The Institute's long-term vision is to deepen the scientific understanding of human transformation while supporting the emergence of a new generation of practitioners capable of working responsibly with the complexity of human experience.</p>
-            <p>Through continued exploration, collaboration, and structured practice, the NeuroHolistic framework aims to contribute to a broader evolution in how human wellbeing, awareness, and transformation are understood and facilitated.</p>
-            <p className="font-mono text-[11px] uppercase tracking-widest opacity-40 pt-4">Systemic Evolution // Applied Awareness</p>
+          <h2 className="mb-12 text-[32px] font-light text-white md:text-[48px]">Vision for the <span className="italic text-slate-400">future.</span></h2>
+          <div className="space-y-8 text-[17px] leading-[1.8] text-slate-400 max-w-3xl mx-auto">
+            <p>
+              The NeuroHolistic Institute continues to expand the development and application of the NeuroHolistic Method™ through therapeutic work, practitioner training, and research.
+            </p>
+            <p>
+              The Institute’s long-term vision is to deepen the scientific understanding of human transformation while supporting the emergence of a new generation of practitioners capable of working responsibly with the complexity of human experience.
+            </p>
+            <p>
+              Through continued exploration, collaboration, and structured practice, the NeuroHolistic framework aims to contribute to a broader evolution in how human wellbeing, awareness, and transformation are understood and facilitated.
+            </p>
           </div>
         </div>
       </section>

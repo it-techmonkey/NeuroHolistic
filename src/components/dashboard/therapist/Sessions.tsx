@@ -5,11 +5,12 @@ import DiagnosticAssessmentForm from './DiagnosticAssessmentForm';
 import SessionDevelopmentForm from './SessionDevelopmentForm';
 import UploadMaterial from './UploadMaterial';
 import MarkComplete from './MarkComplete';
+import FreeConsultationView from './FreeConsultationView';
 
 export default function Sessions({ therapistId }: { therapistId: string }) {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [view, setView] = useState<'list' | 'calendar' | 'free_consultations'>('list');
   const [filter, setFilter] = useState<'upcoming' | 'completed' | 'all'>('upcoming');
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -24,6 +25,9 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
 
   // Track which clients have completed diagnostic assessments
   const [clientsWithAssessments, setClientsWithAssessments] = useState<Set<string>>(new Set());
+  
+  // Track assessments data for passing to the form
+  const [assessmentsData, setAssessmentsData] = useState<Map<string, any>>(new Map());
 
   // Check Google Calendar status
   const checkGoogleStatus = async () => {
@@ -93,9 +97,25 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
     checkGoogleStatus();
   }, [therapistId]);
 
-  const openForm = (session: any, type: 'diagnostic' | 'development') => {
+  const openForm = async (session: any, type: 'diagnostic' | 'development') => {
     setActiveSession(session);
     setModalType(type);
+    
+    // Fetch existing assessment when opening diagnostic form
+    if (type === 'diagnostic' && session.client_id) {
+      try {
+        const res = await fetch(`/api/assessments/diagnostic?clientId=${session.client_id}&therapistId=${therapistId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const baseline = data.assessments?.find((a: any) => a.is_baseline) || data.assessments?.[0];
+          if (baseline) {
+            setAssessmentsData(prev => new Map(prev).set(session.client_id, baseline));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch assessment:', err);
+      }
+    }
   };
 
   const closeForm = (refresh = false) => {
@@ -189,6 +209,14 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
               }`}
             >
               Calendar View
+            </button>
+            <button
+              onClick={() => setView('free_consultations')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                view === 'free_consultations' ? 'bg-purple-100 text-purple-700' : 'bg-white text-slate-600 border border-slate-300'
+              }`}
+            >
+              Free Consultations
             </button>
           </div>
         </div>
@@ -301,6 +329,14 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Free Consultations View */}
+      {view === 'free_consultations' && (
+        <FreeConsultationView
+          therapistId={therapistId}
+          onRefresh={() => fetchSessions()}
+        />
       )}
 
       {/* List View */}
@@ -458,13 +494,13 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
                           sessionId={session.id}
                           isReady={
                             session.type === 'free_consultation'
-                              ? clientsWithAssessments.has(session.client_id)
+                              ? session.assessment_submitted === true
                               : !session.program_id || session.development_form_submitted
                           }
                           isCompleted={session.status === 'completed'}
                           onComplete={() => fetchSessions()}
                           tooltip={
-                            session.type === 'free_consultation' && !clientsWithAssessments.has(session.client_id)
+                            session.type === 'free_consultation' && !session.assessment_submitted
                               ? 'Complete diagnostic assessment first'
                               : !session.program_id || session.development_form_submitted
                                 ? undefined
@@ -498,6 +534,8 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
                   clientId={activeSession.client_id}
                   therapistId={therapistId}
                   sessionId={activeSession.id}
+                  existingAssessment={assessmentsData.get(activeSession.client_id)}
+                  isSessionCompleted={activeSession.status === 'completed'}
                   clientData={
                     activeSession.clients
                       ? {

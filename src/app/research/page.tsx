@@ -55,7 +55,7 @@ export default function ResearchPage() {
       />
 
       {/* ── Section 01: Research Vision (Editorial Spread) ── */}
-      <section className="py-24 md:py-32 lg:py-40">
+      <section className="py-12 md:py-16 lg:py-20">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
             <motion.div 
@@ -70,10 +70,10 @@ export default function ResearchPage() {
               </h2>
               <div className="space-y-8 border-l border-[#E2E8F0] pl-8">
                 <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  The NeuroHolistic Institute is committed to developing a deeper scientific understanding of how human perception, emotional patterns, and behavioral change emerge from the interaction of biological, psychological, and experiential systems.
+                  The NeuroHolistic Institute is committed to developing a scientific understanding of how human perception and behavioral change emerge from the interaction of biological and experiential systems.
                 </p>
                 <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  Our research explores how integrative approaches can support meaningful and sustainable transformation in individuals and communities.
+                  Our research explores how integrative approaches support sustainable transformation in individuals and communities, grounded in rigorous observation.
                 </p>
               </div>
             </motion.div>
@@ -100,9 +100,9 @@ export default function ResearchPage() {
       </section>
 
       {/* ── Section 02: Focus Areas (Registry Matrix) ── */}
-      <section className="bg-[#FAFBFF] py-24 md:py-32 lg:py-40 border-y border-[#E2E8F0]">
+      <section className="bg-[#FAFBFF] py-12 md:py-16 lg:py-20 border-y border-[#E2E8F0]">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="mb-20">
+          <div className="mb-10">
             <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">Areas of <span className="italic text-[#64748B]">Inquiry.</span></h2>
           </div>
 
@@ -123,18 +123,23 @@ export default function ResearchPage() {
       </section>
 
       {/* ── Section 03: Practice & Collaboration (Asymmetrical Dossier) ── */}
-      <section className="py-24 md:py-32 lg:py-40 bg-white">
+      <section className="py-12 md:py-16 lg:py-20 bg-white">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-24">
             <div className="border-l border-[#E2E8F0] pl-10">
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
-                Practice-Based <br/><span className="italic text-[#64748B]">Research.</span>
+                Understanding <br/><span className="italic text-[#64748B]">the emergent human.</span>
               </h3>
-              <p className="mt-6 text-[16px] leading-[1.8] text-[#4B5563]">
-                The Institute develops research through structured observation of applied work. Case documentation and practitioner inquiry contribute to building a body of knowledge around the mechanisms of human transformation.
-              </p>
+              <div className="mt-6 flex flex-col gap-4 text-[16px] leading-[1.8] text-[#4B5563]">
+                <p>
+                  The NeuroHolistic Institute is committed to developing a deeper scientific understanding of how human perception, emotional patterns, and behavioral change emerge from the interaction of biological, psychological, and experiential systems.
+                </p>
+                <p>
+                  Our research explores how integrative approaches can support meaningful and sustainable transformation in individuals and communities.
+                </p>
+              </div>
             </div>
-            <div className="border-l border-[#E2E8F0] pl-10">
+            <div className="border-l border-[#E2E8F0] pl-10 lg:mt-20">
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
                 Academic <br/><span className="italic text-[#64748B]">Collaboration.</span>
               </h3>
@@ -147,7 +152,7 @@ export default function ResearchPage() {
       </section>
 
       {/* ── Section 04: Publications (Dark Capstone) ── */}
-      <section className="bg-[#0F172A] py-24 md:py-32">
+      <section className="bg-[#0F172A] py-12 md:py-16">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-end">
             <div className="lg:col-span-7">
@@ -168,7 +173,7 @@ export default function ResearchPage() {
       </section>
 
       {/* ── Section 05: Final Inquiry (Clean CTA) ── */}
-      <section className="py-24 md:py-32 border-t border-[#E2E8F0]">
+      <section className="py-12 md:py-16 border-t border-[#E2E8F0]">
         <div className="mx-auto max-w-[800px] px-6 text-center">
           <h2 className="mt-6 text-[32px] font-light tracking-tight text-[#0F172A] md:text-[42px]">
             Inquire for <span className="italic text-[#64748B]">partnership.</span>

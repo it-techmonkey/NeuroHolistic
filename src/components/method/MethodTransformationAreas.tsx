@@ -49,7 +49,7 @@ const AREAS = [
   },
   {
     title: "Human Potential",
-    description: "When energy is no longer consumed by unresolved internal conflict, it becomes available for creativity, purpose, and meaningful engagement with life. Many individuals rediscover a deeper sense of direction and the confidence to pursue what truly matters to them.",
+    description: "When energy is no longer consumed by unresolved internal conflict, it becomes available for creativity, purpose, and meaningful engagement with life. Many individuals rediscover a deeper sense of direction and the confidence to pursue what truly matters.",
     Icon: Icons.Potential,
   },
 ];
@@ -74,10 +74,9 @@ export default function TransformationAreas() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-500"
+className="mx-auto mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-500"
           >
-            When internal systems return to balance, change appears across multiple dimensions of life, 
-            altering how we think, feel, and engage with the world.
+            When internal systems return to balance and coherence, change appears across multiple dimensions of life, altering how we think, feel, and engage with the world.
           </motion.p>
         </div>
 
@@ -115,6 +114,18 @@ export default function TransformationAreas() {
             </motion.div>
           ))}
         </div>
+
+        <motion.div
+           initial={{ opacity: 0, y: 15 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true }}
+           transition={{ delay: 0.2 }}
+           className="mt-16 text-center max-w-3xl mx-auto"
+        >
+          <p className="text-[18px] leading-relaxed text-slate-600 font-medium italic">
+            For many individuals, the NeuroHolistic Method™ becomes not only a process of healing, but a pathway toward a more conscious, balanced, and empowered way of living.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

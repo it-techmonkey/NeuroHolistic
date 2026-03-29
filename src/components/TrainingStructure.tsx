@@ -48,32 +48,24 @@ export default function TrainingStructure() {
           >
           </motion.div>
 
-          <motion.h2
+          <motion.h2 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
             className="text-[34px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[48px]"
           >
-            The Program
+            <span className="block text-[14px] font-mono tracking-[0.2em] text-[#6366F1] uppercase mb-4">The Program</span>
+            NeuroHolistic Applied <br className="hidden md:block" />
+            <span className="italic text-[#64748B] font-normal">Psychology Mastery.</span>
           </motion.h2>
-
-          <motion.h3
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.15 }}
-            className="mt-4 text-[22px] font-medium leading-[1.3] tracking-tight text-[#0F172A] md:text-[28px]"
-          >
-            NeuroHolistic Applied Psychology Mastery
-          </motion.h3>
-
-          <motion.p
+          
+          <motion.p 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="mt-6 text-[17px] leading-[1.8] text-[#475569] max-w-[600px]"
+            className="mt-8 text-[17px] leading-[1.8] text-[#475569] max-w-[600px]"
           >
             An advanced professional training program that combines scientific foundations, practitioner formation, and supervised practice to prepare you for ethical, effective applied work.
           </motion.p>

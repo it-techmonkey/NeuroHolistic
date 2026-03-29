@@ -32,7 +32,7 @@ type SessionAssessment = {
 
 type SessionRecord = {
   id: string; date: string; time: string; type: string;
-  status: 'confirmed' | 'completed' | 'cancelled';
+  status: 'confirmed' | 'scheduled' | 'completed' | 'cancelled';
   meetingLink: string | null; sessionNumber: number | null;
   canComplete: boolean; assessment: SessionAssessment | null;
 };
@@ -222,7 +222,7 @@ export default function TherapistDashboard() {
     return clients
       .flatMap((c) =>
         c.sessions
-          .filter((s) => s.status === 'confirmed' && isUpcomingSession(s))
+          .filter((s) => (s.status === 'confirmed' || s.status === 'scheduled') && isUpcomingSession(s))
           .map((s) => ({ ...s, clientName: c.fullName, clientId: c.userId })),
       )
       .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));

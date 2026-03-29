@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import CalendarPicker from '@/components/booking/shared/CalendarPicker';
 import { generateGoogleCalendarUrl } from '@/lib/calendar-utils';
@@ -10,6 +10,7 @@ import { Calendar, Download } from 'lucide-react';
 type Therapist = {
   id: string;
   name: string;
+  slug?: string;
 };
 
 type Slot = {
@@ -19,6 +20,8 @@ type Slot = {
 
 export default function BookConsultationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedSlug = searchParams.get('therapist');
   const [initialLoading, setInitialLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -26,6 +29,7 @@ export default function BookConsultationPage() {
   
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
+  const [therapistLocked, setTherapistLocked] = useState(false);
   
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -70,11 +74,21 @@ export default function BookConsultationPage() {
         const res = await fetch('/api/therapist/list');
         if (!res.ok) throw new Error('Failed to load therapists');
         const data = await res.json();
-        const therapistList = (data.therapists || []).filter((t: Therapist) => 
+        const therapistList = (data.therapists || []).filter((t: any) => 
           !t.name.toLowerCase().includes('admin')
         );
         setTherapists(therapistList);
-        if (therapistList.length > 0) {
+        
+        // If a therapist slug was passed via URL, auto-select and lock it
+        if (preselectedSlug) {
+          const match = therapistList.find((t: any) => t.slug === preselectedSlug);
+          if (match) {
+            setSelectedTherapist(match.id);
+            setTherapistLocked(true);
+          } else if (therapistList.length > 0) {
+            setSelectedTherapist(therapistList[0].id);
+          }
+        } else if (therapistList.length > 0) {
           setSelectedTherapist(therapistList[0].id);
         }
       } catch (err) {
@@ -398,25 +412,32 @@ export default function BookConsultationPage() {
               {/* Therapist Selection */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Select Therapist <span className="text-indigo-600">({therapists.length} available)</span>
+                  {therapistLocked ? 'Your Therapist' : (
+                    <>Select Therapist <span className="text-indigo-600">({therapists.length} available)</span></>
+                  )}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {therapists.map(therapist => (
+                  {(therapistLocked ? therapists.filter(t => t.id === selectedTherapist) : therapists).map(therapist => (
                     <button
                       key={therapist.id}
                       type="button"
+                      disabled={therapistLocked}
                       onClick={() => {
-                        setSelectedTherapist(therapist.id);
-                        setSelectedSlot('');
+                        if (!therapistLocked) {
+                          setSelectedTherapist(therapist.id);
+                          setSelectedSlot('');
+                        }
                       }}
                       className={`p-4 border rounded-lg text-left transition-all ${
                         selectedTherapist === therapist.id
                           ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600'
                           : 'border-slate-200 hover:border-indigo-300'
-                      }`}
+                      } ${therapistLocked ? 'cursor-default' : ''}`}
                     >
                       <div className="font-medium text-slate-900">{therapist.name}</div>
-                      <div className="text-xs text-slate-500 mt-1">NeuroHolistic Specialist</div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {therapistLocked ? '✓ Pre-selected from profile' : 'NeuroHolistic Specialist'}
+                      </div>
                     </button>
                   ))}
                 </div>

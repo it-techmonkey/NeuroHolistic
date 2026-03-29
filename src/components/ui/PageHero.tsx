@@ -13,10 +13,12 @@ interface HeroAction {
 
 interface PageHeroProps {
   eyebrow: string;
-  title: React.ReactNode;
-  description: React.ReactNode;
+  title: React.ReactNode; 
+  description: string;
+  customDescription?: React.ReactNode;
   imageSrc: string;
   imageAlt: string;
+  imagePosition?: string;
   metaTags?: string[];
   primaryAction?: HeroAction;
   secondaryAction?: HeroAction;
@@ -26,15 +28,18 @@ export default function PageHero({
   eyebrow,
   title,
   description,
+  customDescription,
   imageSrc,
   imageAlt,
+  imagePosition = "object-center",
   metaTags = [],
   primaryAction,
   secondaryAction,
 }: PageHeroProps) {
+  const hasCustomDesc = !!customDescription;
   
   return (
-    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-36 pb-14 sm:min-h-[85vh] sm:pt-40 sm:pb-16 md:min-h-[90vh] md:pt-48 md:pb-24">
+    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-14 sm:min-h-[85vh] sm:pt-32 sm:pb-16 md:min-h-[90vh] md:pt-40 md:pb-24">
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">
@@ -43,7 +48,7 @@ export default function PageHero({
           alt={imageAlt}
           fill
           priority
-          className="object-cover object-center"
+          className={`object-cover ${imagePosition}`}
           sizes="100vw"
           quality={95}
         />
@@ -73,9 +78,13 @@ export default function PageHero({
           </h1>
 
           {/* Description: Controlled max-width for line-length comfort */}
-          <p className="mb-7 max-w-[620px] text-[15px] leading-[1.7] text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10">
-            {description}
-          </p>
+          {hasCustomDesc ? (
+            customDescription
+          ) : description ? (
+            <p className="mb-7 max-w-[620px] text-[15px] leading-[1.7] text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10">
+              {description}
+            </p>
+          ) : null}
 
           {/* Meta Information: Switched to flex-wrap for better overflow management */}
           {metaTags.length > 0 && (

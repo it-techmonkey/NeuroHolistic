@@ -10,11 +10,11 @@ export default function TeamPage() {
   return (
     <main className="w-full bg-white">
       <PageHero
-        eyebrow="The Team"
+        eyebrow="Faculty"
         title={
           <>
-            The <br />
-            <span className="italic text-white/60 font-normal">NeuroHolistic Team</span>
+            Practitioners of the <br />
+            <span className="italic text-white/60 font-normal">NeuroHolistic Team.</span>
           </>
         }
         description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."

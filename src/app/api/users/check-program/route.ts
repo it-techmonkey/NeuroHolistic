@@ -46,10 +46,20 @@ export async function GET() {
       firstSession = session;
     }
 
+    // Check if user has used their free consultation
+    const { data: freeConsult } = await serviceSupabase
+      .from('bookings')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('type', 'free_consultation')
+      .limit(1)
+      .maybeSingle();
+
     return NextResponse.json({
       hasProgram: !!program,
       program: program || null,
       firstPendingSession: firstSession,
+      hasUsedFreeConsultation: !!freeConsult,
     });
   } catch (error) {
     console.error('[Check Program]', error);

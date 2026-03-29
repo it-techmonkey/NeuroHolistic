@@ -131,7 +131,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Lebanese and based in Lebanon, Joud is a certified NeuroHolistic Practitioner whose work is guided by compassion, intuition, and a sincere dedication to helping others reconnect with their inner balance.",
       "Known for his calm strength and authentic presence, he supports individuals in exploring deeper layers of awareness and restoring harmony within themselves.",
     ],
-    image: "/images/team/joud.jpeg",
+    image: "/images/team/Joud.png",
     testimonials: [
       "Joud's calm presence helped me slow down, listen deeply, and reconnect with myself.",
       "His grounded style created trust and helped me regain a stronger sense of inner balance.",

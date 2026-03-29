@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function AcademyCTA() {
   return (
-    <section className="w-full bg-[#FAFBFF] px-4 py-16 md:px-6 md:py-20">
+    <section className="w-full bg-[#FAFBFF] px-4 py-10 md:px-6 md:py-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -28,28 +28,18 @@ export default function AcademyCTA() {
         {/* Soft Inner Glow */}
         <div className="pointer-events-none absolute left-0 top-0 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.15)_0%,transparent_70%)] blur-3xl" />
 
-        <div className="relative z-10 px-8 py-20 md:px-16 md:py-28 lg:px-24">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-20">
+        <div className="relative z-10 px-8 lg:py-0 md:px-16 lg:h-[220px] flex items-center lg:px-24">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-20 w-full py-16 lg:py-0">
             
             {/* Left Column: The Hook (Spans 7 Cols) */}
-            <div className="lg:col-span-7">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="h-px w-6 bg-[#8B8BFF]" />
-                <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#8B8BFF]">
-                  The NeuroHolistic Academy™
-                </span>
-              </div>
-
-              <h2 className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[56px]">
-                The NeuroHolistic Academy
+            <div className="lg:col-span-7 flex flex-col justify-center">
+              <h2 className="text-[32px] font-medium leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[48px] uppercase">
+                THE NEUROHOLISTIC ACADEMY
               </h2>
             </div>
 
             {/* Right Column: Context & Action (Spans 5 Cols) */}
-            <div className="flex flex-col items-start lg:col-span-5">
-              <p className="mb-10 text-[17px] leading-[1.7] text-[#94A3B8] md:text-[18px]">
-              </p>
-
+            <div className="flex flex-col items-start lg:col-span-5 lg:items-end justify-center">
               <Link
                 href="/academy"
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-white px-8 text-[15px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"

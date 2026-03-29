@@ -6,8 +6,7 @@ export default function EventsHero() {
       eyebrow="Live Learning Experiences"
       title={
         <>
-          Events that <br className="hidden lg:block" />
-          <span className="italic">last.</span>
+      Events that lasts <br className="hidden lg:block" />
         </>
       }
       description="Join workshops, guided sessions, and live learning experiences designed to restore nervous system balance and deepen practical transformation through the NeuroHolistic Method™."

@@ -71,27 +71,48 @@ export async function GET() {
     // Build unique client list from bookings OR users
     const clientMap = new Map<string, any>();
     
-    // First add all users with bookings
-    for (const booking of (bookings ?? [])) {
-      if (!booking.user_id) continue;
-      
-      if (!clientMap.has(booking.user_id)) {
-        const user = (users ?? []).find((u: any) => u.id === booking.user_id);
-        clientMap.set(booking.user_id, {
-          userId: booking.user_id,
-          fullName: booking.name || user?.full_name || 'Unknown',
-          email: booking.email || user?.email || '',
-          phone: booking.phone || user?.phone || '',
-          bookings: [],
-          assessments: [],
-          devForms: [],
-          program: null,
-          nextSession: null,
-          averageScore: null,
-        });
+    // Helper to find or create client entry by user_id or email
+    const getOrCreateClient = (booking: any) => {
+      // First try by user_id
+      if (booking.user_id && clientMap.has(booking.user_id)) {
+        return clientMap.get(booking.user_id);
       }
       
-      clientMap.get(booking.user_id).bookings.push(booking);
+      // Try to find existing user by email
+      const userByEmail = (users ?? []).find((u: any) => 
+        u.email?.toLowerCase() === booking.email?.toLowerCase()
+      );
+      
+      const effectiveUserId = booking.user_id || userByEmail?.id;
+      
+      if (effectiveUserId && clientMap.has(effectiveUserId)) {
+        return clientMap.get(effectiveUserId);
+      }
+      
+      // Create new client entry
+      const clientId = effectiveUserId || `guest_${booking.email}`;
+      const client = {
+        userId: clientId,
+        fullName: booking.name || userByEmail?.full_name || 'Unknown',
+        email: booking.email || userByEmail?.email || '',
+        phone: booking.phone || userByEmail?.phone || '',
+        bookings: [],
+        assessments: [],
+        devForms: [],
+        program: null,
+        nextSession: null,
+        averageScore: null,
+        isGuest: !effectiveUserId,
+      };
+      
+      clientMap.set(clientId, client);
+      return client;
+    };
+    
+    // Process all bookings, including those without user_id
+    for (const booking of (bookings ?? [])) {
+      const client = getOrCreateClient(booking);
+      client.bookings.push(booking);
     }
 
     // Enrich with assessments and dev forms
@@ -108,6 +129,9 @@ export async function GET() {
       if (allScores.length > 0) {
         client.averageScore = Math.round(allScores.reduce((a: number, b: number) => a + b, 0) / allScores.length);
       }
+
+      client.assessmentCount = client.assessments.length;
+      client.hasFreeConsultation = client.bookings.some((b: any) => b.type === 'free_consultation');
 
       // Find program (latest one)
       const clientPrograms = (programs ?? []).filter((p: any) => p.user_id === clientId);
@@ -132,7 +156,7 @@ export async function GET() {
       // Find next session
       const now = new Date();
       client.nextSession = client.bookings
-        .filter((b: any) => b.status === 'confirmed' && new Date(`${b.date}T${b.time}`) >= now)
+        .filter((b: any) => (b.status === 'confirmed' || b.status === 'scheduled') && new Date(`${b.date}T${b.time}`) >= now)
         .sort((a: any, b: any) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())[0] || null;
     }
 
@@ -142,7 +166,7 @@ export async function GET() {
     const completedBookings = (bookings ?? []).filter((b: any) => b.status === 'completed');
     const upcomingBookings = (bookings ?? []).filter((b: any) => {
       const now = new Date();
-      return b.status === 'confirmed' && new Date(`${b.date}T${b.time}`) >= now;
+      return (b.status === 'confirmed' || b.status === 'scheduled') && new Date(`${b.date}T${b.time}`) >= now;
     });
     const pendingDocs = (devForms ?? []).filter((f: any) => !f.submitted_at);
 

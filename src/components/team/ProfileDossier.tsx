@@ -65,7 +65,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
               {/* Book Button */}
               <div className="mt-12">
                 <Link
-                  href="/book"
+                  href={`/consultation/book?therapist=${profile.slug}`}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0F172A] px-8 py-3.5 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#1E293B] hover:shadow-lg"
                 >
                   {buttonLabel}

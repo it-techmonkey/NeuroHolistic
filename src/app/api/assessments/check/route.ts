@@ -11,11 +11,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // Fetch all clients who have diagnostic assessments
+    // Fetch all clients who have SUBMITTED diagnostic assessments
     const { data: assessments, error } = await supabase
       .from('diagnostic_assessments')
       .select('client_id')
-      .in('client_id', clientIds);
+      .in('client_id', clientIds)
+      .eq('status', 'submitted');
 
     if (error) {
       console.error('[Assessments Check] Error:', error);

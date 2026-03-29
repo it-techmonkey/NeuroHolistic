@@ -24,33 +24,55 @@ export async function GET(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
+    // Check if this is a guest client (ID starts with 'guest_')
+    const isGuestClient = clientId.startsWith('guest_');
+    const guestEmail = isGuestClient ? clientId.replace('guest_', '') : null;
+
     // Fetch all bookings for this client
-    const { data: bookings } = await supabase
+    let bookingsQuery = supabase
       .from('bookings')
       .select('*')
-      .eq('user_id', clientId)
       .order('date', { ascending: false });
 
-    // Fetch all sessions for this client
-    const { data: sessions } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('session_number', { ascending: true });
+    if (isGuestClient && guestEmail) {
+      // For guest clients, fetch by email
+      bookingsQuery = bookingsQuery.eq('email', guestEmail);
+    } else {
+      // For regular clients, fetch by user_id
+      bookingsQuery = bookingsQuery.eq('user_id', clientId);
+    }
 
-    // Fetch all assessments (strip internal data for non-admin)
-    const { data: assessments } = await supabase
-      .from('diagnostic_assessments')
-      .select('id, session_id, client_id, therapist_id, is_baseline, main_complaint, current_symptoms, previous_therapy, nervous_system_pattern, nervous_system_score, emotional_state_score, cognitive_patterns_score, body_symptoms_score, behavioral_patterns_score, life_functioning_score, goal_readiness_score, clinical_condition_brief, therapist_focus, therapy_goal, assessed_at, created_at')
-      .eq('client_id', clientId)
-      .order('assessed_at', { ascending: true });
+    const { data: bookings } = await bookingsQuery;
 
-    // Fetch session development forms
-    const { data: devFormsRaw } = await supabase
-      .from('session_development_forms')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: true });
+    // Fetch all sessions for this client (empty for guest clients)
+    let sessions: any[] = [];
+    let assessments: any[] = [];
+    let devFormsRaw: any[] = [];
+
+    if (!isGuestClient) {
+      const { data: sessionsData } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('session_number', { ascending: true });
+      sessions = sessionsData ?? [];
+
+      // Fetch all assessments (strip internal data for non-admin)
+      const { data: assessmentsData } = await supabase
+        .from('diagnostic_assessments')
+        .select('id, session_id, client_id, therapist_id, is_baseline, main_complaint, current_symptoms, previous_therapy, nervous_system_pattern, nervous_system_score, emotional_state_score, cognitive_patterns_score, body_symptoms_score, behavioral_patterns_score, life_functioning_score, goal_readiness_score, clinical_condition_brief, therapist_focus, therapy_goal, assessed_at, created_at')
+        .eq('client_id', clientId)
+        .order('assessed_at', { ascending: true });
+      assessments = assessmentsData ?? [];
+
+      // Fetch session development forms
+      const { data: devFormsData } = await supabase
+        .from('session_development_forms')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: true });
+      devFormsRaw = devFormsData ?? [];
+    }
 
     // Map session_id to session_number using the sessions we already fetched
     const sessionNumberMap = new Map<string, number>();
@@ -79,17 +101,63 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch client profile for auto-fill
-    const { data: clientProfile } = await supabase
-      .from('users')
-      .select('full_name, email, phone, country')
-      .eq('id', clientId)
-      .single();
+    let clientProfile = null;
+    if (!isGuestClient) {
+      const { data } = await supabase
+        .from('users')
+        .select('full_name, email, phone, country')
+        .eq('id', clientId)
+        .single();
+      clientProfile = data;
+    } else {
+      // For guest clients, use booking info
+      const guestBooking = (bookings ?? [])[0];
+      if (guestBooking) {
+        clientProfile = {
+          full_name: guestBooking.name,
+          email: guestBooking.email,
+          phone: guestBooking.phone,
+          country: guestBooking.country,
+        };
+      }
+    }
 
-    // Combine bookings and sessions into unified array for SessionsTab
-    // Bookings schema: user_id, therapist_id (TEXT), meeting_link, status, type
-    // Sessions schema: client_id, therapist_id (UUID), meet_link, status, development_form_submitted
+    // Build a set of client IDs / names that have submitted assessments
+    // so we can compute assessment_submitted for free consultation bookings
+    const assessedClientIds = new Set<string>();
+    const assessedClientNames = new Set<string>();
+    (assessments ?? []).forEach((a: any) => {
+      if (a.client_id) assessedClientIds.add(a.client_id.toLowerCase().trim());
+    });
+    // Also fetch assessments by therapist for guest clients (where client_id might differ from booking user_id)
+    {
+      const { data: therapistAssessments } = await supabase
+        .from('diagnostic_assessments')
+        .select('client_id, client_name, status')
+        .eq('therapist_id', user.id)
+        .in('status', ['submitted', 'completed']);
+      (therapistAssessments ?? []).forEach((a: any) => {
+        if (a.client_id) assessedClientIds.add(a.client_id.toLowerCase().trim());
+        if (a.client_name) assessedClientNames.add(a.client_name.toLowerCase().trim());
+      });
+    }
+
     const mappedBookings = (bookings ?? []).map(b => {
       const linkedSession = (sessions ?? []).find((s: any) => s.booking_id === b.id);
+
+      // Determine if assessment was submitted for this booking's client
+      let hasAssessment = false;
+      if (b.user_id) {
+        hasAssessment = assessedClientIds.has(b.user_id.toLowerCase().trim());
+      }
+      if (!hasAssessment && b.name) {
+        hasAssessment = assessedClientNames.has(b.name.toLowerCase().trim());
+      }
+      // Also check by client profile full_name
+      if (!hasAssessment && clientProfile?.full_name) {
+        hasAssessment = assessedClientNames.has(clientProfile.full_name.toLowerCase().trim());
+      }
+
       return {
         ...b,
         id: b.id,
@@ -97,6 +165,7 @@ export async function GET(request: NextRequest) {
         client_id: b.user_id,
         meet_link: b.meeting_link,
         development_form_submitted: linkedSession?.development_form_submitted ?? false,
+        assessment_submitted: hasAssessment,
         session_number: linkedSession?.session_number ?? b.session_number ?? null,
       };
     });

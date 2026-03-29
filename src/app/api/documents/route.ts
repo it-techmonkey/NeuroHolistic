@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
 
-// GET - Fetch documents for a client or session
+// GET - Fetch documents for a client or session or therapist
 export async function GET(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -15,10 +15,6 @@ export async function GET(request: NextRequest) {
     const clientId = request.nextUrl.searchParams.get('clientId');
     const sessionId = request.nextUrl.searchParams.get('sessionId');
 
-    if (!clientId) {
-      return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
-    }
-
     // Check user role
     const { data: userData } = await supabase
       .from('users')
@@ -27,6 +23,53 @@ export async function GET(request: NextRequest) {
       .single();
 
     const isTherapist = userData?.role === 'therapist' || userData?.role === 'admin';
+
+    // If no clientId provided, fetch documents for the current user (therapist or client)
+    if (!clientId) {
+      if (isTherapist) {
+        // Therapists can see all documents they uploaded
+        let query = supabase
+          .from('documents')
+          .select('*')
+          .eq('therapist_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (sessionId) {
+          query = query.or(`session_id.eq.${sessionId},session_id.in.(select id from sessions where booking_id.eq.${sessionId})`);
+        }
+
+        const { data: documents, error } = await query;
+
+        if (error) {
+          console.error('[Documents GET] Query error:', error);
+          return NextResponse.json({ error: error.message, documents: [] }, { status: 500 });
+        }
+
+        return NextResponse.json({ documents: documents ?? [] });
+      } else {
+        // Clients can see documents for their own account
+        let query = supabase
+          .from('documents')
+          .select('*')
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (sessionId) {
+          query = query.or(`session_id.eq.${sessionId},session_id.in.(select id from sessions where booking_id.eq.${sessionId})`);
+        }
+
+        const { data: documents, error } = await query;
+
+        if (error) {
+          console.error('[Documents GET] Query error:', error);
+          return NextResponse.json({ error: error.message, documents: [] }, { status: 500 });
+        }
+
+        return NextResponse.json({ documents: documents ?? [] });
+      }
+    }
+
+    // clientId was provided
     const isClientAccessingOwnDocs = user.id === clientId;
 
     // Only allow therapists or clients accessing their own documents

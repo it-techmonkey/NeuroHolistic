@@ -25,23 +25,14 @@ export default function Accreditation() {
         {/* ── Editorial Header ── */}
         <div className="mb-16 text-center">
 
-          <motion.h2
+          <motion.h2 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-[32px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]"
           >
-            Accreditation & Professional <span className="italic text-[#64748B] font-normal">Recognition.</span>
+            Accreditation & Professional <span className="italic text-[#64748B] font-normal">recognition.</span>
           </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="mt-6 text-[16px] leading-[1.8] text-[#475569] max-w-[600px] mx-auto"
-          >
-            The NeuroHolistic Applied Psychology Mastery for Practitioners is issued by the NeuroHolistic Institute and supported by international professional accreditation bodies.
-          </motion.p>
         </div>
 
         {/* ── The Seal Matrix ── */}
@@ -92,13 +83,11 @@ export default function Accreditation() {
           transition={{ delay: 0.4 }}
           className="mt-12 text-center"
         >
-          <p className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8] max-w-xl mx-auto leading-relaxed">
-            The curriculum is issued by the NeuroHolistic Institute Board of Standards 
-            and audited by international professional bodies.
+          <p className="font-mono text-[11px] uppercase tracking-widest text-[#94A3B8] max-w-2xl mx-auto leading-[1.8]">
+            The NeuroHolistic Applied Psychology Mastery for Practitioners is issued by the NeuroHolistic Institute and supported by international professional accreditation bodies.
           </p>
         </motion.div>
-
       </div>
     </section>
-  );
+  );  
 }

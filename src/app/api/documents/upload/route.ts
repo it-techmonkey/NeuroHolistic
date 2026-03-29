@@ -33,12 +33,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File is required', logs }, { status: 400 });
     }
 
-    if (!clientId) {
-      return NextResponse.json({ error: 'clientId is required', logs }, { status: 400 });
-    }
-
     const supabase = getServiceSupabase();
     logs.push('4. Supabase client created');
+
+    if (!clientId) {
+      // For free consultations without a client user account, allow upload
+      // The session_id will be used to link the document
+      logs.push('3a. No clientId - checking for free consultation session');
+      if (!sessionId) {
+        return NextResponse.json({ error: 'Either clientId or sessionId is required', logs }, { status: 400 });
+      }
+
+      // Verify this is a free consultation booking belonging to this therapist
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, type, therapist_id, therapist_user_id, user_id')
+        .eq('id', sessionId)
+        .maybeSingle();
+
+      if (booking) {
+        const isTherapistBooking = booking.therapist_id === user.id || booking.therapist_user_id === user.id;
+        if (booking.type === 'free_consultation' && isTherapistBooking) {
+          logs.push('3b. Free consultation booking verified - allowing upload without clientId');
+        } else {
+          return NextResponse.json({ error: 'Session not found or unauthorized', logs }, { status: 403 });
+        }
+      } else {
+        // Check if it's a session belonging to this therapist
+        const { data: session } = await supabase
+          .from('sessions')
+          .select('id, therapist_id')
+          .eq('id', sessionId)
+          .maybeSingle();
+
+        if (session && session.therapist_id === user.id) {
+          logs.push('3b. Session verified - allowing upload without clientId');
+        } else {
+          return NextResponse.json({ error: 'Session not found or unauthorized', logs }, { status: 403 });
+        }
+      }
+    }
 
     // Verify the user is a therapist or admin
     const { data: userData, error: userError } = await supabase
@@ -59,25 +93,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only therapists can upload documents', logs }, { status: 403 });
     }
 
-    // Verify the therapist is assigned to this client
-    logs.push(`5. Checking therapist-client assignment`);
-    const { data: assignment, error: assignmentError } = await supabase
-      .from('therapist_clients')
-      .select('id')
-      .eq('therapist_id', user.id)
-      .eq('client_id', clientId)
-      .maybeSingle();
+    // Verify the therapist is assigned to this client (skip for free consultations without client account)
+    if (clientId) {
+      logs.push(`5. Checking therapist-client assignment`);
+      const { data: assignment, error: assignmentError } = await supabase
+        .from('therapist_clients')
+        .select('id')
+        .eq('therapist_id', user.id)
+        .eq('client_id', clientId)
+        .maybeSingle();
 
-    if (assignmentError) {
-      logs.push(`5a. Assignment query error: ${assignmentError.message}`);
-      return NextResponse.json({ error: 'Assignment check failed', logs }, { status: 500 });
-    }
+      if (assignmentError) {
+        logs.push(`5a. Assignment query error: ${assignmentError.message}`);
+        return NextResponse.json({ error: 'Assignment check failed', logs }, { status: 500 });
+      }
 
-    if (!assignment) {
-      logs.push('5b. No assignment found');
-      return NextResponse.json({ error: 'Unauthorized to upload for this client', logs }, { status: 403 });
+      if (!assignment) {
+        logs.push('5b. No assignment found');
+        return NextResponse.json({ error: 'Unauthorized to upload for this client', logs }, { status: 403 });
+      }
+      logs.push('5. Assignment verified');
+    } else {
+      logs.push('5. Skipping assignment check - no clientId (free consultation)');
     }
-    logs.push('5. Assignment verified');
 
     // Check if session is completed (if sessionId provided)
     if (sessionId) {
@@ -124,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     // Generate file key
     const fileExtension = file.name.includes('.') ? file.name.split('.').pop() : 'pdf';
-    const fileKey = `clients/${clientId}/sessions/${sessionId || 'general'}/${randomUUID()}.${fileExtension}`;
+    const fileKey = `clients/${clientId || 'anonymous'}/sessions/${sessionId || 'general'}/${randomUUID()}.${fileExtension}`;
     logs.push(`8. Generated file key: ${fileKey}`);
 
     // Convert file to buffer
@@ -150,7 +188,7 @@ export async function POST(request: NextRequest) {
         ContentType: file.type,
         Metadata: {
           uploadedBy: user.id,
-          clientId,
+          clientId: clientId || '',
           sessionId: sessionId || '',
         },
       }));

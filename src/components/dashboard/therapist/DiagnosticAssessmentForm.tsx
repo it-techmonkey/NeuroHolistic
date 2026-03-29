@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface DiagnosticAssessmentFormProps {
-  clientId: string;
+  clientId: string | null;
   therapistId: string;
   sessionId?: string;
   existingAssessment?: any;
@@ -16,6 +16,7 @@ interface DiagnosticAssessmentFormProps {
   };
   onClose: () => void;
   onSave: (assessment: any) => void;
+  isSessionCompleted?: boolean; // Prop to indicate if session is completed (locks the form)
 }
 
 const NERVOUS_SYSTEM_PATTERNS = [
@@ -86,9 +87,14 @@ export default function DiagnosticAssessmentForm({
   clientData,
   onClose,
   onSave,
+  isSessionCompleted = false,
 }: DiagnosticAssessmentFormProps) {
-  // Assessment is read-only after submission
-  const isReadOnly = existingAssessment?.status === 'submitted';
+  // Form is read-only when:
+  // 1. Session is completed (isSessionCompleted prop)
+  // 2. Assessment status is 'completed' (legacy check)
+  const isCompleted = existingAssessment?.status === 'completed' || isSessionCompleted;
+  const isReadOnly = isCompleted;
+  
   const [activeSection, setActiveSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -186,11 +192,11 @@ export default function DiagnosticAssessmentForm({
 
     try {
       // Note: goal_readiness_score is auto-calculated by the database
-      // Note: session_id is set to null to avoid foreign key constraint issues
+      // Pass sessionId to API so it can look up client from session/booking if needed
       const payload = {
-        clientId,
+        clientId: clientId || null,
         therapistId,
-        sessionId: null,
+        sessionId,
         data: {
           ...form,
           // Do NOT include goal_readiness_score - it's auto-calculated
@@ -198,6 +204,8 @@ export default function DiagnosticAssessmentForm({
           status: 'submitted',
         },
       };
+
+      console.log('[DiagnosticAssessmentForm] Submitting payload:', JSON.stringify(payload, null, 2));
 
       const res = await fetch('/api/assessments/diagnostic', {
         method: 'POST',
@@ -284,12 +292,24 @@ export default function DiagnosticAssessmentForm({
         <div className="p-6 border-b border-slate-100">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                {isReadOnly ? 'Baseline Assessment (View Only)' : 'Diagnostic Assessment'}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {isCompleted ? 'Baseline Assessment (Locked)' : 'Diagnostic Assessment'}
+                </h2>
+                {isCompleted && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                    Locked
+                  </span>
+                )}
+                {existingAssessment?.status === 'submitted' && !isCompleted && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+                    Submitted
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500 mt-1">
-                {isReadOnly
-                  ? 'This baseline assessment has been locked. Session progress is tracked via Development Forms.'
+                {isCompleted
+                  ? 'This assessment has been locked after session completion.'
                   : existingAssessment?.is_baseline
                   ? 'Editing baseline assessment'
                   : 'New baseline assessment'}
@@ -662,6 +682,7 @@ export default function DiagnosticAssessmentForm({
             {isReadOnly ? 'Close' : 'Cancel'}
           </button>
           <div className="flex gap-3">
+            {/* Navigation and Save buttons - only when not read-only */}
             {!isReadOnly && activeSection > 0 && (
               <button
                 type="button"

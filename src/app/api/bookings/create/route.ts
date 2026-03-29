@@ -281,6 +281,27 @@ export async function POST(request: NextRequest) {
       console.log('[CreateBooking] Using generated meet link:', meetLink);
     }
 
+    // Determine therapist_user_id - if therapistId is a slug, look up the actual user ID
+    let therapistUserId: string | null = null;
+    
+    // Check if therapistId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(therapistId)) {
+      // It's a UUID, use it directly
+      therapistUserId = therapistId;
+    } else {
+      // It's a slug, try to find the therapist by name
+      const therapistName = therapistId.replace(/-/g, ' ');
+      const { data: therapistUser } = await supabase
+        .from('users')
+        .select('id')
+        .ilike('full_name', `%${therapistName}%`)
+        .eq('role', 'therapist')
+        .maybeSingle();
+      
+      therapistUserId = therapistUser?.id || null;
+    }
+
     // Create booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
@@ -291,7 +312,7 @@ export async function POST(request: NextRequest) {
         phone: phone || '',
         country: country || '',
         therapist_id: therapistId,
-        therapist_user_id: therapistId,
+        therapist_user_id: therapistUserId,
         therapist_name: therapistName,
         date,
         time,

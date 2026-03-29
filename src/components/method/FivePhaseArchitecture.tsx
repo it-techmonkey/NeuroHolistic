@@ -37,21 +37,10 @@ const PHASES = [
 ];
 
 export default function FivePhaseArchitecture() {
-  // Split description into title and body
-  const formatDesc = (desc: string) => {
-    const parts = desc.split('. ');
-    if (parts.length >= 2) {
-      const title = parts[0] + '.';
-      const body = parts.slice(1).join('. ');
-      return { title, body };
-    }
-    return { title: '', body: desc };
-  };
-
   return (
-    <section className="bg-white pt-0 pb-20 lg:pb-32">
+    <section className="bg-white py-14 lg:py-20">
       <div className="mx-auto max-w-[1100px] px-6">
-
+        
         {/* Compact Header */}
         <div className="mb-12 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
@@ -66,27 +55,26 @@ export default function FivePhaseArchitecture() {
         <div className="space-y-12 md:space-y-16">
           {PHASES.map((phase, i) => {
             const isEven = i % 2 === 1;
-            const { title, body } = formatDesc(phase.desc);
-
+            
             return (
-              <div
+              <div 
                 key={phase.number}
                 className={`flex flex-col lg:flex-row items-center gap-10 lg:gap-16 ${isEven ? 'lg:flex-row-reverse' : ''}`}
               >
                 {/* Image Section */}
-                <motion.div
+                <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="w-full lg:w-1/2"
                 >
                   <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 group">
-                    <Image
-                      src={phase.img}
-                      alt={phase.title}
-                      fill
+                    <Image 
+                      src={phase.img} 
+                      alt={phase.title} 
+                      fill 
                       priority={i === 0}
-                      className="object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
+                      className="object-cover transition-all duration-700 group-hover:scale-105" 
                     />
                   </div>
                 </motion.div>
@@ -100,13 +88,8 @@ export default function FivePhaseArchitecture() {
                     <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                       {phase.title}
                     </h3>
-                    {title && (
-                      <p className="text-[14px] text-slate-600 italic font-medium">
-                        {title}
-                      </p>
-                    )}
-                    <p className="text-[16px] text-slate-500 leading-relaxed font-normal">
-                      {body}
+                    <p className="text-[16px] text-slate-500 leading-relaxed font-normal italic">
+                      {phase.desc}
                     </p>
                     <div className="h-0.5 w-8 bg-slate-200" />
                   </div>
@@ -121,15 +104,15 @@ export default function FivePhaseArchitecture() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-32 p-10 md:p-16 rounded-3xl bg-slate-900 text-center text-white"
+          className="mt-20 p-10 md:p-16 rounded-3xl bg-slate-900 text-center text-white"
         >
           <h4 className="text-2xl md:text-3xl font-bold mb-4">Begin Your Consultation</h4>
           <p className="text-slate-400 max-w-md mx-auto mb-8 text-[15px]">
             Work with specialized practitioners trained to guide you through the NeuroHolistic framework.
           </p>
-          <button className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold hover:bg-slate-100 transition-colors active:scale-95">
-            Book a Session
-          </button>
+          <a href="/booking" className="inline-block px-8 py-4 bg-white text-slate-900 rounded-full font-bold hover:bg-slate-100 transition-colors active:scale-95">
+            Book a Consultation
+          </a>
         </motion.div>
       </div>
     </section>

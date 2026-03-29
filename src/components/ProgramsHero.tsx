@@ -8,8 +8,9 @@ export default function ProgramsHero() {
       description="Designed for your stage of change."
       imageSrc="/images/pages/programs.jpg"
       imageAlt="Professional wellbeing coaching session"
+      imagePosition="object-[center_60%]"
       metaTags={[]}
-      primaryAction={{ label: "Book Consultation", kind: "modal" }}
+      primaryAction={{ label: "Book a Consultation", kind: "modal" }}
     />
   );
 }

@@ -8,6 +8,7 @@ export default function MethodHero() {
       description="Systematic approaches to transformation. Harnessing neuroplasticity for lasting growth and systemic coherence."
       imageSrc="/images/pages/methods.jpg"
       imageAlt="Clinical consultation"
+      imagePosition="object-center"
       primaryAction={{ label: "Book a Consultation", kind: "modal" }}
       secondaryAction={{ label: "Explore Research", href: "/research" }}
     />
