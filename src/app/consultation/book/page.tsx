@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import CalendarPicker from '@/components/booking/shared/CalendarPicker';
@@ -19,6 +19,21 @@ type Slot = {
 };
 
 export default function BookConsultationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 pt-28 sm:pt-32 md:pt-40 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-500">Loading...</p>
+        </div>
+      </div>
+    }>
+      <BookConsultationContent />
+    </Suspense>
+  );
+}
+
+function BookConsultationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedSlug = searchParams.get('therapist');
