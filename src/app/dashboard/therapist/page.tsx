@@ -364,11 +364,12 @@ export default function TherapistDashboardPage() {
       console.log('[Therapist Dashboard] Upcoming list sessions:', JSON.stringify(upcomingList.map(s => ({ id: s.id, type: s.type, date: s.date, time: s.time })), null, 2));
 
       const pastList = allSessions.filter(s => {
+        if (s.type === 'free_consultation') return false; // Exclude free consultations from completed sessions
         const sessionDate = new Date(s.date + 'T23:59:59');
         return s.status === 'completed' || sessionDate < now;
       }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      const completedSessions = allSessions.filter(s => s.status === 'completed').length;
+      const completedSessions = allSessions.filter(s => s.status === 'completed' && s.type !== 'free_consultation').length;
       const activeProgramClients = allClients.filter(c => c.program?.status === 'active').length;
       const pendingAssessments = upcomingList.filter(s =>
         s.type !== 'free_consultation' && !s.development_form_submitted

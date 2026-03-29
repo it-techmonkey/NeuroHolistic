@@ -129,8 +129,11 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       therapistName: therapist?.name,
     }));
 
-    // Redirect to Ziina
-    window.location.href = ziinaLink;
+    // Open Ziina in a new tab so user stays on this page
+    window.open(ziinaLink, '_blank');
+    
+    // Show the confirm payment screen immediately
+    setShowConfirmPayment(true);
   };
 
   const handleConfirmPayment = async () => {
