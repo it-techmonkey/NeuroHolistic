@@ -478,7 +478,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 }`}
               >
                 <CreditCard className="w-4 h-4" />
-                Proceed to Ziina Payment
+                Proceed to Payment
               </button>
             </div>
 

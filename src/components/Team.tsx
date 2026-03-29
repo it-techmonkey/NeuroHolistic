@@ -21,7 +21,7 @@ export default function Team() {
             viewport={{ once: true }}
             className="text-[12px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-4"
           >
-            The Collective
+            {/* The Collective */}
           </motion.p>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -30,8 +30,8 @@ export default function Team() {
             transition={{ duration: 0.8 }}
             className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
-            Practitioners of the <br/>
-            <span className="font-semibold text-[#2B2F55]">NeuroHolistic Team.</span>
+            {/* Practitioners of the <br/> */}
+            <span className="font-semibold text-[#2B2F55]">The Team</span>
           </motion.h2>
         </div>
 

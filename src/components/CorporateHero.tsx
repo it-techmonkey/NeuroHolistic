@@ -8,8 +8,8 @@ export default function CorporateHero() {
       description=""
       customDescription={
         <p className="mb-7 max-w-[620px] text-[15px] leading-[1.7] text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10">
-          Your team&apos;s <strong className="text-white font-semibold">performance</strong> reflects their <em>state</em>. <strong className="text-white font-semibold">Clear minds</strong>. <strong className="text-white font-semibold">Strong teams</strong>. <em>Better decisions</em>.
-        </p>
+          Your team&apos;s performance reflects their <em>state</em>. <br /> Clear minds Strong teams <em>Better decisions</em>
+        </p>  
       }
       imageSrc="/images/pages/corportate_wellbeing.jpg"
       imageAlt="Corporate team in a wellbeing strategy workshop"

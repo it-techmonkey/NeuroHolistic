@@ -20,7 +20,7 @@ export default function HeroBookingForm() {
           onClick={() => setIsOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
         >
-          Book Free Consultation <span aria-hidden="true">→</span>
+          Book a Consultation <span aria-hidden="true">→</span>
         </button>
         <a href="/booking/paid-program-booking" className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15">
           Book Paid Program <span aria-hidden="true">→</span>
