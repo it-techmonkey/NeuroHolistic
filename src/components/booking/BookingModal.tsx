@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import BookingForm from './BookingForm';
+import FreeConsultationForm from './FreeConsultationForm';
 import { supabase } from '@/lib/supabase/client';
 
 type BookingModalContextType = {
@@ -106,7 +106,9 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="relative w-full max-w-[500px] overflow-hidden rounded-3xl bg-white shadow-2xl"
+              className={`relative w-full max-w-[500px] overflow-hidden rounded-3xl shadow-2xl ${
+                modalView === 'consultation' ? 'bg-[#0B1028]' : 'bg-white'
+              }`}
               style={{ maxHeight: '90vh' }}
               initial={{ scale: 0.96, y: 16 }}
               animate={{ scale: 1, y: 0 }}
@@ -116,7 +118,11 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={closeBookingModal}
-                className="absolute right-4 top-4 z-10 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                className={`absolute right-4 top-4 z-10 rounded-lg p-2 transition-colors ${
+                  modalView === 'consultation'
+                    ? 'text-white/50 hover:bg-white/10 hover:text-white'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                }`}
                 aria-label="Close"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -134,7 +140,7 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
                   />
                 )}
                 {modalView === 'consultation' && (
-                  <BookingForm onClose={closeBookingModal} bookingType="consultation" />
+                  <FreeConsultationForm mode="embedded" />
                 )}
               </div>
             </motion.div>
