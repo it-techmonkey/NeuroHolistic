@@ -201,24 +201,24 @@ export default function ClientDashboardPage() {
   };
 
   const getSessionDocuments = (session: Session) => {
-    // Documents are stored with session_id pointing to sessions table ID
-    // We can only show documents if we have a valid session_id
-    const effectiveSessionId = session.session_id;
-    
-    // No session_id means no documents can be shown (session not yet created/mapped)
-    if (!effectiveSessionId) {
+    // For free consultations, match by booking ID (session.id) since there may not be a session record
+    // For paid sessions, match by sessions table ID (session.session_id)
+    const isFreeConsult = session.type === 'free_consultation';
+    const matchId = isFreeConsult ? session.id : session.session_id;
+
+    if (!matchId) {
       return [];
     }
-    
-    // Only show documents if the session is completed
-    const completedIds = data?.completedSessionIds || [];
-    const isSessionCompleted = completedIds.includes(effectiveSessionId);
-    
-    if (!isSessionCompleted) {
-      return [];
+
+    // Only require completed status for paid sessions; free consults can show docs anytime
+    if (!isFreeConsult) {
+      const completedIds = data?.completedSessionIds || [];
+      if (!completedIds.includes(session.session_id!)) {
+        return [];
+      }
     }
-    
-    return documents.filter(d => d.session_id === effectiveSessionId);
+
+    return documents.filter(d => d.session_id === matchId);
   };
 
   const getDocIcon = (type: string) => {
@@ -769,11 +769,23 @@ export default function ClientDashboardPage() {
               </div>
             )}
 
-            {/* All Documents Section - Only show documents from completed sessions */}
+            {/* All Documents Section */}
             {(() => {
               const completedIds = data?.completedSessionIds || [];
-              // Only show documents that have a session_id AND that session is completed
-              const visibleDocs = documents.filter(d => d.session_id && completedIds.includes(d.session_id));
+              // Collect booking IDs for completed free consultations
+              const allSessions = [...(data?.upcomingSessions || []), ...(data?.pastSessions || [])];
+              const completedFreeConsultBookingIds = new Set(
+                allSessions
+                  .filter(s => s.type === 'free_consultation' && s.status === 'completed')
+                  .map(s => s.id)
+              );
+              // Show documents from completed paid sessions OR completed free consultations
+              const visibleDocs = documents.filter(d => {
+                if (!d.session_id) return false;
+                if (completedIds.includes(d.session_id)) return true;
+                if (completedFreeConsultBookingIds.has(d.session_id)) return true;
+                return false;
+              });
               if (visibleDocs.length === 0) return null;
               return (
               <section className="mt-8">

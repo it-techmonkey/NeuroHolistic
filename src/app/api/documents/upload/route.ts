@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const clientId = formData.get('clientId') as string | null;
+    let clientId = formData.get('clientId') as string | null;
     const sessionId = formData.get('sessionId') as string | null;
     const description = formData.get('description') as string | null;
 
@@ -55,6 +55,11 @@ export async function POST(request: NextRequest) {
         const isTherapistBooking = booking.therapist_id === user.id || booking.therapist_user_id === user.id;
         if (booking.type === 'free_consultation' && isTherapistBooking) {
           logs.push('3b. Free consultation booking verified - allowing upload without clientId');
+          // Resolve clientId from booking's user_id so the document is visible on the client dashboard
+          if (booking.user_id) {
+            clientId = booking.user_id;
+            logs.push(`3c. Resolved clientId from booking: ${clientId}`);
+          }
         } else {
           return NextResponse.json({ error: 'Session not found or unauthorized', logs }, { status: 403 });
         }
@@ -62,12 +67,16 @@ export async function POST(request: NextRequest) {
         // Check if it's a session belonging to this therapist
         const { data: session } = await supabase
           .from('sessions')
-          .select('id, therapist_id')
+          .select('id, therapist_id, client_id')
           .eq('id', sessionId)
           .maybeSingle();
 
         if (session && session.therapist_id === user.id) {
           logs.push('3b. Session verified - allowing upload without clientId');
+          if (session.client_id) {
+            clientId = session.client_id;
+            logs.push(`3c. Resolved clientId from session: ${clientId}`);
+          }
         } else {
           return NextResponse.json({ error: 'Session not found or unauthorized', logs }, { status: 403 });
         }

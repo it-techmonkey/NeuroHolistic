@@ -154,8 +154,8 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
 
   // Document upload
   const handleUploadClick = (sessionId: string, clientId: string | null) => {
-    if (!clientId) {
-      setUploadError('Cannot upload documents: session has no associated client account');
+    if (!clientId && !sessionId) {
+      setUploadError('Cannot upload documents: no session or client associated');
       return;
     }
     setSelectedSessionForUpload(sessionId);
@@ -251,10 +251,10 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to mark complete');
 
-      window.location.replace(window.location.href);
+      // Reload page to reflect updated session status
+      window.location.reload();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to mark complete');
-    } finally {
       setCompletingSessionId(null);
     }
   };
@@ -490,7 +490,7 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
                       </button>
 
                       {/* Upload Document */}
-                      {!isCompleted && session.client_id && (
+                      {!isCompleted && (
                         <button
                           onClick={() => handleUploadClick(session.id, session.client_id)}
                           disabled={uploadingDoc}
