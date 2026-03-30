@@ -10,6 +10,7 @@ import {
   getZiinaLink,
   getPerSessionFromFull,
   isDrFawzia,
+  ACADEMY_PRICING,
 } from '@/lib/payments/pricing';
 
 interface PaidProgramBookingFormProps {
@@ -27,11 +28,12 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedType = searchParams.get('type') as ProgramType | null;
+  const academyMode = searchParams.get('mode') === 'academy';
   const [step, setStep] = useState<'program_type' | 'payment' | 'details'>(
-    preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type'
+    academyMode || preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type'
   );
   const [selectedProgramType, setSelectedProgramType] = useState<ProgramType | null>(
-    preselectedType === 'private' || preselectedType === 'group' ? preselectedType : null
+    academyMode ? 'private' : (preselectedType === 'private' || preselectedType === 'group' ? preselectedType : null)
   );
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOption | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -103,6 +105,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   };
 
   const getPriceForDisplay = (type: ProgramType, option: PaymentOption) => {
+    if (academyMode) {
+      return option === 'full' ? ACADEMY_PRICING.fullProgram : ACADEMY_PRICING.installment;
+    }
     return getPrice(type, option, therapist?.name, therapist?.slug);
   };
 
@@ -119,7 +124,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     setSelectedPaymentOption(option);
 
     // Get the Ziina link and redirect directly
-    const ziinaLink = getZiinaLink(selectedProgramType, option, therapist?.name, therapist?.slug);
+    const ziinaLink = academyMode
+      ? (option === 'full' ? ACADEMY_PRICING.ziinaLinks.fullProgram : ACADEMY_PRICING.ziinaLinks.installment)
+      : getZiinaLink(selectedProgramType, option, therapist?.name, therapist?.slug);
     
     // Store payment context for confirmation
     sessionStorage.setItem('pendingPayment', JSON.stringify({
@@ -147,10 +154,12 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planType: selectedPaymentOption === 'full'
+          planType: academyMode
+            ? (selectedPaymentOption === 'full' ? 'academy_full' : 'academy_installment')
+            : selectedPaymentOption === 'full'
             ? (selectedProgramType === 'private' ? 'private' : 'group_full')
             : (selectedProgramType === 'private' ? 'session_by_session' : 'group_session'),
-          programType: selectedProgramType,
+          programType: academyMode ? 'academy' : selectedProgramType,
           amount: getPriceForDisplay(selectedProgramType, selectedPaymentOption || 'full') * 100,
         }),
       });
@@ -181,7 +190,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
         </div>
         <h3 className="text-xl font-bold text-green-800 mb-2">Program Activated!</h3>
         <p className="text-green-600 text-sm mb-4">
-          Your {selectedProgramType === 'private' ? 'Private' : 'Group'} Program has been activated.
+          Your {academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program has been activated.
           Your therapist will verify the payment and schedule your sessions.
         </p>
         <p className="text-green-500 text-xs">Redirecting to schedule your first session...</p>
@@ -221,7 +230,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           <h3 className="text-xl font-bold text-indigo-900 mb-2">Complete Your Payment</h3>
           <p className="text-indigo-600 text-sm mb-4">
             You've been redirected to Ziina to complete your payment for the{' '}
-            {selectedProgramType === 'private' ? 'Private' : 'Group'} Program.
+            {academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program.
           </p>
           <p className="text-slate-600 text-sm mb-6">
             Amount: <strong>{getPriceForDisplay(selectedProgramType || 'private', selectedPaymentOption || 'full').toLocaleString()} AED</strong>
@@ -398,13 +407,15 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       {step === 'payment' && selectedProgramType && (
         <div className="space-y-6">
           {/* Back Button */}
-          <button
-            onClick={handleBackToProgramType}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back to program type</span>
-          </button>
+          {!academyMode && (
+            <button
+              onClick={handleBackToProgramType}
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to program type</span>
+            </button>
+          )}
 
           {/* Selected Program Summary */}
           <div className={`rounded-xl p-4 border ${
@@ -424,9 +435,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <div>
                 <p className="font-semibold text-slate-900">
-                  {selectedProgramType === 'private' ? 'Private Program' : 'Group Program'}
+                  {academyMode ? 'Academy Program' : (selectedProgramType === 'private' ? 'Private Program' : 'Group Program')}
                 </p>
-                <p className="text-sm text-slate-500">10 sessions included</p>
+                <p className="text-sm text-slate-500">{academyMode ? '5 sessions included' : '10 sessions included'}</p>
               </div>
             </div>
           </div>
@@ -434,7 +445,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           <div className="text-center mb-4">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Choose Payment Option</h2>
             <p className="text-slate-500 text-sm">
-              Select how you'd like to pay for your {selectedProgramType === 'private' ? 'Private' : 'Group'} Program.
+              {academyMode
+                ? 'Select your Academy payment option.'
+                : `Select how you'd like to pay for your ${selectedProgramType === 'private' ? 'Private' : 'Group'} Program.`}
             </p>
           </div>
 
@@ -457,8 +470,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
-                Pay for all 10 sessions upfront and save. Commit to your complete
-                transformation journey.
+                {academyMode
+                  ? 'Pay for all 5 Academy sessions upfront.'
+                  : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.'}
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
@@ -466,7 +480,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 </span>
                 <span className="text-slate-500 text-base ml-1">AED</span>
                 <p className="text-slate-500 text-sm mt-1">
-                  10 sessions · {getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session
+                  {academyMode
+                    ? `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} AED / session`
+                    : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
                 </p>
               </div>
               <button
@@ -493,8 +509,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Pay Session by Session</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
-                Pay for each session individually. Flexibility to continue at your
-                own pace without upfront commitment.
+                {academyMode
+                  ? 'Pay 5,000 AED per Academy session. Total Academy program consists of 5 sessions.'
+                  : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.'}
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
@@ -556,7 +573,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {selectedProgramType === 'private' ? 'Private' : 'Group'} Program
+                    {academyMode ? 'Academy Program' : `${selectedProgramType === 'private' ? 'Private' : 'Group'} Program`}
                   </p>
                   <p className="text-sm text-slate-500">
                     {pendingPaymentOption === 'full' ? 'Full payment' : 'Per session'}

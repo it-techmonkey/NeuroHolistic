@@ -9,7 +9,7 @@ export default function AcademyHero() {
       imageSrc="/images/pages/academy.jpg"
       imageAlt="Wellness education cohort in a training session"
       metaTags={[]}
-      primaryAction={{ label: "Apply to Academy", href: "/academy/apply" }}
+      primaryAction={{ label: "Apply to Academy", href: "/booking/paid-program-booking?mode=academy" }}
       secondaryAction={{ label: "Book Intro Call", kind: "modal" }}
     />
   );

@@ -49,7 +49,7 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
         
         {/* Header */}
         <div className="mb-8 flex items-center gap-5">
-          <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-[#F2F7F4] text-[#2D5A43] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+          <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
             {props.icon}
           </div>
           <h3 className="text-slate-900 text-2xl font-bold tracking-tight">
@@ -70,14 +70,14 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
         </div>
 
         {/* Suited for - This will now start at the same vertical position if flex-grow is used correctly above */}
-        <div className="mb-10 rounded-[24px] bg-[#F9FBF9] border border-slate-50 p-6">
+        <div className="mb-10 rounded-[24px] bg-[#F8FAFC] border border-slate-100 p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">
             {props.suitedTitle}
           </p>
           <ul className="space-y-3">
             {props.suitedBullets.map((bullet) => (
               <li key={bullet} className="flex gap-3 items-start">
-                <ChevronRight className="w-3.5 h-3.5 text-[#2D5A43] mt-0.5 shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#4F46E5] mt-0.5 shrink-0" />
                 <span className="text-slate-600 text-[13px] font-medium leading-[1.5]">{bullet}</span>
               </li>
             ))}
@@ -88,7 +88,7 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
         <div className="mt-auto">
           <Link
             href={`/booking/paid-program-booking?type=${props.type}`}
-            className="w-full inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#2D5A43] text-white font-bold text-[13px] uppercase tracking-widest shadow-lg shadow-[#2D5A43]/10 hover:opacity-90 active:scale-[0.98] transition-all"
+            className="w-full inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#4F46E5] text-white font-bold text-[13px] uppercase tracking-widest shadow-lg shadow-[#4F46E5]/20 hover:opacity-90 active:scale-[0.98] transition-all"
           >
             Book Consultation
           </Link>
@@ -100,7 +100,7 @@ function ProgramCard(props: (typeof PROGRAMS)[0]) {
 
 export default function ProgramsSection() {
   return (
-    <Section padding="lg" className="bg-[#F9FBF9] font-sans antialiased">
+    <Section padding="lg" className="bg-[#F8FAFC] font-sans antialiased">
       <div className="max-w-6xl mx-auto px-6">
         <div className="max-w-[700px] mb-16">
           <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6">
@@ -108,7 +108,7 @@ export default function ProgramsSection() {
           </p>
           <h2 className="text-[40px] md:text-[52px] font-bold leading-[1.1] text-slate-900 tracking-tight">
             Choose Your <br/>
-            <span className="text-[#2D5A43]">Growth Protocol.</span>
+            <span className="text-[#4F46E5]">Growth Protocol.</span>
           </h2>
         </div>
 

@@ -41,7 +41,7 @@ export default function AcademyCTA() {
             {/* Right Column: Context & Action (Spans 5 Cols) */}
             <div className="flex flex-col items-start lg:col-span-5 lg:items-end justify-center">
               <Link
-                href="/academy"
+                href="/booking/paid-program-booking?mode=academy"
                 className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-white px-8 text-[15px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
               >
                 Become a Therapist

@@ -97,7 +97,9 @@ export default function TeamRegistry() {
                     src={member.image}
                     alt={member.name}
                     fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                    className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${
+                      member.slug === 'zekra-khayata' ? 'object-[center_22%]' : 'object-center'
+                    }`}
                   />
                   <div className="absolute inset-0 border border-white/10" />
                 </div>

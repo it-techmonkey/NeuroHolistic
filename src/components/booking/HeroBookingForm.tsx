@@ -14,7 +14,7 @@ export default function HeroBookingForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
-        className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
+        className="mt-10 flex items-center justify-center lg:justify-start gap-3"
       >
         <button
           onClick={() => setIsOpen(true)}
@@ -22,9 +22,6 @@ export default function HeroBookingForm() {
         >
           Book a Consultation <span aria-hidden="true">→</span>
         </button>
-        <a href="/booking/paid-program-booking" className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-7 py-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-white/15">
-          Book Paid Program <span aria-hidden="true">→</span>
-        </a>
       </motion.div>
 
       {/* Modal */}

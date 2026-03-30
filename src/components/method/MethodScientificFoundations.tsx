@@ -27,10 +27,10 @@ export default function MethodScientificFoundations() {
   return (
     <section className="bg-[#FAFBFF] py-16 md:py-20 lg:py-24 border-y border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-20">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-14 items-start">
           
           {/* Header Column */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-6">
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -57,7 +57,7 @@ export default function MethodScientificFoundations() {
           </div>
 
           {/* Pillars Column */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-6 lg:pt-2">
             <motion.div 
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}

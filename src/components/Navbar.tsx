@@ -122,7 +122,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             {!isLoading && isAuthenticated ? (
               <>
-                <Link href="/dashboard" className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]">Dashboard</Link>
+                <Link href="/dashboard" className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]">Sign Up</Link>
                 <span className="opacity-20">|</span>
                 <button
                   onClick={handleLogout}

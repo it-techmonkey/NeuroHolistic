@@ -7,9 +7,15 @@ export const metadata = {
   description: 'Choose your program type and complete your booking',
 };
 
-export default async function PaidProgramBookingPage() {
+export default async function PaidProgramBookingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ mode?: string }>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const resolvedSearchParams = await searchParams;
+  const academyMode = resolvedSearchParams?.mode === 'academy';
 
   // Extract user info if logged in (no redirect if not)
   const firstName = (user?.user_metadata?.first_name as string | undefined) || '';
@@ -24,13 +30,15 @@ export default async function PaidProgramBookingPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#6366F1] mb-3">
-            NeuroHolistic Program
+            {academyMode ? 'NeuroHolistic Academy' : 'NeuroHolistic Program'}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Choose Your Program
+            {academyMode ? 'Choose Your Academy Plan' : 'Choose Your Program'}
           </h1>
           <p className="text-slate-500 text-[16px] max-w-lg mx-auto leading-relaxed">
-            View our program options and pricing. Choose the type that best suits your needs.
+            {academyMode
+              ? 'Follow the same payment flow and choose either full payment or per-session Academy installments.'
+              : 'View our program options and pricing. Choose the type that best suits your needs.'}
           </p>
         </div>
 
