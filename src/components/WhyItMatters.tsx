@@ -19,12 +19,12 @@ export default function WhyItMatters() {
           >
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-              Why it <span className="italic text-[#64748B] font-normal">matters.</span>
+              Why it <span className="italic text-[#64748B] font-normal">matters</span>
             </h2>
 
             <div className="space-y-8">
               <p className="text-[17px] leading-[1.8] text-[#475569] md:text-[18px]">
-                Modern organizations face growing challenges: stress, burnout, cognitive overload, and reduced engagement. These issues often stem from nervous system dysregulation—yet traditional initiatives rarely address the underlying mechanisms.
+                Modern organizations face growing challenges: stress, burnout, cognitive overload, and reduced engagement. These issues often stem from nervous system dysregulation-yet traditional initiatives rarely address the underlying mechanisms.
               </p>
               
               <div className="h-px w-12 bg-[#E2E8F0]" />

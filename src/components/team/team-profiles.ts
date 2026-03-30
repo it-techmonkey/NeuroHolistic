@@ -23,7 +23,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Over the past twenty years, Dr. Fawzia has worked with tens of thousands of individuals facing a wide range of life challenges. Her work has supported people navigating emotional and psychological struggles, complex relationship dynamics, health crises, and major life transitions. She has also guided leaders, public figures, and individuals from diverse backgrounds through profound personal transformation.",
       "Today, she leads the NeuroHolistic Institute™, guiding individuals through deep personal transformation while training practitioners and advancing research into the science of human change.",
     ],
-    image: "/images/team/Fawzia%20Yassmina.jpeg",
+    image: "/images/team/Fawzia Yassmina Landing.jpeg",
     testimonials: [
       "Working with Dr. Fawzia helped me reconnect with emotional clarity and long-term inner stability.",
       "Her depth, precision, and presence made a profound difference in how I understand myself and my life direction.",
@@ -77,7 +77,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Syria, Zekra is a certified NeuroHolistic Practitioner dedicated to understanding the connection between the brain, emotions, and human transformation. Her work focuses on helping individuals recognize the subconscious patterns that shape their experiences, decisions, and overall well-being.",
       "Through the NeuroHolistic Method™, she supports people in developing deeper awareness, restoring internal balance, and creating meaningful personal change.",
     ],
-    image: "/images/dummy-user.svg",
+    image: "/images/team/Zekra.png",
     testimonials: [
       "Zekra's listening and gentle guidance helped me feel safe enough to do real inner work.",
       "Her sessions gave me practical insight into patterns I had struggled with for years.",

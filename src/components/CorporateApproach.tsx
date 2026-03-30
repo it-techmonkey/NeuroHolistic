@@ -34,7 +34,7 @@ export default function CorporateApproach() {
           >
             <div className="max-w-[620px]">
               <p className="text-[18px] leading-[1.8] text-[#475569] md:text-[20px]">
-                Our corporate programs integrate neuroscience-informed principles—regulation, perception, and cognitive flexibility—to support teams navigating complexity.
+                Our corporate programs integrate neuroscience-informed principles-regulation, perception, and cognitive flexibility-to support teams navigating complexity.
               </p>
               
               <div className="my-10 h-px w-full bg-[#E2E8F0]" />

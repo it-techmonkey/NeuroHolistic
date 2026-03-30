@@ -88,7 +88,7 @@ export default function PaymentButtons({ userEmail, userName }: PaymentButtonsPr
               Best Value
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Program Payment</h2>
+          <h2 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h2>
           <p className="text-slate-500 text-sm mb-6 flex-1">
             Book the full program of 10 sessions and pay in advance. Get the complete
             transformation journey at the best rate.

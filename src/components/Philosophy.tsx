@@ -38,21 +38,22 @@ export default function Philosophy() {
               variants={itemVariants}
               className="mb-6 text-[32px] font-medium leading-[1.15] tracking-tight text-[#0B1028] md:text-[46px] lg:text-[52px]"
             >
-              True transformation does not come from <span className="italic text-[#64748B]">managing symptoms.</span>
+              True transformation does not come from <span className="italic text-[#64748B]">managing symptoms. </span>It begins when the system shifts at its core.
+
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
               className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px]"
             >
-              It begins when the system shifts at its core.
+              {/* It begins when the system shifts at its core. */}
             </motion.p>
 
             <motion.p
               variants={itemVariants}
               className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px] mt-3"
             >
-              The <strong className="font-semibold text-[#0B1028]">NeuroHolistic Method™</strong> works at the root—realigning the nervous system, cognition, and emotional patterns to create lasting transformation.
+              The NeuroHolistic Method™ works at the root—realigning the nervous system, cognition, and emotional patterns to create lasting transformation.
             </motion.p>
           </div>
 

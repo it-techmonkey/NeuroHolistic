@@ -455,7 +455,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   Best Value
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Program Payment</h3>
+              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 Pay for all 10 sessions upfront and save. Commit to your complete
                 transformation journey.
