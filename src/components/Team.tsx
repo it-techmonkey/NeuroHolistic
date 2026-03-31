@@ -96,7 +96,7 @@ export default function Team() {
                     alt={member.name}
                     fill
                     unoptimized
-                    className={`object-cover grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 scale-105 group-hover:scale-110 ${
+                    className={`object-cover contrast-[1.1] transition-all duration-1000 scale-105 group-hover:scale-110 ${
                       member.slug === "zekra-khayata" ? "object-[center_22%]" : "object-center"
                     }`}
                   />

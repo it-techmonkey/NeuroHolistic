@@ -46,7 +46,7 @@ export default function TeamRegistry() {
             >
               {/* Founder Portrait - Larger */}
               <div className="w-full md:w-2/5">
-                <div className="relative mb-6 aspect-[4/5] w-full overflow-hidden bg-slate-100 grayscale-[40%] transition-all duration-700 group-hover:grayscale-0">
+                <div className="relative mb-6 aspect-[4/5] w-full overflow-hidden bg-slate-100 transition-all duration-700">
                   <Image
                     src={founder.image}
                     alt={founder.name}
@@ -92,7 +92,7 @@ export default function TeamRegistry() {
                 className="group flex flex-col p-8 md:p-10 border-b border-[#E2E8F0] md:border-r md:border-b transition-colors hover:bg-[#FAFBFF]"
               >
                 {/* Framed Portrait */}
-                <div className="relative mb-8 aspect-[4/5] w-full overflow-hidden bg-slate-100 grayscale-[40%] transition-all duration-700 group-hover:grayscale-0">
+                <div className="relative mb-8 aspect-[4/5] w-full overflow-hidden bg-slate-100 transition-all duration-700">
                   <Image
                     src={member.image}
                     alt={member.name}

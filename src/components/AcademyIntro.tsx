@@ -60,20 +60,20 @@ export default function AcademyIntro() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-7 lg:pt-12"
           >
-            <div className="group relative w-full bg-[#F8FAFC] p-4 border border-slate-100 shadow-sm transition-shadow hover:shadow-md">
+            <div className="group relative w-full rounded-[24px] border border-slate-200 bg-gradient-to-br from-white via-[#FAFBFF] to-[#F1F5F9] p-3 shadow-[0_12px_36px_rgba(15,23,42,0.08)] transition-all duration-500 hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)] md:p-4">
+              <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/60" />
               {/* Internal Image Frame */}
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 md:aspect-[16/11]">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-[#F8FAFC] md:aspect-[16/10]">
                 <Image
                   src="/images/team/team.png"
                   alt="Academy Training Session"
                   fill
                   unoptimized
-                  className="object-contain object-center bg-white grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+                  className="object-contain object-bottom bg-[#F8FAFC] p-2 transition-transform duration-700 group-hover:scale-[1.02] md:p-4"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   priority
                 />
-                {/* Subtle vignette for depth */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent opacity-60" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/8 via-transparent to-white/20" />
               </div>
             </div>
             

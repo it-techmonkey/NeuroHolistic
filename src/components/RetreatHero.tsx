@@ -6,11 +6,11 @@ export default function RetreatHero() {
       eyebrow="Immersive Transformation"
       title={
         <>
-          Something Changes Here <br className="hidden lg:block" />
-          You’ll Feel It
+          Step Out of Routine <br className="hidden lg:block" />
+          Enter Deep Transformation
         </>
       }
-      description="Immersive retreat experiences that allow you to step away from the noise and enter a deeper, truly transformative process."
+      description="Immersive retreats designed to help you disconnect from daily overload, regulate your system, and move through lasting inner transformation."
       imageSrc="/images/pages/retreat.jpg"
       imageAlt="A serene retreat location in nature"
       metaTags={["Deep Immersion", "Nature Based", "Held Container"]}
