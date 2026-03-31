@@ -30,10 +30,10 @@ export default function Hero() {
               style={{ fontFamily: "Inter, Satoshi, 'Neue Montreal', -apple-system, sans-serif" }}
             >
               <span className="block text-[32px] font-normal text-[#E2E9FF] sm:text-[44px] md:text-[66px] lg:text-[55px]">
-                Reset From Within.
+                Reset From Within
               </span>
-              <span className="block text-[32px] italic text-white sm:text-[40px] md:text-[60px] lg:text-[55px]">
-                Transform Your Life.
+              <span className="block text-[32px] text-white sm:text-[40px] md:text-[60px] lg:text-[55px]">
+                Transform Your Life
               </span>
             </h1>
             <p className="mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] leading-[1.7] text-[#C3CBE8] lg:text-[17.5px]">

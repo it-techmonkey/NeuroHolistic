@@ -20,7 +20,7 @@ export default function CorporateApproach() {
 
             <h2 className="text-[34px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[48px]">
               The approach for <br className="hidden md:block" />
-              <span className="italic text-[#64748B] font-normal">organizations.</span>
+              <span className="italic text-[#64748B] font-normal">organizations</span>
             </h2>
           </motion.div>
 

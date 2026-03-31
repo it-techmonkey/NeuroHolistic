@@ -31,7 +31,7 @@ export default function Accreditation() {
             viewport={{ once: true }}
             className="text-[32px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]"
           >
-            Accreditation & Professional <span className="italic text-[#64748B] font-normal">recognition.</span>
+            Accreditation & Professional <span className="italic text-[#64748B] font-normal">recognition</span>
           </motion.h2>
         </div>
 

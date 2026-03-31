@@ -32,7 +32,7 @@ export default function ProfessionalOutcome() {
 
               <h2 className="mb-10 text-[32px] font-light leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[56px]">
                 Certified NeuroHolistic <br className="hidden md:block" />
-                Applied Psychology <span className="italic text-slate-400 font-normal">Practitioner.</span>
+                Applied Psychology <span className="italic text-slate-400 font-normal">Practitioner</span>
               </h2>
 
               <div className="max-w-[600px] border-l border-white/10 pl-8 space-y-6">

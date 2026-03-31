@@ -52,7 +52,7 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
 
             </div>
             <h2 className="text-[42px] font-light leading-[1.05] tracking-tight text-[#0F172A] md:text-[56px]">
-              Upcoming <span className="italic text-[#64748B]">Events.</span>
+              Upcoming <span className="italic text-[#64748B]">Events</span>
             </h2>
           </div>
 

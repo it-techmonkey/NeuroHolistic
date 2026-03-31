@@ -108,7 +108,7 @@ export default function ProgramsSection() {
           </p>
           <h2 className="text-[40px] md:text-[52px] font-bold leading-[1.1] text-slate-900 tracking-tight">
             Choose Your <br/>
-            <span className="text-[#4F46E5]">Growth Protocol.</span>
+            <span className="text-[#4F46E5]">Growth Protocol</span>
           </h2>
         </div>
 

@@ -6,8 +6,8 @@ export default function RetreatHero() {
       eyebrow="Immersive Transformation"
       title={
         <>
-          Something Changes Here. <br className="hidden lg:block" />
-          <span className="italic">You’ll Feel It.</span>
+          Something Changes Here <br className="hidden lg:block" />
+          You’ll Feel It
         </>
       }
       description="Immersive retreat experiences that allow you to step away from the noise and enter a deeper, truly transformative process."

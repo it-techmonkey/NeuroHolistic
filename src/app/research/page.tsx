@@ -44,7 +44,7 @@ export default function ResearchPage() {
         title={
           <>
             Advancing the science of <br />
-            <span className="italic text-white/60 font-normal">transformation.</span>
+            <span className="text-white/60 font-normal">transformation</span>
           </>
         }
         description="Developing a deeper understanding of human systems through interdisciplinary scientific inquiry and applied practice."
@@ -66,7 +66,7 @@ export default function ResearchPage() {
             >
               <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
                 Understanding the <br />
-                <span className="italic text-[#64748B] font-normal">emergent human.</span>
+                <span className="italic text-[#64748B] font-normal">emergent human</span>
               </h2>
               <div className="space-y-8 border-l border-[#E2E8F0] pl-8">
                 <p className="text-[17px] leading-[1.8] text-[#475569]">
@@ -103,7 +103,7 @@ export default function ResearchPage() {
       <section className="bg-[#FAFBFF] py-12 md:py-16 lg:py-20 border-y border-[#E2E8F0]">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="mb-10">
-            <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">Areas of <span className="italic text-[#64748B]">Inquiry.</span></h2>
+            <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">Areas of <span className="italic text-[#64748B]">Inquiry</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-[#E2E8F0]">
@@ -128,7 +128,7 @@ export default function ResearchPage() {
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-24">
             <div className="border-l border-[#E2E8F0] pl-10">
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
-                Understanding <br/><span className="italic text-[#64748B]">the emergent human.</span>
+                Understanding <br/><span className="italic text-[#64748B]">the emergent human</span>
               </h3>
               <div className="mt-6 flex flex-col gap-4 text-[16px] leading-[1.8] text-[#4B5563]">
                 <p>
@@ -141,7 +141,7 @@ export default function ResearchPage() {
             </div>
             <div className="border-l border-[#E2E8F0] pl-10 lg:mt-20">
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
-                Academic <br/><span className="italic text-[#64748B]">Collaboration.</span>
+                Academic <br/><span className="italic text-[#64748B]">Collaboration</span>
               </h3>
               <p className="mt-6 text-[16px] leading-[1.8] text-[#4B5563]">
                 The Institute aims to collaborate with universities, researchers, and academic institutions interested in advancing interdisciplinary research on human transformation, applied psychology, and wellbeing.
@@ -156,7 +156,7 @@ export default function ResearchPage() {
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-end">
             <div className="lg:col-span-7">
-              <h3 className="mt-6 text-[32px] font-light text-white md:text-[44px]">Research Projects <br/>& <span className="italic text-slate-400">Publications.</span></h3>
+              <h3 className="mt-6 text-[32px] font-light text-white md:text-[44px]">Research Projects <br/>& <span className="italic text-slate-400">Publications</span></h3>
             </div>
             <div className="lg:col-span-5">
               <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-white/10 pt-8">
@@ -176,7 +176,7 @@ export default function ResearchPage() {
       <section className="py-12 md:py-16 border-t border-[#E2E8F0]">
         <div className="mx-auto max-w-[800px] px-6 text-center">
           <h2 className="mt-6 text-[32px] font-light tracking-tight text-[#0F172A] md:text-[42px]">
-            Inquire for <span className="italic text-[#64748B]">partnership.</span>
+            Inquire for <span className="italic text-[#64748B]">partnership</span>
           </h2>
           <p className="mt-8 text-[17px] leading-[1.8] text-[#475569]">
             Researchers and institutions interested in collaboration are invited to contact the NeuroHolistic Institute.

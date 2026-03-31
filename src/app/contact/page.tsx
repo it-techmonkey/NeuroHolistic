@@ -13,7 +13,7 @@ export default function ContactPage() {
         title={
           <>
             Connect with the <br />
-            <span className="italic text-white/60 font-normal">NeuroHolistic Institute.</span>
+            <span className="text-white/60 font-normal">NeuroHolistic Institute</span>
           </>
         }
         description="For consultations, academy applications, and collaborations."

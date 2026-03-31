@@ -95,7 +95,9 @@ export default function Team() {
                     src={member.image}
                     alt={member.name}
                     fill
-                    className="object-cover grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 scale-105 group-hover:scale-110"
+                    className={`object-cover grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 scale-105 group-hover:scale-110 ${
+                      member.slug === "zekra-khayata" ? "object-[center_30%]" : "object-center"
+                    }`}
                   />
                   {/* Subtle vignette */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-60" />

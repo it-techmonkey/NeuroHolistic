@@ -39,7 +39,7 @@ export default function PageHero({
   const hasCustomDesc = !!customDescription;
   
   return (
-    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-14 sm:min-h-[85vh] sm:pt-32 sm:pb-16 md:min-h-[90vh] md:pt-40 md:pb-24">
+    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-12 sm:min-h-[85vh] sm:pt-32 sm:pb-14 md:min-h-[90vh] md:pt-40 md:pb-16">
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">
@@ -73,7 +73,7 @@ export default function PageHero({
           </div>
 
           {/* Headline: Uses 'clamp' to shrink on small laptops and wrap safely */}
-          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.05] tracking-tight text-white md:mb-6 lg:text-[clamp(48px,6vw,84px)]">
+          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.05] tracking-tight text-white not-italic [&_em]:not-italic [&_span]:not-italic md:mb-6 lg:text-[clamp(48px,6vw,84px)]">
             {title}
           </h1>
 

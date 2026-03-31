@@ -13,8 +13,7 @@ export default function TeamPage() {
         eyebrow="Faculty"
         title={
           <>
-            {/* Practitioners of the <br /> */}
-            <span className="italic text-white/60 font-normal">The Team.</span>
+            <span className="text-white/60 font-normal">The Team</span>
           </>
         }
         description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."

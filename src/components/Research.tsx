@@ -45,7 +45,7 @@ export default function Research() {
               className="mb-8 text-[36px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[44px]"
             >
               Research & Systems <br className="hidden lg:block" />
-              <span className="italic text-[#64748B]">Development.</span>
+              <span className="italic text-[#64748B]">Development</span>
             </motion.h2>
 
             <motion.p

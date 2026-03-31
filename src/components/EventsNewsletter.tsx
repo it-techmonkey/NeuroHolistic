@@ -25,7 +25,7 @@ export default function EventsNewsletter() {
           > 
 
             <h2 className="text-[34px] md:text-[48px] font-light tracking-tight text-[#0F172A] mb-4">
-              Join the <span className="italic font-normal text-[#64748B]">Registry.</span>
+              Join the <span className="italic font-normal text-[#64748B]">Registry</span>
             </h2>
             <p className="text-[16px] text-[#475569] max-w-[480px] mx-auto leading-relaxed">
               Formal updates regarding upcoming clinical workshops, retreats, and live integration sessions.

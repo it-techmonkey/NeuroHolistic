@@ -20,7 +20,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
         <div className="mb-16 flex flex-col items-start justify-between gap-8 border-b border-[#E2E8F0] pb-10 lg:flex-row lg:items-end">
           <div>
             <h2 className="text-[34px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]">
-              Upcoming <span className="italic text-[#64748B]">Sessions.</span>
+              Upcoming <span className="italic text-[#64748B]">Sessions</span>
             </h2>
           </div>
           

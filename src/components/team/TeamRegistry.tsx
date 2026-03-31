@@ -33,7 +33,7 @@ export default function TeamRegistry() {
             viewport={{ once: true }}
             className="text-[34px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]"
           >
-            Practitioners of the <span className="italic text-[#64748B] font-normal">Team.</span>
+            Practitioners of the <span className="italic text-[#64748B] font-normal">Team</span>
           </motion.h2>
         </div>
 

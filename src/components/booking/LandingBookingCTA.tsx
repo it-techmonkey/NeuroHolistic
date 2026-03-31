@@ -24,12 +24,14 @@ type LandingBookingCTAProps = {
   primaryClassName: string;
   secondaryClassName?: string;
   containerClassName?: string;
+  dashboardLabel?: string;
 };
 
 export default function LandingBookingCTA({
   primaryClassName,
   secondaryClassName = "",
   containerClassName = "",
+  dashboardLabel = "Go to Dashboard",
 }: LandingBookingCTAProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
@@ -91,7 +93,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/therapist" className={primaryClassName}>
-          Go to Dashboard <span aria-hidden="true">→</span>
+          {dashboardLabel} <span aria-hidden="true">→</span>
         </a>
       </div>
     );
@@ -113,7 +115,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/client" className={primaryClassName}>
-          Go to Dashboard <span aria-hidden="true">→</span>
+          {dashboardLabel} <span aria-hidden="true">→</span>
         </a>
       </div>
     );
@@ -135,7 +137,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/client" className={primaryClassName}>
-          Go to Dashboard <span aria-hidden="true">→</span>
+          {dashboardLabel} <span aria-hidden="true">→</span>
         </a>
       </div>
     );
@@ -156,7 +158,7 @@ export default function LandingBookingCTA({
   return (
     <div className={containerClassName}>
       <a href="/dashboard/client" className={primaryClassName}>
-        Go to Dashboard <span aria-hidden="true">→</span>
+        {dashboardLabel} <span aria-hidden="true">→</span>
       </a>
     </div>
   );

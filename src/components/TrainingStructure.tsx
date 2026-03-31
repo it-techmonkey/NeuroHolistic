@@ -57,7 +57,7 @@ export default function TrainingStructure() {
           >
             <span className="block text-[14px] font-mono tracking-[0.2em] text-[#6366F1] uppercase mb-4">The Program</span>
             NeuroHolistic Applied <br className="hidden md:block" />
-            <span className="italic text-[#64748B] font-normal">Psychology Mastery.</span>
+            <span className="italic text-[#64748B] font-normal">Psychology Mastery</span>
           </motion.h2>
           
           <motion.p 

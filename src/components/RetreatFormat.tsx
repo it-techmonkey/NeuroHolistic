@@ -28,7 +28,7 @@ export default function RetreatFormat() {
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
               How the experience <br/>
-              <span className="italic text-[#64748B] font-normal">is structured.</span>
+              <span className="italic text-[#64748B] font-normal">is structured</span>
             </h2>
 
             <p className="mb-12 text-[17px] leading-[1.8] text-[#475569]">

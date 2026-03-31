@@ -39,8 +39,7 @@ export default function AboutPage() {
         eyebrow="About Us"
         title={
           <>
-            
-            <span className="italic text-white/60 font-normal">The Evolution of the NeuroHolistic Method™<br /></span>
+            <span className="text-white/60 font-normal">The Evolution of the NeuroHolistic Method™<br /></span>
           </>
         }
         description="Redefining How Real Change Happens "
@@ -101,7 +100,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
-              <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">The Birth of the <br/> <span className="italic text-[#64748B]">NeuroHolistic Institute.</span></h2>
+              <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">The Birth of the <br/> <span className="italic text-[#64748B]">NeuroHolistic Institute</span></h2>
             </div>
             <div className="flex flex-col justify-center space-y-6 text-[17px] leading-[1.8] text-[#475569]">
               <p>As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method.</p>
@@ -129,7 +128,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} className="lg:col-span-6 lg:sticky lg:top-32">
-              <h2 className="mb-8 text-[34px] font-light text-[#0F172A] md:text-[48px]">Dr. Fawzia <span className="italic text-[#64748B]">Yassmina.</span></h2>
+              <h2 className="mb-8 text-[34px] font-light text-[#0F172A] md:text-[48px]">Dr. Fawzia <span className="italic text-[#64748B]">Yassmina</span></h2>
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0 rounded-lg bg-white">
                   <Image src="/images/team/Fawzia Yassmina Landing.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-cover object-top" />
@@ -177,7 +176,7 @@ export default function AboutPage() {
       {/* ── Section 04: Vision for the Future (Dark Capstone) ── */}
       <section className="bg-[#0F172A] py-24 md:py-32">
         <div className="mx-auto max-w-[900px] px-6 text-center">
-          <h2 className="mb-12 text-[32px] font-light text-white md:text-[48px]">Vision for the <span className="italic text-slate-400">future.</span></h2>
+          <h2 className="mb-12 text-[32px] font-light text-white md:text-[48px]">Vision for the <span className="italic text-slate-400">future</span></h2>
           <div className="space-y-8 text-[17px] leading-[1.8] text-slate-400 max-w-3xl mx-auto">
             <p>
               The NeuroHolistic Institute continues to expand the development and application of the NeuroHolistic Method™ through therapeutic work, practitioner training, and research.

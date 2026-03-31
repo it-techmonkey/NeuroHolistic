@@ -28,7 +28,7 @@ export default function AcademyIntro() {
             
             <h2 className="mb-10 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
               The first generation of <br/>
-              <span className="italic text-slate-500 font-normal">NeuroHolistic practitioners.</span>
+              <span className="italic text-slate-500 font-normal">NeuroHolistic practitioners</span>
             </h2>
 
             <div className="space-y-8">

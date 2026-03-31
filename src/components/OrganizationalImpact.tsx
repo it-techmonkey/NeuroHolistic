@@ -59,7 +59,7 @@ export default function OrganizationalImpact() {
               className="text-[34px] font-light leading-[1.1] tracking-tight text-white md:text-[52px]"
             >
               Measurable impact across <br />
-              <span className="italic text-slate-400 font-normal">the organization.</span>
+              <span className="italic text-slate-400 font-normal">the organization</span>
             </motion.h2>
           </div>
           
