@@ -80,7 +80,7 @@ export default function Research() {
             className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200"
           >
             <Image
-              src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1400&q=80"
+              src="/images/pages/test-tube.png"
               alt="Research and systems development"
               fill
               className="object-cover"

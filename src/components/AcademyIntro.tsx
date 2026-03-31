@@ -64,10 +64,10 @@ export default function AcademyIntro() {
               {/* Internal Image Frame */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 md:aspect-[16/11]">
                 <Image
-                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                  src="/images/team/team.png"
                   alt="Academy Training Session"
                   fill
-                  className="object-cover grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+                  className="object-contain object-center bg-white grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   priority
                 />

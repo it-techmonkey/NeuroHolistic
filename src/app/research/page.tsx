@@ -87,7 +87,7 @@ export default function ResearchPage() {
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[16/11] w-full overflow-hidden transition-all duration-1000">
                   <Image
-                    src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1400&q=80"
+                    src="/images/pages/emergent-human-scan.png"
                     alt="Scientific data visualization"
                     fill
                     className="object-cover"

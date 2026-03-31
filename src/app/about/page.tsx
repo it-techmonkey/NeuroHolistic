@@ -20,7 +20,7 @@ const JOURNEY = [
       "As the work deepened, insights from neuroscience, psychology, and systemic awareness began to converge. It became clear that lasting transformation could not be understood through a single discipline alone.",
       "Through years of refinement, recurring mechanisms of change became visible across diverse backgrounds and life situations.",
     ],
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80",
+    image: "/images/pages/years-exploration-calendar.png",
   },
   {
     title: "Structuring the Method",
@@ -28,7 +28,7 @@ const JOURNEY = [
       "Over time, these insights were organized into a coherent framework. What emerged through practice was articulated into a structured model of transformation.",
       "This led to the five-phase architecture of the NeuroHolistic Method™, providing a systematic way to facilitate human change.",
     ],
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80",
+    image: "/images/pages/structuring-method.png",
   },
 ] as const;
 
