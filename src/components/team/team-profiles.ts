@@ -77,7 +77,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Syria, Zekra is a certified NeuroHolistic Practitioner dedicated to understanding the connection between the brain, emotions, and human transformation. Her work focuses on helping individuals recognize the subconscious patterns that shape their experiences, decisions, and overall well-being.",
       "Through the NeuroHolistic Method™, she supports people in developing deeper awareness, restoring internal balance, and creating meaningful personal change.",
     ],
-    image: "/images/team/Zekra.png",
+    image: "/images/team/zekra.png",
     testimonials: [
       "Zekra's listening and gentle guidance helped me feel safe enough to do real inner work.",
       "Her sessions gave me practical insight into patterns I had struggled with for years.",
