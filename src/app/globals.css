@@ -85,8 +85,19 @@ h3,
 h4,
 h5,
 h6 {
+  font-family: var(--font-inter), "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  font-style: normal;
+}
+
+h1 *,
+h2 *,
+h3 *,
+h4 *,
+h5 *,
+h6 * {
+  font-style: normal !important;
 }
 
 p {
