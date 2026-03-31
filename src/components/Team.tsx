@@ -95,8 +95,10 @@ export default function Team() {
                     src={member.image}
                     alt={member.name}
                     fill
-                    className={`object-cover grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 scale-105 group-hover:scale-110 ${
-                      member.slug === "zekra-khayata" ? "object-[center_30%]" : "object-center"
+                    className={`grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-105 ${
+                      member.slug === "zekra-khayata"
+                        ? "object-contain object-center scale-100 bg-white"
+                        : "object-cover object-center scale-105 group-hover:scale-110"
                     }`}
                   />
                   {/* Subtle vignette */}
