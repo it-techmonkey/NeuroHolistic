@@ -27,7 +27,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
             >
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 grayscale-[15%] transition-all duration-1000 group-hover:grayscale-0">
-                  <Image src={profile.image} alt={profile.name} fill className="object-cover" priority />
+                  <Image src={profile.image} alt={profile.name} fill unoptimized className="object-cover" priority />
                 </div>
               </div>
             </motion.div>

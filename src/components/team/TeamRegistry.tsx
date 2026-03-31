@@ -97,6 +97,7 @@ export default function TeamRegistry() {
                     src={member.image}
                     alt={member.name}
                     fill
+                    unoptimized
                     className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${
                       member.slug === 'zekra-khayata' ? 'object-[center_22%]' : 'object-center'
                     }`}

@@ -95,6 +95,7 @@ export default function Team() {
                     src={member.image}
                     alt={member.name}
                     fill
+                    unoptimized
                     className={`grayscale-[0.3] contrast-[1.1] transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-105 ${
                       member.slug === "zekra-khayata"
                         ? "object-contain object-center scale-100 bg-white"
