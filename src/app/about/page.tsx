@@ -85,6 +85,7 @@ export default function AboutPage() {
                       src={block.image}
                       alt={block.title}
                       fill
+                      unoptimized
                       className={block.title === "The Beginning" ? "object-contain" : "object-cover"}
                     />
                   </div>
@@ -131,7 +132,7 @@ export default function AboutPage() {
               <h2 className="mb-8 text-[34px] font-light text-[#0F172A] md:text-[48px]">Dr. Fawzia <span className="italic text-[#64748B]">Yassmina</span></h2>
               <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden grayscale-[30%] transition-all duration-700 group-hover:grayscale-0 rounded-lg bg-white">
-                  <Image src="/images/team/Fawzia Yassmina Landing.jpeg" alt="Dr. Fawzia Yassmina" fill className="object-cover object-top" />
+                  <Image src="/images/team/Fawzia Yassmina Landing.jpeg" alt="Dr. Fawzia Yassmina" fill unoptimized className="object-cover object-top" />
                 </div>
               </div>
             </motion.div>

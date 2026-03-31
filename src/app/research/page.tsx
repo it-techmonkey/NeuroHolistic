@@ -90,6 +90,7 @@ export default function ResearchPage() {
                     src="/images/pages/emergent-human-scan.png"
                     alt="Scientific data visualization"
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>

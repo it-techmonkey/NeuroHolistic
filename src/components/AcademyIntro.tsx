@@ -67,6 +67,7 @@ export default function AcademyIntro() {
                   src="/images/team/team.png"
                   alt="Academy Training Session"
                   fill
+                  unoptimized
                   className="object-contain object-center bg-white grayscale-[20%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   priority

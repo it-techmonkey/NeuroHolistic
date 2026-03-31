@@ -83,6 +83,7 @@ export default function Research() {
               src="/images/pages/test-tube.png"
               alt="Research and systems development"
               fill
+              unoptimized
               className="object-cover"
             />
           </motion.div>
