@@ -382,7 +382,7 @@ export const en = {
   // ── Programs Section (Landing Page Detail) ──
   programsSection: {
     heading: "Choose your",
-    headingBold: "path",
+    headingBold: "Path",
     idealFor: "Ideal for you if you:",
     bookConsultation: "Book a Consultation",
     privateDescription2: "Sessions are structured to support your pace and needs, with ongoing integration between meetings and dedicated support.",
@@ -408,8 +408,8 @@ export const en = {
     heroTitle2: "transformation.",
     heroDescription: "Developing a deeper understanding of human systems through interdisciplinary scientific inquiry and applied practice.",
     inquireCollaboration: "Inquire for Collaboration",
-    visionTitle1: "Understanding the",
-    visionTitle2: "emergent human",
+    visionTitle1: "Understanding The",
+    visionTitle2: "Emergent Human",
     visionParagraph1: "The NeuroHolistic Institute is committed to developing a scientific understanding of how human perception and behavioral change emerge from the interaction of biological and experiential systems.",
     visionParagraph2: "Our research explores how integrative approaches support sustainable transformation in individuals and communities, grounded in rigorous observation.",
     areasOfInquiry: "Areas of",

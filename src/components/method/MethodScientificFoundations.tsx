@@ -39,7 +39,7 @@ export default function MethodScientificFoundations() {
             >
   
               <h2 className="mb-8 text-[34px] font-medium leading-[1.15] tracking-tight text-[#0F172A] md:text-[46px]">
-                Scientific & <br/>Theoretical <span className="italic text-[#64748B]">foundations</span>
+                Scientific & <br/>Theoretical <span className="italic text-[#64748B]">Foundations</span>
               </h2>
               <p className="mb-4 text-[16px] leading-[1.8] text-[#475569]">
                 The NeuroHolistic Method™ is grounded in contemporary scientific understanding of how the human system regulates, adapts, and transforms. Its theoretical foundation integrates insights from neuroscience, psychoneuroimmunology, and epigenetic regulation to understand how thoughts, emotions, and physiological states interact to shape human experience.
