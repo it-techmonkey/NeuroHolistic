@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
 import {
   type ProgramType,
   type PaymentOption,
@@ -42,6 +43,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const [loadingTherapist, setLoadingTherapist] = useState(true);
   const [hasActiveProgram, setHasActiveProgram] = useState(false);
   const [hasCompletedConsultation, setHasCompletedConsultation] = useState<boolean | null>(null);
+  const [consultationCheckDone, setConsultationCheckDone] = useState(false);
   
   // Inline signup form data (for unauthenticated users)
   const [formData, setFormData] = useState({
@@ -78,6 +80,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             const consultData = await consultRes.json();
             setHasCompletedConsultation(consultData.hasCompletedFreeConsult ?? false);
           }
+          setConsultationCheckDone(true);
         } else {
           // Unauthenticated users - check after signup in the details step
           setHasCompletedConsultation(false);
@@ -251,8 +254,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     );
   }
 
-  // Show consultation required guard (only for authenticated users who haven't completed consultation)
-  if (isAuthenticated && hasCompletedConsultation === false && !academyMode) {
+  // Show consultation required guard for authenticated users who haven't completed consultation
+  // Also shows for non-authenticated users after they enter details and are found to lack a consultation
+  if (hasCompletedConsultation === false && !academyMode && (isAuthenticated || consultationCheckDone)) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
         <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -331,6 +335,11 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             setShowConfirmPayment(false);
             setSelectedProgramType(null);
             setSelectedPaymentOption(null);
+            setStep(preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type');
+            if (!isAuthenticated) {
+              setPendingPaymentOption(null);
+            }
+            router.push('/booking/paid-program-booking');
           }}
           className="w-full py-3 text-slate-600 hover:text-slate-800 text-sm font-medium"
         >
@@ -661,7 +670,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
 
               setProcessing(true);
               try {
-                // Create account
+                // Create account (API auto-signs in and returns session)
                 const signupRes = await fetch('/api/auth/signup', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -678,12 +687,40 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
 
                 const signupData = await signupRes.json();
                 
-                // 409 means user already exists - try to sign in
+                // 409 means user already exists - still proceeds with session
                 if (!signupRes.ok && signupRes.status !== 409) {
                   throw new Error(signupData.error || 'Failed to create account');
                 }
 
-                // Now proceed to payment with Ziina
+                // Set the session on the client so authenticated API calls work
+                if (signupData.session?.access_token) {
+                  await supabase.auth.setSession({
+                    access_token: signupData.session.access_token,
+                    refresh_token: signupData.session.refresh_token || '',
+                  });
+                }
+
+                // Check if this email has a completed free consultation
+                const consultCheckRes = await fetch('/api/client/dashboard');
+                if (consultCheckRes.ok) {
+                  const consultCheckData = await consultCheckRes.json();
+                  if (!consultCheckData.hasCompletedFreeConsult) {
+                    setHasCompletedConsultation(false);
+                    setConsultationCheckDone(true);
+                    setStep('payment');
+                    setProcessing(false);
+                    return;
+                  }
+                } else {
+                  // If dashboard check fails, block to be safe
+                  setHasCompletedConsultation(false);
+                  setConsultationCheckDone(true);
+                  setStep('payment');
+                  setProcessing(false);
+                  return;
+                }
+
+                // Has completed consultation - proceed to payment
                 const link = getZiinaLink(selectedProgramType!, pendingPaymentOption!, therapist?.name, therapist?.slug);
                 if (link) {
                   sessionStorage.setItem('pendingPayment', JSON.stringify({
