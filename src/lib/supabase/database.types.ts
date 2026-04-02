@@ -127,7 +127,7 @@ export type Database = {
           total_sessions: number;
           used_sessions: number;
           sessions_completed: number;
-          status: 'active' | 'completed' | 'cancelled';
+          status: 'pending' | 'active' | 'completed' | 'cancelled';
           payment_id: string;
           therapist_user_id: string | null;
           therapist_name: string | null;
@@ -135,6 +135,10 @@ export type Database = {
           price_paid: number | null;
           client_name: string | null;
           client_email: string | null;
+          payment_status: 'pending_verification' | 'verified' | 'rejected' | null;
+          payment_submitted_at: string | null;
+          payment_verified_at: string | null;
+          admin_notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -144,7 +148,7 @@ export type Database = {
           total_sessions: number;
           used_sessions?: number;
           sessions_completed?: number;
-          status?: 'active' | 'completed' | 'cancelled';
+          status?: 'pending' | 'active' | 'completed' | 'cancelled';
           payment_id: string;
           therapist_user_id?: string | null;
           therapist_name?: string | null;
@@ -152,6 +156,10 @@ export type Database = {
           price_paid?: number | null;
           client_name?: string | null;
           client_email?: string | null;
+          payment_status?: 'pending_verification' | 'verified' | 'rejected' | null;
+          payment_submitted_at?: string | null;
+          payment_verified_at?: string | null;
+          admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -161,7 +169,7 @@ export type Database = {
           total_sessions?: number;
           used_sessions?: number;
           sessions_completed?: number;
-          status?: 'active' | 'completed' | 'cancelled';
+          status?: 'pending' | 'active' | 'completed' | 'cancelled';
           payment_id?: string;
           therapist_user_id?: string | null;
           therapist_name?: string | null;
@@ -169,6 +177,10 @@ export type Database = {
           price_paid?: number | null;
           client_name?: string | null;
           client_email?: string | null;
+          payment_status?: 'pending_verification' | 'verified' | 'rejected' | null;
+          payment_submitted_at?: string | null;
+          payment_verified_at?: string | null;
+          admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };

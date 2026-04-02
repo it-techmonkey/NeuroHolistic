@@ -3,14 +3,16 @@
 import { usePathname } from 'next/navigation';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isUrdu } = useLang();
 
-  const hideNavbar = 
-    pathname?.startsWith('/auth/') || 
-    pathname?.startsWith('/dashboard/') || 
-    pathname === '/dashboard' || 
+  const isPublicPage = !(
+    pathname?.startsWith('/auth/') ||
+    pathname?.startsWith('/dashboard/') ||
+    pathname === '/dashboard' ||
     pathname?.startsWith('/admin/') ||
     pathname === '/admin' ||
     pathname?.startsWith('/therapist/') ||
@@ -18,15 +20,25 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/book/') ||
     pathname === '/book' ||
     pathname?.startsWith('/booking/') ||
-    pathname === '/booking';
-    
-  const hideFooter = hideNavbar;
+    pathname === '/booking' ||
+    pathname?.startsWith('/api/')
+  );
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
-      <main>{children}</main>
-      {!hideFooter && <Footer />}
+      {isPublicPage && <Navbar />}
+      {isPublicPage ? (
+        <main
+          dir={isUrdu ? "rtl" : "ltr"}
+          lang={isUrdu ? "ur" : "en"}
+          className={isUrdu ? "urdu-text font-urdu" : ""}
+        >
+          {children}
+        </main>
+      ) : (
+        <main>{children}</main>
+      )}
+      {isPublicPage && <Footer />}
     </>
   );
 }

@@ -2,8 +2,11 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function AcademyCTA() {
+  const { t, isUrdu } = useLang();
+
   return (
     <section className="w-full bg-[#FAFBFF] px-4 py-10 md:px-6 md:py-20">
       <motion.div
@@ -33,8 +36,8 @@ export default function AcademyCTA() {
             
             {/* Left Column: The Hook (Spans 7 Cols) */}
             <div className="lg:col-span-7 flex flex-col justify-center">
-              <h2 className="text-[32px] font-medium leading-[1.15] tracking-tight text-white md:text-[48px] lg:text-[48px] uppercase">
-                THE NEUROHOLISTIC ACADEMY
+              <h2 className="text-[32px] font-medium leading-[1.4] tracking-tight text-white md:text-[48px] lg:text-[48px]">
+                {t.academyCTA.heading}
               </h2>
             </div>
 
@@ -42,10 +45,10 @@ export default function AcademyCTA() {
             <div className="flex flex-col items-start lg:col-span-5 lg:items-end justify-center">
               <Link
                 href="/booking/paid-program-booking?mode=academy"
-                className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-white px-8 text-[15px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
+                className="group inline-flex h-16 items-center justify-center gap-3 rounded-full bg-white px-10 text-[16px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
               >
-                Become a Therapist
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                {t.academyCTA.becomeATherapist}
+                <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
               </Link>
             </div>
 

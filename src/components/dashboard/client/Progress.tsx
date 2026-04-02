@@ -227,7 +227,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                       new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     ),
                     datasets: [{
-                      label: 'Wellbeing Score',
+                      label: 'Dysregulation Level',
                       data: timelineData.map(d => d.score),
                       borderColor: '#6366F1',
                       backgroundColor: '#EEF2FF',

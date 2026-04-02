@@ -1,21 +1,27 @@
+"use client";
+
 import PageHero from "@/components/ui/PageHero";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function RetreatHero() {
+  const { t } = useLang();
+  const rh = t.retreatHero;
+
   return (
     <PageHero
-      eyebrow="Immersive Transformation"
+      eyebrow={rh.eyebrow}
       title={
         <>
-          Step Out of Routine <br className="hidden lg:block" />
-          Enter Deep Transformation
+          {rh.title1} <br className="hidden lg:block" />
+          {rh.title2}
         </>
       }
-      description="Immersive retreats designed to help you disconnect from daily overload, regulate your system, and move through lasting inner transformation."
+      description={rh.description}
       imageSrc="/images/pages/retreat.jpg"
       imageAlt="A serene retreat location in nature"
-      metaTags={["Deep Immersion", "Nature Based", "Held Container"]}
-      primaryAction={{ label: "View Upcoming Retreats", href: "#upcoming-retreats" }}
-      secondaryAction={{ label: "Join Wish List", href: "#newsletter" }}
+      metaTags={[...rh.metaTags]}
+      primaryAction={{ label: rh.viewRetreats, href: "#upcoming-retreats" }}
+      secondaryAction={{ label: rh.joinWishList, href: "#newsletter" }}
     />
   );
 }

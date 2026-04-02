@@ -4,54 +4,29 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import PageHero from "@/components/ui/PageHero";
-
-const RESEARCH_FOCUS = [
-  {
-    step: "01",
-    label: "Biological",
-    title: "Neuroscience of Transformation",
-    description: "Exploring neural mechanisms involved in perception, emotional regulation, and adaptive change.",
-    symbol: "◆",
-  },
-  {
-    step: "02",
-    label: "Physiological",
-    title: "Mind-Body Interaction",
-    description: "Investigating the relationship between psychological states, physiological regulation, and wellbeing.",
-    symbol: "◇",
-  },
-  {
-    step: "03",
-    label: "Genetics",
-    title: "Epigenetic Adaptation",
-    description: "Understanding how environment and experience interact with biological systems over time.",
-    symbol: "○",
-  },
-  {
-    step: "04",
-    label: "Methodology",
-    title: "Applied Transformation Models",
-    description: "Studying how structured frameworks facilitate sustainable and measurable human change.",
-    symbol: "△",
-  },
-] as const;
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function ResearchPage() {
+  const { t, isUrdu } = useLang();
+  const rp = t.researchPage;
+  const RESEARCH_FOCUS = rp.focusAreas;
+  const SYMBOLS = ["◆", "◇", "○", "△"];
+
   return (
     <div className="w-full bg-white">
       <PageHero
-        eyebrow="Research"
+        eyebrow={rp.eyebrow}
         title={
           <>
-            Advancing the science of <br />
-            <span className="text-white/60 font-normal">transformation</span>
+            {rp.heroTitle1} <br />
+            <span className="text-white/60 font-normal">{rp.heroTitle2}</span>
           </>
         }
-        description="Developing a deeper understanding of human systems through interdisciplinary scientific inquiry and applied practice."
+        description={rp.heroDescription}
         imageSrc="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1920&q=80"
         imageAlt="Neuroscience research environment"
         metaTags={[]}
-        primaryAction={{ label: "Inquire for Collaboration", href: "mailto:info@neuroholistic.com" }}
+        primaryAction={{ label: rp.inquireCollaboration, href: "mailto:info@neuroholistic.com" }}
       />
 
       {/* ── Section 01: Research Vision (Editorial Spread) ── */}
@@ -65,15 +40,15 @@ export default function ResearchPage() {
               className="lg:col-span-6"
             >
               <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-                Understanding the <br />
-                <span className="italic text-[#64748B] font-normal">emergent human</span>
+                {rp.visionTitle1} <br />
+                <span className="italic text-[#64748B] font-normal">{rp.visionTitle2}</span>
               </h2>
-              <div className="space-y-8 border-l border-[#E2E8F0] pl-8">
-                <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  The NeuroHolistic Institute is committed to developing a scientific understanding of how human perception and behavioral change emerge from the interaction of biological and experiential systems.
+              <div className={`space-y-8 ${isUrdu ? 'border-r pr-8' : 'border-l pl-8'} border-[#E2E8F0]`}>
+                <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                  {rp.visionParagraph1}
                 </p>
-                <p className="text-[17px] leading-[1.8] text-[#475569]">
-                  Our research explores how integrative approaches support sustainable transformation in individuals and communities, grounded in rigorous observation.
+                <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                  {rp.visionParagraph2}
                 </p>
               </div>
             </motion.div>
@@ -104,19 +79,19 @@ export default function ResearchPage() {
       <section className="bg-[#FAFBFF] py-12 md:py-16 lg:py-20 border-y border-[#E2E8F0]">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="mb-10">
-            <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">Areas of <span className="italic text-[#64748B]">Inquiry</span></h2>
+            <h2 className="mt-6 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">{rp.areasOfInquiry} <span className="italic text-[#64748B]">{rp.areasOfInquiry2}</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-[#E2E8F0]">
-            {RESEARCH_FOCUS.map((item, i) => (
+            {RESEARCH_FOCUS.map((item: { step: string; label: string; title: string; description: string }, i: number) => (
               <div key={item.title} className="group border-b border-[#E2E8F0] p-10 transition-colors hover:bg-white lg:border-r last:lg:border-r-0">
                 <div className="mb-12 flex items-center justify-between">
                   <span className="font-mono text-[12px] text-[#CBD5E1] group-hover:text-[#6366F1] transition-colors">[ {item.step} ]</span>
-                  <span className="text-[18px] text-[#6366F1] opacity-30 group-hover:opacity-100 transition-opacity">{item.symbol}</span>
+                  <span className="text-[18px] text-[#6366F1] opacity-30 group-hover:opacity-100 transition-opacity">{SYMBOLS[i]}</span>
                 </div>
                 <span className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">{item.label}</span>
                 <h3 className="mb-4 text-[19px] font-semibold text-[#0F172A] leading-snug">{item.title}</h3>
-                <p className="text-[15px] leading-[1.7] text-[#64748B]">{item.description}</p>
+                <p className={`text-[15px] ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'} text-[#64748B]`}>{item.description}</p>
               </div>
             ))}
           </div>
@@ -127,25 +102,21 @@ export default function ResearchPage() {
       <section className="py-12 md:py-16 lg:py-20 bg-white">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-24">
-            <div className="border-l border-[#E2E8F0] pl-10">
+            <div className={`${isUrdu ? 'border-r pr-10' : 'border-l pl-10'}`}>
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
-                Understanding <br/><span className="italic text-[#64748B]">the emergent human</span>
+                {rp.understandingTitle1} <br/><span className="italic text-[#64748B]">{rp.understandingTitle2}</span>
               </h3>
-              <div className="mt-6 flex flex-col gap-4 text-[16px] leading-[1.8] text-[#4B5563]">
-                <p>
-                  The NeuroHolistic Institute is committed to developing a deeper scientific understanding of how human perception, emotional patterns, and behavioral change emerge from the interaction of biological, psychological, and experiential systems.
-                </p>
-                <p>
-                  Our research explores how integrative approaches can support meaningful and sustainable transformation in individuals and communities.
-                </p>
+              <div className={`mt-6 flex flex-col gap-4 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#4B5563]`}>
+                <p>{rp.understandingParagraph1}</p>
+                <p>{rp.understandingParagraph2}</p>
               </div>
             </div>
-            <div className="border-l border-[#E2E8F0] pl-10 lg:mt-20">
+            <div className={`${isUrdu ? 'border-r pr-10' : 'border-l pl-10'} lg:mt-20`}>
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
-                Academic <br/><span className="italic text-[#64748B]">Collaboration</span>
+                {rp.collaborationTitle1} <br/><span className="italic text-[#64748B]">{rp.collaborationTitle2}</span>
               </h3>
-              <p className="mt-6 text-[16px] leading-[1.8] text-[#4B5563]">
-                The Institute aims to collaborate with universities, researchers, and academic institutions interested in advancing interdisciplinary research on human transformation, applied psychology, and wellbeing.
+              <p className={`mt-6 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#4B5563]`}>
+                {rp.collaborationParagraph}
               </p>
             </div>
           </div>
@@ -153,22 +124,36 @@ export default function ResearchPage() {
       </section>
 
       {/* ── Section 04: Publications (Dark Capstone) ── */}
-      <section className="bg-[#0F172A] py-12 md:py-16">
+      <section className="bg-[#0F172A] py-20 md:py-28">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-end">
-            <div className="lg:col-span-7">
-              <h3 className="mt-6 text-[32px] font-light text-white md:text-[44px]">Research Projects <br/>& <span className="italic text-slate-400">Publications</span></h3>
-            </div>
-            <div className="lg:col-span-5">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-white/10 pt-8">
-                {["Research Papers", "Ongoing Studies", "Case Studies", "Presentations"].map((pub, i) => (
-                  <div key={pub} className="flex items-center gap-3">
-                    <span className="font-mono text-[10px] text-white/30">0{i+1}</span>
-                    <span className="text-[12px] font-bold uppercase tracking-widest text-white/80">{pub}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <motion.h3 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center text-[32px] font-light text-white md:text-[44px]"
+          >
+            {rp.publicationsTitle1} <br/>& <span className="italic text-slate-400">{rp.publicationsTitle2}</span>
+          </motion.h3>
+
+          <div className="mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
+            {rp.publicationCategories.map((pub: string, i: number) => (
+              <motion.div
+                key={pub}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
+                className="group text-center"
+              >
+                <span className="block font-mono text-[48px] md:text-[64px] font-light leading-none text-white/10 group-hover:text-[#6366F1]/40 transition-colors duration-500">
+                  0{i + 1}
+                </span>
+                <div className="mx-auto mt-4 h-px w-8 bg-white/10 group-hover:bg-[#6366F1]/50 group-hover:w-12 transition-all duration-500" />
+                <span className="mt-4 block text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.15em] text-white/70 group-hover:text-white transition-colors duration-300">
+                  {pub}
+                </span>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -177,16 +162,16 @@ export default function ResearchPage() {
       <section className="py-12 md:py-16 border-t border-[#E2E8F0]">
         <div className="mx-auto max-w-[800px] px-6 text-center">
           <h2 className="mt-6 text-[32px] font-light tracking-tight text-[#0F172A] md:text-[42px]">
-            Inquire for <span className="italic text-[#64748B]">partnership</span>
+            {rp.inquireTitle1} <span className="italic text-[#64748B]">{rp.inquireTitle2}</span>
           </h2>
-          <p className="mt-8 text-[17px] leading-[1.8] text-[#475569]">
-            Researchers and institutions interested in collaboration are invited to contact the NeuroHolistic Institute.
+          <p className={`mt-8 text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+            {rp.inquireDescription}
           </p>
           <Link
             href="mailto:info@neuroholistic.com"
             className="mt-12 inline-flex h-14 items-center justify-center bg-[#0F172A] px-10 text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1E293B]"
           >
-            Contact the Institute
+            {rp.contactInstitute}
           </Link>
         </div>
       </section>

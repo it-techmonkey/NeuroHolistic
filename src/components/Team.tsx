@@ -4,8 +4,11 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { TEAM_PROFILES } from "./team/team-profiles";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Team() {
+  const { t } = useLang();
+
   const founder = TEAM_PROFILES.find(member => member.slug === "fawzia-yassmina");
   const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
 
@@ -31,7 +34,7 @@ export default function Team() {
             className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
             {/* Practitioners of the <br/> */}
-            <span className="font-semibold text-[#2B2F55]">The Team</span>
+            <span className="font-semibold text-[#2B2F55]">{t.team.heading}</span>
           </motion.h2>
         </div>
 
@@ -61,7 +64,7 @@ export default function Team() {
               {/* Text Content - Right Side */}
               <div className="w-full lg:w-7/12 flex flex-col items-start pr-4">
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-4">
-                  Founder   
+                  {t.team.founder}   
                 </span>
                 <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
                   {founder.name}
@@ -70,7 +73,7 @@ export default function Team() {
                   "{founder.shortBio}"
                 </p>
                 <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
-                  <span>View Profile</span>
+                  <span>{t.team.viewProfile}</span>
                   <div className="h-[1px] w-8 bg-[#2B2F55]/30 group-hover:w-16 group-hover:bg-[#2B2F55] transition-all" />
                 </div>
               </div>
@@ -96,8 +99,8 @@ export default function Team() {
                     alt={member.name}
                     fill
                     unoptimized
-                    className={`object-cover contrast-[1.1] transition-all duration-1000 scale-105 group-hover:scale-110 ${
-                      member.slug === "zekra-khayata" ? "object-[center_22%]" : "object-center"
+                    className={`object-cover contrast-[1.1] transition-all duration-1000 scale-100 group-hover:scale-110 ${
+                      member.slug === "zekra-khayata" ? "object-[center_12%]" : "object-center"
                     }`}
                   />
                   {/* Subtle vignette */}
@@ -106,9 +109,6 @@ export default function Team() {
 
                 {/* Content */}
                 <div className="px-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
-                    Practitioner
-                  </span>
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
                     {member.name}
                   </h3>
@@ -116,7 +116,7 @@ export default function Team() {
                     {member.shortBio}
                   </p>
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 group-hover:text-[#2B2F55] transition-all">
-                    <span>View Profile</span>
+                    <span>{t.team.viewProfile}</span>
                     <div className="h-[1px] w-6 bg-slate-200 group-hover:bg-[#2B2F55] group-hover:w-10 transition-all" />
                   </div>
                 </div>

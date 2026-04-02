@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ReactElement } from "react";
 import Link from "next/link";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── SVG Icons ──────────────────────────────────────────────────────────── */
 
@@ -31,30 +33,32 @@ function GroupIcon({ className }: { className?: string }) {
 
 /* ─── Program data ───────────────────────────────────────────────────────── */
 
-const PROGRAMS = [
-  {
-    id: "private",
-    Icon: PersonIcon,
-    title: "Private Program",
-    description:
-      "A personalized transformational journey of 10 sessions, tailored to your unique neurology and life goals.",
-    cta: "Book Free Consultation",
-    href: "/consultation",
-  },
-  {
-    id: "group",
-    Icon: GroupIcon,
-    title: "Group Program",
-    description:
-      "A structured transformational experience conducted within a guided group setting. Powerful shared healing.",
-    cta: "Book Free Consultation",
-    href: "/consultation",
-  },
-];
+// moved inside component
 
 /* ─── Main section ───────────────────────────────────────────────────────── */
 
 export default function Programs() {
+  const { t, isUrdu } = useLang();
+
+  const PROGRAMS = [
+    {
+      id: "private",
+      Icon: PersonIcon,
+      title: t.programs.privateProgram,
+      description: t.programs.privateDescription,
+      cta: t.programs.bookConsultation,
+      href: "/booking/paid-program-booking?type=private",
+    },
+    {
+      id: "group",
+      Icon: GroupIcon,
+      title: t.programs.groupProgram,
+      description: t.programs.groupDescription,
+      cta: t.programs.bookConsultation,
+      href: "/booking/paid-program-booking?type=group",
+    },
+  ];
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -85,16 +89,16 @@ export default function Programs() {
         <div className="mb-16 flex flex-col items-center text-center md:mb-24">
           <motion.h2
             variants={itemVariants}
-            className="text-[36px] font-medium leading-[1.15] tracking-tight text-white md:text-[46px]"
+            className="text-[36px] font-medium leading-[1.4] tracking-tight text-white md:text-[46px]"
           >
-            Programs
+            {t.programs.heading}
           </motion.h2>
         </div>
 
         {/* ── Cards Grid ── */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {PROGRAMS.map((program, i) => (
-            <ProgramCard key={program.id} program={program} index={i} />
+            <ProgramCard key={program.id} program={program} index={i} isUrdu={isUrdu} />
           ))}
         </div>
       </motion.div>
@@ -107,9 +111,11 @@ export default function Programs() {
 function ProgramCard({
   program,
   index,
+  isUrdu,
 }: {
-  program: (typeof PROGRAMS)[number];
+  program: { id: string; Icon: ({ className }: { className?: string }) => ReactElement; title: string; description: string; cta: string; href: string };
   index: number;
+  isUrdu: boolean;
 }) {
   const { Icon } = program;
   
@@ -137,7 +143,7 @@ function ProgramCard({
         {program.title}
       </h3>
       
-      <p className="relative z-10 mb-10 flex-1 text-[16px] leading-[1.7] text-[#94A3B8]">
+      <p className={`relative z-10 mb-10 flex-1 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'} text-[#94A3B8]`}>
         {program.description}
       </p>
 
@@ -147,7 +153,7 @@ function ProgramCard({
         className="relative z-10 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-transparent px-6 py-3.5 text-[14.5px] font-medium text-white transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-[#0B1028]"
       >
         {program.cta}
-        <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+        <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
       </Link>
     </motion.div>
   );

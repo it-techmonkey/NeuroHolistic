@@ -235,7 +235,7 @@ export default function SessionDevelopmentForm({
               <p className="text-sm text-slate-500 mt-1">Session {sessionNumber} — {sessionDate}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-500">Wellbeing Score</p>
+              <p className="text-sm text-slate-500">Goal Readiness</p>
               <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
             </div>
           </div>
@@ -437,21 +437,21 @@ export default function SessionDevelopmentForm({
           {/* Scores Tab */}
           {activeTab === 'scores' && (
             <div className="space-y-6">
-              <h3 className="font-medium text-slate-900">Progress Scores (0-10)</h3>
+              <h3 className="font-medium text-slate-900">Progress Tracking (0-10)</h3>
               <p className="text-sm text-slate-500">Rate each domain based on session observations.</p>
 
               <div className="space-y-4">
                 <ScoreSlider label="Nervous System Regulation" field="nervous_system_score" value={form.nervous_system_score} />
                 <ScoreSlider label="Emotional State" field="emotional_state_score" value={form.emotional_state_score} />
                 <ScoreSlider label="Cognitive Patterns" field="cognitive_patterns_score" value={form.cognitive_patterns_score} />
-                <ScoreSlider label="Body Symptoms" field="body_symptoms_score" value={form.body_symptoms_score} />
+                <ScoreSlider label="Physical" field="body_symptoms_score" value={form.body_symptoms_score} />
                 <ScoreSlider label="Behavioral Patterns" field="behavioral_patterns_score" value={form.behavioral_patterns_score} />
                 <ScoreSlider label="Life Functioning" field="life_functioning_score" value={form.life_functioning_score} />
               </div>
 
               <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-indigo-900">Wellbeing Score:</span>
+                  <span className="font-medium text-indigo-900">Goal Readiness:</span>
                   <span className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>
@@ -494,7 +494,7 @@ export default function SessionDevelopmentForm({
                           { label: 'Nervous System', baseline: comparisonBaseline.nervous_system_score ?? 0, current: form.nervous_system_score },
                           { label: 'Emotional State', baseline: comparisonBaseline.emotional_state_score ?? 0, current: form.emotional_state_score },
                           { label: 'Cognitive Patterns', baseline: comparisonBaseline.cognitive_patterns_score ?? 0, current: form.cognitive_patterns_score },
-                          { label: 'Body Symptoms', baseline: comparisonBaseline.body_symptoms_score ?? 0, current: form.body_symptoms_score },
+                          { label: 'Physical', baseline: comparisonBaseline.body_symptoms_score ?? 0, current: form.body_symptoms_score },
                           { label: 'Behavioral Patterns', baseline: comparisonBaseline.behavioral_patterns_score ?? 0, current: form.behavioral_patterns_score },
                           { label: 'Life Functioning', baseline: comparisonBaseline.life_functioning_score ?? 0, current: form.life_functioning_score },
                         ].map((row) => {
@@ -514,7 +514,7 @@ export default function SessionDevelopmentForm({
                           );
                         })}
                         <tr className="bg-slate-100 font-semibold">
-                          <td className="py-2 px-3 text-slate-900">Total Wellbeing</td>
+                          <td className="py-2 px-3 text-slate-900">Goal Readiness</td>
                           <td className="py-2 px-3 text-center text-slate-600">{comparisonBaseline.goal_readiness_score ?? 0}/60</td>
                           <td className="py-2 px-3 text-center text-indigo-600">{goalReadinessScore}/60</td>
                           <td className={`py-2 px-3 text-center ${
@@ -547,7 +547,7 @@ export default function SessionDevelopmentForm({
                       {goalReadinessScore > comparisonBaseline.goal_readiness_score
                         ? `Client shows improvement of ${goalReadinessScore - comparisonBaseline.goal_readiness_score} points compared to ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`}.`
                         : goalReadinessScore < comparisonBaseline.goal_readiness_score
-                        ? `Client's wellbeing score is ${comparisonBaseline.goal_readiness_score - goalReadinessScore} points below ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`}. Consider reviewing treatment approach.`
+                        ? `Client's goal readiness score is ${comparisonBaseline.goal_readiness_score - goalReadinessScore} points below ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`}. Consider reviewing treatment approach.`
                         : `Client is maintaining ${comparisonBaseline.source === 'assessment' ? 'baseline' : `Session ${comparisonBaseline.sessionNumber}`} levels.`}
                     </p>
                   </div>

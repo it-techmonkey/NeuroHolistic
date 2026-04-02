@@ -3,8 +3,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function ScientificFoundation() {
+  const { t, isUrdu } = useLang();
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const } },
@@ -19,26 +22,26 @@ export default function ScientificFoundation() {
         className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="text-left">
+          <div className={isUrdu ? 'text-right' : 'text-left'}>
           <motion.h2
             variants={itemVariants}
-            className="mb-8 text-[36px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-8 text-[36px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
           >
-            Scientific <span className="italic text-[#64748B]">Foundation</span>
+            {t.scientificFoundation.heading}
           </motion.h2>
 
           <motion.p
             variants={itemVariants}
-            className="mb-5 text-[16px] leading-[1.8] text-[#475569]"
+            className="mb-5 text-[16px] leading-[2] text-[#475569]"
           >
-            The NeuroHolistic Method™ integrates insights from several scientific disciplines that explore how human systems regulate, adapt, and transform. These include contemporary neuroscience, research on neuroplasticity and epigenetic expression, and emerging perspectives on the role of bioenergetic processes in human functioning.
+            {t.scientificFoundation.paragraph1}
           </motion.p>
 
           <motion.p
             variants={itemVariants}
-            className="mb-10 text-[16px] leading-[1.8] text-[#475569]"
+            className="mb-10 text-[16px] leading-[2] text-[#475569]"
           >
-            The method also draws inspiration from modern physics concepts that highlight the interconnected and dynamic nature of complex systems, providing a broader framework for understanding human potential and transformation.
+            {t.scientificFoundation.paragraph2}
           </motion.p>
 
           <motion.div variants={itemVariants}>
@@ -46,8 +49,8 @@ export default function ScientificFoundation() {
               href="/research"
               className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#0F172A] px-8 text-[14.5px] font-medium text-white transition-all hover:bg-[#1E293B] hover:shadow-[0_8px_20px_rgba(15,23,42,0.15)]"
             >
-              Explore More
-              <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              {t.scientificFoundation.exploreMore}
+              <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
             </Link>
           </motion.div>
           </div>

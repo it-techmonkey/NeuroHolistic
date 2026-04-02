@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import HeroCalendar from './HeroCalendar';
+import { useLang } from '@/lib/translations/LanguageContext';
 
 type Therapist = {
   id: string;
@@ -20,6 +21,7 @@ interface FreeConsultationFormProps {
 }
 
 export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsultationFormProps) {
+  const { t, isUrdu } = useLang();
   const [step, setStep] = useState<'details' | 'schedule' | 'success'>('details');
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
@@ -97,11 +99,11 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
   const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
-      setError('Please fill in all required fields including password');
+      setError(t.consultationForm.pleaseFillAll);
       return;
     }
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t.consultationForm.passwordMin8);
       return;
     }
     setError('');
@@ -135,7 +137,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       const signupData = await signupRes.json();
 
       if (!signupRes.ok && signupRes.status !== 409) {
-        throw new Error(signupData.error || 'Failed to create account');
+        throw new Error(signupData.error || t.consultationForm.accountCreatedFailed);
       }
 
       if (signupData.session) {
@@ -166,12 +168,12 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       });
 
       const bookingData = await bookingRes.json();
-      if (!bookingRes.ok) throw new Error(bookingData.error || 'Booking failed');
+      if (!bookingRes.ok) throw new Error(bookingData.error || t.consultationForm.bookingFailed);
 
       setStep('success');
     } catch (err: any) {
       console.error('Booking error:', err);
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || t.consultationForm.somethingWrong);
     } finally {
       setLoading(false);
     }
@@ -199,13 +201,13 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       });
 
       if (signInError) {
-        setError('Failed to sign in. Please try logging in manually.');
+        setError(t.consultationForm.signInFailed);
         return;
       }
 
       window.location.href = '/dashboard/client';
     } catch (err: any) {
-      setError('Something went wrong. Please try logging in manually.');
+      setError(t.consultationForm.signInFailed);
     } finally {
       setLoading(false);
     }
@@ -222,12 +224,12 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-white">
-          {step === 'success' ? 'Booking Confirmed!' : 'Book Free Consultation'}
+          {step === 'success' ? t.consultationForm.bookingConfirmed : t.consultationForm.bookFreeConsultation}
         </h2>
         <p className="text-sm text-white/60 mt-1">
-          {step === 'details' && 'Enter your details to get started'}
-          {step === 'schedule' && 'Select your preferred date and time'}
-          {step === 'success' && 'Your consultation has been booked'}
+          {step === 'details' && t.consultationForm.enterDetails}
+          {step === 'schedule' && t.consultationForm.selectDateTime}
+          {step === 'success' && t.consultationForm.consultationBooked}
         </p>
       </div>
 
@@ -249,69 +251,64 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       {step === 'details' && (
         <form onSubmit={handleDetailsSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-1.5">Full Name *</label>
+            <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.fullName}</label>
             <input
               type="text"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               className={inputClass}
-              placeholder="Your full name"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-1.5">Email *</label>
+            <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.email}</label>
             <input
               type="email"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               className={inputClass}
-              placeholder="your@email.com"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">Phone *</label>
+              <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.phone}</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 className={inputClass}
-                placeholder="+971 50 000 0000"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-white/70 mb-1.5">Country</label>
+              <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.country}</label>
               <input
                 type="text"
                 value={formData.country}
                 onChange={e => setFormData({ ...formData, country: e.target.value })}
                 className={inputClass}
-                placeholder="UAE"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-1.5">Password *</label>
+            <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.password}</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className={inputClass + ' pr-10'}
-                placeholder="At least 8 characters"
+                className={inputClass + (isUrdu ? ' pr-10' : ' pl-10')}
                 required
                 minLength={8}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
+                className={`absolute top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors ${isUrdu ? 'right-3' : 'left-3'}`}
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -326,7 +323,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
                 )}
               </button>
             </div>
-            <p className="text-[10px] text-white/40 mt-1">You'll use this to access your dashboard</p>
+            <p className="text-[10px] text-white/40 mt-1">{t.consultationForm.useForDashboard}</p>
           </div>
 
           <button
@@ -338,7 +335,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
                 : 'bg-white/20 text-white/40 cursor-not-allowed'
             }`}
           >
-            Continue to Schedule
+            {t.consultationForm.continueToSchedule}
           </button>
         </form>
       )}
@@ -348,7 +345,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
         <div className="space-y-4">
           {/* Therapist Selection */}
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-2">Select Therapist</label>
+            <label className="block text-xs font-medium text-white/70 mb-2">{t.consultationForm.selectTherapist}</label>
             <div className="grid grid-cols-2 gap-2">
               {therapists.map(therapist => (
                 <button
@@ -358,14 +355,14 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
                     setSelectedTherapist(therapist.id);
                     setSelectedSlot('');
                   }}
-                  className={`p-2.5 border rounded-lg text-left transition-all ${
+                  className={`p-2.5 border rounded-lg text-right transition-all ${
                     selectedTherapist === therapist.id
                       ? 'border-indigo-400 bg-indigo-400/10'
                       : 'border-white/20 hover:border-white/30'
                   }`}
                 >
                   <span className="font-medium text-white text-xs block truncate">{therapist.name}</span>
-                  <span className="block text-[10px] text-white/50 mt-0.5">Specialist</span>
+                  <span className="block text-[10px] text-white/50 mt-0.5">{t.consultationForm.specialist}</span>
                 </button>
               ))}
             </div>
@@ -373,7 +370,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
           {/* Date Selection - Custom Calendar */}
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-2">Select Date</label>
+            <label className="block text-xs font-medium text-white/70 mb-2">{t.consultationForm.selectDate}</label>
             <HeroCalendar
               selectedDate={selectedDate}
               onSelect={(date) => {
@@ -388,16 +385,16 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
           {selectedDate && (
             <div>
               <label className="block text-xs font-medium text-white/70 mb-2">
-                Select Time for {formatDate(selectedDate)}
+                {t.consultationForm.selectTime}
               </label>
               {slotsLoading ? (
                 <div className="text-center py-4 text-white/60 text-sm">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto mb-2"></div>
-                  Loading available times...
+                  {t.consultationForm.loadingTimes}
                 </div>
               ) : slots.length === 0 ? (
                 <div className="text-center py-4 text-amber-300 bg-amber-500/10 rounded-lg text-sm">
-                  No slots available for this date. Please try another day.
+                  {t.consultationForm.noSlots}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
@@ -419,7 +416,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               )}
               {selectedSlot && (
                 <p className="mt-2 text-xs text-green-400 font-medium">
-                  Selected: {slots.find(s => s.time === selectedSlot)?.display}
+                  {t.consultationForm.selected} {slots.find(s => s.time === selectedSlot)?.display}
                 </p>
               )}
             </div>
@@ -431,7 +428,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               onClick={() => setStep('details')}
               className="flex-1 py-2.5 border border-white/20 rounded-lg font-medium text-white/70 hover:bg-white/10 transition text-sm"
             >
-              Back
+              {t.consultationForm.back}
             </button>
             <button
               onClick={handleBooking}
@@ -445,10 +442,10 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0B0F2B]"></div>
-                  Creating Account...
+                  {t.consultationForm.creatingAccount}
                 </span>
               ) : (
-                'Book Consultation'
+                t.consultationForm.bookConsultation
               )}
             </button>
           </div>
@@ -465,15 +462,15 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-white">Your consultation is booked!</h3>
+            <h3 className="text-lg font-semibold text-white">{t.consultationForm.consultationBookedSuccess}</h3>
             <p className="text-white/60 mt-1">
               {selectedDate && formatDate(selectedDate)}
             </p>
             <p className="text-white/60">
-              at {slots.find(s => s.time === selectedSlot)?.display}
+              {slots.find(s => s.time === selectedSlot)?.display}
             </p>
             <p className="text-white/60 mt-1">
-              with {therapists.find(t => t.id === selectedTherapist)?.name}
+              {therapists.find(t => t.id === selectedTherapist)?.name}
             </p>
           </div>
 
@@ -483,11 +480,11 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               disabled={loading}
               className="w-full py-3 bg-white text-[#0B0F2B] rounded-lg font-medium hover:bg-white/90 transition disabled:opacity-50"
             >
-              {loading ? 'Signing in...' : 'Go to Dashboard'}
+              {loading ? t.consultationForm.signingIn : t.consultationForm.goToDashboard}
             </button>
 
             <p className="text-xs text-white/40">
-              A confirmation email has been sent to {formData.email}
+              {formData.email}
             </p>
           </div>
         </div>

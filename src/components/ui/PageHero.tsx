@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 interface HeroAction {
   label: string;
@@ -37,6 +38,7 @@ export default function PageHero({
   secondaryAction,
 }: PageHeroProps) {
   const hasCustomDesc = !!customDescription;
+  const { isUrdu } = useLang();
   
   return (
     <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-12 sm:min-h-[85vh] sm:pt-32 sm:pb-14 md:min-h-[90vh] md:pt-40 md:pb-16">
@@ -52,9 +54,10 @@ export default function PageHero({
           sizes="100vw"
           quality={95}
         />
-        {/* Extended Gradient: Higher opacity on the left to handle longer text wrap */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.95)_0%,rgba(15,23,42,0.6)_40%,rgba(15,23,42,0)_100%)]" />
-        <div className="absolute inset-0 bg-black/20" />
+        {/* Extended Gradient: Strong overlay for title readability across all images */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,16,40,0.7)_0%,rgba(11,16,40,0.5)_30%,rgba(11,16,40,0.35)_60%,rgba(11,16,40,0.5)_100%)]" />
+        <div className={`absolute inset-0 bg-[linear-gradient(${isUrdu ? 'to_left' : 'to_right'},rgba(11,16,40,0.95)_0%,rgba(11,16,40,0.6)_40%,rgba(11,16,40,0.3)_70%,rgba(11,16,40,0.15)_100%)]`} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(11,16,40,0.7)_0%,rgba(11,16,40,0.2)_40%,transparent_100%)]" />
       </div>
 
       {/* ── Content Layer ── */}
@@ -63,42 +66,21 @@ export default function PageHero({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-[900px]" // Widened slightly to prevent 1-word line breaks
+          className="max-w-[900px]"
         >
-          {/* Label */}
-          <div className="mb-5 flex items-center gap-4 md:mb-8">
-            <span className="font-mono text-[10px] tracking-[0.4em] text-white/40 uppercase">
-              {eyebrow}
-            </span>
-          </div>
-
-          {/* Headline: Uses 'clamp' to shrink on small laptops and wrap safely */}
-          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.05] tracking-tight text-white not-italic [&_em]:not-italic [&_span]:not-italic md:mb-6 lg:text-[clamp(48px,6vw,84px)]">
+          {/* Headline */}
+          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.4] tracking-tight text-white not-italic [&_em]:not-italic [&_span]:not-italic md:mb-6 lg:text-[clamp(48px,6vw,84px)]">
             {title}
           </h1>
 
-          {/* Description: Controlled max-width for line-length comfort */}
+          {/* Description */}
           {hasCustomDesc ? (
             customDescription
           ) : description ? (
-            <p className="mb-7 max-w-[620px] text-[15px] leading-[1.7] text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10">
+            <p className={`mb-7 max-w-[620px] text-[15px] ${isUrdu ? 'leading-[2]' : 'leading-[1.6]'} text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10`}>
               {description}
             </p>
           ) : null}
-
-          {/* Meta Information: Switched to flex-wrap for better overflow management */}
-          {metaTags.length > 0 && (
-            <div className="mb-10 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-white/10 pt-6 lg:mb-12">
-              {metaTags.map((tag, i) => (
-                <div key={tag} className="flex items-center gap-3">
-                  <span className="font-mono text-[10px] text-white/20">0{i + 1}</span>
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
-                    {tag}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-10">
@@ -124,7 +106,7 @@ export default function PageHero({
                   {secondaryAction.label}
                   <span className="absolute -bottom-1 left-0 h-px w-full origin-right scale-x-0 bg-white transition-transform duration-300 group-hover:origin-left group-hover:scale-x-100" />
                 </span>
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1 rtl-flip">{isUrdu ? '←' : '→'}</span>
               </Link>
             )}
           </div>

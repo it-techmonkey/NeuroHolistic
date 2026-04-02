@@ -1,20 +1,26 @@
+"use client";
+
 import PageHero from "@/components/ui/PageHero";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function EventsHero() {
+  const { t } = useLang();
+  const eh = t.eventsHero;
+
   return (
     <PageHero
-      eyebrow="Live Learning Experiences"
+      eyebrow={eh.eyebrow}
       title={
         <>
-      Events that lasts <br className="hidden lg:block" />
+      {eh.title} <br className="hidden lg:block" />
         </>
       }
-      description="Join workshops, guided sessions, and live learning experiences designed to restore nervous system balance and deepen practical transformation through the NeuroHolistic Method™."
+      description={eh.description}
       imageSrc="/images/pages/events.jpg"
       imageAlt="Participants in a premium wellness workshop"
       metaTags={[]}
-      primaryAction={{ label: "Get Event Updates", href: "#newsletter" }}
-      secondaryAction={{ label: "Explore Retreats", href: "/retreats" }}
+      primaryAction={{ label: eh.getUpdates, href: "#newsletter" }}
+      secondaryAction={{ label: eh.exploreRetreats, href: "/retreats" }}
     />
   );
 }

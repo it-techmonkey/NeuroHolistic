@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { AdminData } from '@/components/dashboard/admin/tabs/types';
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, Activity,
-  BarChart3, Loader2, RefreshCw, LogOut
+  BarChart3, Loader2, RefreshCw, LogOut, CreditCard
 } from 'lucide-react';
 import OverviewTab from '@/components/dashboard/admin/tabs/OverviewTab';
 import UsersTab from '@/components/dashboard/admin/tabs/UsersTab';
@@ -14,6 +14,7 @@ import TherapistsTab from '@/components/dashboard/admin/tabs/TherapistsTab';
 import BookingsTab from '@/components/dashboard/admin/tabs/BookingsTab';
 import SessionsTab from '@/components/dashboard/admin/tabs/SessionsTab';
 import AnalyticsTab from '@/components/dashboard/admin/tabs/AnalyticsTab';
+import PaymentsTab from '@/components/dashboard/admin/tabs/PaymentsTab';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -22,6 +23,7 @@ const tabs = [
   { id: 'bookings', label: 'Bookings', icon: CalendarDays },
   { id: 'sessions', label: 'Sessions', icon: Activity },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'payments', label: 'Payments', icon: CreditCard },
 ];
 
 export default function AdminDashboardPage() {
@@ -173,6 +175,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'bookings' && <BookingsTab data={data} />}
         {activeTab === 'sessions' && <SessionsTab data={data} />}
         {activeTab === 'analytics' && <AnalyticsTab data={data} />}
+        {activeTab === 'payments' && <PaymentsTab />}
       </main>
     </div>
   );

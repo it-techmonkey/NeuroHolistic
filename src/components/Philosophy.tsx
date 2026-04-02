@@ -1,8 +1,11 @@
 "use client";
 
 import { motion, Variants } from "framer-motion";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Philosophy() {
+  const { t, isUrdu } = useLang();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -18,7 +21,7 @@ export default function Philosophy() {
 
   return (
     // Outer section provides padding so the inner rounded container can "float"
-    <section className="px-4 py-8 md:px-6 md:py-12">
+    <section className="px-4 py-10 md:px-6 md:py-14">
       {/* The Rounded Floating Rectangle */}
       <motion.div
         initial="hidden"
@@ -28,7 +31,7 @@ export default function Philosophy() {
       >
         {/* Soft Inner Gradients (Replaced the harsh straight lines) */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(240,244,255,0.6)_100%)]" />
-        <div className="pointer-events-none absolute top-[-10%] right-[-5%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(139,139,255,0.08)_0%,transparent_70%)] blur-3xl" />
+        <div className="pointer-events-none absolute top-[-10%] left-[-5%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(139,139,255,0.08)_0%,transparent_70%)] blur-3xl" />
 
         <div className="relative z-10 mx-auto max-w-[1000px] px-6 md:px-8">
           
@@ -36,24 +39,16 @@ export default function Philosophy() {
           <div className="mx-auto max-w-[840px] text-center">
             <motion.h2
               variants={itemVariants}
-              className="mb-6 text-[32px] font-medium leading-[1.15] tracking-tight text-[#0B1028] md:text-[46px] lg:text-[52px]"
+              className="mb-6 text-[32px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[46px] lg:text-[52px]"
             >
-              True transformation does not come from <span className="italic text-[#64748B]">managing symptoms. </span>It begins when the system shifts at its core.
-
+              {t.philosophy.heading}
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
-              className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px]"
+              className="mx-auto max-w-[680px] text-[16px] leading-[2] text-[#475569] md:text-[17px] mt-3"
             >
-              {/* It begins when the system shifts at its core. */}
-            </motion.p>
-
-            <motion.p
-              variants={itemVariants}
-              className="mx-auto max-w-[680px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px] mt-3"
-            >
-              The NeuroHolistic Method™ works at the root—realigning the nervous system, cognition, and emotional patterns to create lasting transformation.
+              {t.philosophy.description}
             </motion.p>
           </div>
 

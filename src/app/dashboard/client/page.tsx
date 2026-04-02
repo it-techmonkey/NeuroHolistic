@@ -7,7 +7,7 @@ import {
   Loader2, Calendar, Clock, CheckCircle, AlertCircle,
   Video, FileText, User, Mail, TrendingUp, ChevronRight,
   Search, BarChart3, Settings, LogOut, UserCircle,
-  ChevronDown, Download, Eye, File, Image
+  ChevronDown, Download, Eye, File, Image, Hourglass
 } from 'lucide-react';
 import Progress from '@/components/dashboard/client/Progress';
 import Account from '@/components/dashboard/client/Account';
@@ -86,6 +86,16 @@ type DashboardData = {
   materials: any[];
   completedSessionIds?: string[];
   user?: any;
+  pendingProgram?: {
+    id: string;
+    programType: string;
+    pricePaid: number;
+    paymentStatus: string;
+    paymentSubmittedAt: string;
+    therapistName: string;
+    totalSessions: number;
+    createdAt: string;
+  } | null;
 };
 
 type ViewMode = 'overview' | 'sessions' | 'progress' | 'account';
@@ -409,7 +419,7 @@ export default function ClientDashboardPage() {
                     Book Free Consultation
                   </a>
                 )}
-                {/* Free consultation completed - show Book Paid Program */}
+                {/* Free consultation completed - show Book Paid Program or Pending status */}
                 {data?.programStatus === 'consultation_done' && (
                   <a
                     href="/booking/paid-program-booking"
@@ -418,6 +428,13 @@ export default function ClientDashboardPage() {
                     <Calendar className="w-4 h-4" />
                     Book a Paid Program
                   </a>
+                )}
+                {/* Pending payment verification */}
+                {data?.programStatus === 'pending_verification' && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm text-white/90">
+                    <Hourglass className="w-4 h-4" />
+                    Payment Under Review
+                  </div>
                 )}
                 {data?.programStatus === 'active' && (
                   <a
@@ -446,6 +463,38 @@ export default function ClientDashboardPage() {
                 </button>
               </div>
             </div>
+
+            {/* Pending Payment Verification Banner */}
+            {data?.programStatus === 'pending_verification' && data.pendingProgram && (
+              <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <Hourglass className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-900">Payment Under Review</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Your payment for the <strong className="capitalize">{data.pendingProgram.programType} Program</strong> (AED {data.pendingProgram.pricePaid?.toLocaleString()}) has been submitted and is being verified by our team.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-500" />
+                        <span>Submitted {data.pendingProgram.paymentSubmittedAt ? new Date(data.pendingProgram.paymentSubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'recently'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-amber-500" />
+                        <span>Therapist: {data.pendingProgram.therapistName}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-xs text-amber-800">
+                        <strong>What happens next:</strong> Our admin team will verify your payment. Once confirmed, you'll be able to schedule your sessions. This usually takes 1-2 business days.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

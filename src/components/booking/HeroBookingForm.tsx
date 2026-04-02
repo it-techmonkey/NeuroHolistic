@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FreeConsultationForm from './FreeConsultationForm';
+import { useLang } from '@/lib/translations/LanguageContext';
 
 export default function HeroBookingForm() {
+  const { t, isUrdu } = useLang();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -20,7 +22,7 @@ export default function HeroBookingForm() {
           onClick={() => setIsOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
         >
-          Book a Consultation <span aria-hidden="true">→</span>
+          {t.heroBookingForm.bookConsultation} <span aria-hidden="true">{isUrdu ? '←' : '→'}</span>
         </button>
       </motion.div>
 

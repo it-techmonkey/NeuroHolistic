@@ -1,14 +1,28 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Noto_Nastaliq_Urdu } from "next/font/google";
 import "./globals.css";
 import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
+import { LanguageProvider } from "@/lib/translations/LanguageContext";
 import { LayoutContent } from "./LayoutContent";
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-body",
   display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  subsets: ["arabic"],
+  variable: "--font-urdu",
+  display: "swap",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -24,11 +38,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} ${outfit.variable} ${notoNastaliqUrdu.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
         <AuthProvider>
-          <BookingModalProvider>
-            <LayoutContent>{children}</LayoutContent>
-          </BookingModalProvider>
+          <LanguageProvider>
+            <BookingModalProvider>
+              <LayoutContent>{children}</LayoutContent>
+            </BookingModalProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

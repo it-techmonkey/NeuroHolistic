@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       client_id: clientId,
       therapist_id: therapistId,
       session_id: validSessionId,
-      is_baseline: !existingBaseline, // Only true if no baseline exists
+      is_baseline: !!existingBaseline, // Preserve baseline status on update
       
       // Client demographic information
       client_name: data.client_name || null,

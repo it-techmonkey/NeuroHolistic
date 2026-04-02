@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Clean UI Icons ─────────────────────────────────────────────────────── */
 
@@ -114,6 +115,8 @@ function TestimonialCard({
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 
 export default function Testimonials() {
+  const { t, isUrdu } = useLang();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -128,7 +131,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="w-full bg-white py-10 md:py-10">
+    <section className="w-full bg-white py-16 md:py-20">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -144,16 +147,16 @@ export default function Testimonials() {
 
           <motion.h2 
             variants={itemVariants} 
-            className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.15] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
           >
-            Client's Experiences
+            {t.testimonials.heading}
           </motion.h2>
 
           <motion.p 
             variants={itemVariants} 
-            className="max-w-[600px] text-[17px] leading-[1.7] text-[#475569]"
+            className="max-w-[600px] text-[17px] leading-[2] text-[#475569]"
           >
-            98% of Clients Experience Meaningful Transformation • 7,400+ Clients Worldwide • Working at the root to create lasting change.
+            {t.testimonials.subtitle}
           </motion.p>
         </div>
 

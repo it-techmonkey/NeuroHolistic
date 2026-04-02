@@ -41,12 +41,14 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const [therapist, setTherapist] = useState<TherapistInfo | null>(null);
   const [loadingTherapist, setLoadingTherapist] = useState(true);
   const [hasActiveProgram, setHasActiveProgram] = useState(false);
+  const [hasCompletedConsultation, setHasCompletedConsultation] = useState<boolean | null>(null);
   
   // Inline signup form data (for unauthenticated users)
   const [formData, setFormData] = useState({
     name: userName || '',
     email: userEmail || '',
     phone: '',
+    country: '',
     password: '',
   });
   const [formError, setFormError] = useState('');
@@ -70,6 +72,15 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             const progData = await progRes.json();
             setHasActiveProgram(progData.hasProgram ?? false);
           }
+          // Check if user has completed a free consultation
+          const consultRes = await fetch('/api/client/dashboard');
+          if (consultRes.ok) {
+            const consultData = await consultRes.json();
+            setHasCompletedConsultation(consultData.hasCompletedFreeConsult ?? false);
+          }
+        } else {
+          // Unauthenticated users - check after signup in the details step
+          setHasCompletedConsultation(false);
         }
       } catch (err) {
         console.error('Failed to fetch therapist:', err);
@@ -149,7 +160,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     setConfirmingPayment(true);
     
     try {
-      // Create the program in our system
+      // Create the program in our system (status: pending, awaiting admin verification)
       const res = await fetch('/api/bookings/purchase-program', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -164,19 +175,23 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
         }),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to activate program');
+        if (data.requiresConsultation) {
+          setHasCompletedConsultation(false);
+          return;
+        }
+        throw new Error(data.error || 'Failed to submit payment');
       }
 
       sessionStorage.removeItem('pendingPayment');
       setSuccess(true);
       
       setTimeout(() => {
-        router.push('/booking/schedule-session');
-      }, 2000);
+        router.push('/dashboard/client');
+      }, 3000);
     } catch (err: any) {
-      alert(err.message || 'Failed to activate program');
+      alert(err.message || 'Failed to submit payment. Please try again.');
     } finally {
       setConfirmingPayment(false);
     }
@@ -184,16 +199,33 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
 
   if (success) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-amber-600" />
         </div>
-        <h3 className="text-xl font-bold text-green-800 mb-2">Program Activated!</h3>
-        <p className="text-green-600 text-sm mb-4">
-          Your {academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program has been activated.
-          Your therapist will verify the payment and schedule your sessions.
+        <h3 className="text-xl font-bold text-amber-900 mb-2">Payment Submitted!</h3>
+        <p className="text-amber-700 text-sm mb-4">
+          Your {academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program payment has been submitted for verification.
+          Our admin team will verify your payment and confirm your booking shortly.
         </p>
-        <p className="text-green-500 text-xs">Redirecting to schedule your first session...</p>
+        <div className="bg-amber-100/50 rounded-lg p-4 mb-6 text-left">
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-2">What happens next</p>
+          <ul className="space-y-1.5 text-sm text-amber-700">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</span>
+              Our team verifies your payment
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</span>
+              You'll receive a confirmation email
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</span>
+              Schedule your sessions from the dashboard
+            </li>
+          </ul>
+        </div>
+        <p className="text-amber-600 text-xs">Redirecting to your dashboard...</p>
       </div>
     );
   }
@@ -214,6 +246,30 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
         >
           Go to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // Show consultation required guard (only for authenticated users who haven't completed consultation)
+  if (isAuthenticated && hasCompletedConsultation === false && !academyMode) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-amber-900 mb-2">Free Consultation Required</h3>
+        <p className="text-amber-700 text-sm mb-6 max-w-md mx-auto">
+          A free consultation with a therapist is required before purchasing a paid program. 
+          During the consultation, your therapist will complete an initial assessment to establish your baseline and create a personalized treatment plan.
+        </p>
+        <button
+          onClick={() => router.push('/consultation/book')}
+          className="px-8 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all"
+        >
+          Book Free Consultation
         </button>
       </div>
     );
@@ -251,13 +307,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           </div>
         )}
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <p className="text-sm text-amber-800">
-            <strong>Important:</strong> Once you've completed the payment on Ziina, click the button below to activate your program.
-            Your therapist will verify the payment separately.
-          </p>
-        </div>
-
         <button
           onClick={handleConfirmPayment}
           disabled={confirmingPayment}
@@ -266,12 +315,12 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           {confirmingPayment ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Activating...
+              Submitting...
             </>
           ) : (
             <>
               <CheckCircle className="w-5 h-5" />
-              I've Completed the Payment
+              I've Made the Payment
             </>
           )}
         </button>
@@ -601,7 +650,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             onSubmit={async (e) => {
               e.preventDefault();
               setFormError('');
-              if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+              if (!formData.name || !formData.email || !formData.phone || !formData.country || !formData.password) {
                 setFormError('Please fill in all fields');
                 return;
               }
@@ -622,6 +671,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                     email: formData.email,
                     password: formData.password,
                     phone: formData.phone,
+                    country: formData.country,
                     role: 'client',
                   }),
                 });
@@ -693,6 +743,18 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Country *</label>
+              <input
+                type="text"
+                value={formData.country}
+                onChange={e => setFormData({ ...formData, country: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="UAE"
+                required
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Create Password *</label>
               <input
                 type="password"
@@ -708,9 +770,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
 
             <button
               type="submit"
-              disabled={processing || !formData.name || !formData.email || !formData.phone || !formData.password}
+              disabled={processing || !formData.name || !formData.email || !formData.phone || !formData.country || !formData.password}
               className={`w-full py-3.5 rounded-xl text-white font-semibold text-[15px] transition-all flex items-center justify-center gap-2 ${
-                processing || !formData.name || !formData.email || !formData.phone || !formData.password
+                processing || !formData.name || !formData.email || !formData.phone || !formData.country || !formData.password
                   ? 'bg-slate-300 cursor-not-allowed'
                   : selectedProgramType === 'private'
                     ? 'bg-indigo-600 hover:bg-indigo-700'

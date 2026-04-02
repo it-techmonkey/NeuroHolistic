@@ -34,7 +34,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-body), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   line-height: 1.7;
   letter-spacing: -0.01em;
@@ -98,6 +98,27 @@ h4 *,
 h5 *,
 h6 * {
   font-style: normal !important;
+}
+
+/* Clean sans-serif font for large headings */
+h1,
+h2 {
+  font-family: var(--font-display), "Outfit", system-ui, sans-serif;
+  font-weight: 500;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 600;
+}
+
+/* Utility class for display headings */
+.font-display {
+  font-family: var(--font-display), "Outfit", system-ui, sans-serif;
+  font-weight: 500;
 }
 
 p {
@@ -168,5 +189,43 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ── Urdu / RTL Utilities ── */
+.font-urdu {
+  font-family: var(--font-urdu), "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif;
+}
+
+.urdu-text {
+  line-height: 2;
+}
+
+/* RTL: flip directional arrows */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* RTL: fix border-l / border-r */
+[dir="rtl"] .rtl-border-s {
+  border-left: none;
+  border-right: 1px solid currentColor;
+}
+
+/* RTL: auto logical properties for spacing */
+[dir="rtl"] .rtl-pl-6 {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+
+/* RTL: fix for left-anchored dropdowns */
+[dir="rtl"] .rtl-dropdown-left {
+  left: auto;
+  right: 0;
+}
+
+/* RTL: fix for right-anchored mobile menu */
+[dir="rtl"] .rtl-mobile-menu {
+  right: auto;
+  left: 0;
 }
 

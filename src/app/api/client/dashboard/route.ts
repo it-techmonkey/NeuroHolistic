@@ -162,6 +162,17 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
+    // 6.0 Fetch pending program (payment awaiting admin verification)
+    const { data: pendingProgram } = await supabase
+      .from('programs')
+      .select('*')
+      .eq('user_id', clientId)
+      .eq('status', 'pending')
+      .eq('payment_status', 'pending_verification')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // 6.1 Fetch completed programs for users who finished all sessions
     const { data: completedPrograms } = await supabase
       .from('programs')
@@ -199,6 +210,7 @@ export async function GET(request: NextRequest) {
     const hasBookedFreeConsult = !!bookedFreeConsult;
 
     const hasActiveProgram = !!program;
+    const hasPendingProgram = !!pendingProgram;
     const hasCompletedAllSessions = (completedPrograms ?? []).some(p =>
       p.used_sessions >= p.total_sessions
     );
@@ -207,6 +219,8 @@ export async function GET(request: NextRequest) {
     let programStatus = 'none';
     if (hasActiveProgram) {
       programStatus = 'active';
+    } else if (hasPendingProgram) {
+      programStatus = 'pending_verification';
     } else if (hasCompletedAllSessions) {
       programStatus = 'completed';
     } else if (hasCompletedFreeConsult) {
@@ -230,8 +244,18 @@ export async function GET(request: NextRequest) {
       devForms: devForms ?? [],
       therapist: therapistInfo,
       program: program ?? null,
+      pendingProgram: pendingProgram ? {
+        id: pendingProgram.id,
+        programType: pendingProgram.program_type,
+        pricePaid: pendingProgram.price_paid,
+        paymentStatus: pendingProgram.payment_status,
+        paymentSubmittedAt: pendingProgram.payment_submitted_at,
+        therapistName: pendingProgram.therapist_name,
+        totalSessions: pendingProgram.total_sessions,
+        createdAt: pendingProgram.created_at,
+      } : null,
       completedPrograms: completedPrograms ?? [],
-      programStatus, // 'active', 'completed', 'consultation_done', or 'none'
+      programStatus, // 'active', 'pending_verification', 'completed', 'consultation_done', or 'none'
       hasCompletedFreeConsult,
       hasBookedFreeConsult,
       bookedFreeConsult: bookedFreeConsult ? addSessionId(bookedFreeConsult) : null, // The booking details for the upcoming consultation
@@ -240,6 +264,7 @@ export async function GET(request: NextRequest) {
       debug: {
         allPrograms: allPrograms.data || [],
         activeProgram: program || null,
+        pendingProgram: pendingProgram || null,
         completedProgramsCount: (completedPrograms ?? []).length,
       },
     });

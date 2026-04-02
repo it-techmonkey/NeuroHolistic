@@ -77,7 +77,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Syria, Zekra is a certified NeuroHolistic Practitioner dedicated to understanding the connection between the brain, emotions, and human transformation. Her work focuses on helping individuals recognize the subconscious patterns that shape their experiences, decisions, and overall well-being.",
       "Through the NeuroHolistic Method™, she supports people in developing deeper awareness, restoring internal balance, and creating meaningful personal change.",
     ],
-    image: "/images/team/Zekra.png",
+    image: "/images/team/Zekra Khayata.png",
     testimonials: [
       "Zekra's listening and gentle guidance helped me feel safe enough to do real inner work.",
       "Her sessions gave me practical insight into patterns I had struggled with for years.",
@@ -113,7 +113,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       "Originally from Lebanon and now based in Dubai, Fawares grew up as the only sister among six brothers, an environment that naturally shaped her independence, resilience, and strong sense of leadership. She has built a successful career as a consultant in the medical field, where her work deepened her understanding of the relationship between physical health, emotional wellbeing, and human behavior.",
       "She is now a certified NeuroHolistic Practitioner, integrating her professional experience, emotional intelligence, and natural intuition to support individuals in developing greater awareness, balance, and meaningful change in their lives.",
     ],
-    image: "/images/team/fawares.jpeg",
+    image: "/images/team/Fawares Azaar.png",
     testimonials: [
       "Fawares brought both clarity and encouragement, helping me take meaningful action in my life.",
       "I felt supported and challenged in the right way, with steady guidance throughout my journey.",

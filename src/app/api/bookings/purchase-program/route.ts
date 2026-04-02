@@ -24,25 +24,30 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // Check if user already has an active/completed program
+    // Check if user already has an active/completed/pending program
     const { data: existingProgram } = await supabase
       .from('programs')
-      .select('id, status')
+      .select('id, status, payment_status')
       .eq('user_id', user.id)
-      .in('status', ['active', 'completed'])
+      .in('status', ['pending', 'active', 'completed'])
       .maybeSingle();
 
     if (existingProgram) {
+      const statusMsg = existingProgram.status === 'pending'
+        ? 'You have a program pending payment verification.'
+        : 'You already have an active or completed program.';
       return NextResponse.json({
-        error: 'You already have an active or completed program.',
-        programId: existingProgram.id
+        error: statusMsg,
+        programId: existingProgram.id,
+        status: existingProgram.status,
+        paymentStatus: existingProgram.payment_status,
       }, { status: 409 });
     }
 
-    // Get user's assigned therapist from their bookings
-    const { data: booking } = await supabase
+    // Require completed free consultation before purchasing a paid program
+    const { data: completedConsultation } = await supabase
       .from('bookings')
-      .select('therapist_user_id, therapist_name')
+      .select('id, therapist_user_id, therapist_name')
       .eq('user_id', user.id)
       .eq('type', 'free_consultation')
       .eq('status', 'completed')
@@ -50,8 +55,15 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    let therapistId = booking?.therapist_user_id;
-    let resolvedTherapistName = booking?.therapist_name || 'Assigned Therapist';
+    if (!completedConsultation) {
+      return NextResponse.json({
+        error: 'You must complete a free consultation before purchasing a paid program. Please book a free consultation first.',
+        requiresConsultation: true,
+      }, { status: 403 });
+    }
+
+    const therapistId = completedConsultation.therapist_user_id;
+    const resolvedTherapistName = completedConsultation.therapist_name || 'Assigned Therapist';
 
     // Get user details
     const { data: userData } = await supabase
@@ -60,7 +72,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    // Create the program (user confirmed they paid via Ziina)
+    // Create the program (user confirmed they paid — pending admin verification)
     const { data: program, error: programError } = await supabase
       .from('programs')
       .insert({
@@ -70,12 +82,14 @@ export async function POST(request: NextRequest) {
         total_sessions: 10,
         used_sessions: 0,
         sessions_completed: 0,
-        status: 'active',
-        payment_id: `ZIINA-${Date.now()}`,
+        status: 'pending',
+        payment_id: `MANUAL-${Date.now()}`,
         program_type: normalizedProgramType,
         price_paid: Math.round(amount / 100), // Convert fils back to AED
         client_name: userData?.full_name || 'Client',
         client_email: userData?.email || user.email,
+        payment_status: 'pending_verification',
+        payment_submitted_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -85,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: programError.message }, { status: 500 });
     }
 
-    // Create 10 pending session records - all sessions start as pending until scheduled
+    // Create 10 pending session records — sessions remain pending until admin verifies payment
     const sessions = [];
     for (let i = 1; i <= 10; i++) {
       sessions.push({
@@ -93,9 +107,9 @@ export async function POST(request: NextRequest) {
         client_id: user.id,
         therapist_id: therapistId,
         session_number: i,
-        date: null, // Not scheduled yet
+        date: null,
         time: null,
-        status: 'pending', // All sessions start as pending until user schedules them
+        status: 'pending',
         is_complete: false,
         development_form_submitted: false,
         meet_link: null,
@@ -125,9 +139,10 @@ export async function POST(request: NextRequest) {
       program: {
         id: program.id,
         status: program.status,
+        paymentStatus: program.payment_status,
         totalSessions: 10,
       },
-      message: 'Program activated successfully!',
+      message: 'Payment submitted for verification. Our team will verify and confirm your booking shortly.',
     });
   } catch (error) {
     console.error('[Purchase Program]', error);

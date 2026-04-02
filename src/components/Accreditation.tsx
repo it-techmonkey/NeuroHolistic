@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 const ACCREDITATIONS = [
   { 
@@ -18,6 +19,9 @@ const ACCREDITATIONS = [
 ];
 
 export default function Accreditation() {
+  const { t } = useLang();
+  const acc = t.accreditation;
+
   return (
     <section className="bg-white py-24 md:py-32 border-t border-[#E2E8F0]">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
@@ -31,7 +35,7 @@ export default function Accreditation() {
             viewport={{ once: true }}
             className="text-[32px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]"
           >
-            Accreditation & Professional <span className="italic text-[#64748B] font-normal">recognition</span>
+            {acc.heading1} <span className="italic text-[#64748B] font-normal">{acc.heading2}</span>
           </motion.h2>
         </div>
 
@@ -64,7 +68,7 @@ export default function Accreditation() {
                 
                 <div className="mt-4 flex flex-col gap-1">
                   <span className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1]">
-                    {item.abbr} Certified
+                    {item.abbr} {acc.certified}
                   </span>
                   <span className="text-[13px] text-[#64748B]">
                     {item.status}
@@ -83,8 +87,8 @@ export default function Accreditation() {
           transition={{ delay: 0.4 }}
           className="mt-12 text-center"
         >
-          <p className="font-mono text-[11px] uppercase tracking-widest text-[#94A3B8] max-w-2xl mx-auto leading-[1.8]">
-            The NeuroHolistic Applied Psychology Mastery for Practitioners is issued by the NeuroHolistic Institute and supported by international professional accreditation bodies.
+          <p className="text-[14px] text-[#94A3B8] max-w-2xl mx-auto leading-[1.8]">
+            {acc.footerText}
           </p>
         </motion.div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/context";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 type EligibilityResult = {
   canBookConsultation: boolean;
@@ -34,6 +35,7 @@ export default function LandingBookingCTA({
   dashboardLabel = "Go to Dashboard",
 }: LandingBookingCTAProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { t, isUrdu } = useLang();
   const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
 
@@ -81,7 +83,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <button type="button" disabled className={primaryClassName}>
-          Loading...
+          {t.consultationForm.loadingTimes}
         </button>
       </div>
     );
@@ -92,8 +94,8 @@ export default function LandingBookingCTA({
   if (eligibility?.role === 'therapist' && isAuthenticated) {
     return (
       <div className={containerClassName}>
-        <a href="/dashboard/therapist" className={primaryClassName}>
-          {dashboardLabel} <span aria-hidden="true">→</span>
+        <a href="/dashboard/therapist" className={`${primaryClassName} group`}>
+          {dashboardLabel} <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -102,8 +104,8 @@ export default function LandingBookingCTA({
   if (eligibility?.role === 'admin') {
     return (
       <div className={containerClassName}>
-        <a href="/dashboard/admin" className={primaryClassName}>
-          Go to Admin <span aria-hidden="true">→</span>
+        <a href="/dashboard/admin" className={`${primaryClassName} group`}>
+          {dashboardLabel} <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -114,8 +116,8 @@ export default function LandingBookingCTA({
   if (eligibility?.hasActiveProgram) {
     return (
       <div className={containerClassName}>
-        <a href="/dashboard/client" className={primaryClassName}>
-          {dashboardLabel} <span aria-hidden="true">→</span>
+        <a href="/dashboard/client" className={`${primaryClassName} group`}>
+          {dashboardLabel} <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -125,8 +127,8 @@ export default function LandingBookingCTA({
   if (eligibility?.consultationStatus === 'completed' && !eligibility?.hasActiveProgram) {
     return (
       <div className={containerClassName}>
-        <a href="/booking/paid-program-booking" className={primaryClassName}>
-          Book Paid Program <span aria-hidden="true">→</span>
+        <a href="/booking/paid-program-booking" className={`${primaryClassName} group`}>
+          Book Paid Program <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -136,8 +138,8 @@ export default function LandingBookingCTA({
   if (['scheduled', 'confirmed', 'pending'].includes(eligibility?.consultationStatus as string)) {
     return (
       <div className={containerClassName}>
-        <a href="/dashboard/client" className={primaryClassName}>
-          {dashboardLabel} <span aria-hidden="true">→</span>
+        <a href="/dashboard/client" className={`${primaryClassName} group`}>
+          {dashboardLabel} <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -147,8 +149,8 @@ export default function LandingBookingCTA({
   if (eligibility?.canBookConsultation && isAuthenticated == false) {
     return (
       <div className={containerClassName}>
-        <a href="/consultation/book" className={primaryClassName}>
-          Book Free Consultation <span aria-hidden="true">→</span>
+        <a href="/consultation/book" className={`${primaryClassName} group`}>
+          Book Free Consultation <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
         </a>
       </div>
     );
@@ -157,8 +159,8 @@ export default function LandingBookingCTA({
   // Fallback -> Go to Dashboard
   return (
     <div className={containerClassName}>
-      <a href="/dashboard/client" className={primaryClassName}>
-        {dashboardLabel} <span aria-hidden="true">→</span>
+      <a href="/dashboard/client" className={`${primaryClassName} group`}>
+        {dashboardLabel} <span aria-hidden="true" className={`inline-block transition-transform group-hover:${isUrdu ? '-translate-x-1' : 'translate-x-1'}`}>{isUrdu ? '←' : '→'}</span>
       </a>
     </div>
   );

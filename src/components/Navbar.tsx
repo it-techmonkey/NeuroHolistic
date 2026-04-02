@@ -1,34 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { useAuth } from "@/lib/auth/context";
 import { supabase } from "@/lib/supabase/client";
-
-const PRIMARY_LINKS = [
-  { href: "/method", label: "Method" },
-  { href: "/programs", label: "Programs" },
-  { href: "/research", label: "Research" },
-  {
-    href: "/events",
-    label: "Experience",
-    children: [
-      { href: "/events", label: "Events" },
-      { href: "/retreats", label: "Retreats" },
-      { href: "/corporate-wellbeing", label: "Corporate Wellbeing" },
-    ],
-  },
-  { href: "/academy", label: "Academy" },
-  { href: "/resources", label: "Resources" },
-] as const;
-
-const COMPANY_LINKS = [
-  { href: "/about", label: "About Us" },
-  { href: "/team", label: "Team" },
-] as const;
+import { useLang } from "@/lib/translations/LanguageContext";
 
 const CONTACT_INFO = {
   email: "info@neuroholistic.com",
@@ -57,24 +37,47 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
+  const { t, isUrdu, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
-  // Throttled scroll handler
+  const PRIMARY_LINKS = useMemo(() => [
+    { href: "/method", label: t.navbar.method },
+    { href: "/programs", label: t.navbar.programs },
+    { href: "/research", label: t.navbar.research },
+    {
+      href: "/events",
+      label: t.navbar.experience,
+      children: [
+        { href: "/events", label: t.navbar.events },
+        { href: "/retreats", label: t.navbar.retreats },
+        { href: "/corporate-wellbeing", label: t.navbar.corporateWellbeing },
+      ],
+    },
+    { href: "/academy", label: t.navbar.academy },
+    { href: "/resources", label: t.navbar.resources },
+  ], [t]);
+
+  const COMPANY_LINKS = useMemo(() => [
+    { href: "/about", label: t.navbar.aboutUs },
+    { href: "/team", label: t.navbar.team },
+  ], [t]);
+
+  // Optimized scroll handler using rAF for smoother performance
   const handleScroll = useCallback(() => {
     if (scrollTimeoutRef.current) return;
     
-    scrollTimeoutRef.current = setTimeout(() => {
+    scrollTimeoutRef.current = requestAnimationFrame(() => {
       setScrolled(window.scrollY > 15);
       scrollTimeoutRef.current = undefined;
-    }, 100);
+    }) as unknown as NodeJS.Timeout;
   }, []);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (scrollTimeoutRef.current) cancelAnimationFrame(scrollTimeoutRef.current as unknown as number);
     };
   }, [handleScroll]);
 
@@ -105,47 +108,55 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4">
-      <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-all duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
+      <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-colors duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
         
         {/* ── 1. Secondary Navbar (Utility) ── */}
         <div 
-          className={`flex items-center justify-between px-4 sm:px-6 md:px-8 text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wide transition-all duration-300 ease-out overflow-hidden ${
+          className={`flex items-center justify-between px-4 sm:px-6 md:px-8 text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wide transition-[max-height,opacity,padding] duration-300 ease-out overflow-hidden ${
             scrolled ? "max-h-0 opacity-0 pointer-events-none" : "py-2 md:h-10 md:max-h-10 border-b opacity-100"
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-            <span className="opacity-60 whitespace-nowrap hidden sm:inline">EN / العربية</span>
-            <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Book a Consultation</Link>
-            <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">Apply to Academy</Link>
-            <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">FAQ</Link>
+            <button
+              onClick={toggleLang}
+              className="opacity-60 hover:opacity-100 whitespace-nowrap hidden sm:inline transition-opacity cursor-pointer"
+            >
+              {isUrdu ? 'اردو / EN' : 'EN / اردو'}
+            </button>
+            <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
+            <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
+            <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             {!isLoading && isAuthenticated ? (
               <>
-                <Link href="/dashboard" className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]">Sign Up</Link>
+                <Link href="/dashboard" className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.signUp}</Link>
                 <span className="opacity-20">|</span>
                 <button
                   onClick={handleLogout}
                   className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]"
                 >
-                  Logout
+                  {t.navbar.logout}
                 </button>
               </>
             ) : (
               <>
-                <Link href="/auth/login" className="opacity-60 hover:opacity-100">Therapist Login</Link>
+                <Link href="/auth/login" className="opacity-60 hover:opacity-100">{t.navbar.therapistLogin}</Link>
                 <span className="opacity-20">|</span>
-                <Link href="/auth/login" className="opacity-60 hover:opacity-100">Client Login</Link>
+                <Link href="/auth/login" className="opacity-60 hover:opacity-100">{t.navbar.clientLogin}</Link>
               </>
             )}
           </div>
         </div>
 
         {/* ── 2. Main Navbar ── */}
-        <div className={`flex items-center justify-between px-3 sm:px-6 md:px-10 transition-all duration-300 ${scrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"}`}>
+        <div className={`flex items-center justify-between px-3 sm:px-6 md:px-10 transition-[height] duration-300 ${scrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"}`}>
           
-          <Link href="/" className={`text-lg sm:text-xl font-bold tracking-tighter shrink-0 transition-colors ${textColor}`}>
-            NEURO<span className="font-light opacity-50">HOLISTIC</span>
+          <Link href="/" className={`flex items-center gap-2 sm:gap-2.5 shrink-0 transition-colors ${textColor}`}>
+            <Image src="/images/logo.svg" alt="NeuroHolistic" width={32} height={28} className="w-7 h-6 sm:w-8 sm:h-7" unoptimized />
+            <span className="text-lg sm:text-xl font-bold tracking-tighter">
+              NEURO<span className="font-light opacity-50">HOLISTIC</span>
+            </span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -178,7 +189,7 @@ export default function Navbar() {
                         className="absolute top-[85%] left-1/2 -translate-x-1/2 pt-3 w-48 z-[110]"
                       >
                         <div className={`rounded-xl border p-2 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
-                          {item.children.map((child) => (
+                          {'children' in item && (item as { children: { href: string; label: string }[] }).children.map((child) => (
                             <Link
                               key={child.href}
                               href={child.href}
@@ -203,7 +214,7 @@ export default function Navbar() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button className={`px-3 sm:px-4 py-2 text-[12px] sm:text-[13px] font-medium opacity-60 hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center gap-1.5 ${textColor}`}>
-                About
+                {t.navbar.aboutUs}
                 <ChevronIcon isOpen={openDropdown === 'company'} />
               </button>
               <AnimatePresence>
@@ -211,7 +222,7 @@ export default function Navbar() {
                   <motion.div 
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-[85%] right-0 pt-3 w-48 z-[110]"
+                    className={`absolute top-[85%] ${isUrdu ? 'right-0' : 'left-0'} pt-3 w-48 z-[110]`}
                   >
                     <div className={`rounded-xl border p-2 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       {COMPANY_LINKS.map(link => (
@@ -243,7 +254,7 @@ export default function Navbar() {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 mt-2 w-52 z-[110]"
+                    className={`absolute top-full ${isUrdu ? 'right-0' : 'left-0'} mt-2 w-52 z-[110]`}
                   >
                     <div className={`rounded-xl border p-3 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       <a href={`mailto:${CONTACT_INFO.email}`} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -256,7 +267,7 @@ export default function Navbar() {
                       </a>
                       <div className="border-t border-white/10 my-2 pt-2">
                         <div className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${isLightPage ? 'text-slate-600' : 'text-slate-500'}`}>
-                          {isAuthenticated ? 'Account' : 'Logins'}
+                          {isAuthenticated ? t.navbar.account : t.navbar.logins}
                         </div>
                         {isAuthenticated ? (
                           <button
@@ -264,17 +275,17 @@ export default function Navbar() {
                             className={authLinkClass(`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-[11px] font-medium w-full text-left`)}
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                            Logout
+                            {t.navbar.logout}
                           </button>
                         ) : (
                           <>
                             <Link href="/auth/login" className={authLinkClass(`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-[11px] font-medium`)}>
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v10a2 2 0 002 2h5m0-14h5a2 2 0 012 2v10a2 2 0 01-2 2m0 0V9m0 4v6m0-6l-7-3m7 3l7-3" /></svg>
-                              Therapist Login
+                              {t.navbar.therapistLogin}
                             </Link>
                             <Link href="/auth/login" className={authLinkClass(`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-[11px] font-medium`)}>
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                              Client Login
+                              {t.navbar.clientLogin}
                             </Link>
                           </>
                         )}
@@ -288,7 +299,7 @@ export default function Navbar() {
             <BookNowButton className={`hidden md:flex px-4 sm:px-5 py-2 rounded-xl text-[12px] sm:text-[13px] font-bold transition-all active:scale-95 ${
               isLightPage ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-white text-slate-900 hover:bg-slate-100'
             }`}>
-              Book Now
+              {t.navbar.bookNow}
             </BookNowButton>
 
             <button onClick={() => setMobileOpen(!mobileOpen)} className={`lg:hidden p-1.5 transition-colors duration-200 ${textColor} hover:opacity-70 rounded-lg`}>
@@ -306,18 +317,29 @@ export default function Navbar() {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
             <motion.div 
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              initial={{ x: isUrdu ? "-100%" : "100%" }} animate={{ x: 0 }} exit={{ x: isUrdu ? "-100%" : "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 250 }}
-              className={`fixed top-0 right-0 h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
+              className={`fixed top-0 ${isUrdu ? 'left-0' : 'right-0'} h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
             >
               <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-2">
+                <Image src="/images/logo.svg" alt="NeuroHolistic" width={28} height={24} className="w-6 h-5" unoptimized />
                 <span className="font-bold tracking-tighter text-base sm:text-lg uppercase">NH</span>
+              </div>
                 <button onClick={() => setMobileOpen(false)} className={`p-1.5 rounded-lg transition-colors duration-200 ${isLightPage ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <nav className="flex flex-col gap-4 overflow-y-auto flex-1">
+              {/* Language toggle in mobile menu */}
+              <button
+                onClick={toggleLang}
+                className={`mb-4 py-2 rounded-lg font-medium text-sm transition-colors ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
+              >
+                {isUrdu ? 'English میں تبدیل کریں' : 'Switch to اردو'}
+              </button>
+
+              <nav className={`flex flex-col gap-4 overflow-y-auto flex-1 ${isUrdu ? 'text-right' : ''}`}>
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
                     {item.label}
@@ -332,18 +354,18 @@ export default function Navbar() {
                       onClick={() => { setMobileOpen(false); handleLogout(); }}
                       className={`col-span-3 py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
                     >
-                      Logout
+                      {t.navbar.logout}
                     </button>
                   ) : (
                     <>
                       <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
-                        Therapist
+                        {t.navbar.therapistLogin}
                       </Link>
                       <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
-                        Client Login
+                        {t.navbar.clientLogin}
                       </Link>
                       <a href={`mailto:${CONTACT_INFO.email}`} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
-                        Contact
+                        {t.navbar.contact}
                       </a>
                     </>
                   )}
@@ -351,7 +373,7 @@ export default function Navbar() {
                 <BookNowButton className={`w-full py-3 rounded-xl font-bold text-[12px] transition-all active:scale-95 ${
                   isLightPage ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-white text-slate-900 hover:bg-slate-100'
                 }`} onClick={() => setMobileOpen(false)}>
-                  Begin Your Reset
+                  {t.navbar.beginYourReset}
                 </BookNowButton>
               </div>
             </motion.div>

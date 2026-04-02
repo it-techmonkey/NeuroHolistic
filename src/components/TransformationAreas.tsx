@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Standard, Clean UI Icons ─────────────────────────────────────────── */
 
@@ -31,32 +32,17 @@ const Icons = {
   ),
 };
 
-const AREAS = [
-  {
-    title: "Health",
-    description: "Restore balance in your body, release built-up tension, and experience a renewed sense of energy, ease, and physical well-being.",
-    Icon: Icons.Health,
-  },
-  {
-    title: "Mind & Heart",
-    description: "Quiet the noise, gain clarity, and feel lighter, free from emotional weight and mental loops that have been holding you back.",
-    Icon: Icons.Mind,
-  },
-  {
-    title: "Relationships",
-    description: "Shift how you connect, communicate, and respond, creating more ease, depth, and harmony in how you relate to others.",
-    Icon: Icons.Relationships,
-  },
-  {
-    title: "Potential",
-    description: "Move beyond limitations, think with clarity, and step into a stronger, more expanded version of yourself and what you are capable of.",
-    Icon: Icons.Potential,
-  },
-];
+const AREAS_ICONS = [Icons.Health, Icons.Mind, Icons.Relationships, Icons.Potential];
 
 export default function TransformationAreas() {
+  const { t, isUrdu } = useLang();
+
+  const AREAS = t.transformationAreas.areas.map((area: any, i: number) => ({
+    ...area,
+    Icon: AREAS_ICONS[i],
+  }));
   return (
-    <section className="w-full bg-white py-12 md:py-16 lg:py-10">
+    <section className="w-full bg-white py-16 md:py-20">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* Header: Compact & Centered */}
@@ -65,9 +51,9 @@ export default function TransformationAreas() {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl"
+            className="text-[36px] font-semibold tracking-tight text-slate-900 md:text-[48px]"
           >
-            Where You Transform
+            {t.transformationAreas.heading}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -76,7 +62,7 @@ export default function TransformationAreas() {
             transition={{ delay: 0.1 }}
             className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-500"
           >
-            The NeuroHolistic Method is for those ready to create real change in how they feel, think, and live in these core areas.
+            {t.transformationAreas.subtitle}
           </motion.p>
         </div>
 
@@ -107,8 +93,8 @@ export default function TransformationAreas() {
                 </p>
 
                 <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
-                  Explore
-                  <span className="text-[14px]">→</span>
+                  {t.transformationAreas.explore}
+                  <span className={`text-[14px] rtl-flip`}>{isUrdu ? '→' : '←'}</span>
                 </div>
               </Link>
             </motion.div>

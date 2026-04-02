@@ -64,15 +64,6 @@ export default function OrganizationalImpact() {
           </div>
           
           <div className="lg:col-span-5 flex items-end">
-            <motion.p 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-[17px] leading-[1.8] text-slate-400 max-w-[420px]"
-            >
-              Organizations implementing regulation-informed frameworks observe fundamental improvements in systemic resilience.
-            </motion.p>
           </div>
         </div>
 

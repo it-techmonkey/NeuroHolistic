@@ -223,7 +223,7 @@ export default function Reports({ therapistId }: ReportsProps) {
               </div>
               <div className="flex justify-between text-xs text-slate-500 mt-2">
                 <span>0</span>
-                <span>Wellbeing Score (0-60)</span>
+                <span>Dysregulation Level (0-60)</span>
                 <span>60</span>
               </div>
             </div>

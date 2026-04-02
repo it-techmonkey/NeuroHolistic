@@ -18,11 +18,12 @@ export async function GET() {
 
     const serviceSupabase = getServiceSupabase();
 
-    // Check for active program
+    // Check for active or pending program
     const { data: program, error } = await serviceSupabase
       .from('programs')
       .select('*')
       .eq('user_id', user.id)
+      .in('status', ['active', 'pending', 'completed'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

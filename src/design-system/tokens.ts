@@ -78,7 +78,8 @@ export const colors = {
 export const typography = {
   // Font families
   fonts: {
-    sans: "system-ui, -apple-system, sans-serif",
+    sans: "'Inter', system-ui, -apple-system, sans-serif",
+    display: "'DM Sans', system-ui, sans-serif",
     serif: "ui-serif, Georgia, serif",
     mono: "ui-monospace, SFMono-Regular, monospace",
   },

@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Hero() {
+  const { t, isUrdu } = useLang();
 
   return (
     <motion.section
@@ -13,7 +15,7 @@ export default function Hero() {
       className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(135deg,#0B1028_0%,#0A132B_48%,#060710_100%)]"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute right-[-120px] sm:right-[-80px] md:right-[-40px] top-[8%] h-[320px] w-[320px] sm:h-[420px] sm:w-[420px] md:h-[520px] md:w-[520px] rounded-full bg-[radial-gradient(circle,rgba(152,170,255,0.18)_0%,rgba(6,7,16,0)_62%)] blur-[10px]" />
+        <div className={`absolute ${isUrdu ? 'left' : 'right'}-[-120px] sm:${isUrdu ? 'left' : 'right'}-[-80px] md:${isUrdu ? 'left' : 'right'}-[-40px] top-[8%] h-[320px] w-[320px] sm:h-[420px] sm:w-[420px] md:h-[520px] md:w-[520px] rounded-full bg-[radial-gradient(circle,rgba(152,170,255,0.18)_0%,rgba(6,7,16,0)_62%)] blur-[10px]`} />
         <div className="hero-noise-texture absolute inset-0 opacity-[0.045]" />
       </div>
 
@@ -23,21 +25,21 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.8 }}
-            className="max-w-[650px] text-center lg:text-left"
+            className={`max-w-[650px] text-center ${isUrdu ? 'lg:text-right' : 'lg:text-left'}`}
           >
             <h1
-              className="leading-[1.05] tracking-[-0.035em] text-[#EAF0FF]"
-              style={{ fontFamily: "Inter, Satoshi, 'Neue Montreal', -apple-system, sans-serif" }}
+              className={`${isUrdu ? 'leading-[1.4] tracking-normal' : 'leading-[1.05] tracking-[-0.035em]'} text-[#EAF0FF]`}
+              style={isUrdu ? { fontFamily: "var(--font-urdu), 'Noto Nastaliq Urdu', sans-serif" } : { fontFamily: "var(--font-display), 'Outfit', system-ui, sans-serif" }}
             >
-              <span className="block text-[32px] font-normal text-[#E2E9FF] sm:text-[44px] md:text-[66px] lg:text-[55px]">
-                Reset From Within
+              <span className={`block text-[32px] font-normal text-[#E2E9FF] sm:text-[44px] md:text-[66px] lg:text-[55px] ${isUrdu ? 'font-urdu' : ''}`}>
+                {t.hero.resetFromWithin}
               </span>
-              <span className="block text-[32px] text-white sm:text-[40px] md:text-[60px] lg:text-[55px]">
-                Transform Your Life
+              <span className={`block text-[32px] text-white sm:text-[40px] md:text-[60px] lg:text-[55px] ${isUrdu ? 'font-urdu' : ''}`}>
+                {t.hero.transformYourLife}
               </span>
             </h1>
-            <p className="mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] leading-[1.7] text-[#C3CBE8] lg:text-[17.5px]">
-              Designed for deep, lasting results.
+            <p className={`mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'} text-[#C3CBE8] lg:text-[17.5px]`}>
+              {t.hero.designedForResults}
             </p>
             <HeroBookingForm />
           </motion.div>
@@ -46,7 +48,7 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.22, duration: 0.85 }}
-            className="relative flex justify-center lg:justify-end"
+            className={`relative flex justify-center ${isUrdu ? 'lg:justify-start' : 'lg:justify-end'}`}
           >
             <NeuralGraphic />
           </motion.div>
@@ -57,6 +59,8 @@ export default function Hero() {
 }
 
 export function NeuralGraphic() {
+  const { t } = useLang();
+
   return (
     <div className="relative h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[400px] md:w-[400px] lg:h-[550px] lg:w-[550px] flex items-center justify-center">
       
@@ -117,18 +121,18 @@ export function NeuralGraphic() {
             <div className="absolute inset-0 rounded-full bg-cyan-400 opacity-20 animate-pulse" />
             <div className="absolute inset-0.5 sm:inset-1 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-cyan-300" />
           </div>
-          <span className="text-[8px] sm:text-[11px] uppercase tracking-[0.15em] text-white/70 font-medium">Status</span>
+          <span className="text-[8px] sm:text-[11px] uppercase tracking-[0.15em] text-white/70 font-medium">{t.hero.status}</span>
         </div>
-        <div className="text-white text-[11px] sm:text-[15px] mt-1 font-light leading-tight">System Restored</div>
+        <div className="text-white text-[11px] sm:text-[15px] mt-1 font-light leading-tight">{t.hero.systemRestored}</div>
       </motion.div>
 
-      {/* Bottom Left: Neural Balance - Now visible on mobile */}
+      {/* Bottom Left: Neural Balance */}
       <motion.div
         animate={{ y: [0, 8, 0] }}
         transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         className="absolute bottom-2 sm:bottom-10 left-0 sm:left-3 backdrop-blur-md bg-white/5 border border-white/10 p-2 sm:p-4 rounded-[16px] sm:rounded-[20px] shadow-2xl"
       >
-        <div className="text-[8px] sm:text-[11px] uppercase tracking-[0.15em] text-white/70 font-medium mb-1.5 sm:mb-3">Neural Balance</div>
+        <div className="text-[8px] sm:text-[11px] uppercase tracking-[0.15em] text-white/70 font-medium mb-1.5 sm:mb-3">{t.hero.neuralBalance}</div>
         <div className="flex items-end gap-1 h-4 sm:h-6">
           {[0.5, 0.8, 1, 0.7, 0.9, 0.6].map((h, i) => (
             <motion.div

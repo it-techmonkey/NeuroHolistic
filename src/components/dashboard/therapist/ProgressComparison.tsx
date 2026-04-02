@@ -26,7 +26,7 @@ const SCORE_LABELS: Record<string, string> = {
   nervous_system: 'Nervous System',
   emotional_state: 'Emotional State',
   cognitive_patterns: 'Cognitive Patterns',
-  body_symptoms: 'Body Symptoms',
+  body_symptoms: 'Physical',
   behavioral_patterns: 'Behavioral Patterns',
   life_functioning: 'Life Functioning',
 };
@@ -216,7 +216,7 @@ export default function ProgressComparison({ baselineScores, sessionScores }: Pr
                   );
                 })}
                 <tr className="bg-slate-50 font-semibold">
-                  <td className="py-3 px-4 text-slate-900">Total wellbeing</td>
+                  <td className="py-3 px-4 text-slate-900">Goal Readiness</td>
                   <td className="py-3 px-4 text-center">
                     <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
                       {comparisonRef.goal_readiness}/60
