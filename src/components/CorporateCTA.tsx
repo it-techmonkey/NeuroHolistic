@@ -22,7 +22,7 @@ export default function CorporateCTA() {
 
               <h2 className="mb-8 text-[34px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px] lg:text-[64px]">
                 Bring the NeuroHolistic <br className="hidden md:block" />
-                Method to your <span className="italic text-[#64748B] font-normal">organization</span>
+                Method to Your <span className="italic text-[#64748B] font-normal">Organization</span>
               </h2>
 
               <p className="max-w-[540px] text-[17px] leading-[1.8] text-[#475569] md:text-[19px]">

@@ -157,7 +157,7 @@ export const en = {
 
   // ── Testimonials ──
   testimonials: {
-    heading: "Client's Experiences",
+    heading: "Testimonials",
     subtitle:
       "98% of Clients Experience Meaningful Transformation \u2022 7,400+ Clients Worldwide \u2022 Working at the root to create lasting change.",
   },
@@ -273,7 +273,7 @@ export const en = {
     matterOfChoiceText1: "I withdrew from life for a while, but deep down, I still knew that we determine the direction of our own lives.",
     matterOfChoiceText2: "One night, I stayed awake until sunrise, facing a decision — whether to follow those I had lost, or to move forward.",
     matterOfChoiceText3: "With the first light, I chose life. Not just to live, but to expand what is possible in human life. In that moment, I understood where 'I cannot' comes from, and how to move beyond it.",
-    visionForFuture: "Vision for the future",
+    visionForFuture: "Vision For The Future",
     visionParagraph1:
       "The NeuroHolistic Institute continues to expand the development and application of the NeuroHolistic Method™ through therapeutic work, practitioner training, and research.",
     visionParagraph2:
@@ -294,8 +294,8 @@ export const en = {
 
   // ── Academy Intro ──
   academyIntro: {
-    heading1: "The first generation of",
-    heading2: "NeuroHolistic practitioners",
+    heading1: "The First Generation of",
+    heading2: "NeuroHolistic Practitioners",
     mainDescription: "The NeuroHolistic Method™ introduces a new integrative framework for understanding and facilitating human transformation.",
     paragraph1: "Practitioners trained through the Academy are among the first professionals to apply this approach in practice, integrating insights from neuroscience, psychology, and systemic human development.",
     paragraph2: "NeuroHolistic therapists represent a new generation of practitioners working at the intersection of science, awareness, and transformative human work.",
@@ -331,7 +331,7 @@ export const en = {
   // ── Accreditation ──
   accreditation: {
     heading1: "Accreditation & Professional",
-    heading2: "recognition",
+    heading2: "Recognition",
     footerText: "The NeuroHolistic Applied Psychology Mastery for Practitioners is issued by the NeuroHolistic Institute and supported by international professional accreditation bodies.",
     certified: "Certified",
   },
@@ -341,14 +341,14 @@ export const en = {
     eyebrow: "Corporate Wellbeing",
     title: "The State Behind Performance",
     description1: "Your team's performance reflects their",
-    description2: "Clear minds Strong teams Better decisions",
+    description2: "Clear minds · Strong teams · Better decisions",
     contactUs: "Contact Us",
     metaTags: ["Leadership Cohorts", "Team Resilience", "Culture Health"],
   },
 
   eventsHero: {
     eyebrow: "Live Learning Experiences",
-    title: "Events that lasts",
+    title: "Events That Lasts",
     description: "Join workshops, guided sessions, and live learning experiences designed to restore nervous system balance and deepen practical transformation through the NeuroHolistic Method™.",
     getUpdates: "Get Event Updates",
     exploreRetreats: "Explore Retreats",
@@ -373,7 +373,7 @@ export const en = {
 
   academyHero: {
     eyebrow: "Academy",
-    title: "Master the NeuroHolistic Method™.",
+    title: "Master The NeuroHolistic Method™.",
     description: "NeuroHolistic Applied Psychology Mastery",
     applyAcademy: "Apply to Academy",
     bookCall: "Book Call",
@@ -420,8 +420,8 @@ export const en = {
       { step: "03", label: "Genetics", title: "Epigenetic Adaptation", description: "Understanding how environment and experience interact with biological systems over time." },
       { step: "04", label: "Methodology", title: "Applied Transformation Models", description: "Studying how structured frameworks facilitate sustainable and measurable human change." },
     ],
-    understandingTitle1: "Understanding",
-    understandingTitle2: "the emergent human",
+    understandingTitle1: "Practice-based",
+    understandingTitle2: "Research",
     understandingParagraph1: "The NeuroHolistic Institute is committed to developing a deeper scientific understanding of how human perception, emotional patterns, and behavioral change emerge from the interaction of biological, psychological, and experiential systems.",
     understandingParagraph2: "Our research explores how integrative approaches can support meaningful and sustainable transformation in individuals and communities.",
     collaborationTitle1: "Academic",
@@ -430,8 +430,8 @@ export const en = {
     publicationsTitle1: "Research Projects",
     publicationsTitle2: "Publications",
     publicationCategories: ["Research Papers", "Ongoing Studies", "Case Studies", "Presentations"],
-    inquireTitle1: "Inquire for",
-    inquireTitle2: "partnership",
+    inquireTitle1: "Inquire For",
+    inquireTitle2: "Partnership",
     inquireDescription: "Researchers and institutions interested in collaboration are invited to contact the NeuroHolistic Institute.",
     contactInstitute: "Contact the Institute",
   },

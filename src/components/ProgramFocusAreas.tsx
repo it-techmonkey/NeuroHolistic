@@ -51,7 +51,7 @@ export default function ProgramFocusAreas() {
             transition={{ delay: 0.1 }}
             className="max-w-[800px] text-[34px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]"
           >
-            Strategic program <span className="italic text-[#64748B] font-normal">focus areas</span>
+            Strategic Program <span className="italic text-[#64748B] font-normal">Focus Areas</span>
           </motion.h2>
         </div>
 

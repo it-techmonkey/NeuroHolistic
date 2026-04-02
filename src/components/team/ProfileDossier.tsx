@@ -41,7 +41,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
             >
               <div className="mb-10 flex items-center gap-4">
                 <span className="font-mono text-[11px] tracking-[0.4em] text-[#6366F1] uppercase">
-                  {profile.slug === "dr-fawzia-yassmina" ? "Founder" : "Practitioner"}
+                  {profile.slug === "fawzia-yassmina" ? "Founder" : ""}
                 </span>
               </div>
 
@@ -68,14 +68,14 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
                   href={`/consultation/book?therapist=${profile.slug}`}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0F172A] px-8 py-3.5 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#1E293B] hover:shadow-lg"
                 >
-                  Free Consultation
+                  Book a Consultation
                   <span className="transition-transform group-hover:translate-x-1">→</span>
                 </Link>
                 <Link
                   href="/booking/paid-program-booking"
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#0F172A] bg-white px-8 py-3.5 text-[15px] font-semibold text-[#0F172A] transition-all duration-300 hover:bg-[#F8FAFC]"
                 >
-                  Paid Program
+                  Book a Session
                   <span className="transition-transform group-hover:translate-x-1">→</span>
                 </Link>
               </div>
@@ -89,7 +89,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
           <div className="mb-12">
             <h2 className="text-[32px] font-medium leading-[1.2] text-[#0F172A] md:text-[42px]">
-              Client Reflections
+              Testimonial
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-10 md:grid-cols-2">

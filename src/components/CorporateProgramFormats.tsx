@@ -14,8 +14,7 @@ export default function CorporateProgramFormats() {
               viewport={{ once: true }}
             >
               <h2 className="text-[34px] font-medium leading-[1.1] tracking-tight text-[#0F172A] md:text-[46px]">
-                Program <br/>
-                <span className="italic text-[#64748B]">Formats</span>
+                Program <span className="italic text-[#64748B]">Format</span>
               </h2>
               <p className="mt-6 text-[16px] leading-[1.8] text-[#475569]">
                 Corporate programs can be delivered through various structured mediums, and can be adapted to the specific needs of each organization.

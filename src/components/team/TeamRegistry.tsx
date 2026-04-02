@@ -46,6 +46,7 @@ export default function TeamRegistry() {
                   fill
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-[#2B2F55]/5 group-hover:bg-transparent transition-colors duration-700" />
               </div>
 
               {/* Text Content - Right Side */}
@@ -57,7 +58,7 @@ export default function TeamRegistry() {
                   {founder.name}
                 </h3>
                 <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light mb-8 italic">
-                  &ldquo;{founder.shortBio}&rdquo;
+                  "{founder.shortBio}"
                 </p>
                 <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
                   <span>View Profile</span>
@@ -86,22 +87,16 @@ export default function TeamRegistry() {
                     alt={member.name}
                     fill
                     unoptimized
-                    className={`object-cover contrast-[1.1] transition-all duration-1000 scale-105 group-hover:scale-110 ${
-                      member.slug === 'zekra-khayata' ? 'object-[center_35%] scale-100' :
-                      member.slug === 'fawares-azaar' ? 'object-[center_20%]' : 'object-center'
+                    className={`object-cover contrast-[1.1] transition-all duration-1000 scale-100 group-hover:scale-110 ${
+                      member.slug === "zekra-khayata" ? "object-[center_10%]" : "object-center"
                     }`}
                   />
+                  {/* Subtle vignette */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-60" />
-                  {member.slug === "fawares-azaar" && (
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(252,252,253,0.6)_100%)]" />
-                  )}
                 </div>
 
                 {/* Content */}
                 <div className="px-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
-                    Practitioner
-                  </span>
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
                     {member.name}
                   </h3>

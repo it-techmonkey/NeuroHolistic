@@ -27,8 +27,8 @@ export default function ResourcesPage() {
         eyebrow="Resources"
         title={
           <>
-            Explore practical <br />
-            <span className="text-white/60 font-normal">learning resources</span>
+            Explore practical<br />
+            <span className="text-white/60 font-normal">learning resources.</span>
           </>
         }
         description="A growing knowledge base to support awareness, integration, and meaningful change."

@@ -100,7 +100,7 @@ export default function Team() {
                     fill
                     unoptimized
                     className={`object-cover contrast-[1.1] transition-all duration-1000 scale-100 group-hover:scale-110 ${
-                      member.slug === "zekra-khayata" ? "object-[center_12%]" : "object-center"
+                      member.slug === "zekra-khayata" ? "object-[center_10%]" : "object-center"
                     }`}
                   />
                   {/* Subtle vignette */}

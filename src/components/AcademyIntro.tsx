@@ -11,20 +11,6 @@ export default function AcademyIntro() {
     <section className="bg-white py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
-        {/* Centered Heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-12 max-w-[800px] mx-auto"
-        >
-          <h2 className="text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-            {t.academyIntro.heading1} <br/>
-            <span className="italic text-slate-500 font-normal">{t.academyIntro.heading2}</span>
-          </h2>
-        </motion.div>
-
         {/* Full-Bleed Image */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -43,8 +29,11 @@ export default function AcademyIntro() {
               sizes="(max-width: 1024px) 100vw, 80vw"
               priority
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0F172A]/10 via-transparent to-transparent" />
           </div>
+          <h2 className="mt-8 text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
+            {t.academyIntro.heading1} <br/>
+            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
+          </h2>
         </motion.div>
 
         {/* Centered Description Below Image */}

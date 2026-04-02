@@ -58,8 +58,8 @@ export default function OrganizationalImpact() {
               transition={{ delay: 0.1 }}
               className="text-[34px] font-light leading-[1.1] tracking-tight text-white md:text-[52px]"
             >
-              Measurable impact across <br />
-              <span className="italic text-slate-400 font-normal">the organization</span>
+              Measurable Impact Across <br />
+              <span className="italic text-slate-400 font-normal">The Organization</span>
             </motion.h2>
           </div>
           

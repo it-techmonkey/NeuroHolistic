@@ -52,7 +52,7 @@ export default function RetreatExperience() {
             transition={{ delay: 0.1 }}
             className="max-w-[800px] text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]"
           >
-            What you will <span className="italic text-[#64748B] font-normal">experience</span>
+            What You Will <span className="italic text-[#64748B] font-normal">Experience</span>
           </motion.h2>
         </div>
 

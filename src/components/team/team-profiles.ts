@@ -12,7 +12,7 @@ export type TeamProfile = {
 export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "fawzia-yassmina",
-    name: "Fawzia Yassmina",
+    name: "Dr. Fawzia Yassmina",
     role: "Founder of the NeuroHolistic Institute™ and Creator of the NeuroHolistic Method™",
     heroTitle: "Dr. Fawzia Yassmina",
     shortBio:
@@ -32,7 +32,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "mariam-al-kaisi",
     name: "Mariam Al Kaissi",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Mariam Al Kaissi",
     shortBio:
       "A grounded practitioner known for calm presence, deep attentiveness, and a clear, structured approach to transformation.",
@@ -50,7 +50,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "noura-youssef",
     name: "Noura Youssef",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Noura Youssef",
     shortBio:
       "A compassionate practitioner integrating scientific insight with intuition, warmth, and deep human care.",
@@ -68,7 +68,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "zekra-khayata",
     name: "Zekra Khayata",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Zekra Khayata",
     shortBio:
       "A nurturing and compassionate practitioner focused on restoring internal balance through awareness and insight.",
@@ -86,7 +86,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "reem-mobayed",
     name: "Reem Mobayed",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Reem Mobayed",
     shortBio:
       "A Syrian-Canadian practitioner and mental wellness advocate known for engaging, insight-driven transformational work.",
@@ -104,7 +104,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "fawares-azaar",
     name: "Fawares Azaar",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Fawares Azaar",
     shortBio:
       "A confident and intuitive practitioner blending medical consulting experience with emotional intelligence and care.",
@@ -122,7 +122,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "joud-charafeddin",
     name: "Joud Charafeddin",
-    role: "NeuroHolistic Certified Practitioner",
+    role: "NeuroHolistic Certified",
     heroTitle: "Joud Charafeddin",
     shortBio:
       "A grounded and intuitive practitioner creating safe spaces for healing, awareness, and inner harmony.",

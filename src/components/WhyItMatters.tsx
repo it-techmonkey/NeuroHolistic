@@ -19,7 +19,7 @@ export default function WhyItMatters() {
           >
 
             <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-              Why it <span className="italic text-[#64748B] font-normal">matters</span>
+              Why It <span className="italic text-[#64748B] font-normal">Matters</span>
             </h2>
 
             <div className="space-y-8">
