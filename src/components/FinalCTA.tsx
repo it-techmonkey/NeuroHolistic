@@ -15,7 +15,8 @@ export default function FinalCTA() {
       >
         <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#F8FAFC] via-[#FAFBFF] to-[#F1F5F9] px-8 py-16 text-center md:px-12 md:py-24 border border-[#E2E8F0]">
           <LandingBookingCTA
-            dashboardLabel="Signup Now"
+            dashboardLabel="Go to Dashboard"
+            signupLabel="Signup Now"
             containerClassName="mx-auto flex max-w-max flex-col sm:flex-row items-center gap-3"
             primaryClassName="group inline-flex h-16 items-center justify-center rounded-full bg-[#0F172A] px-12 text-[16px] font-medium text-white transition-all duration-300 hover:bg-[#1E293B] hover:shadow-[0_12px_32px_rgba(15,23,42,0.2)]"
             secondaryClassName="group inline-flex h-16 items-center justify-center gap-3 rounded-full border border-slate-300 bg-white px-12 text-[16px] font-medium text-slate-800 transition-all duration-300 hover:border-slate-400 hover:bg-slate-50"

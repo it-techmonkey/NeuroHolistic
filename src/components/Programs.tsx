@@ -153,7 +153,6 @@ function ProgramCard({
         className="relative z-10 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-transparent px-6 py-3.5 text-[14.5px] font-medium text-white transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-[#0B1028]"
       >
         {program.cta}
-        <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
       </Link>
     </motion.div>
   );

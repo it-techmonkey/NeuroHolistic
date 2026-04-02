@@ -5,7 +5,6 @@ import { canAccessPath, getHomeRouteForRole, normalizeUserRole } from '@/lib/aut
 
 const PUBLIC_PREFIXES = [
   '/',
-  '/auth',
   '/method',
   '/programs',
   '/about',
@@ -24,6 +23,7 @@ const PUBLIC_PREFIXES = [
   '/booking/paid-program-booking',
 ];
 
+const AUTH_PREFIXES = ['/auth'];
 const AUTH_REQUIRED_PREFIXES = ['/dashboard', '/therapist', '/admin', '/booking'];
 
 export async function middleware(request: NextRequest) {
@@ -31,11 +31,8 @@ export async function middleware(request: NextRequest) {
 
   const isApiRoute = pathname.startsWith('/api/');
   const isNextInternal = pathname.startsWith('/_next/') || pathname === '/favicon.ico';
-  const isPublic = PUBLIC_PREFIXES.some((prefix) =>
-    pathname === prefix || (prefix !== '/' && pathname.startsWith(prefix + '/'))
-  );
 
-  if (isApiRoute || isNextInternal || isPublic) {
+  if (isApiRoute || isNextInternal) {
     return NextResponse.next({
       request: { headers: request.headers },
     });
@@ -74,6 +71,33 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect authenticated users away from auth pages
+  const isAuthPage = AUTH_PREFIXES.some((prefix) =>
+    pathname === prefix || pathname.startsWith(prefix + '/')
+  );
+  if (isAuthPage && user) {
+    // Allow reset-password page if user navigated from email link
+    if (pathname === '/auth/reset-password') {
+      return response;
+    }
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    const role = normalizeUserRole(profile?.role as string | null | undefined);
+    return NextResponse.redirect(new URL(getHomeRouteForRole(role), request.url));
+  }
+
+  // Allow unauthenticated users on public and auth pages
+  const isPublic = PUBLIC_PREFIXES.some((prefix) =>
+    pathname === prefix || (prefix !== '/' && pathname.startsWith(prefix + '/'))
+  );
+  if (isPublic || isAuthPage) {
+    return response;
+  }
+
+  // Require authentication for protected routes
   const requiresAuth = AUTH_REQUIRED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (requiresAuth && !user) {
     const loginUrl = new URL('/auth/login', request.url);

@@ -42,7 +42,7 @@ export default function TransformationAreas() {
     Icon: AREAS_ICONS[i],
   }));
   return (
-    <section className="w-full bg-white py-16 md:py-20">
+    <section className="w-full bg-white pt-16 pb-8 md:pt-20 md:pb-12">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* Header: Compact & Centered */}
@@ -94,7 +94,6 @@ export default function TransformationAreas() {
 
                 <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
                   {t.transformationAreas.explore}
-                  <span className={`text-[14px] rtl-flip`}>{isUrdu ? '→' : '←'}</span>
                 </div>
               </Link>
             </motion.div>

@@ -38,7 +38,6 @@ export default function MethodHero() {
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#0B1028] px-8 text-[14.5px] font-medium text-white transition-all hover:bg-[#1E293B] hover:shadow-[0_8px_20px_rgba(11,16,40,0.15)]"
               >
                 {t.method.exploreMethod}
-                <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
               </Link>
             </div>
           </motion.div>

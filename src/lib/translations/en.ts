@@ -21,6 +21,7 @@ export const en = {
     applyAcademy: "Apply to Academy",
     faq: "FAQ",
     signUp: "Sign Up",
+    dashboard: "Dashboard",
     logout: "Logout",
     therapistLogin: "Therapist Login",
     clientLogin: "Client Login",
@@ -61,8 +62,8 @@ export const en = {
 
   // ── Hero ──
   hero: {
-    resetFromWithin: "Reset From Within",
-    transformYourLife: "Transform Your Life",
+    resetFromWithin: "Reset From Within.",
+    transformYourLife: "Transform Your Life.",
     designedForResults: "Designed for deep, lasting results.",
     bookConsultation: "Book a Consultation",
     status: "Status",
@@ -75,7 +76,7 @@ export const en = {
     heading:
       "True transformation does not come from managing symptoms. It begins when the system shifts at its core.",
     description:
-      "The NeuroHolistic Method™ works at the root—realigning the nervous system, cognition, and emotional patterns to create lasting transformation.",
+      "The NeuroHolistic Method™ works at the root realigning the nervous system, cognition, and emotional patterns to create lasting transformation.",
   },
 
   // ── Method Phases ──
@@ -121,7 +122,7 @@ export const en = {
     groupProgram: "Group Program",
     groupDescription:
       "A structured transformational experience conducted within a guided group setting. Powerful shared healing.",
-    bookConsultation: "Book Consultation",
+    bookConsultation: "Book a Consultation",
   },
 
   // ── Transformation Areas ──
@@ -228,7 +229,7 @@ export const en = {
     noSlots: "No slots available for this date. Please try another day.",
     selected: "Selected:",
     back: "Back",
-    bookConsultation: "Book Consultation",
+    bookConsultation: "Book a Consultation",
     creatingAccount: "Creating Account...",
     consultationBookedSuccess: "Your consultation is booked!",
     goToDashboard: "Go to Dashboard",
@@ -383,7 +384,7 @@ export const en = {
     heading: "Choose your",
     headingBold: "path",
     idealFor: "Ideal for you if you:",
-    bookConsultation: "Book Consultation",
+    bookConsultation: "Book a Consultation",
     privateDescription2: "Sessions are structured to support your pace and needs, with ongoing integration between meetings and dedicated support.",
     groupDescription2: "Shared learning and collective energy enrich the journey as participants witness and support one another.",
     privateBullets: [

@@ -21,6 +21,7 @@ export const ur = {
     applyAcademy: "اکیڈمی میں درخواست دیں",
     faq: "عمومی سوالات",
     signUp: "سائن اپ",
+    dashboard: "ڈیش بورڈ",
     logout: "لاگ آؤٹ",
     therapistLogin: "تھراپسٹ لاگ ان",
     clientLogin: "کلائنٹ لاگ ان",

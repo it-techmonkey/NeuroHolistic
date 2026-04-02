@@ -48,7 +48,6 @@ export default function AcademyCTA() {
                 className="group inline-flex h-16 items-center justify-center gap-3 rounded-full bg-white px-10 text-[16px] font-medium text-[#0F172A] transition-all duration-300 hover:bg-[#EEF2FF] hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]"
               >
                 {t.academyCTA.becomeATherapist}
-                <span className={`transition-transform duration-300 ${isUrdu ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} rtl-flip`}>{isUrdu ? '←' : '→'}</span>
               </Link>
             </div>
 
