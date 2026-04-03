@@ -68,7 +68,8 @@ export default function Navbar() {
     if (scrollTimeoutRef.current) return;
     
     scrollTimeoutRef.current = requestAnimationFrame(() => {
-      setScrolled(window.scrollY > 15);
+      const isScrolled = window.scrollY > 15;
+      setScrolled(prev => prev === isScrolled ? prev : isScrolled);
       scrollTimeoutRef.current = undefined;
     }) as unknown as NodeJS.Timeout;
   }, []);
@@ -81,10 +82,19 @@ export default function Navbar() {
     };
   }, [handleScroll]);
 
+  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => { 
+      document.body.style.overflow = ""; 
+      document.body.style.touchAction = "";
+    };
   }, [mobileOpen]);
 
   async function handleLogout() {
@@ -97,9 +107,9 @@ export default function Navbar() {
 
   const getAdaptiveBg = () => {
     if (isLightPage) {
-      return "bg-white/70 backdrop-blur-sm";
+      return "bg-white/70 backdrop-blur-md";
     }
-    return "bg-[#080C20]/75 backdrop-blur-sm";
+    return "bg-[#080C20]/80 backdrop-blur-md";
   };
 
   // Auth link classname helper
@@ -112,7 +122,7 @@ export default function Navbar() {
         
         {/* ── 1. Secondary Navbar (Utility) ── */}
         <div 
-          className={`flex items-center justify-between px-4 sm:px-6 md:px-8 text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wide transition-[max-height,opacity,padding] duration-300 ease-out overflow-hidden ${
+          className={`hidden md:flex items-center justify-between px-4 sm:px-6 md:px-8 text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wide transition-[max-height,opacity,padding] duration-300 ease-out overflow-hidden ${
             scrolled ? "max-h-0 opacity-0 pointer-events-none" : "py-2 md:h-10 md:max-h-10 border-b opacity-100"
           } ${borderColor} ${textColor}`}
         >
@@ -315,11 +325,20 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
             <motion.div 
-              initial={{ x: isUrdu ? "-100%" : "100%" }} animate={{ x: 0 }} exit={{ x: isUrdu ? "-100%" : "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 250 }}
-              className={`fixed top-0 ${isUrdu ? 'left-0' : 'right-0'} h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              transition={{ duration: 0.2 }} 
+              className="fixed inset-0 z-[150] bg-black/60" 
+              onClick={() => setMobileOpen(false)} 
+            />
+            <motion.div 
+              initial={{ x: isUrdu ? "-100%" : "100%" }} 
+              animate={{ x: 0 }} 
+              exit={{ x: isUrdu ? "-100%" : "100%" }}
+              transition={{ type: "tween", duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              className={`fixed top-0 ${isUrdu ? 'left-0' : 'right-0'} h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col will-change-transform ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
             >
               <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
@@ -339,12 +358,27 @@ export default function Navbar() {
                 {isUrdu ? 'English میں تبدیل کریں' : 'Switch to اردو'}
               </button>
 
-              <nav className={`flex flex-col gap-4 overflow-y-auto flex-1 ${isUrdu ? 'text-right' : ''}`}>
+              <nav className={`flex flex-col gap-4 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
                     {item.label}
                   </Link>
                 ))}
+                
+                <div className={`h-px w-full my-2 ${isLightPage ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'} ${!isAuthenticated ? 'hidden' : ''}`}>
+                  {t.navbar.dashboard}
+                </Link>
+                <Link href="/consultation/book" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                  {t.navbar.bookConsultation}
+                </Link>
+                <Link href="/booking/paid-program-booking?mode=academy" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                  {t.navbar.applyAcademy}
+                </Link>
+                <Link href="/faqs" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                  {t.navbar.faq}
+                </Link>
               </nav>
 
               <div className="mt-auto pt-8 border-t border-white/10">
