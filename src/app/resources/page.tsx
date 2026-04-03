@@ -28,7 +28,7 @@ export default function ResourcesPage() {
         title={
           <>
             Explore practical<br />
-            <span className="text-white/60 font-normal">learning resources.</span>
+            <span className="text-white font-normal">learning resources.</span>
           </>
         }
         description="A growing knowledge base to support awareness, integration, and meaningful change."

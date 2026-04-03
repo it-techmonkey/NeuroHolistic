@@ -19,6 +19,10 @@ export default function AcademyIntro() {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-[1100px] mb-12"
         >
+          <h2 className="mb-8 text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
+            {t.academyIntro.heading1} <br/>
+            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
+          </h2>
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[8px] bg-[#F8FAFC]">
             <Image
               src="/images/team/team.png"
@@ -30,10 +34,6 @@ export default function AcademyIntro() {
               priority
             />
           </div>
-          <h2 className="mt-8 text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
-            {t.academyIntro.heading1} <br/>
-            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
-          </h2>
         </motion.div>
 
         {/* Centered Description Below Image */}

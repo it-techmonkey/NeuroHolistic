@@ -19,7 +19,7 @@ export default function ResearchPage() {
         title={
           <>
             {rp.heroTitle1} <br />
-            <span className="text-white/60 font-normal">{rp.heroTitle2}</span>
+            <span className="text-white font-normal">{rp.heroTitle2}</span>
           </>
         }
         description={rp.heroDescription}

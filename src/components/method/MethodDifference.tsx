@@ -5,7 +5,7 @@ export default function MethodDifference() {
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-20">
           <div className="lg:col-span-12">
             <h2 className="text-[34px] mb-12 font-medium leading-[1.15] text-[#0F172A] md:text-[46px]">
-              What makes the <br/>Method <span className="italic text-[#64748B]">different</span>
+              What Makes The <br/>Method <span className="italic text-[#64748B]">Different</span>
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
               <div className="space-y-6 text-[16px] leading-[1.8] text-[#475569]">

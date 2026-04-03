@@ -59,7 +59,7 @@ export default function AboutPage() {
         eyebrow={t.pageHero.aboutUs}
         title={
           <>
-            <span className="text-white/60 font-normal">{isUrdu ? 'نیوروحولسٹک طریقہ™ کا ارتقاء' : 'The Evolution of the NeuroHolistic Method™'}<br /></span>
+            <span className="text-white font-normal">{isUrdu ? 'نیوروحولسٹک طریقہ™ کا ارتقاء' : 'The Evolution of the NeuroHolistic Method™'}<br /></span>
           </>
         }
         description={isUrdu ? 'حقیقی تبدیلی کیسے ہوتی ہے اس کی نئی تعریف' : 'A new definition of how true transformation happens'}
@@ -173,55 +173,80 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Section 03: Founder (Editorial Spread) ── */}
-      <section className="py-24 md:py-32 lg:py-40 bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} className="lg:col-span-6 lg:sticky lg:top-32">
-              <h2 className="mb-8 text-[34px] font-light text-[#0F172A] md:text-[48px]">{t.about.founderName}</h2>
-              <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-                <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden transition-all duration-700 rounded-lg bg-white">
-                  <Image src="/images/team/Fawzia Yassmina.jpeg" alt={t.about.founderName} fill unoptimized className="object-cover object-top scale-125" />
-                </div>
-              </div>
-            </motion.div>
-            
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="lg:col-span-6 lg:pt-4">
-              <div className={`space-y-12 text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
-                
-                <div>
-                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.naturalState}</h3>
-                  <p>{t.about.naturalStateText}</p>
-                </div>
+{/* ── Section 03: Founder (Editorial Spread) ── */}
+<section className="py-24 md:py-32 lg:py-40 bg-white">
+  <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+    <div className="mb-16 md:mb-24">
+      <motion.h2 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-[34px] font-light text-[#0F172A] md:text-[52px] leading-tight"
+      >
+        {t.about.founderName}
+      </motion.h2>
+    </div>
 
-                <div>
-                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.naturalAccess}</h3>
-                  <p>{t.about.naturalAccessText}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.learnOrRecycle}</h3>
-                  <div className="space-y-4">
-                    <p>{t.about.learnOrRecycleText1}</p>
-                    <p>{t.about.learnOrRecycleText2}</p>
-                    <p>{t.about.learnOrRecycleText3}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.matterOfChoice}</h3>
-                  <div className="space-y-4">
-                    <p>{t.about.matterOfChoiceText1}</p>
-                    <p>{t.about.matterOfChoiceText2}</p>
-                    <p>{t.about.matterOfChoiceText3}</p>
-                  </div>
-                </div>
-
-              </div>
-            </motion.div>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+      
+      {/* Left Column (Image) */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }} 
+        whileInView={{ opacity: 1, x: 0 }} 
+        className="lg:col-span-6 lg:sticky lg:top-32"
+      >
+        <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9] rounded-xl">
+          <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-lg bg-white">
+            <Image 
+              src="/images/team/Fawzia Yassmina.jpeg" 
+              alt={t.about.founderName} 
+              fill 
+              unoptimized 
+              className="object-cover object-top scale-125 transition-transform duration-700 group-hover:scale-110" 
+            />
           </div>
         </div>
-      </section>
+      </motion.div>
+      
+      {/* Right Column (Content) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        whileInView={{ opacity: 1, y: 0 }} 
+        className="lg:col-span-6"
+      >
+        <div className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569] space-y-12 lg:pt-4`}>
+          
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-[#0F172A]">
+              {t.about.naturalState}
+            </h3>
+            <p>{t.about.naturalStateText}</p>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.naturalAccess}</h3>
+            <p>{t.about.naturalAccessText}</p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.learnOrRecycle}</h3>
+            <p>{t.about.learnOrRecycleText1}</p>
+            <p>{t.about.learnOrRecycleText2}</p>
+            <p>{t.about.learnOrRecycleText3}</p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold mb-3 text-[#0F172A]">{t.about.matterOfChoice}</h3>
+            <p>{t.about.matterOfChoiceText1}</p>
+            <p>{t.about.matterOfChoiceText2}</p>
+            <p>{t.about.matterOfChoiceText3}</p>
+          </div>
+
+        </div>
+      </motion.div>
+    </div>
+  </div>
+</section>
 
       {/* ── Section 04: Vision for the Future ── */}
       <section className="bg-gradient-to-b from-[#FAFBFF] to-[#F1F5F9] py-24 md:py-32 border-t border-[#E2E8F0]">

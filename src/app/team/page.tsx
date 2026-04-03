@@ -13,7 +13,7 @@ export default function TeamPage() {
         eyebrow=""
         title={
           <>
-            <span className="text-white/60 font-normal">The NeuroHolistic Team</span>
+            <span className="text-white font-normal">The NeuroHolistic Team</span>
           </>
         }
         description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."

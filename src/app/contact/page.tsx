@@ -13,7 +13,7 @@ export default function ContactPage() {
         title={
           <>
             {t.contactPage.connectWith} <br />
-            <span className="text-white/60 font-normal">{t.contactPage.neuroHolisticInstitute}</span>
+            <span className="text-white font-normal">{t.contactPage.neuroHolisticInstitute}</span>
           </>
         }
         description={t.contactPage.description}

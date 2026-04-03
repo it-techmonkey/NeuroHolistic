@@ -32,7 +32,7 @@ export default function FAQsPage() {
         title={
           <>
             Frequently Asked <br />
-            <span className="text-white/60 font-normal">Questions</span>
+            <span className="text-white font-normal">Questions</span>
           </>
         }
         description="Quick answers about consultations, programs, and the NeuroHolistic journey."
