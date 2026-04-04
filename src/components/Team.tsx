@@ -53,7 +53,7 @@ export default function Team() {
               {/* Image Container - Left Side */}
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
                 <Image
-                  src="/images/team/Fawzia Yassmina Landing.jpeg"
+                  src="/images/team/Fawzia Yassmina Landing.png"
                   alt={founder.name}
                   fill
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
@@ -102,8 +102,6 @@ export default function Team() {
                       member.slug === "zekra-khayata" ? "object-[center_10%]" : "object-center"
                     }`}
                   />
-                  {/* Subtle vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-60" />
                 </div>
 
                 {/* Content */}
