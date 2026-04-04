@@ -19,13 +19,13 @@ export default function AcademyIntro() {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-[1100px] mb-12"
         >
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[8px]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[8px] bg-white">
             <Image
               src="/images/team/team.png"
               alt="Academy Training Session"
               fill
               unoptimized
-              className="object-cover object-center transition-transform duration-700 hover:scale-[1.02]"
+              className="object-contain object-center transition-transform duration-700 hover:scale-[1.02]"
               sizes="(max-width: 1024px) 100vw, 80vw"
               priority
             />

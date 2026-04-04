@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function AcademyPage() {
   return (
-    <div className="w-full">
+    <div className="w-full bg-white">
       <AcademyHero />
       <AcademyIntro />
       <TrainingStructure />

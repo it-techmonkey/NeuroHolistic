@@ -337,7 +337,7 @@ export default function Navbar() {
               <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
                 <Image src="/images/logo.svg" alt="NeuroHolistic" width={28} height={24} className="w-6 h-5" unoptimized />
-                <span className="font-bold tracking-tighter text-base sm:text-lg uppercase">NH</span>
+                <span className="font-bold tracking-tighter text-base sm:text-lg">NeuroHolistic</span>
               </div>
                 <button onClick={() => setMobileOpen(false)} className={`p-1.5 rounded-lg transition-colors duration-200 ${isLightPage ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
