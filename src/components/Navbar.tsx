@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu } = useLang();
+  const { t, isUrdu, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -127,6 +127,12 @@ export default function Navbar() {
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+            <button
+              onClick={toggleLang}
+              className="opacity-60 hover:opacity-100 whitespace-nowrap hidden sm:inline transition-opacity cursor-pointer"
+            >
+              {isUrdu ? 'اردو / EN' : 'EN / اردو'}
+            </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>
@@ -345,6 +351,14 @@ export default function Navbar() {
               </div>
 
               <nav className={`flex flex-col gap-5 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
+                {/* Language toggle in mobile menu */}
+                <button
+                  onClick={toggleLang}
+                  className={`mb-2 py-3 px-4 rounded-xl font-medium text-sm transition-colors text-left ${isLightPage ? 'text-slate-600 bg-slate-50 hover:bg-slate-100' : 'text-slate-400 bg-white/5 hover:bg-white/10'}`}
+                >
+                  {isUrdu ? 'English میں تبدیل کریں' : 'Switch to اردو'}
+                </button>
+
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <div key={item.label}>
                     <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
