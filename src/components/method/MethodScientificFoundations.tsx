@@ -30,7 +30,7 @@ export default function MethodScientificFoundations() {
         </motion.div>
 
         {/* Main Content Grid - Using items-center for perfect visual balance */}
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:items-center">
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:items-start">
           
           {/* Left Column: The Full Narrative (Unbroken) */}
           <motion.div 

@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, toggleLang } = useLang();
+  const { t, isUrdu } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -127,12 +127,6 @@ export default function Navbar() {
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-            <button
-              onClick={toggleLang}
-              className="opacity-60 hover:opacity-100 whitespace-nowrap hidden sm:inline transition-opacity cursor-pointer"
-            >
-              {isUrdu ? 'اردو / EN' : 'EN / اردو'}
-            </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>
@@ -349,14 +343,6 @@ export default function Navbar() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
-
-              {/* Language toggle in mobile menu */}
-              <button
-                onClick={toggleLang}
-                className={`mb-4 py-2 rounded-lg font-medium text-sm transition-colors ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
-              >
-                {isUrdu ? 'English میں تبدیل کریں' : 'Switch to اردو'}
-              </button>
 
               <nav className={`flex flex-col gap-4 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (

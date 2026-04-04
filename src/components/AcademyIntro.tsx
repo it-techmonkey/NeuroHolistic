@@ -11,18 +11,27 @@ export default function AcademyIntro() {
     <section className="bg-white py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
         
-        {/* Full-Bleed Image */}
+        {/* "The First Generation of" */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto max-w-[1100px] mb-12"
+          className="mx-auto max-w-[1100px] mb-8"
         >
-          <h2 className="mb-8 text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
-            {t.academyIntro.heading1} <br/>
-            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
+          <h2 className="text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
+            {t.academyIntro.heading1}
           </h2>
+        </motion.div>
+
+        {/* Image */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="mx-auto max-w-[1100px] mb-8"
+        >
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[8px] bg-[#F8FAFC]">
             <Image
               src="/images/team/team.png"
@@ -34,6 +43,19 @@ export default function AcademyIntro() {
               priority
             />
           </div>
+        </motion.div>
+
+        {/* "NeuroHolistic Practitioners" */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          className="mx-auto max-w-[1100px] mb-12"
+        >
+          <h2 className="text-center text-[32px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px]">
+            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
+          </h2>
         </motion.div>
 
         {/* Centered Description Below Image */}
