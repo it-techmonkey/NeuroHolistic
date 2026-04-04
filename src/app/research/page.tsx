@@ -43,10 +43,7 @@ export default function ResearchPage() {
                 {rp.visionTitle1} <br />
                 <span className="italic text-[#64748B] font-normal">{rp.visionTitle2}</span>
               </h2>
-              <p className="mb-6 text-[14px] font-semibold uppercase tracking-[0.15em] text-[#6366F1]">
-                {rp.understandingTitle1} {rp.understandingTitle2}
-              </p>
-              <div className={`space-y-8 ${isUrdu ? 'border-r pr-8' : 'border-l pl-8'} border-[#E2E8F0]`}>
+              <div className={`space-y-4 ${isUrdu ? 'border-r pr-8' : 'border-l pl-8'} border-[#E2E8F0]`}>
                 <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
                   {rp.visionParagraph1}
                 </p>
@@ -109,7 +106,7 @@ export default function ResearchPage() {
               <h3 className="text-[28px] font-light tracking-tight text-[#0F172A] md:text-[36px]">
                 {rp.understandingTitle1} <br/><span className="italic text-[#64748B]">{rp.understandingTitle2}</span>
               </h3>
-              <div className={`mt-6 flex flex-col gap-4 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#4B5563]`}>
+              <div className={`mt-4 flex flex-col gap-3 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#4B5563]`}>
                 <p>{rp.understandingParagraph1}</p>
                 <p>{rp.understandingParagraph2}</p>
               </div>

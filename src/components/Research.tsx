@@ -25,7 +25,7 @@ export default function Research() {
     <section className="w-full bg-white py-12 md:py-16 lg:py-10">
       <div className="mx-auto max-w-[1200px] px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <motion.div
+          <motion.div 
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"

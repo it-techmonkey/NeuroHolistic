@@ -257,7 +257,7 @@ export const en = {
     structuringMethod: "Structuring the Method",
     birthOfInstitute: "The Birth of the NeuroHolistic Institute",
     todayFunctions: "Today the Institute serves three main functions:",
-    function1: "Therapeutic work with individuals",
+    function1: "Therapy with individuals",
     function2: "Practitioner training through the NeuroHolistic Academy",
     function3: "Research and development of the NeuroHolistic framework",
     founderName: "Dr. Fawzia Yassmina",
