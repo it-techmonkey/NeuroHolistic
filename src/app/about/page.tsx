@@ -49,7 +49,7 @@ export default function AboutPage() {
             "Over time, these insights were organized into a coherent framework. What emerged through practice was articulated into a structured model of transformation.",
             "This led to the five-phase architecture of the NeuroHolistic Method™, providing a systematic way to facilitate human change.",
           ],
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80",
+      image: "/images/pages/dna.jpeg",
     },
   ] as { title: string; description: string[]; image: string; isFullWidth?: boolean }[], [t, isUrdu]);
 

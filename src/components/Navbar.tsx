@@ -344,11 +344,31 @@ export default function Navbar() {
                 </button>
               </div>
 
-              <nav className={`flex flex-col gap-4 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
+              <nav className={`flex flex-col gap-5 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
-                  <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
-                    {item.label}
-                  </Link>
+                  <div key={item.label}>
+                    <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                      {item.label}
+                    </Link>
+                    {'children' in item && item.children && (
+                      <div className={`flex flex-col gap-2 mt-2 ${isUrdu ? 'mr-3' : 'ml-3'}`}>
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setMobileOpen(false)}
+                            className={`text-sm font-light py-2 px-3 rounded-lg transition-all duration-200 ${
+                              isLightPage
+                                ? 'text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700'
+                                : 'text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
                 
                 <div className={`h-px w-full my-2 ${isLightPage ? 'bg-slate-200' : 'bg-white/10'}`} />
