@@ -26,6 +26,16 @@ if (!supabaseUrl || !serviceKey) {
   process.exit(1);
 }
 
+const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1] || '';
+const blockedProjectRefs = new Set(
+  ['cippnggwojzgfprgexvh', process.env.PRODUCTION_SUPABASE_PROJECT_REF || ''].filter(Boolean)
+);
+if (blockedProjectRefs.has(projectRef)) {
+  console.error('❌ BLOCKED: This script is pointing to a production Supabase project.');
+  console.error('   Use a test project URL before running seed scripts.');
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });

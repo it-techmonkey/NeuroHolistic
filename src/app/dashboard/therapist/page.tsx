@@ -246,16 +246,24 @@ export default function TherapistDashboardPage() {
         return;
       }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role, full_name, email')
-        .eq('id', user.id)
-        .single();
+      const authRes = await fetch('/api/auth/me', { cache: 'no-store' });
+      const authPayload = await authRes.json();
+      const resolvedRole = authPayload?.role as string | null | undefined;
 
-      if (userData?.role !== 'therapist' && userData?.role !== 'admin') {
+      if (!authPayload?.authenticated) {
+        router.push('/auth/login');
+        return;
+      }
+      if (resolvedRole !== 'therapist' && resolvedRole !== 'admin') {
         router.push('/dashboard/client');
         return;
       }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single();
 
       setTherapistId(user.id);
       setTherapistInfo({ ...userData, id: user.id });

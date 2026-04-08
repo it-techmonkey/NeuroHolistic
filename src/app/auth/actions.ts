@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/auth/server';
-import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
+import { getHomeRouteForRole, resolveUserRole } from '@/lib/auth/role-routing';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { headers } from 'next/headers';
 
@@ -165,10 +165,10 @@ export async function login(formData: {
     return { success: true, redirectTo };
   }
 
-  const role = normalizeUserRole(userData?.role as string | null | undefined);
+  const role = resolveUserRole(userData?.role as string | null | undefined, user);
   
-  // Always redirect to /dashboard which will handle role-based routing
-  const redirectUrl = '/dashboard';
+  // Redirect directly to role home to avoid stale/mismatched client-side routing.
+  const redirectUrl = getHomeRouteForRole(role);
   
   console.log('[Login] User:', user.email, 'DB Role:', userData?.role, 'Normalized:', role, 'Redirect:', redirectUrl);
 

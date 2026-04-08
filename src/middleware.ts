@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import type { Database } from '@/lib/supabase/database.types';
-import { canAccessPath, getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
+import { canAccessPath, getHomeRouteForRole, resolveUserRole } from '@/lib/auth/role-routing';
 
 const PUBLIC_PREFIXES = [
   '/',
@@ -85,7 +85,7 @@ export async function middleware(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single();
-    const role = normalizeUserRole(profile?.role as string | null | undefined);
+    const role = resolveUserRole(profile?.role as string | null | undefined, user);
     return NextResponse.redirect(new URL(getHomeRouteForRole(role), request.url));
   }
 
@@ -115,7 +115,7 @@ export async function middleware(request: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  const role = normalizeUserRole(profile?.role as string | null | undefined);
+  const role = resolveUserRole(profile?.role as string | null | undefined, user);
 
   if (!canAccessPath(role, pathname)) {
     const redirectRoute = getHomeRouteForRole(role);
