@@ -168,6 +168,11 @@ export default function DiagnosticAssessmentForm({
   const [activeSection, setActiveSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [scorePrompt, setScorePrompt] = useState<{
+    field: string;
+    title: string;
+    description: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
     // Basic Information
@@ -248,6 +253,11 @@ export default function DiagnosticAssessmentForm({
 
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const openScorePrompt = (field: string, title: string, description: string) => {
+    if (isReadOnly) return;
+    setScorePrompt({ field, title, description });
   };
 
   const toggleArrayItem = (field: string, item: string) => {
@@ -375,7 +385,19 @@ export default function DiagnosticAssessmentForm({
     </div>
   );
 
-  const PatternCheckbox = ({ options, field, disabled = false, maxSelect }: { options: string[]; field: string; disabled?: boolean; maxSelect?: number }) => (
+  const PatternCheckbox = ({
+    options,
+    field,
+    disabled = false,
+    maxSelect,
+    onSelectNew,
+  }: {
+    options: string[];
+    field: string;
+    disabled?: boolean;
+    maxSelect?: number;
+    onSelectNew?: () => void;
+  }) => (
     <div className="grid grid-cols-2 gap-2">
       {options.map(option => {
         const selectedArr = form[field as keyof typeof form] as string[];
@@ -385,7 +407,11 @@ export default function DiagnosticAssessmentForm({
           <button
             key={option}
             type="button"
-            onClick={() => !disabled && !atLimit && toggleArrayItem(field, option)}
+            onClick={() => {
+              if (disabled || atLimit) return;
+              toggleArrayItem(field, option);
+              if (!selected) onSelectNew?.();
+            }}
             disabled={disabled || atLimit}
             className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
               selected
@@ -404,13 +430,28 @@ export default function DiagnosticAssessmentForm({
     </div>
   );
 
-  const SingleSelect = ({ options, field, disabled = false }: { options: { value: string; label: string }[]; field: string; disabled?: boolean }) => (
+  const SingleSelect = ({
+    options,
+    field,
+    disabled = false,
+    onSelectNew,
+  }: {
+    options: { value: string; label: string }[];
+    field: string;
+    disabled?: boolean;
+    onSelectNew?: () => void;
+  }) => (
     <div className="grid grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option.value}
           type="button"
-          onClick={() => !disabled && updateField(field, option.value)}
+          onClick={() => {
+            if (disabled) return;
+            const current = form[field as keyof typeof form];
+            updateField(field, option.value);
+            if (current !== option.value) onSelectNew?.();
+          }}
           disabled={disabled}
           className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
             form[field as keyof typeof form] === option.value
@@ -658,7 +699,18 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern (select 1-2 dominant)</label>
-                  <SingleSelect options={NERVOUS_SYSTEM_PATTERNS} field="nervous_system_pattern" disabled={isReadOnly} />
+                  <SingleSelect
+                    options={NERVOUS_SYSTEM_PATTERNS}
+                    field="nervous_system_pattern"
+                    disabled={isReadOnly}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'nervous_system_score',
+                        'Nervous System Score',
+                        'You selected a nervous system pattern. Set the severity now.'
+                      )
+                    }
+                  />
                 </div>
                 {form.nervous_system_pattern && (
                   <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
@@ -679,7 +731,19 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">2. Emotional State</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Emotional Pattern (top 2)</label>
-                  <PatternCheckbox options={EMOTIONAL_PATTERNS} field="emotional_patterns" disabled={isReadOnly} maxSelect={2} />
+                  <PatternCheckbox
+                    options={EMOTIONAL_PATTERNS}
+                    field="emotional_patterns"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'emotional_state_score',
+                        'Emotional State Score',
+                        'You selected an emotional pattern. Set the severity now.'
+                      )
+                    }
+                  />
                 </div>
                 {form.emotional_patterns.length > 0 && (
                   <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
@@ -700,7 +764,19 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">3. Cognitive Patterns</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Thought Patterns (top 2)</label>
-                  <PatternCheckbox options={COGNITIVE_PATTERNS} field="cognitive_patterns" disabled={isReadOnly} maxSelect={2} />
+                  <PatternCheckbox
+                    options={COGNITIVE_PATTERNS}
+                    field="cognitive_patterns"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'cognitive_patterns_score',
+                        'Cognitive Patterns Score',
+                        'You selected a cognitive pattern. Set the severity now.'
+                      )
+                    }
+                  />
                 </div>
                 {form.cognitive_patterns.length > 0 && (
                   <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
@@ -721,7 +797,19 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">4. Body Symptoms</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Main Physical Expressions (top 2)</label>
-                  <PatternCheckbox options={BODY_SYMPTOMS} field="body_symptoms" disabled={isReadOnly} maxSelect={2} />
+                  <PatternCheckbox
+                    options={BODY_SYMPTOMS}
+                    field="body_symptoms"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'body_symptoms_score',
+                        'Body Symptoms Score',
+                        'You selected a body symptom. Set the severity now.'
+                      )
+                    }
+                  />
                   {form.body_symptoms.includes('Health Condition') && (
                     <div className="mt-3">
                       <label className="block text-sm font-medium text-slate-700 mb-1">If health condition specify</label>
@@ -755,7 +843,19 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">5. Behavioral Patterns</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Behaviors (top 2)</label>
-                  <PatternCheckbox options={BEHAVIORAL_PATTERNS} field="behavioral_patterns" disabled={isReadOnly} maxSelect={2} />
+                  <PatternCheckbox
+                    options={BEHAVIORAL_PATTERNS}
+                    field="behavioral_patterns"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'behavioral_patterns_score',
+                        'Behavioral Patterns Score',
+                        'You selected a behavioral pattern. Set the severity now.'
+                      )
+                    }
+                  />
                 </div>
                 {form.behavioral_patterns.length > 0 && (
                   <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
@@ -776,7 +876,19 @@ export default function DiagnosticAssessmentForm({
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">6. Life Functioning</h4>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas (top 2)</label>
-                  <PatternCheckbox options={LIFE_FUNCTIONING} field="life_functioning_patterns" disabled={isReadOnly} maxSelect={2} />
+                  <PatternCheckbox
+                    options={LIFE_FUNCTIONING}
+                    field="life_functioning_patterns"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'life_functioning_score',
+                        'Life Functioning Score',
+                        'You selected a life-impact pattern. Set the severity now.'
+                      )
+                    }
+                  />
                 </div>
                 {form.life_functioning_patterns.length > 0 && (
                   <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
@@ -1012,6 +1124,29 @@ export default function DiagnosticAssessmentForm({
           </div>
         </div>
       </div>
+      {scorePrompt && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
+            <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
+            <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
+            <ScoreSlider
+              label="Severity"
+              field={scorePrompt.field}
+              value={(form[scorePrompt.field as keyof typeof form] as number) ?? 0}
+              disabled={false}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setScorePrompt(null)}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

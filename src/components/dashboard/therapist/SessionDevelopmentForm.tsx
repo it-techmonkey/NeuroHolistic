@@ -77,6 +77,11 @@ export default function SessionDevelopmentForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'pre' | 'session' | 'post' | 'scores' | 'notes'>('pre');
+  const [scorePrompt, setScorePrompt] = useState<{
+    field: 'pre_session_intensity' | 'post_session_intensity';
+    title: string;
+    description: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
     previous_session_improvements: existingForm?.previous_session_improvements ?? '',
@@ -137,6 +142,21 @@ export default function SessionDevelopmentForm({
 
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateSymptomsWithPrompt = (
+    symptomField: 'pre_session_symptoms' | 'post_session_symptoms',
+    intensityField: 'pre_session_intensity' | 'post_session_intensity',
+    title: string,
+    description: string,
+    rawValue: string
+  ) => {
+    const parsed = rawValue.split(',').map((s: string) => s.trim()).filter(Boolean);
+    const hadAny = form[symptomField].length > 0;
+    updateField(symptomField, parsed);
+    if (!hadAny && parsed.length > 0) {
+      setScorePrompt({ field: intensityField, title, description });
+    }
   };
 
   const toggleTechnique = (technique: string) => {
@@ -327,7 +347,15 @@ export default function SessionDevelopmentForm({
                   <input
                     type="text"
                     value={form.pre_session_symptoms.join(', ')}
-                    onChange={(e) => updateField('pre_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                    onChange={(e) =>
+                      updateSymptomsWithPrompt(
+                        'pre_session_symptoms',
+                        'pre_session_intensity',
+                        'Pre-Session Intensity',
+                        'You added pre-session symptoms. Please set symptom intensity now.',
+                        e.target.value
+                      )
+                    }
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
                     placeholder="Anxiety, tension, fatigue (comma-separated)"
                   />
@@ -428,7 +456,15 @@ export default function SessionDevelopmentForm({
                   <input
                     type="text"
                     value={form.post_session_symptoms.join(', ')}
-                    onChange={(e) => updateField('post_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                    onChange={(e) =>
+                      updateSymptomsWithPrompt(
+                        'post_session_symptoms',
+                        'post_session_intensity',
+                        'Post-Session Intensity',
+                        'You added post-session symptoms. Please set symptom intensity now.',
+                        e.target.value
+                      )
+                    }
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
                     placeholder="Reduced anxiety, lighter (comma-separated)"
                   />
@@ -686,6 +722,28 @@ export default function SessionDevelopmentForm({
           </div>
         </div>
       </div>
+      {scorePrompt && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
+            <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
+            <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
+            <IntensitySlider
+              label="Intensity"
+              field={scorePrompt.field}
+              value={form[scorePrompt.field]}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setScorePrompt(null)}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
