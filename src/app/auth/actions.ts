@@ -87,11 +87,22 @@ export async function signUp(formData: {
     userId = authData.user.id;
   }
 
+  // Preserve privileged roles when account already exists.
+  const { data: existingProfile } = await serviceSupabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+  const preservedRole =
+    existingProfile?.role === 'admin' || existingProfile?.role === 'therapist'
+      ? existingProfile.role
+      : 'client';
+
   // Create or update user record in public.users table
   const { error: insertError } = await serviceSupabase.from('users').upsert({
     id: userId,
     email: formData.email,
-    role: 'client',
+    role: preservedRole,
     full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
     phone: formData.phone.trim() || null,
     country: formData.country?.trim() ?? null,

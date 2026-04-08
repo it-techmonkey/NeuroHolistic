@@ -25,7 +25,7 @@ export default async function PaidProgramBookingPage({
     : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-16 pt-32">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-16 pt-24">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">

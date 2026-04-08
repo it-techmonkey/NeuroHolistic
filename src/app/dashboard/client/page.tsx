@@ -211,6 +211,11 @@ export default function ClientDashboardPage() {
   };
 
   const getSessionDocuments = (session: Session) => {
+    // Documents/resources are visible only after the session is completed.
+    if (session.status !== 'completed') {
+      return [];
+    }
+
     // For free consultations, match by booking ID (session.id) since there may not be a session record
     // For paid sessions, match by sessions table ID (session.session_id)
     const isFreeConsult = session.type === 'free_consultation';
@@ -220,12 +225,9 @@ export default function ClientDashboardPage() {
       return [];
     }
 
-    // Only require completed status for paid sessions; free consults can show docs anytime
-    if (!isFreeConsult) {
-      const completedIds = data?.completedSessionIds || [];
-      if (!completedIds.includes(session.session_id!)) {
-        return [];
-      }
+    const completedIds = data?.completedSessionIds || [];
+    if (!isFreeConsult && !completedIds.includes(session.session_id!)) {
+      return [];
     }
 
     return documents.filter(d => d.session_id === matchId);
@@ -429,23 +431,17 @@ export default function ClientDashboardPage() {
                     Book a Paid Program
                   </a>
                 )}
-                {/* Pending payment verification */}
-                {data?.programStatus === 'pending_verification' && (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm text-white/90">
-                    <Hourglass className="w-4 h-4" />
-                    Payment Under Review
-                  </div>
-                )}
-                {data?.programStatus === 'active' && (
+                {/* Pending payment verification - allow scheduling immediately */}
+                {(data?.programStatus === 'pending_verification' || data?.programStatus === 'active') && (
                   <a
                     href="/booking/schedule-session"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
                   >
                     <Calendar className="w-4 h-4" />
-                    Book Next Session
+                    {data?.programStatus === 'pending_verification' ? 'Schedule Sessions' : 'Book Next Session'}
                   </a>
                 )}
-                {data?.programStatus === 'active' && (
+                {(data?.programStatus === 'pending_verification' || data?.programStatus === 'active') && (
                   <button
                     onClick={() => setViewMode('sessions')}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors"
@@ -472,9 +468,9 @@ export default function ClientDashboardPage() {
                     <Hourglass className="w-6 h-6 text-amber-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900">Payment Under Review</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">Payment Submitted</h3>
                     <p className="text-sm text-slate-600 mt-1">
-                      Your payment for the <strong className="capitalize">{data.pendingProgram.programType} Program</strong> (AED {data.pendingProgram.pricePaid?.toLocaleString()}) has been submitted and is being verified by our team.
+                      Your payment for the <strong className="capitalize">{data.pendingProgram.programType} Program</strong> (AED {data.pendingProgram.pricePaid?.toLocaleString()}) has been submitted. You can schedule sessions now while our admin team verifies it.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
                       <div className="flex items-center gap-2">
@@ -488,8 +484,17 @@ export default function ClientDashboardPage() {
                     </div>
                     <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
                       <p className="text-xs text-amber-800">
-                        <strong>What happens next:</strong> Our admin team will verify your payment. Once confirmed, you'll be able to schedule your sessions. This usually takes 1-2 business days.
+                        <strong>What happens next:</strong> Schedule your sessions now. Admin verification continues in parallel, and revenue is only counted after admin approval.
                       </p>
+                    </div>
+                    <div className="mt-4">
+                      <a
+                        href="/booking/schedule-session"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Schedule Sessions
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -1068,67 +1073,68 @@ function SessionDetailCard({
             )}
           </div>
 
-          {/* Session Documents */}
-          <div>
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-              <File className="w-4 h-4" /> Documents & Attachments
-            </h4>
-            {documents.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {documents.map(doc => (
-                  <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-200">
-                      {getDocIcon(doc.type)}
-                    </div>
-                    <div className="flex-1 min-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
-                      <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/documents/${doc.id}/view`);
-                          const data = await res.json();
-                          if (data.url) {
-                            window.open(data.url, '_blank');
+          {isCompleted && (
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <File className="w-4 h-4" /> Documents & Attachments
+              </h4>
+              {documents.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {documents.map(doc => (
+                    <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-slate-200">
+                        {getDocIcon(doc.type)}
+                      </div>
+                      <div className="flex-1 min-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{doc.file_name}</p>
+                        <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/documents/${doc.id}/view`);
+                            const data = await res.json();
+                            if (data.url) {
+                              window.open(data.url, '_blank');
+                            }
+                          } catch (error) {
+                            console.error('Failed to get document URL:', error);
                           }
-                        } catch (error) {
-                          console.error('Failed to get document URL:', error);
-                        }
-                      }}
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/documents/${doc.id}/view`);
-                          const data = await res.json();
-                          if (data.url) {
-                            const a = document.createElement('a');
-                            a.href = data.url;
-                            a.download = doc.file_name;
-                            a.click();
+                        }}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/documents/${doc.id}/view`);
+                            const data = await res.json();
+                            if (data.url) {
+                              const a = document.createElement('a');
+                              a.href = data.url;
+                              a.download = doc.file_name;
+                              a.click();
+                            }
+                          } catch (error) {
+                            console.error('Failed to download document:', error);
                           }
-                        } catch (error) {
-                          console.error('Failed to download document:', error);
-                        }
-                      }}
-                      className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-                <File className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-400">No documents available for this session</p>
-              </div>
-            )}
-          </div>
+                        }}
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
+                  <File className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-400">No documents available for this session</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Session Info */}
           <div className="pt-4 border-t border-slate-100">

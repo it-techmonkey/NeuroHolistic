@@ -162,12 +162,41 @@ export default function DiagnosticAssessmentForm({
   onSave,
   isSessionCompleted = false,
 }: DiagnosticAssessmentFormProps) {
+  const parseMultiValue = (value: unknown): string[] => {
+    if (Array.isArray(value)) return value.filter((v) => typeof v === 'string') as string[];
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  const getParentalInfluenceKey = (value: unknown): string => {
+    const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    if (!normalized) return '';
+    const direct = PARENTAL_INFLUENCE_OPTIONS.find((opt) => opt.value === normalized);
+    if (direct) return direct.value;
+    const byLabel = PARENTAL_INFLUENCE_OPTIONS.find((opt) => opt.label.toLowerCase() === normalized);
+    return byLabel?.value || 'other';
+  };
+
   const isCompleted = existingAssessment?.status === 'completed' || isSessionCompleted;
-  const isReadOnly = isCompleted;
+  const isSubmitted = existingAssessment?.status === 'submitted';
+  const isReadOnly = isCompleted || isSubmitted;
 
   const [activeSection, setActiveSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [scorePromptedFields, setScorePromptedFields] = useState<Record<string, boolean>>({
+    nervous_system_score: (existingAssessment?.nervous_system_score ?? 0) > 0,
+    emotional_state_score: (existingAssessment?.emotional_state_score ?? 0) > 0,
+    cognitive_patterns_score: (existingAssessment?.cognitive_patterns_score ?? 0) > 0,
+    body_symptoms_score: (existingAssessment?.body_symptoms_score ?? 0) > 0,
+    behavioral_patterns_score: (existingAssessment?.behavioral_patterns_score ?? 0) > 0,
+    life_functioning_score: (existingAssessment?.life_functioning_score ?? 0) > 0,
+  });
   const [scorePrompt, setScorePrompt] = useState<{
     field: string;
     title: string;
@@ -186,7 +215,7 @@ export default function DiagnosticAssessmentForm({
 
     // Main Concerns
     main_complaint: existingAssessment?.main_complaint ?? '',
-    current_symptoms: existingAssessment?.current_symptoms ?? [],
+    current_symptoms: parseMultiValue(existingAssessment?.current_symptoms),
     current_symptoms_other: existingAssessment?.current_symptoms_other ?? '',
 
     // Previous Therapy
@@ -198,33 +227,33 @@ export default function DiagnosticAssessmentForm({
     nervous_system_score: existingAssessment?.nervous_system_score ?? 0,
 
     // Symptoms - Emotional State
-    emotional_patterns: existingAssessment?.emotional_patterns ?? [],
+    emotional_patterns: parseMultiValue(existingAssessment?.emotional_patterns),
     emotional_state_score: existingAssessment?.emotional_state_score ?? 0,
 
     // Symptoms - Cognitive Patterns
-    cognitive_patterns: existingAssessment?.cognitive_patterns ?? [],
+    cognitive_patterns: parseMultiValue(existingAssessment?.cognitive_patterns),
     cognitive_patterns_score: existingAssessment?.cognitive_patterns_score ?? 0,
 
     // Symptoms - Body Symptoms
-    body_symptoms: existingAssessment?.body_symptoms ?? [],
+    body_symptoms: parseMultiValue(existingAssessment?.body_symptoms),
     health_condition_specify: existingAssessment?.health_condition_specify ?? '',
     body_symptoms_score: existingAssessment?.body_symptoms_score ?? 0,
 
     // Symptoms - Behavioral Patterns
-    behavioral_patterns: existingAssessment?.behavioral_patterns ?? [],
+    behavioral_patterns: parseMultiValue(existingAssessment?.behavioral_patterns),
     behavioral_patterns_score: existingAssessment?.behavioral_patterns_score ?? 0,
 
     // Symptoms - Life Functioning
-    life_functioning_patterns: existingAssessment?.life_functioning_patterns ?? [],
+    life_functioning_patterns: parseMultiValue(existingAssessment?.life_functioning_patterns),
     life_functioning_score: existingAssessment?.life_functioning_score ?? 0,
 
     // Root Cause Analysis
     root_cause_pattern_timeline: existingAssessment?.root_cause_pattern_timeline ?? '',
-    root_cause_parental_influence: existingAssessment?.root_cause_parental_influence ?? '',
+    root_cause_parental_influence: getParentalInfluenceKey(existingAssessment?.root_cause_parental_influence),
     root_cause_parental_influence_other: existingAssessment?.root_cause_parental_influence_other ?? '',
-    root_cause_core_patterns: existingAssessment?.root_cause_core_patterns ?? [],
+    root_cause_core_patterns: parseMultiValue(existingAssessment?.root_cause_core_patterns),
     root_cause_core_patterns_other: existingAssessment?.root_cause_core_patterns_other ?? '',
-    root_cause_contributing_factors: existingAssessment?.root_cause_contributing_factors ?? [],
+    root_cause_contributing_factors: parseMultiValue(existingAssessment?.root_cause_contributing_factors),
     root_cause_contributing_factors_other: existingAssessment?.root_cause_contributing_factors_other ?? '',
 
     // Clinical Summary
@@ -234,7 +263,7 @@ export default function DiagnosticAssessmentForm({
   });
 
   useEffect(() => {
-    if (existingAssessment?.status === 'submitted') return;
+    if (isReadOnly) return;
     if (!clientData) return;
     setForm((prev) => ({
       ...prev,
@@ -244,7 +273,7 @@ export default function DiagnosticAssessmentForm({
       client_country: prev.client_country || clientData.country || '',
     }));
   }, [
-    existingAssessment?.status,
+    isReadOnly,
     clientData?.full_name,
     clientData?.email,
     clientData?.phone,
@@ -257,6 +286,8 @@ export default function DiagnosticAssessmentForm({
 
   const openScorePrompt = (field: string, title: string, description: string) => {
     if (isReadOnly) return;
+    if (scorePromptedFields[field]) return;
+    setScorePromptedFields((prev) => ({ ...prev, [field]: true }));
     setScorePrompt({ field, title, description });
   };
 
@@ -384,6 +415,8 @@ export default function DiagnosticAssessmentForm({
       <p className="text-xs text-slate-500">{SCORE_LABELS[value]}</p>
     </div>
   );
+
+  const quickScoreOptions = [0, 3, 5, 7, 10];
 
   const PatternCheckbox = ({
     options,
@@ -1129,12 +1162,31 @@ export default function DiagnosticAssessmentForm({
           <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
             <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
             <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
+            <p className="text-xs text-slate-500 mb-3">
+              Tip: set a rough score now; you can fine-tune it anytime before submission.
+            </p>
             <ScoreSlider
               label="Severity"
               field={scorePrompt.field}
               value={(form[scorePrompt.field as keyof typeof form] as number) ?? 0}
               disabled={false}
             />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickScoreOptions.map((score) => (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => updateField(scorePrompt.field, score)}
+                  className={`px-2.5 py-1.5 rounded text-xs border transition-colors ${
+                    (form[scorePrompt.field as keyof typeof form] as number) === score
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'
+                  }`}
+                >
+                  {score}
+                </button>
+              ))}
+            </div>
             <div className="flex justify-end mt-4">
               <button
                 type="button"

@@ -32,6 +32,15 @@ interface BookingResult {
   bookingId?: string;
 }
 
+function normalizeTherapistName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^(dr|doctor)\s+/i, '')
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ');
+}
+
 export default function BookingForm({ onClose, bookingType = 'consultation' }: BookingFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<'details' | 'schedule' | 'success'>('details');
@@ -67,10 +76,10 @@ export default function BookingForm({ onClose, bookingType = 'consultation' }: B
       .then(res => res.json())
       .then(data => {
         const list = data.therapists || [];
-        // Deduplicate by name
+        // Deduplicate by normalized name
         const seen = new Set<string>();
         const unique = list.filter((t: Therapist) => {
-          const key = t.name.toLowerCase().trim();
+          const key = normalizeTherapistName(t.name);
           if (seen.has(key)) return false;
           seen.add(key);
           return true;

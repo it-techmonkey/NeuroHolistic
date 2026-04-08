@@ -74,9 +74,25 @@ export default function SessionDevelopmentForm({
   onClose,
   onSave,
 }: SessionDevelopmentFormProps) {
+  const clampScore = (value: number) => Math.max(0, Math.min(10, value));
+  const parseMultiValue = (value: unknown): string[] => {
+    if (Array.isArray(value)) return value.filter((v) => typeof v === 'string') as string[];
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+  const isReadOnly = Boolean(existingForm?.submitted_at || existingForm?.id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'pre' | 'session' | 'post' | 'scores' | 'notes'>('pre');
+  const [scorePromptedFields, setScorePromptedFields] = useState({
+    pre_session_intensity: (existingForm?.pre_session_intensity ?? 0) > 0,
+    post_session_intensity: (existingForm?.post_session_intensity ?? 0) > 0,
+  });
   const [scorePrompt, setScorePrompt] = useState<{
     field: 'pre_session_intensity' | 'post_session_intensity';
     title: string;
@@ -86,15 +102,15 @@ export default function SessionDevelopmentForm({
   const [form, setForm] = useState({
     previous_session_improvements: existingForm?.previous_session_improvements ?? '',
     previous_session_challenges: existingForm?.previous_session_challenges ?? '',
-    pre_session_symptoms: existingForm?.pre_session_symptoms ?? [],
+    pre_session_symptoms: parseMultiValue(existingForm?.pre_session_symptoms),
     pre_session_intensity: existingForm?.pre_session_intensity ?? 5,
     pre_session_mood: existingForm?.pre_session_mood ?? 5,
-    techniques_used: existingForm?.techniques_used ?? [],
+    techniques_used: parseMultiValue(existingForm?.techniques_used),
     targeted_therapy_specify: existingForm?.targeted_therapy_specify ?? '',
     scanning_specify: existingForm?.scanning_specify ?? '',
     key_interventions: existingForm?.key_interventions ?? '',
     breakthroughs_resistance: existingForm?.breakthroughs_resistance ?? '',
-    post_session_symptoms: existingForm?.post_session_symptoms ?? [],
+    post_session_symptoms: parseMultiValue(existingForm?.post_session_symptoms),
     post_session_intensity: existingForm?.post_session_intensity ?? 5,
     post_session_mood: existingForm?.post_session_mood ?? 5,
     shift_observed: existingForm?.shift_observed ?? '',
@@ -115,15 +131,15 @@ export default function SessionDevelopmentForm({
       setForm({
         previous_session_improvements: existingForm.previous_session_improvements ?? '',
         previous_session_challenges: existingForm.previous_session_challenges ?? '',
-        pre_session_symptoms: existingForm.pre_session_symptoms ?? [],
+        pre_session_symptoms: parseMultiValue(existingForm.pre_session_symptoms),
         pre_session_intensity: existingForm.pre_session_intensity ?? 5,
         pre_session_mood: existingForm.pre_session_mood ?? 5,
-        techniques_used: existingForm.techniques_used ?? [],
+        techniques_used: parseMultiValue(existingForm.techniques_used),
         targeted_therapy_specify: existingForm.targeted_therapy_specify ?? '',
         scanning_specify: existingForm.scanning_specify ?? '',
         key_interventions: existingForm.key_interventions ?? '',
         breakthroughs_resistance: existingForm.breakthroughs_resistance ?? '',
-        post_session_symptoms: existingForm.post_session_symptoms ?? [],
+        post_session_symptoms: parseMultiValue(existingForm.post_session_symptoms),
         post_session_intensity: existingForm.post_session_intensity ?? 5,
         post_session_mood: existingForm.post_session_mood ?? 5,
         shift_observed: existingForm.shift_observed ?? '',
@@ -154,7 +170,8 @@ export default function SessionDevelopmentForm({
     const parsed = rawValue.split(',').map((s: string) => s.trim()).filter(Boolean);
     const hadAny = form[symptomField].length > 0;
     updateField(symptomField, parsed);
-    if (!hadAny && parsed.length > 0) {
+    if (!hadAny && parsed.length > 0 && !scorePromptedFields[intensityField]) {
+      setScorePromptedFields((prev) => ({ ...prev, [intensityField]: true }));
       setScorePrompt({ field: intensityField, title, description });
     }
   };
@@ -171,6 +188,7 @@ export default function SessionDevelopmentForm({
   const goalReadinessScore = form.nervous_system_score + form.emotional_state_score +
     form.cognitive_patterns_score + form.body_symptoms_score +
     form.behavioral_patterns_score + form.life_functioning_score;
+  const intensityChange = form.pre_session_intensity - form.post_session_intensity;
 
   const handleSave = async () => {
     setLoading(true);
@@ -226,7 +244,8 @@ export default function SessionDevelopmentForm({
         max="10"
         value={value}
         onChange={(e) => updateField(field, parseInt(e.target.value))}
-        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+        disabled={isReadOnly}
+        className={`w-full h-2 bg-slate-200 rounded-lg appearance-none accent-indigo-600 ${isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       />
       <p className="text-xs text-slate-500">{SCORE_LABELS[value]}</p>
     </div>
@@ -244,7 +263,8 @@ export default function SessionDevelopmentForm({
         max="10"
         value={value}
         onChange={(e) => updateField(field, parseInt(e.target.value))}
-        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+        disabled={isReadOnly}
+        className={`w-full h-2 bg-slate-200 rounded-lg appearance-none accent-amber-600 ${isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       />
     </div>
   );
@@ -256,6 +276,7 @@ export default function SessionDevelopmentForm({
     { id: 'scores', label: 'Scores' },
     { id: 'notes', label: 'Notes' },
   ] as const;
+  const quickScoreOptions = [0, 3, 5, 7, 10];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -267,8 +288,8 @@ export default function SessionDevelopmentForm({
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold text-slate-900">Session Development Form</h2>
                 {existingForm && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-                    Viewing Existing
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${isReadOnly ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {isReadOnly ? 'Submitted (Read-only)' : 'Viewing Existing'}
                   </span>
                 )}
               </div>
@@ -319,7 +340,8 @@ export default function SessionDevelopmentForm({
                   value={form.previous_session_improvements}
                   onChange={(e) => updateField('previous_session_improvements', e.target.value)}
                   rows={3}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="What improvements were observed since the last session?"
                 />
               </div>
@@ -332,7 +354,8 @@ export default function SessionDevelopmentForm({
                   value={form.previous_session_challenges}
                   onChange={(e) => updateField('previous_session_challenges', e.target.value)}
                   rows={3}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="What challenges remain from the previous session?"
                 />
               </div>
@@ -348,6 +371,7 @@ export default function SessionDevelopmentForm({
                     type="text"
                     value={form.pre_session_symptoms.join(', ')}
                     onChange={(e) =>
+                      !isReadOnly &&
                       updateSymptomsWithPrompt(
                         'pre_session_symptoms',
                         'pre_session_intensity',
@@ -356,7 +380,8 @@ export default function SessionDevelopmentForm({
                         e.target.value
                       )
                     }
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                    disabled={isReadOnly}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                     placeholder="Anxiety, tension, fatigue (comma-separated)"
                   />
                 </div>
@@ -385,7 +410,8 @@ export default function SessionDevelopmentForm({
                     <button
                       key={technique}
                       type="button"
-                      onClick={() => toggleTechnique(technique)}
+                      onClick={() => !isReadOnly && toggleTechnique(technique)}
+                      disabled={isReadOnly}
                       className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
                         form.techniques_used.includes(technique)
                           ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
@@ -406,7 +432,8 @@ export default function SessionDevelopmentForm({
                       <div key={technique} className={`rounded-lg border p-3 transition-colors ${isActive ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
                         <button
                           type="button"
-                          onClick={() => toggleTechnique(technique)}
+                          onClick={() => !isReadOnly && toggleTechnique(technique)}
+                          disabled={isReadOnly}
                           className={`text-left text-sm font-medium transition-colors ${
                             isActive ? 'text-indigo-800' : 'text-slate-700 hover:text-slate-900'
                           }`}
@@ -418,7 +445,8 @@ export default function SessionDevelopmentForm({
                             type="text"
                             value={form[specifyField]}
                             onChange={(e) => updateField(specifyField, e.target.value)}
-                            className="w-full mt-2 border border-indigo-200 rounded px-3 py-1.5 text-sm bg-white"
+                            disabled={isReadOnly}
+                            className="w-full mt-2 border border-indigo-200 rounded px-3 py-1.5 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-500"
                             placeholder={`Specify ${technique.toLowerCase()} details...`}
                           />
                         )}
@@ -434,7 +462,8 @@ export default function SessionDevelopmentForm({
                   value={form.breakthroughs_resistance}
                   onChange={(e) => updateField('breakthroughs_resistance', e.target.value)}
                   rows={4}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="Note any breakthroughs or resistance encountered..."
                 />
               </div>
@@ -457,6 +486,7 @@ export default function SessionDevelopmentForm({
                     type="text"
                     value={form.post_session_symptoms.join(', ')}
                     onChange={(e) =>
+                      !isReadOnly &&
                       updateSymptomsWithPrompt(
                         'post_session_symptoms',
                         'post_session_intensity',
@@ -465,7 +495,8 @@ export default function SessionDevelopmentForm({
                         e.target.value
                       )
                     }
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                    disabled={isReadOnly}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                     placeholder="Reduced anxiety, lighter (comma-separated)"
                   />
                 </div>
@@ -485,17 +516,43 @@ export default function SessionDevelopmentForm({
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">Intensity Change:</span>
                   <span className={`text-lg font-bold ${
-                    form.post_session_intensity < form.pre_session_intensity
+                    intensityChange > 0
                       ? 'text-green-600'
-                      : form.post_session_intensity > form.pre_session_intensity
+                      : intensityChange < 0
                       ? 'text-red-600'
                       : 'text-slate-600'
                   }`}>
-                    {form.pre_session_intensity - form.post_session_intensity > 0 ? '+' : ''}
-                    {form.pre_session_intensity - form.post_session_intensity}
-                    {form.post_session_intensity < form.pre_session_intensity && ' (Improved)'}
-                    {form.post_session_intensity > form.pre_session_intensity && ' (Worsened)'}
+                    {intensityChange > 0 ? '+' : ''}
+                    {intensityChange}
+                    {intensityChange > 0 && ' (Improved)'}
+                    {intensityChange < 0 && ' (Worsened)'}
                   </span>
+                </div>
+                <div className="mt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-medium text-slate-600">
+                      Adjust intensity change
+                    </label>
+                    <span className="text-xs text-slate-500">
+                      -10 = Worsened, +10 = Improved
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-10"
+                    max="10"
+                    step="1"
+                    value={intensityChange}
+                    disabled={isReadOnly}
+                    onChange={(e) => {
+                      const change = parseInt(e.target.value, 10);
+                      const nextPost = clampScore(form.pre_session_intensity - change);
+                      updateField('post_session_intensity', nextPost);
+                    }}
+                    className={`w-full h-2 bg-slate-200 rounded-lg appearance-none accent-indigo-600 ${
+                      isReadOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                    }`}
+                  />
                 </div>
               </div>
 
@@ -505,7 +562,8 @@ export default function SessionDevelopmentForm({
                   value={form.shift_observed}
                   onChange={(e) => updateField('shift_observed', e.target.value)}
                   rows={3}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="What shifts were observed during/after the session?"
                 />
               </div>
@@ -516,7 +574,8 @@ export default function SessionDevelopmentForm({
                   value={form.client_feedback}
                   onChange={(e) => updateField('client_feedback', e.target.value)}
                   rows={3}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="Direct feedback from the client..."
                 />
               </div>
@@ -658,7 +717,8 @@ export default function SessionDevelopmentForm({
                   value={form.integration_notes}
                   onChange={(e) => updateField('integration_notes', e.target.value)}
                   rows={4}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  disabled={isReadOnly}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="Notes for the client to integrate between sessions..."
                 />
               </div>
@@ -671,7 +731,8 @@ export default function SessionDevelopmentForm({
                   value={form.therapist_internal_notes}
                   onChange={(e) => updateField('therapist_internal_notes', e.target.value)}
                   rows={5}
-                  className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-white mt-2"
+                  disabled={isReadOnly}
+                  className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-white mt-2 disabled:bg-slate-50 disabled:text-slate-500"
                   placeholder="Private clinical notes — these will never be shared with the client..."
                 />
                 <p className="text-xs text-amber-700 mt-2">
@@ -689,7 +750,7 @@ export default function SessionDevelopmentForm({
             onClick={onClose}
             className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
           >
-            Cancel
+            {isReadOnly ? 'Close' : 'Cancel'}
           </button>
           <div className="flex gap-3">
             {activeTab !== 'pre' && (
@@ -709,7 +770,7 @@ export default function SessionDevelopmentForm({
               >
                 Next
               </button>
-            ) : (
+            ) : !isReadOnly && (
               <button
                 type="button"
                 onClick={handleSave}
@@ -727,11 +788,30 @@ export default function SessionDevelopmentForm({
           <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
             <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
             <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
+            <p className="text-xs text-slate-500 mb-3">
+              Tip: choose a quick intensity first, then refine with the slider.
+            </p>
             <IntensitySlider
               label="Intensity"
               field={scorePrompt.field}
               value={form[scorePrompt.field]}
             />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickScoreOptions.map((score) => (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => updateField(scorePrompt.field, score)}
+                  className={`px-2.5 py-1.5 rounded text-xs border transition-colors ${
+                    form[scorePrompt.field] === score
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'
+                  }`}
+                >
+                  {score}
+                </button>
+              ))}
+            </div>
             <div className="flex justify-end mt-4">
               <button
                 type="button"

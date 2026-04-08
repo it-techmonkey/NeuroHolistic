@@ -62,7 +62,10 @@ export async function GET() {
     const userMap = new Map(users.map(u => [u.id, u]));
 
     // Revenue
-    const programRevenue = programs.reduce((sum, p) => sum + (p.price_paid ?? 0), 0);
+    const programRevenue = programs.reduce((sum, p) => {
+      if (p.payment_status !== 'verified') return sum;
+      return sum + (p.price_paid ?? 0);
+    }, 0);
     const totalRevenue = programRevenue;
 
     // Time buckets
@@ -85,7 +88,10 @@ export async function GET() {
       });
       monthlyRevenue.push({
         month: monthLabel,
-        revenue: monthPrograms.reduce((sum, p) => sum + (p.price_paid ?? 0), 0),
+        revenue: monthPrograms.reduce((sum, p) => {
+          if (p.payment_status !== 'verified') return sum;
+          return sum + (p.price_paid ?? 0);
+        }, 0),
         programs: monthPrograms.length,
       });
     }
@@ -245,7 +251,10 @@ export async function GET() {
           completedSessions: tSessions.filter(s => s.status === 'completed').length,
           assessments: tAssessments.length,
           devForms: tDevForms.length,
-          revenue: tPrograms.reduce((sum, p) => sum + (p.price_paid ?? 0), 0),
+          revenue: tPrograms.reduce((sum, p) => {
+            if (p.payment_status !== 'verified') return sum;
+            return sum + (p.price_paid ?? 0);
+          }, 0),
           avgGoalReadiness: tAssessments.length > 0
             ? Math.round(tAssessments.reduce((sum, a) => sum + (a.goal_readiness_score ?? 0), 0) / tAssessments.length)
             : 0,

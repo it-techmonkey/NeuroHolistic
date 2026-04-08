@@ -16,7 +16,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
 
   if (therapists.length === 0) {
     return (
-      <div className="bg-[#111827] rounded-xl border border-white/5 p-12 text-center">
+      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
         <UserCheck className="w-10 h-10 text-slate-600 mx-auto mb-3" />
         <p className="text-sm text-slate-400">No therapists found</p>
         <p className="text-xs text-slate-600 mt-1">Therapists will appear here once added to the platform</p>
@@ -42,7 +42,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
           return (
             <div
               key={t.id}
-              className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden hover:border-white/10 transition-colors"
+              className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 transition-colors"
             >
               <button
                 onClick={() => setExpandedId(isExpanded ? null : t.id)}
@@ -54,7 +54,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                       <UserCheck className="w-4 h-4 text-violet-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{t.name}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
                       <p className="text-[11px] text-slate-500 truncate">{t.email}</p>
                     </div>
                   </div>
@@ -71,7 +71,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                       <Users className="w-3 h-3" />
                       <span className="text-[10px]">Clients</span>
                     </div>
-                    <p className="text-sm font-semibold font-mono text-white">{fmt(stats.totalClients || 0)}</p>
+                    <p className="text-sm font-semibold font-mono text-slate-900">{fmt(stats.totalClients || 0)}</p>
                   </div>
                   <div>
                     <div className="flex items-center gap-1 text-slate-500 mb-1">
@@ -85,14 +85,14 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                       <Calendar className="w-3 h-3" />
                       <span className="text-[10px]">Sessions</span>
                     </div>
-                    <p className="text-sm font-semibold font-mono text-white">{fmt(stats.completedSessions || 0)}/{fmt(stats.totalSessions || 0)}</p>
+                    <p className="text-sm font-semibold font-mono text-slate-900">{fmt(stats.completedSessions || 0)}/{fmt(stats.totalSessions || 0)}</p>
                   </div>
                   <div>
                     <div className="flex items-center gap-1 text-slate-500 mb-1">
                       <FileText className="w-3 h-3" />
                       <span className="text-[10px]">Assessments</span>
                     </div>
-                    <p className="text-sm font-semibold font-mono text-white">{fmt(stats.assessments || 0)}</p>
+                    <p className="text-sm font-semibold font-mono text-slate-900">{fmt(stats.assessments || 0)}</p>
                   </div>
                 </div>
               </button>
@@ -119,7 +119,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                   )}
 
                   <div>
-                    <p className="text-xs font-medium text-white mb-3">Clients ({clients.length})</p>
+                    <p className="text-xs font-medium text-slate-900 mb-3">Clients ({clients.length})</p>
                     {clients.length === 0 ? (
                       <p className="text-xs text-slate-600 py-3">No clients assigned</p>
                     ) : (
@@ -132,9 +132,9 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                           const assessment = c.latestAssessment;
 
                           return (
-                            <div key={c.id} className="bg-white/[0.02] rounded-lg px-4 py-3">
+                            <div key={c.id} className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-slate-200 truncate">{c.name}</span>
+                                <span className="text-xs font-medium text-slate-900 truncate">{c.name}</span>
                                 {program && (
                                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                                     program.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
@@ -201,12 +201,12 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
 
 function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-white/[0.03] rounded-lg px-3 py-2">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
       <div className="flex items-center gap-1 text-slate-500 mb-1">
         {icon}
         <span className="text-[10px]">{label}</span>
       </div>
-      <p className="text-xs font-semibold font-mono text-white">{value}</p>
+      <p className="text-xs font-semibold font-mono text-slate-900">{value}</p>
     </div>
   );
 }

@@ -117,7 +117,7 @@ export default function BookingsTab({ data }: BookingsTabProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
         <CalendarDays className="w-6 h-6 text-blue-400" />
-        <h2 className="text-xl font-semibold text-white">Bookings</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Bookings</h2>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -144,7 +144,7 @@ export default function BookingsTab({ data }: BookingsTabProps) {
             placeholder="Search by client or therapist name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-[#111827] border border-white/5 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export default function BookingsTab({ data }: BookingsTabProps) {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-            className="bg-[#111827] border border-white/5 rounded-lg text-white px-3 py-2.5 focus:outline-none focus:border-blue-500/50 transition-colors"
+            className="bg-white border border-slate-300 rounded-lg text-slate-900 px-3 py-2.5 focus:outline-none focus:border-blue-500/50 transition-colors"
           >
             {typeFilters.map((f) => (
               <option key={f.key} value={f.key}>
@@ -171,7 +171,7 @@ export default function BookingsTab({ data }: BookingsTabProps) {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               statusFilter === f.key
                 ? 'bg-blue-600 text-white'
-                : 'bg-[#111827] border border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                : 'bg-white border border-slate-300 text-slate-600 hover:text-slate-900 hover:border-slate-400'
             }`}
           >
             {f.label}
@@ -185,9 +185,9 @@ export default function BookingsTab({ data }: BookingsTabProps) {
       </div>
 
       {filteredBookings.length === 0 ? (
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-12 text-center">
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
           <CalendarDays className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">
+          <h3 className="text-lg font-medium text-slate-900 mb-2">
             No bookings found
           </h3>
           <p className="text-sm text-slate-400">
@@ -197,11 +197,11 @@ export default function BookingsTab({ data }: BookingsTabProps) {
           </p>
         </div>
       ) : (
-        <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px]">
               <thead>
-                <tr className="border-b border-white/5">
+                <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="text-left px-5 py-3.5 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Client
                   </th>
@@ -229,11 +229,11 @@ export default function BookingsTab({ data }: BookingsTabProps) {
                 {filteredBookings.map((booking) => (
                   <tr
                     key={booking.id}
-                    className="hover:bg-white/[0.02] transition-colors"
+                    className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-5 py-4">
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-slate-900">
                           {booking.clientName ?? 'Unknown'}
                         </p>
                         {booking.clientEmail && (

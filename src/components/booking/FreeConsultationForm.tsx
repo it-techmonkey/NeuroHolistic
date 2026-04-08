@@ -15,6 +15,15 @@ type Slot = {
   display: string;
 };
 
+function normalizeTherapistName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^(dr|doctor)\s+/i, '')
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ');
+}
+
 interface FreeConsultationFormProps {
   /** Render mode: 'page' wraps in a full-page dark layout, 'embedded' renders form only */
   mode?: 'page' | 'embedded';
@@ -105,7 +114,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
           );
           const seen = new Set<string>();
           const unique = list.filter((t: Therapist) => {
-            const key = t.name.toLowerCase().trim();
+            const key = normalizeTherapistName(t.name);
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -291,7 +300,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
     if (mode === 'page') {
       return (
-        <div className="min-h-screen bg-[#0B1028] pt-28 sm:pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#0B1028] pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-lg mx-auto">{loadingContent}</div>
         </div>
       );
@@ -591,7 +600,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
   if (mode === 'page') {
     return (
-      <div className="min-h-screen bg-[#0B1028] pt-28 sm:pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#0B1028] pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-lg mx-auto">
           {formContent}
         </div>

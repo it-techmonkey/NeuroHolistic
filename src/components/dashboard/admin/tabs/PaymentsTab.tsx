@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   CreditCard, CheckCircle, XCircle, Loader2, Clock,
   User, Mail, DollarSign, Calendar, RefreshCw, MessageSquare,
@@ -92,6 +92,12 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
     }
   }, []);
 
+  useEffect(() => {
+    if (initialPayments.length === 0) {
+      fetchPayments();
+    }
+  }, [initialPayments.length, fetchPayments]);
+
   const handleAction = async (programId: string, action: 'accept' | 'reject') => {
     setActionLoading(programId);
     try {
@@ -134,6 +140,13 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
 
   const pendingCount = payments.length;
   const totalPendingAmount = payments.reduce((sum, p) => sum + p.pricePaid, 0);
+  const handleQuickApprove = async (programId: string) => {
+    const confirmed = window.confirm(
+      'Mark this payment as verified and activate the program?'
+    );
+    if (!confirmed) return;
+    await handleAction(programId, 'accept');
+  };
 
   return (
     <div className="space-y-6">
@@ -152,7 +165,7 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <CreditCard className="w-6 h-6 text-amber-400" />
-          <h2 className="text-xl font-semibold text-white">Pending Payments</h2>
+          <h2 className="text-xl font-semibold text-white">Manual Payment Approvals</h2>
         </div>
         <button
           onClick={fetchPayments}
@@ -273,10 +286,22 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
                     </div>
                     <div className="flex gap-2">
                       <button
+                        onClick={() => handleQuickApprove(payment.id)}
+                        disabled={actionLoading === payment.id}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
+                      >
+                        {actionLoading === payment.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
+                        )}
+                        Mark Verified
+                      </button>
+                      <button
                         onClick={() => setSelectedPayment(payment)}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
                       >
-                        Review
+                        Review Details
                       </button>
                     </div>
                   </div>
@@ -293,8 +318,8 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
           <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-white/5">
-              <h3 className="text-lg font-semibold text-white">Review Payment</h3>
-              <p className="text-xs text-slate-400 mt-1">Verify payment details before accepting</p>
+              <h3 className="text-lg font-semibold text-white">Manual Approval</h3>
+              <p className="text-xs text-slate-400 mt-1">Approve or reject based on your internal confirmation process.</p>
             </div>
 
             {/* Modal Body */}
@@ -360,10 +385,10 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
                 />
               </div>
 
-              {/* Verification Reminder */}
+              {/* Manual Approval Reminder */}
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
                 <p className="text-xs text-amber-400">
-                  <strong>Reminder:</strong> Please verify the payment on your payment platform (Ziina) before accepting. Check that the amount matches the expected price for this program type.
+                  <strong>Manual workflow:</strong> This action is admin-controlled. Approve when your team confirms payment with client/therapist.
                 </p>
               </div>
             </div>
@@ -398,7 +423,7 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
                 ) : (
                   <CheckCircle className="w-4 h-4" />
                 )}
-                Accept
+                Mark Verified & Activate
               </button>
             </div>
           </div>

@@ -147,15 +147,26 @@ export default function SuperAdminDashboard() {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [approvalLoading, setApprovalLoading] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/admin/overview');
-      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-      const json: AdminData = await res.json();
+      const [overviewRes, approvalsRes] = await Promise.all([
+        fetch('/api/admin/overview'),
+        fetch('/api/admin/payments'),
+      ]);
+      if (!overviewRes.ok) throw new Error(`Failed to fetch: ${overviewRes.status}`);
+      const json: AdminData = await overviewRes.json();
       setData(json);
+      if (approvalsRes.ok) {
+        const approvalsJson = await approvalsRes.json();
+        setPendingApprovals(approvalsJson.payments || []);
+      } else {
+        setPendingApprovals([]);
+      }
     } catch (e) {
       console.error('[Admin Dashboard Error]', e);
       setError(e instanceof Error ? e.message : 'Failed to load dashboard');
@@ -163,6 +174,26 @@ export default function SuperAdminDashboard() {
       setLoading(false);
     }
   }, []);
+
+  const handlePaymentDecision = useCallback(async (programId: string, action: 'accept' | 'reject') => {
+    setApprovalLoading(programId);
+    try {
+      const res = await fetch('/api/admin/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programId, action }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Action failed');
+      setPendingApprovals((prev) => prev.filter((p) => p.id !== programId));
+      await fetchData();
+    } catch (e) {
+      console.error('[Admin Payment Decision]', e);
+      setError(e instanceof Error ? e.message : 'Failed to process payment decision');
+    } finally {
+      setApprovalLoading(null);
+    }
+  }, [fetchData]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -219,6 +250,50 @@ export default function SuperAdminDashboard() {
       {/* ── FINANCE ── */}
       {tab === 'finance' && (
         <div className="space-y-12">
+          <section className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Manual Payment Approvals</h3>
+                <p className="text-xs text-slate-500 mt-1">Approve payments manually after your internal confirmation with client/therapist.</p>
+              </div>
+              <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                Pending: {pendingApprovals.length}
+              </span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {pendingApprovals.length === 0 ? (
+                <div className="px-6 py-8 text-sm text-slate-500 text-center">No pending payments to approve.</div>
+              ) : (
+                pendingApprovals.map((payment) => (
+                  <div key={payment.id} className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{payment.clientName} • AED {(payment.pricePaid || 0).toLocaleString()}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {payment.programType} program • Therapist: {payment.therapistName} • {payment.clientEmail}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePaymentDecision(payment.id, 'reject')}
+                        disabled={approvalLoading === payment.id}
+                        className="px-3 py-1.5 text-xs rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={() => handlePaymentDecision(payment.id, 'accept')}
+                        disabled={approvalLoading === payment.id}
+                        className="px-3 py-1.5 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        {approvalLoading === payment.id ? 'Processing...' : 'Approve Payment'}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
           <header>
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Total Verified Revenue</p>
             <h1 className="text-4xl md:text-5xl font-light tracking-tight text-slate-900">

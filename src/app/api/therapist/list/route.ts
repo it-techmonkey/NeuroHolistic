@@ -15,6 +15,7 @@ function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .trim()
+    .replace(/^(dr|doctor)\s+/i, '')
     .replace(/\./g, '')
     .replace(/\s+/g, ' ')
     .replace(/[^a-z0-9\s]/g, '')
@@ -62,7 +63,7 @@ export async function GET() {
           therapists.push({
             id: user.id,
             slug: isFounder ? FOUNDER_SLUG : name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-            name: isFounder ? 'Fawzia Yassmina' : name,
+            name: isFounder ? 'Dr. Fawzia Yassmina' : name,
             role: isFounder ? 'Founder & Lead Practitioner' : (user.role === 'admin' ? 'Founder & Lead Practitioner' : 'Certified Practitioner'),
           });
         }

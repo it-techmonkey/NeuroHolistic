@@ -87,13 +87,25 @@ export async function POST(request: NextRequest) {
       isNewUser = true;
     }
 
-    // Create or update record in users table
     const supabase = getServiceSupabase();
+
+    // Preserve privileged roles when account already exists.
+    const { data: existingProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+    const preservedRole =
+      existingProfile?.role === 'admin' || existingProfile?.role === 'therapist'
+        ? existingProfile.role
+        : userRole;
+
+    // Create or update record in users table
     if (isNewUser) {
       const { error: profileError } = await supabase.from('users').insert({
         id: userId,
         email,
-        role: userRole,
+        role: preservedRole,
         full_name: `${firstName} ${lastName}`.trim(),
         phone: phone ?? null,
         country: country ?? null,
@@ -107,7 +119,7 @@ export async function POST(request: NextRequest) {
       await supabase.from('users').upsert({
         id: userId,
         email,
-        role: userRole,
+        role: preservedRole,
         full_name: `${firstName} ${lastName}`.trim(),
         phone: phone ?? null,
         country: country ?? null,
