@@ -14,16 +14,18 @@ export function normalizeUserRole(rawRole: string | null | undefined): UserRole 
 export function getRoleFromAuthMetadata(
   user:
     | {
-        app_metadata?: { role?: unknown } | null;
-        user_metadata?: { role?: unknown } | null;
+        app_metadata?: Record<string, unknown> | null;
+        user_metadata?: Record<string, unknown> | null;
       }
     | null
     | undefined
 ): UserRole | null {
-  const appRole =
-    typeof user?.app_metadata?.role === 'string' ? user.app_metadata.role : null;
-  const userRole =
-    typeof user?.user_metadata?.role === 'string' ? user.user_metadata.role : null;
+  const appRole = typeof user?.app_metadata?.['role'] === 'string'
+    ? (user.app_metadata['role'] as string)
+    : null;
+  const userRole = typeof user?.user_metadata?.['role'] === 'string'
+    ? (user.user_metadata['role'] as string)
+    : null;
 
   for (const candidate of [appRole, userRole]) {
     if (candidate === 'admin' || candidate === 'therapist' || candidate === 'client') {
@@ -41,8 +43,8 @@ export function resolveUserRole(
   rawRole: string | null | undefined,
   user?:
     | {
-        app_metadata?: { role?: unknown } | null;
-        user_metadata?: { role?: unknown } | null;
+        app_metadata?: Record<string, unknown> | null;
+        user_metadata?: Record<string, unknown> | null;
       }
     | null
 ): UserRole {

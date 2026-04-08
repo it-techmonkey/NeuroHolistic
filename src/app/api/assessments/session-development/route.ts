@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
 
       // Session data
       techniques_used: data.techniques_used || [],
+      targeted_therapy_specify: data.targeted_therapy_specify || null,
+      scanning_specify: data.scanning_specify || null,
       key_interventions: data.key_interventions || null,
       breakthroughs_resistance: data.breakthroughs_resistance || null,
 

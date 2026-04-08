@@ -27,23 +27,39 @@ interface SessionDevelopmentFormProps {
 }
 
 const TECHNIQUE_OPTIONS = [
-  'Somatic Tracking', 'Breathwork', 'EMDR', 'Parts Work/IFS', 'CBT Techniques',
-  'DBT Skills', 'Mindfulness', 'Body Scanning', 'Grounding Exercises',
-  'Trauma Release', 'Inner Child Work', 'Narrative Therapy', 'EFT Tapping',
-  'Progressive Relaxation', 'Visualization', 'Psychoeducation',
+  'Timeline',
+  'Control Room',
+  'Hypnoses Womb',
+  'Hypnoses Birth',
+  'Hypnoses 1',
+  'Hypnoses 2',
+  'Hypnoses 3',
+  'Hypnoses 4',
+  'Hypnoses 5',
+  'Neural Shock',
+  'Cognition Expansion',
+  'Void Expansion',
+  'Creation',
+  'Flow',
+  'Cutting Cord',
+  'Grounding',
+  'Environmental Breathing',
+  'Clearing',
 ];
+
+const SPECIFIABLE_TECHNIQUES = ['Targeted Therapy', 'Scanning'];
 
 const SCORE_LABELS: Record<number, string> = {
   0: 'None',
   1: 'Minimal',
-  2: 'Very mild',
-  3: 'Mild',
-  4: 'Mild-moderate',
+  2: 'Very Low',
+  3: 'Low',
+  4: 'Mild',
   5: 'Moderate',
-  6: 'Moderate-significant',
-  7: 'Significant',
-  8: 'Severe',
-  9: 'Very severe',
+  6: 'Moderate-High',
+  7: 'High',
+  8: 'Very High',
+  9: 'Severe',
   10: 'Extreme',
 };
 
@@ -69,6 +85,8 @@ export default function SessionDevelopmentForm({
     pre_session_intensity: existingForm?.pre_session_intensity ?? 5,
     pre_session_mood: existingForm?.pre_session_mood ?? 5,
     techniques_used: existingForm?.techniques_used ?? [],
+    targeted_therapy_specify: existingForm?.targeted_therapy_specify ?? '',
+    scanning_specify: existingForm?.scanning_specify ?? '',
     key_interventions: existingForm?.key_interventions ?? '',
     breakthroughs_resistance: existingForm?.breakthroughs_resistance ?? '',
     post_session_symptoms: existingForm?.post_session_symptoms ?? [],
@@ -96,6 +114,8 @@ export default function SessionDevelopmentForm({
         pre_session_intensity: existingForm.pre_session_intensity ?? 5,
         pre_session_mood: existingForm.pre_session_mood ?? 5,
         techniques_used: existingForm.techniques_used ?? [],
+        targeted_therapy_specify: existingForm.targeted_therapy_specify ?? '',
+        scanning_specify: existingForm.scanning_specify ?? '',
         key_interventions: existingForm.key_interventions ?? '',
         breakthroughs_resistance: existingForm.breakthroughs_resistance ?? '',
         post_session_symptoms: existingForm.post_session_symptoms ?? [],
@@ -297,31 +317,38 @@ export default function SessionDevelopmentForm({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pre-Session Symptoms (describe what client reported)
-                </label>
-                <input
-                  type="text"
-                  value={form.pre_session_symptoms.join(', ')}
-                  onChange={(e) => updateField('pre_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Anxiety, tension, fatigue (comma-separated)"
-                />
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.pre_session_symptoms.length > 0 ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Pre-Session Symptoms (describe what client reported)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.pre_session_symptoms.join(', ')}
+                    onChange={(e) => updateField('pre_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="Anxiety, tension, fatigue (comma-separated)"
+                  />
+                </div>
+                {form.pre_session_symptoms.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-amber-100 pt-4">
+                    <IntensitySlider
+                      label="Pre-Session Symptom Intensity"
+                      field="pre_session_intensity"
+                      value={form.pre_session_intensity}
+                    />
+                  </div>
+                )}
               </div>
-
-              <IntensitySlider
-                label="Pre-Session Symptom Intensity"
-                field="pre_session_intensity"
-                value={form.pre_session_intensity}
-              />
             </div>
           )}
 
           {/* Session Tab */}
           {activeTab === 'session' && (
             <div className="space-y-6">
-              <h3 className="font-medium text-slate-900">Session Documentation</h3>
+              <h3 className="font-medium text-slate-900">Session Procedure</h3>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Techniques Used</label>
@@ -341,21 +368,40 @@ export default function SessionDevelopmentForm({
                     </button>
                   ))}
                 </div>
+
+                {/* Specifiable techniques with text inputs */}
+                <div className="mt-4 space-y-3">
+                  {SPECIFIABLE_TECHNIQUES.map(technique => {
+                    const isActive = form.techniques_used.includes(technique);
+                    const specifyField = technique === 'Targeted Therapy' ? 'targeted_therapy_specify' : 'scanning_specify';
+                    return (
+                      <div key={technique} className={`rounded-lg border p-3 transition-colors ${isActive ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
+                        <button
+                          type="button"
+                          onClick={() => toggleTechnique(technique)}
+                          className={`text-left text-sm font-medium transition-colors ${
+                            isActive ? 'text-indigo-800' : 'text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          {isActive ? '✓ ' : ''}{technique}
+                        </button>
+                        {isActive && (
+                          <input
+                            type="text"
+                            value={form[specifyField]}
+                            onChange={(e) => updateField(specifyField, e.target.value)}
+                            className="w-full mt-2 border border-indigo-200 rounded px-3 py-1.5 text-sm bg-white"
+                            placeholder={`Specify ${technique.toLowerCase()} details...`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Key Interventions</label>
-                <textarea
-                  value={form.key_interventions}
-                  onChange={(e) => updateField('key_interventions', e.target.value)}
-                  rows={4}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Describe the key therapeutic interventions used..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Breakthroughs & Resistance</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Breakthroughs / Resistance</label>
                 <textarea
                   value={form.breakthroughs_resistance}
                   onChange={(e) => updateField('breakthroughs_resistance', e.target.value)}
@@ -372,24 +418,31 @@ export default function SessionDevelopmentForm({
             <div className="space-y-6">
               <h3 className="font-medium text-slate-900">Post-Session Assessment</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Post-Session Symptoms (describe what client reported)
-                </label>
-                <input
-                  type="text"
-                  value={form.post_session_symptoms.join(', ')}
-                  onChange={(e) => updateField('post_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Reduced anxiety, lighter (comma-separated)"
-                />
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.post_session_symptoms.length > 0 ? 'border-green-200 bg-green-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Post-Session Symptoms (describe what client reported)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.post_session_symptoms.join(', ')}
+                    onChange={(e) => updateField('post_session_symptoms', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="Reduced anxiety, lighter (comma-separated)"
+                  />
+                </div>
+                {form.post_session_symptoms.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-green-100 pt-4">
+                    <IntensitySlider
+                      label="Post-Session Symptom Intensity"
+                      field="post_session_intensity"
+                      value={form.post_session_intensity}
+                    />
+                  </div>
+                )}
               </div>
-
-              <IntensitySlider
-                label="Post-Session Symptom Intensity"
-                field="post_session_intensity"
-                value={form.post_session_intensity}
-              />
 
               {/* Intensity Change Indicator */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
@@ -441,11 +494,11 @@ export default function SessionDevelopmentForm({
               <p className="text-sm text-slate-500">Rate each domain based on session observations.</p>
 
               <div className="space-y-4">
-                <ScoreSlider label="Nervous System Regulation" field="nervous_system_score" value={form.nervous_system_score} />
-                <ScoreSlider label="Emotional State" field="emotional_state_score" value={form.emotional_state_score} />
-                <ScoreSlider label="Cognitive Patterns" field="cognitive_patterns_score" value={form.cognitive_patterns_score} />
+                <ScoreSlider label="Nervous System" field="nervous_system_score" value={form.nervous_system_score} />
+                <ScoreSlider label="Emotional" field="emotional_state_score" value={form.emotional_state_score} />
+                <ScoreSlider label="Cognitive" field="cognitive_patterns_score" value={form.cognitive_patterns_score} />
                 <ScoreSlider label="Physical" field="body_symptoms_score" value={form.body_symptoms_score} />
-                <ScoreSlider label="Behavioral Patterns" field="behavioral_patterns_score" value={form.behavioral_patterns_score} />
+                <ScoreSlider label="Behavioral" field="behavioral_patterns_score" value={form.behavioral_patterns_score} />
                 <ScoreSlider label="Life Functioning" field="life_functioning_score" value={form.life_functioning_score} />
               </div>
 
@@ -492,10 +545,10 @@ export default function SessionDevelopmentForm({
                       <tbody className="divide-y divide-slate-200">
                         {[
                           { label: 'Nervous System', baseline: comparisonBaseline.nervous_system_score ?? 0, current: form.nervous_system_score },
-                          { label: 'Emotional State', baseline: comparisonBaseline.emotional_state_score ?? 0, current: form.emotional_state_score },
-                          { label: 'Cognitive Patterns', baseline: comparisonBaseline.cognitive_patterns_score ?? 0, current: form.cognitive_patterns_score },
+                          { label: 'Emotional', baseline: comparisonBaseline.emotional_state_score ?? 0, current: form.emotional_state_score },
+                          { label: 'Cognitive', baseline: comparisonBaseline.cognitive_patterns_score ?? 0, current: form.cognitive_patterns_score },
                           { label: 'Physical', baseline: comparisonBaseline.body_symptoms_score ?? 0, current: form.body_symptoms_score },
-                          { label: 'Behavioral Patterns', baseline: comparisonBaseline.behavioral_patterns_score ?? 0, current: form.behavioral_patterns_score },
+                          { label: 'Behavioral', baseline: comparisonBaseline.behavioral_patterns_score ?? 0, current: form.behavioral_patterns_score },
                           { label: 'Life Functioning', baseline: comparisonBaseline.life_functioning_score ?? 0, current: form.life_functioning_score },
                         ].map((row) => {
                           const change = row.current - row.baseline;

@@ -390,6 +390,8 @@ export type Database = {
           pre_session_symptoms: Record<string, unknown>[];
           pre_session_intensity: number;
           techniques_used: Record<string, unknown>[];
+          targeted_therapy_specify: string | null;
+          scanning_specify: string | null;
           key_interventions: string | null;
           breakthroughs_resistance: string | null;
           post_session_symptoms: Record<string, unknown>[];
@@ -421,6 +423,8 @@ export type Database = {
           pre_session_symptoms?: Record<string, unknown>[];
           pre_session_intensity?: number;
           techniques_used?: Record<string, unknown>[];
+          targeted_therapy_specify?: string | null;
+          scanning_specify?: string | null;
           key_interventions?: string | null;
           breakthroughs_resistance?: string | null;
           post_session_symptoms?: Record<string, unknown>[];
@@ -451,6 +455,8 @@ export type Database = {
           pre_session_symptoms?: Record<string, unknown>[];
           pre_session_intensity?: number;
           techniques_used?: Record<string, unknown>[];
+          targeted_therapy_specify?: string | null;
+          scanning_specify?: string | null;
           key_interventions?: string | null;
           breakthroughs_resistance?: string | null;
           post_session_symptoms?: Record<string, unknown>[];

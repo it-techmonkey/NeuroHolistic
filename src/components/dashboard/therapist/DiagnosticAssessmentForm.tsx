@@ -652,106 +652,142 @@ export default function DiagnosticAssessmentForm({
               <h3 className="font-medium text-slate-900 mb-4">Symptoms Assessment</h3>
 
               {/* 1. Nervous System */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern (select 1-2 dominant)</label>
-                <SingleSelect options={NERVOUS_SYSTEM_PATTERNS} field="nervous_system_pattern" disabled={isReadOnly} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How dysregulated is the client most of the time?"
-                    field="nervous_system_score"
-                    value={form.nervous_system_score}
-                    disabled={isReadOnly}
-                  />
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.nervous_system_pattern ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern (select 1-2 dominant)</label>
+                  <SingleSelect options={NERVOUS_SYSTEM_PATTERNS} field="nervous_system_pattern" disabled={isReadOnly} />
                 </div>
-              </div>
-
-              {/* 2. Emotional State */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">2. Emotional State</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Emotional Pattern (top 2)</label>
-                <PatternCheckbox options={EMOTIONAL_PATTERNS} field="emotional_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much do emotions overwhelm or limit the client?"
-                    field="emotional_state_score"
-                    value={form.emotional_state_score}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              </div>
-
-              {/* 3. Cognitive Patterns */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">3. Cognitive Patterns</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Thought Patterns (top 2)</label>
-                <PatternCheckbox options={COGNITIVE_PATTERNS} field="cognitive_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much are thoughts repetitive or uncontrollable?"
-                    field="cognitive_patterns_score"
-                    value={form.cognitive_patterns_score}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              </div>
-
-              {/* 4. Body Symptoms */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">4. Body Symptoms</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Main Physical Expressions (top 2)</label>
-                <PatternCheckbox options={BODY_SYMPTOMS} field="body_symptoms" disabled={isReadOnly} maxSelect={2} />
-                {form.body_symptoms.includes('Health Condition') && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">If health condition specify</label>
-                    <input
-                      type="text"
-                      value={form.health_condition_specify}
-                      onChange={(e) => updateField('health_condition_specify', e.target.value)}
+                {form.nervous_system_pattern && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How dysregulated is the client most of the time?"
+                      field="nervous_system_score"
+                      value={form.nervous_system_score}
                       disabled={isReadOnly}
-                      placeholder="Specify the health condition..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                     />
                   </div>
                 )}
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much do physical symptoms affect the client?"
-                    field="body_symptoms_score"
-                    value={form.body_symptoms_score}
-                    disabled={isReadOnly}
-                  />
+              </div>
+
+              {/* 2. Emotional State */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.emotional_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">2. Emotional State</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Emotional Pattern (top 2)</label>
+                  <PatternCheckbox options={EMOTIONAL_PATTERNS} field="emotional_patterns" disabled={isReadOnly} maxSelect={2} />
                 </div>
+                {form.emotional_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much do emotions overwhelm or limit the client?"
+                      field="emotional_state_score"
+                      value={form.emotional_state_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Cognitive Patterns */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.cognitive_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">3. Cognitive Patterns</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Thought Patterns (top 2)</label>
+                  <PatternCheckbox options={COGNITIVE_PATTERNS} field="cognitive_patterns" disabled={isReadOnly} maxSelect={2} />
+                </div>
+                {form.cognitive_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much are thoughts repetitive or uncontrollable?"
+                      field="cognitive_patterns_score"
+                      value={form.cognitive_patterns_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Body Symptoms */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.body_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">4. Body Symptoms</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Main Physical Expressions (top 2)</label>
+                  <PatternCheckbox options={BODY_SYMPTOMS} field="body_symptoms" disabled={isReadOnly} maxSelect={2} />
+                  {form.body_symptoms.includes('Health Condition') && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">If health condition specify</label>
+                      <input
+                        type="text"
+                        value={form.health_condition_specify}
+                        onChange={(e) => updateField('health_condition_specify', e.target.value)}
+                        disabled={isReadOnly}
+                        placeholder="Specify the health condition..."
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                      />
+                    </div>
+                  )}
+                </div>
+                {form.body_symptoms.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much do physical symptoms affect the client?"
+                      field="body_symptoms_score"
+                      value={form.body_symptoms_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 5. Behavioral Patterns */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">5. Behavioral Patterns</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Behaviors (top 2)</label>
-                <PatternCheckbox options={BEHAVIORAL_PATTERNS} field="behavioral_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much are behaviors driven by these patterns?"
-                    field="behavioral_patterns_score"
-                    value={form.behavioral_patterns_score}
-                    disabled={isReadOnly}
-                  />
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.behavioral_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">5. Behavioral Patterns</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Behaviors (top 2)</label>
+                  <PatternCheckbox options={BEHAVIORAL_PATTERNS} field="behavioral_patterns" disabled={isReadOnly} maxSelect={2} />
                 </div>
+                {form.behavioral_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much are behaviors driven by these patterns?"
+                      field="behavioral_patterns_score"
+                      value={form.behavioral_patterns_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 6. Life Functioning */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">6. Life Functioning</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas (top 2)</label>
-                <PatternCheckbox options={LIFE_FUNCTIONING} field="life_functioning_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much is the client's life impacted overall?"
-                    field="life_functioning_score"
-                    value={form.life_functioning_score}
-                    disabled={isReadOnly}
-                  />
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.life_functioning_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">6. Life Functioning</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas (top 2)</label>
+                  <PatternCheckbox options={LIFE_FUNCTIONING} field="life_functioning_patterns" disabled={isReadOnly} maxSelect={2} />
                 </div>
+                {form.life_functioning_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much is the client's life impacted overall?"
+                      field="life_functioning_score"
+                      value={form.life_functioning_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Baseline Score Summary */}

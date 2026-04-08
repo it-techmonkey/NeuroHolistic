@@ -33,6 +33,11 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Logged-in user state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,6 +46,53 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
     password: '',
   });
   const [signupSession, setSignupSession] = useState<{ access_token?: string; refresh_token?: string } | null>(null);
+
+  // Check if user is already logged in and load their profile
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          setIsLoggedIn(true);
+
+          // Load user profile
+          const { data: profile } = await supabase
+            .from('users')
+            .select('full_name, email, phone, country')
+            .eq('id', user.id)
+            .single();
+
+          if (profile) {
+            setFormData({
+              name: profile.full_name || user.user_metadata?.first_name + ' ' + (user.user_metadata?.last_name || '') || '',
+              email: profile.email || user.email || '',
+              phone: profile.phone || user.user_metadata?.phone || '',
+              country: profile.country || user.user_metadata?.country || '',
+              password: '',
+            });
+          } else {
+            setFormData({
+              name: (user.user_metadata?.first_name || '') + ' ' + (user.user_metadata?.last_name || ''),
+              email: user.email || '',
+              phone: user.user_metadata?.phone || '',
+              country: user.user_metadata?.country || '',
+              password: '',
+            });
+          }
+
+          // Skip directly to schedule step
+          setStep('schedule');
+        }
+      } catch (err) {
+        console.error('Auth check error:', err);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // Load therapists on mount
   useEffect(() => {
@@ -120,28 +172,31 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
     setError('');
 
     try {
-      const signupRes = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.name.split(' ')[0] || formData.name,
-          lastName: formData.name.split(' ').slice(1).join(' ') || '',
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          country: formData.country,
-          role: 'client',
-        }),
-      });
+      // Only sign up if user is not already logged in
+      if (!isLoggedIn) {
+        const signupRes = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: formData.name.split(' ')[0] || formData.name,
+            lastName: formData.name.split(' ').slice(1).join(' ') || '',
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone,
+            country: formData.country,
+            role: 'client',
+          }),
+        });
 
-      const signupData = await signupRes.json();
+        const signupData = await signupRes.json();
 
-      if (!signupRes.ok && signupRes.status !== 409) {
-        throw new Error(signupData.error || t.consultationForm.accountCreatedFailed);
-      }
+        if (!signupRes.ok && signupRes.status !== 409) {
+          throw new Error(signupData.error || t.consultationForm.accountCreatedFailed);
+        }
 
-      if (signupData.session) {
-        setSignupSession(signupData.session);
+        if (signupData.session) {
+          setSignupSession(signupData.session);
+        }
       }
 
       const therapist = therapists.find(t => t.id === selectedTherapist);
@@ -154,7 +209,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: null,
+          userId: isLoggedIn ? userId : null,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -183,6 +238,12 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
     setLoading(true);
     setError('');
     try {
+      if (isLoggedIn) {
+        // Already logged in, just navigate
+        window.location.href = '/dashboard/client';
+        return;
+      }
+
       if (signupSession?.access_token) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: signupSession.access_token,
@@ -219,6 +280,25 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
   const inputClass = 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all';
 
+  // Show loading while checking auth
+  if (authLoading) {
+    const loadingContent = (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+        <p className="text-white/60 text-sm">Loading...</p>
+      </div>
+    );
+
+    if (mode === 'page') {
+      return (
+        <div className="min-h-screen bg-[#0B1028] pt-28 sm:pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-lg mx-auto">{loadingContent}</div>
+        </div>
+      );
+    }
+    return <div className="p-6">{loadingContent}</div>;
+  }
+
   const formContent = (
     <>
       {/* Header */}
@@ -228,15 +308,25 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
         </h2>
         <p className="text-sm text-white/60 mt-1">
           {step === 'details' && t.consultationForm.enterDetails}
-          {step === 'schedule' && t.consultationForm.selectDateTime}
+          {step === 'schedule' && (isLoggedIn
+            ? 'Select your preferred date and time'
+            : t.consultationForm.selectDateTime
+          )}
           {step === 'success' && t.consultationForm.consultationBooked}
         </p>
+        {isLoggedIn && step === 'schedule' && (
+          <p className="text-xs text-indigo-300 mt-2">
+            Booking as {formData.name} ({formData.email})
+          </p>
+        )}
       </div>
 
       {/* Progress indicator */}
       {step !== 'success' && (
         <div className="flex gap-2 mb-6">
-          <div className={`h-1 flex-1 rounded ${step === 'details' ? 'bg-indigo-400' : 'bg-white/20'}`} />
+          {!isLoggedIn && (
+            <div className={`h-1 flex-1 rounded ${step === 'details' ? 'bg-indigo-400' : 'bg-white/20'}`} />
+          )}
           <div className={`h-1 flex-1 rounded ${step === 'schedule' ? 'bg-indigo-400' : 'bg-white/20'}`} />
         </div>
       )}
@@ -424,16 +514,18 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
           {/* Navigation */}
           <div className="flex gap-2 pt-2">
-            <button
-              onClick={() => setStep('details')}
-              className="flex-1 py-2.5 border border-white/20 rounded-lg font-medium text-white/70 hover:bg-white/10 transition text-sm"
-            >
-              {t.consultationForm.back}
-            </button>
+            {!isLoggedIn && (
+              <button
+                onClick={() => setStep('details')}
+                className="flex-1 py-2.5 border border-white/20 rounded-lg font-medium text-white/70 hover:bg-white/10 transition text-sm"
+              >
+                {t.consultationForm.back}
+              </button>
+            )}
             <button
               onClick={handleBooking}
               disabled={!selectedTherapist || !selectedDate || !selectedSlot || loading}
-              className={`flex-1 py-2.5 rounded-lg font-medium transition text-sm ${
+              className={`${isLoggedIn ? 'w-full' : 'flex-1'} py-2.5 rounded-lg font-medium transition text-sm ${
                 selectedTherapist && selectedDate && selectedSlot && !loading
                   ? 'bg-white text-[#0B0F2B] hover:bg-white/90'
                   : 'bg-white/20 text-white/40 cursor-not-allowed'
@@ -480,7 +572,12 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               disabled={loading}
               className="w-full py-3 bg-white text-[#0B0F2B] rounded-lg font-medium hover:bg-white/90 transition disabled:opacity-50"
             >
-              {loading ? t.consultationForm.signingIn : t.consultationForm.goToDashboard}
+              {loading
+                ? t.consultationForm.signingIn
+                : isLoggedIn
+                ? 'Go to Dashboard'
+                : t.consultationForm.goToDashboard
+              }
             </button>
 
             <p className="text-xs text-white/40">
