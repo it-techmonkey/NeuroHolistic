@@ -628,15 +628,16 @@ export function ReportsTab({
     });
 
     // Add development forms with their scores
-    devForms.forEach((f: any, idx: number) => {
+    devForms.forEach((f: any) => {
       const totalScore = (f.nervous_system_score || 0) + (f.emotional_state_score || 0) +
         (f.cognitive_patterns_score || 0) + (f.body_symptoms_score || 0) +
         (f.behavioral_patterns_score || 0) + (f.life_functioning_score || 0);
+      const sessionDate = f.session_date || f.created_at;
       
       timeline.push({
-        date: f.created_at,
+        date: sessionDate,
         score: totalScore,
-        label: `Session ${f.session_number || idx + 1}`,
+        label: new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         type: 'session',
         data: f
       });

@@ -389,9 +389,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             <div>
               <p className="text-sm font-medium text-indigo-900">Your Assigned Therapist</p>
               <p className="text-lg font-semibold text-indigo-800">{effectiveTherapist.name}</p>
-              {isFawzia && (
-                <p className="text-xs text-indigo-600 mt-0.5">Premium Specialist</p>
-              )}
             </div>
           </div>
         </div>

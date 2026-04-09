@@ -39,7 +39,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
       date: string;
       score: number;
       label: string;
-      type: 'baseline' | 'assessment' | 'session';
+      type: 'baseline' | 'session';
       data: any;
     }> = [];
 
@@ -54,27 +54,17 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
       });
     }
 
-    // Add other assessments (non-baseline)
-    assessments.filter((a: any) => !a.is_baseline).forEach((a: any) => {
-      timeline.push({
-        date: a.assessed_at || a.created_at,
-        score: a.goal_readiness_score || 0,
-        label: `Assessment`,
-        type: 'assessment',
-        data: a
-      });
-    });
-
     // Add development forms with their scores
-    devForms.forEach((f: any, idx: number) => {
+    devForms.forEach((f: any) => {
       const totalScore = (f.nervous_system_score || 0) + (f.emotional_state_score || 0) +
         (f.cognitive_patterns_score || 0) + (f.body_symptoms_score || 0) +
         (f.behavioral_patterns_score || 0) + (f.life_functioning_score || 0);
+      const sessionDate = f.session_date || f.created_at;
       
       timeline.push({
-        date: f.created_at,
+        date: sessionDate,
         score: totalScore,
-        label: `Session ${f.session_number || idx + 1}`,
+        label: new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         type: 'session',
         data: f
       });
@@ -234,7 +224,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                       fill: true,
                       tension: 0.4,
                       pointBackgroundColor: timelineData.map(d => 
-                        d.type === 'baseline' ? '#F59E0B' : d.type === 'session' ? '#10B981' : '#6366F1'
+                        d.type === 'baseline' ? '#F59E0B' : '#10B981'
                       ),
                       pointBorderColor: '#fff',
                       pointBorderWidth: 2,
@@ -282,10 +272,6 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-amber-500"></div>
                   <span className="text-slate-600">Baseline</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-                  <span className="text-slate-600">Assessment</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
