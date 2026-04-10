@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signUp } from '@/app/auth/actions';
+import { AuthGoBackButton } from '@/components/auth/AuthGoBackButton';
 
 const COUNTRIES = [
   'UAE', 'Saudi Arabia', 'Kuwait', 'Qatar', 'Bahrain', 'Oman',
@@ -87,6 +88,7 @@ function SignUpForm() {
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto">
         <div className="w-full max-w-sm space-y-10 my-auto">
+          <AuthGoBackButton />
 
           {/* Program intent banner */}
           {intent === 'program' && (

@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { login } from '@/app/auth/actions';
+import { AuthGoBackButton } from '@/components/auth/AuthGoBackButton';
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -78,7 +79,8 @@ function LoginForm() {
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20">
         <div className="w-full max-w-sm space-y-10">
-          
+          <AuthGoBackButton />
+
           <div className="space-y-2">
             <h2 className="text-2xl font-light tracking-tight text-slate-900">Sign In</h2>
             <p className="text-sm text-slate-500 font-light">
