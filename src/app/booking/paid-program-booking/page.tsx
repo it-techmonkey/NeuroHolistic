@@ -37,7 +37,7 @@ export default async function PaidProgramBookingPage({
           </h1>
           <p className="text-slate-500 text-[16px] max-w-lg mx-auto leading-relaxed">
             {academyMode
-              ? 'Follow the same payment flow and choose either full payment or per-session Academy installments.'
+              ? 'Choose either full program payment or pay in instalments.'
               : 'View our program options and pricing. Choose the type that best suits your needs.'}
           </p>
         </div>
