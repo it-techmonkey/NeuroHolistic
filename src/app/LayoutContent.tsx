@@ -48,7 +48,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
       {isPublicPage ? (
         <main
           dir={isUrdu ? "rtl" : "ltr"}
-          lang={isUrdu ? "ar" : "en"}
+          lang={isUrdu ? "ur" : "en"}
           className={isUrdu ? "urdu-text font-urdu" : ""}
         >
           {children}

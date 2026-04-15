@@ -512,7 +512,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 <p className="font-semibold text-slate-900">
                   {academyMode ? 'Academy Program' : (selectedProgramType === 'private' ? 'Private Program' : 'Group Program')}
                 </p>
-                <p className="text-sm text-slate-500">{academyMode ? '8-month program' : '10 sessions included'}</p>
+                <p className="text-sm text-slate-500">{academyMode ? '5 sessions included' : '10 sessions included'}</p>
               </div>
             </div>
           </div>
@@ -546,7 +546,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
-                  ? 'Pay for full program upfront.'
+                  ? 'Pay for all 5 Academy sessions upfront.'
                   : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.'}
               </p>
               <div className="mb-6">
@@ -556,7 +556,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 <span className="text-slate-500 text-base ml-1">AED</span>
                 <p className="text-slate-500 text-sm mt-1">
                   {academyMode
-                    ? '8-month Academy program'
+                    ? `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} AED / session`
                     : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
                 </p>
               </div>
@@ -582,12 +582,10 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   Flexible
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">
-                {academyMode ? 'Pay in Instalments' : 'Pay Session by Session'}
-              </h3>
+              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Pay Session by Session</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
-                  ? 'Pay in instalments across the Academy program.'
+                  ? 'Pay 5,000 AED per Academy session. Total Academy program consists of 5 sessions.'
                   : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.'}
               </p>
               <div className="mb-6">
@@ -595,7 +593,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
                 </span>
                 <span className="text-slate-500 text-base ml-1">AED</span>
-                <p className="text-slate-500 text-sm mt-1">{academyMode ? 'Per Instalment' : 'per session'}</p>
+                <p className="text-slate-500 text-sm mt-1">per session</p>
               </div>
               <button
                 onClick={() => handlePayment('per_session')}
