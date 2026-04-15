@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, Noto_Nastaliq_Urdu } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Tajawal } from "next/font/google";
 import "./globals.css";
 import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
@@ -18,11 +18,11 @@ const outfit = Outfit({
   display: "swap",
 });
 
-const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+const tajawalArabic = Tajawal({
   subsets: ["arabic"],
   variable: "--font-urdu",
   display: "swap",
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} ${outfit.variable} ${notoNastaliqUrdu.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} ${outfit.variable} ${tajawalArabic.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
         <AuthProvider>
           <LanguageProvider>
             <BookingModalProvider>

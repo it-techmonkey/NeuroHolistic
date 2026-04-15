@@ -117,7 +117,11 @@ export default function Navbar() {
     `${base} ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4">
+    <header
+      dir={isUrdu ? "rtl" : "ltr"}
+      lang={isUrdu ? "ar" : "en"}
+      className={`fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4 ${isUrdu ? "font-urdu urdu-text" : ""}`}
+    >
       <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-colors duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
         
         {/* ── 1. Secondary Navbar (Utility) ── */}
@@ -129,7 +133,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
             <button
               onClick={toggleLang}
-              className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
+              className={`hover:opacity-100 opacity-60 text-[8px] sm:text-[9px] ${isUrdu ? "font-urdu normal-case tracking-normal" : "uppercase tracking-widest"}`}
             >
               {isUrdu ? "العربية / English" : "English / العربية"}
             </button>

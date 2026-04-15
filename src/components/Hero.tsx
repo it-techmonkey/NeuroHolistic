@@ -29,7 +29,7 @@ export default function Hero() {
           >
             <h1
               className={`${isUrdu ? 'leading-[1.4] tracking-normal' : 'leading-[1.05] tracking-[-0.035em]'} text-[#EAF0FF]`}
-              style={isUrdu ? { fontFamily: "var(--font-urdu), 'Noto Nastaliq Urdu', sans-serif" } : { fontFamily: "var(--font-display), 'Outfit', system-ui, sans-serif" }}
+              style={isUrdu ? { fontFamily: "var(--font-urdu), 'Tajawal', sans-serif" } : { fontFamily: "var(--font-display), 'Outfit', system-ui, sans-serif" }}
             >
               <span className={`block text-[32px] font-normal text-[#E2E9FF] sm:text-[44px] md:text-[66px] lg:text-[55px] ${isUrdu ? 'font-urdu' : ''}`}>
                 {t.hero.resetFromWithin}
