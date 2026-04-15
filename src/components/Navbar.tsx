@@ -131,7 +131,7 @@ export default function Navbar() {
               onClick={toggleLang}
               className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
             >
-              {isUrdu ? "EN" : "العربية"}
+              {isUrdu ? "العربية / English" : "English / العربية"}
             </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
@@ -341,19 +341,9 @@ export default function Navbar() {
               className={`fixed top-0 ${isUrdu ? 'left-0' : 'right-0'} h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col will-change-transform ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
             >
               <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Image src="/images/logo.svg" alt="NeuroHolistic" width={28} height={24} className="w-6 h-5" unoptimized />
-                  <span className="font-bold tracking-tighter text-base sm:text-lg">NeuroHolistic</span>
-                </div>
-                <button
-                  onClick={toggleLang}
-                  className={`text-[11px] uppercase tracking-widest transition-opacity duration-200 ${
-                    isLightPage ? 'text-slate-500 hover:text-slate-800' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  {isUrdu ? "EN" : "العربية"}
-                </button>
+              <div className="flex items-center gap-2">
+                <Image src="/images/logo.svg" alt="NeuroHolistic" width={28} height={24} className="w-6 h-5" unoptimized />
+                <span className="font-bold tracking-tighter text-base sm:text-lg">NeuroHolistic</span>
               </div>
                 <button onClick={() => setMobileOpen(false)} className={`p-1.5 rounded-lg transition-colors duration-200 ${isLightPage ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -361,14 +351,6 @@ export default function Navbar() {
               </div>
 
               <nav className={`flex flex-col gap-5 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
-                {/* Language toggle in mobile menu */}
-                <button
-                  onClick={toggleLang}
-                  className={`mb-2 py-3 px-4 rounded-xl font-medium text-sm transition-colors text-left ${isLightPage ? 'text-slate-600 bg-slate-50 hover:bg-slate-100' : 'text-slate-400 bg-white/5 hover:bg-white/10'}`}
-                >
-                  {isUrdu ? 'English میں تبدیل کریں' : 'Switch to اردو'}
-                </button>
-
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <div key={item.label}>
                     <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>

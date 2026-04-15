@@ -25,8 +25,8 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
               animate={{ opacity: 1, x: 0 }}
               className="lg:col-span-5"
             >
-              <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9]">
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 grayscale-[15%] transition-all duration-1000 group-hover:grayscale-0">
+              <div className="group relative w-full bg-white p-4 border border-[#F1F5F9]">
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-white">
                   <Image 
                     src={profile.image} 
                     alt={profile.name} 

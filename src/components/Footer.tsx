@@ -23,7 +23,7 @@ export default function Footer() {
     { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
     { label: t.footer.bookAConsultation, href: "/consultation/book" },
     { label: t.footer.applyToAcademy, href: "/academy" },
-    { label: isUrdu ? "اردو / English" : "English / اردو", href: "#", onClick: toggleLang },
+    { label: isUrdu ? "العربية / English" : "English / العربية", href: "#", onClick: toggleLang },
   ], [t, isUrdu, toggleLang]);
 
   return (

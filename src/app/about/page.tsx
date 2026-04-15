@@ -22,7 +22,7 @@ export default function AboutPage() {
             "More than twenty years ago, Dr. Fawzia Yassmina began working closely with individuals facing complex emotional and psychological challenges. Through thousands of hours of observation, deeper patterns of human perception and transformation began to reveal themselves.",
             "These early experiences laid the foundation for what would eventually become the NeuroHolistic Method™.",
           ],
-      image: "/images/team/Fawzia Yassmina.jpeg",
+      image: "/images/team/Fawzia Yassmina.png",
       isFullWidth: true,
     },
     {
@@ -198,7 +198,7 @@ export default function AboutPage() {
         <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9] rounded-xl">
           <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-lg bg-white">
             <Image 
-              src="/images/team/Fawzia Yassmina.jpeg" 
+              src="/images/team/Fawzia Yassmina.png" 
               alt={t.about.founderName} 
               fill 
               unoptimized 
