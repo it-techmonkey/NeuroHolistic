@@ -7,7 +7,7 @@ import { TEAM_PROFILES } from "./team/team-profiles";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Team() {
-  const { t } = useLang();
+  const { t, isArabic } = useLang();
 
   const founder = TEAM_PROFILES.find(member => member.slug === "fawzia-yassmina");
   const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
@@ -54,7 +54,7 @@ export default function Team() {
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
                 <Image
                   src="/images/team/Fawzia Yassmina Landing.png"
-                  alt={founder.name}
+                  alt={isArabic ? founder.name.ar : founder.name.en}
                   fill
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
@@ -66,10 +66,10 @@ export default function Team() {
                   {t.team.founder}   
                 </span>
                 <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
-                  {founder.name}
+                  {isArabic ? founder.name.ar : founder.name.en}
                 </h3>
                 <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light mb-8 italic">
-                  "{founder.shortBio}"
+                  &quot;{isArabic ? founder.shortBio.ar : founder.shortBio.en}&quot;
                 </p>
                 <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
                   <span>{t.team.viewProfile}</span>
@@ -95,7 +95,7 @@ export default function Team() {
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
                   <Image
                     src={member.image}
-                    alt={member.name}
+                    alt={isArabic ? member.name.ar : member.name.en}
                     fill
                     unoptimized
                     className={`object-cover contrast-[1.1] transition-all duration-1000 scale-100 group-hover:scale-110 ${
@@ -107,10 +107,10 @@ export default function Team() {
                 {/* Content */}
                 <div className="px-2">
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
-                    {member.name}
+                    {isArabic ? member.name.ar : member.name.en}
                   </h3>
                   <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-6">
-                    {member.shortBio}
+                    {isArabic ? member.shortBio.ar : member.shortBio.en}
                   </p>
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 group-hover:text-[#2B2F55] transition-all">
                     <span>{t.team.viewProfile}</span>

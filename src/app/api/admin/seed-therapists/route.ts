@@ -30,16 +30,17 @@ export async function POST(request: NextRequest) {
     const errors: string[] = [];
 
     for (const profile of TEAM_PROFILES) {
+      const enName = profile.name.en;
       // Check if therapist already exists
       const { data: existing } = await supabase
         .from('users')
         .select('id')
-        .eq('full_name', profile.name)
+        .eq('full_name', enName)
         .eq('role', 'therapist')
         .maybeSingle();
 
       if (existing) {
-        created.push(`${profile.name} (already exists)`);
+        created.push(`${enName} (already exists)`);
         continue;
       }
 
@@ -53,18 +54,18 @@ export async function POST(request: NextRequest) {
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
-          first_name: profile.name.split(' ')[0],
-          last_name: profile.name.split(' ').slice(1).join(' '),
+          first_name: enName.split(' ')[0],
+          last_name: enName.split(' ').slice(1).join(' '),
         },
       });
 
       if (authError) {
-        errors.push(`Failed to create auth for ${profile.name}: ${authError.message}`);
+        errors.push(`Failed to create auth for ${enName}: ${authError.message}`);
         continue;
       }
 
       if (!authData.user) {
-        errors.push(`No user returned for ${profile.name}`);
+        errors.push(`No user returned for ${enName}`);
         continue;
       }
 
@@ -73,13 +74,13 @@ export async function POST(request: NextRequest) {
         id: authData.user.id,
         email: `${slug}@neuroholistic.com`,
         role: 'therapist',
-        full_name: profile.name,
+        full_name: enName,
       });
 
       if (profileError) {
-        errors.push(`Failed to create profile for ${profile.name}: ${profileError.message}`);
+        errors.push(`Failed to create profile for ${enName}: ${profileError.message}`);
       } else {
-        created.push(profile.name);
+        created.push(enName);
       }
     }
 

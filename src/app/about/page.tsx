@@ -8,15 +8,15 @@ import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function AboutPage() {
-  const { t, isUrdu } = useLang();
+  const { t, isUrdu, isArabic } = useLang();
 
   const JOURNEY = useMemo(() => [
     {
       title: t.about.theBeginning,
-      description: isUrdu
+      description: isArabic
         ? [
-            "ڈاکٹر فوزیہ یاسمینا نے بیس سال سے زیادہ وقت پہلے پیچیدہ جذباتی اور نفسیاتی چیلنجز کا سامنا کرنے والے افراد کے ساتھ قریب سے کام کرنا شروع کیا۔ ہزاروں گھنٹوں کی مشاہدے کے ذریعے، انسانی ادراک اور تبدیلی کے گہرے نمونے ظاہر ہونے لگے۔",
-            "ان ابتدائی تجربات نے اس کی بنیاد رکھی جو آخرکار نیوروحولسٹک طریقہ™ بن گیا۔",
+            "قبل أكثر من عشرين عاما، بدأت د. فوزية ياسمينة العمل عن قرب مع أفراد يواجهون تحديات عاطفية ونفسية معقّدة.",
+            "ومن خلال آلاف الساعات من الملاحظة، بدأت أنماط أعمق في الإدراك الإنساني والتحوّل تتكشف تدريجيا.",
           ]
         : [
             "More than twenty years ago, Dr. Fawzia Yassmina began working closely with individuals facing complex emotional and psychological challenges. Through thousands of hours of observation, deeper patterns of human perception and transformation began to reveal themselves.",
@@ -27,10 +27,10 @@ export default function AboutPage() {
     },
     {
       title: t.about.yearsOfExploration,
-      description: isUrdu
+      description: isArabic
         ? [
-            "جیسے جیسے کام گہرا ہوتا گیا، نیوروسائنس، نفسیات، اور نظامی شعور سے ملنے والی بصیرتیں ایک دوسرے سے ملنے لگیں۔ یہ واضح ہو گیا کہ مستقل تبدیلی کو صرف ایک ہی شعبے کے ذریعے نہیں سمجھا جا سکتا۔",
-            "برسوں کی جواکشی کے ذریعے، مختلف پس منظر اور زندگی کے حالات میں تبدیلی کے بار بار آنے والے طریقے نظر آنے لگے۔",
+            "مع تعمّق العمل، بدأت الرؤى القادمة من علوم الأعصاب، وعلم النفس، والوعي المنظومي تتقاطع وتتلاقى.",
+            "وأصبح واضحا أن التحوّل المستدام لا يمكن فهمه من خلال تخصص واحد فقط.",
           ]
         : [
             "As the work deepened, insights from neuroscience, psychology, and systemic awareness began to converge. It became clear that lasting transformation could not be understood through a single discipline alone.",
@@ -40,10 +40,10 @@ export default function AboutPage() {
     },
     {
       title: t.about.structuringMethod,
-      description: isUrdu
+      description: isArabic
         ? [
-            "وقت کے ساتھ، ان بصیرتوں کو ایک ہم آہنگ فریم ورک میں منظم کیا گیا۔ عمل کے ذریعے جو کچھ سامنے آیا اسے تبدیلی کی ایک منظم ماڈل میں بیان کیا گیا۔",
-            "اس سے نیوروحولسٹک طریقہ™ کا پانچ مرحلوں کا ڈھانچہ سامنے آیا، جو انسانی تبدیلی کو سہارا دینے کا ایک منظم طریقہ فراہم کرتا ہے۔",
+            "مع مرور الوقت، جرى تنظيم هذه الرؤى ضمن إطار متماسك.",
+            "وقد قاد ذلك إلى البنية الخماسية لمراحل طريقة نيوروهوليستك™، بما يوفّر منهجا منظّما لتيسير التغيير الإنساني.",
           ]
         : [
             "Over time, these insights were organized into a coherent framework. What emerged through practice was articulated into a structured model of transformation.",
@@ -59,13 +59,13 @@ export default function AboutPage() {
         eyebrow={t.pageHero.aboutUs}
         title={
           <>
-            <span className="text-white font-normal">{isUrdu ? 'نیوروحولسٹک طریقہ™ کا ارتقاء' : 'The Evolution of the NeuroHolistic Method™'}<br /></span>
+            <span className="text-white font-normal">{isArabic ? 'تطوّر طريقة نيوروهوليستك™' : 'The Evolution of the NeuroHolistic Method™'}<br /></span>
           </>
         }
-        description={isUrdu ? 'حقیقی تبدیلی کیسے ہوتی ہے اس کی نئی تعریف' : 'A new definition of how true transformation happens'}
+        description={isArabic ? 'تعريف جديد لكيفية حدوث التحوّل الحقيقي.' : 'A new definition of how true transformation happens'}
         imageSrc="/images/pages/about.jpg"
         imageAlt="Premium wellbeing consultation environment"
-        metaTags={isUrdu ? ["20+ سال", "عملی تجربہ", "بین الفروعی"] : ["20+ Years", "Practical Experience", "Cross-Disciplinary"]}
+        metaTags={isArabic ? ["20+ عاما", "ممارسة تطبيقية", "تخصصات متعددة"] : ["20+ Years", "Practical Experience", "Cross-Disciplinary"]}
       />
 
       {/* ── Section 01: The Chronology (Editorial Spreads) ── */}
@@ -150,8 +150,8 @@ export default function AboutPage() {
               <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">{t.about.birthOfInstitute}</h2>
             </div>
             <div className={`flex flex-col justify-center space-y-6 text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
-              <p>{isUrdu
-                ? "جیسے جیسے اس کام میں دلچسپی بڑھتی گئی، طریقہ کی مسلسل ترقی اور ذمہ دارانہ اشاعت کی حمایت کے لیے نیوروحولسٹک انسٹی ٹیوٹ قائم کیا گیا۔"
+              <p>{isArabic
+                ? "ومع استمرار الاهتمام بهذا العمل في التوسّع، تأسّس معهد نيوروهوليستك لدعم التطوير المستمر للطريقة ونشرها بمسؤولية."
                 : "As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method."
               }</p>
               <p>{t.about.todayFunctions}</p>

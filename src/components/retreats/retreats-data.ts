@@ -2,47 +2,47 @@ import type { FeaturedRetreatData, RetreatItem } from "./types";
 
 export const FEATURED_RETREAT: FeaturedRetreatData = {
   id: "featured-1",
-  title: "Meet and Greet",
+  title: "لقاء تعارفي",
   description:
-    "A welcoming gathering to connect with the NeuroHolistic community and explore what the retreat experience offers. This introductory session sets the tone for deeper immersion—whether you are new to the method or returning to continue your journey.",
-  date: "12 August 2026, 4 PM GST",
+    "لقاء ترحيبي يهدف إلى التواصل مع مجتمع نيوروهوليستك واستكشاف ما الذي تقدّمه تجربة الخلوة. تمهّد هذه الجلسة التمهيدية لتجربة أعمق وأكثر اندماجا، سواء كنت جديدا على الطريقة أو عائدا لمتابعة رحلتك.",
+  date: "12 أغسطس 2026، الساعة 4 مساءً بتوقيت الخليج",
   time: "4 PM GST",
-  location: "Cafe Shoppe, Oxford, United Kingdom",
+  location: "عن بُعد",
   capacity: 20,
-  duration: "2 hours",
+  duration: "ساعتان",
   image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
-  tags: ["Networking", "Collaboration", "Project Management", "User Experience"],
+  tags: ["تنظيم عميق", "عمليات موجّهة", "دمج جماعي", "الطبيعة"],
   slug: "meet-and-greet-oxford-2026",
 };
 
 export const UPCOMING_RETREATS: RetreatItem[] = [
   {
     id: "1",
-    title: "Spring Restoration Retreat",
+    title: "رحلة الاستعادة الربيعية",
     description:
-      "A three-day immersive retreat combining guided NeuroHolistic sessions with nature-based practices. Step away from daily life and engage deeply in the transformational process.",
-    date: "May 22–24, 2025",
-    location: "Mountain Resort, Oman",
+      "رحلة غامرة تمتد ثلاثة أيام، تجمع بين جلسات نيوروهوليستك الموجّهة والممارسات المستندة إلى الطبيعة. ابتعد عن تفاصيل الحياة اليومية وانخرط بعمق في العملية التحوّلية.",
+    date: "22–24 مايو 2025",
+    location: "منتجع جبلي، عُمان",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80",
     slug: "spring-restoration-2025",
   },
   {
     id: "2",
-    title: "Summer Integration Gathering",
+    title: "ملتقى الدمج الصيفي",
     description:
-      "Connect with fellow practitioners in a held container for integration, reflection, and continued growth through the NeuroHolistic Method™.",
-    date: "July 10–12, 2025",
-    location: "Coastal Retreat Center, UAE",
+      "تواصل مع ممارسين آخرين في إطار احتوائي داعم للدمج، والتأمل، واستمرار النمو من خلال طريقة نيوروهوليستك™.",
+    date: "10–12 يوليو 2025",
+    location: "مركز رحلات ساحلي، الإمارات العربية المتحدة",
     image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80",
     slug: "summer-integration-2025",
   },
   {
     id: "3",
-    title: "Autumn Deep Dive",
+    title: "التعمّق الخريفي",
     description:
-      "An extended retreat for those ready to go deeper—featuring extended sessions, group circles, and individual reflection time in nature.",
-    date: "October 5–9, 2025",
-    location: "Forest Lodge, UK",
+      "رحلة ممتدة للمستعدين للذهاب إلى عمق أكبر، وتتضمن جلسات مطوّلة، ودوائر جماعية، ووقتا فرديا للتأمل في الطبيعة.",
+    date: "5–9 أكتوبر 2025",
+    location: "نُزل في الغابة، المملكة المتحدة",
     image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
     slug: "autumn-deep-dive-2025",
   },

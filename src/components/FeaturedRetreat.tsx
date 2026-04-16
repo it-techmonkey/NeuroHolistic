@@ -63,22 +63,22 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
             <div className="mb-12 space-y-6 border-t border-[#F1F5F9] pt-8">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Timeline</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">الوقت</span>
                   <span className="text-[15px] font-medium text-[#0F172A]">{retreat.date}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Duration</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">المدة</span>
                   <span className="text-[15px] font-medium text-[#0F172A]">{retreat.duration}</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Capacity</span>
-                  <span className="text-[15px] font-medium text-[#0F172A]">{retreat.capacity} Participants</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">العدد</span>
+                  <span className="text-[15px] font-medium text-[#0F172A]">{retreat.capacity} مشاركا</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Status</span>
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1]">Registration Open</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">الحالة</span>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1]">التسجيل مفتوح</span>
                 </div>
               </div>
             </div>
@@ -89,13 +89,13 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
                 href={detailsHref}
                 className="inline-flex h-14 items-center justify-center bg-[#0F172A] px-10 text-[13px] font-bold uppercase tracking-widest text-white transition-all hover:bg-[#1E293B]"
               >
-                Register
+                سجّل الآن
               </Link>
               <Link
                 href={detailsHref}
                 className="group inline-flex items-center gap-2 border-b border-[#0F172A] pb-1 text-[13px] font-bold uppercase tracking-widest text-[#0F172A]"
               >
-                View Details
+                عرض التفاصيل
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
             </div>

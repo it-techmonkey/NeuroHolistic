@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       const { data: therapistUser } = await supabase
         .from('users')
         .select('id')
-        .eq('full_name', profile.name)
+        .eq('full_name', profile.name.en)
         .eq('role', 'therapist')
         .maybeSingle();
 

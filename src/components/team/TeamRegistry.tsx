@@ -4,8 +4,12 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { TEAM_PROFILES } from "./team-profiles";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function TeamRegistry() {
+  const { t, isArabic } = useLang();
+  const tp = t.teamPage;
+
   const founder = TEAM_PROFILES.find(member => member.slug === "fawzia-yassmina");
   const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
 
@@ -22,7 +26,7 @@ export default function TeamRegistry() {
             transition={{ duration: 0.8 }}
             className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
-            <span className="font-semibold text-[#2B2F55]">Meet the team</span>
+            <span className="font-semibold text-[#2B2F55]">{tp.meetTheTeam}</span>
           </motion.h2>
         </div>
 
@@ -42,7 +46,7 @@ export default function TeamRegistry() {
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px] bg-white">
                 <Image
                   src={founder.image}
-                  alt={founder.name}
+                  alt={isArabic ? founder.name.ar : founder.name.en}
                   fill
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
@@ -51,16 +55,16 @@ export default function TeamRegistry() {
               {/* Text Content - Right Side */}
               <div className="w-full lg:w-7/12 flex flex-col items-start pr-4">
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-4">
-                  Founder   
+                  {tp.founder}   
                 </span>
                 <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
-                  {founder.name}
+                  {isArabic ? founder.name.ar : founder.name.en}
                 </h3>
                 <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light mb-8 italic">
-                  "{founder.shortBio}"
+                  &quot;{isArabic ? founder.shortBio.ar : founder.shortBio.en}&quot;
                 </p>
                 <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
-                  <span>View Profile</span>
+                  <span>{tp.viewProfile}</span>
                   <div className="h-[1px] w-8 bg-[#2B2F55]/30 group-hover:w-16 group-hover:bg-[#2B2F55] transition-all" />
                 </div>
               </div>
@@ -83,7 +87,7 @@ export default function TeamRegistry() {
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
                   <Image
                     src={member.image}
-                    alt={member.name}
+                    alt={isArabic ? member.name.ar : member.name.en}
                     fill
                     unoptimized
                     className={`object-cover contrast-[1.1] transition-all duration-1000 scale-100 group-hover:scale-110 ${
@@ -95,13 +99,13 @@ export default function TeamRegistry() {
                 {/* Content */}
                 <div className="px-2">
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
-                    {member.name}
+                    {isArabic ? member.name.ar : member.name.en}
                   </h3>
                   <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-6">
-                    {member.shortBio}
+                    {isArabic ? member.shortBio.ar : member.shortBio.en}
                   </p>
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 group-hover:text-[#2B2F55] transition-all">
-                    <span>View Profile</span>
+                    <span>{tp.viewProfile}</span>
                     <div className="h-[1px] w-6 bg-slate-200 group-hover:bg-[#2B2F55] group-hover:w-10 transition-all" />
                   </div>
                 </div>

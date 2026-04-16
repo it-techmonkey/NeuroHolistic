@@ -8,9 +8,9 @@ import type { EventItem } from "./events/types";
 /* ─── Filter Logic (Keeping your existing logic) ─────────────────────────── */
 function extractDateOptions(events: EventItem[]) {
   const seen = new Set<string>();
-  const options = [{ value: "all", label: "All dates" }];
+  const options = [{ value: "all", label: "جميع التواريخ" }];
   for (const e of events) {
-    const match = e.date.match(/([A-Za-z]+)\s+\d+/);
+    const match = e.date.match(/(أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر|يناير|فبراير|مارس)\s+\d{4}/);
     if (match) {
       const month = match[1];
       const year = e.date.match(/\d{4}/)?.[0] || "";
@@ -31,7 +31,7 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
     return events.filter((e) => {
       if (filters.type !== "all" && e.type !== filters.type) return false;
       if (filters.date !== "all") {
-        const month = e.date.match(/([A-Za-z]+)\s+\d+/)?.[1] || "";
+        const month = e.date.match(/(أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر|يناير|فبراير|مارس)/)?.[1] || "";
         const year = e.date.match(/\d{4}/)?.[0] || "";
         if (`${month} ${year}` !== filters.date) return false;
       }
@@ -52,26 +52,26 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
 
             </div>
             <h2 className="text-[42px] font-light leading-[1.05] tracking-tight text-[#0F172A] md:text-[56px]">
-              Upcoming <span className="italic text-[#64748B]">Events</span>
+              الفعاليات <span className="italic text-[#64748B]">القادمة</span>
             </h2>
           </div>
 
           {/* Minimalist Filters (No bubbles, just hairlines) */}
           <div className="flex flex-wrap gap-8">
             <div className="flex flex-col gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Type</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">النوع</span>
               <select 
                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
                 className="bg-transparent text-[14px] font-semibold text-[#0F172A] outline-none cursor-pointer border-b border-[#E2E8F0] pb-1 hover:border-[#0F172A] transition-colors"
               >
-                <option value="all">All Disciplines</option>
-                <option value="Workshop">Workshops</option>
-                <option value="Retreat">Retreats</option>
-                <option value="Session">Live Sessions</option>
+                <option value="all">الكل</option>
+                <option value="ورشة عمل">ورش العمل</option>
+                <option value="رحلة">الرحلات</option>
+                <option value="جلسة عبر الإنترنت">الجلسات الحية</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Timeline</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">الجدول الزمني</span>
               <select 
                 onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
                 className="bg-transparent text-[14px] font-semibold text-[#0F172A] outline-none cursor-pointer border-b border-[#E2E8F0] pb-1 hover:border-[#0F172A] transition-colors"
@@ -95,7 +95,7 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
                 animate={{ opacity: 1 }} 
                 className="py-20 text-center font-mono text-[13px] text-[#94A3B8]"
               >
-                [ No results found in current registry ]
+                [ لا توجد نتائج ضمن الفلاتر الحالية ]
               </motion.p>
             )}
           </AnimatePresence>
@@ -145,7 +145,7 @@ function EventRow({ event, index }: { event: EventItem; index: number }) {
         {/* Meta Info */}
         <div className="md:col-span-3">
           <div className="flex flex-col gap-1 border-l border-[#E2E8F0] pl-6">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Date // Location</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">التاريخ // الموقع</span>
             <span className="text-[15px] font-medium text-[#0F172A]">{event.date}</span>
             <span className="text-[14px] text-[#64748B]">{event.location}</span>
           </div>
@@ -157,7 +157,7 @@ function EventRow({ event, index }: { event: EventItem; index: number }) {
             href={detailsHref}
             className="inline-flex h-12 items-center justify-center border border-[#0F172A] px-6 text-[13px] font-bold uppercase tracking-widest text-[#0F172A] transition-all hover:bg-[#0F172A] hover:text-white"
           >
-            Register
+            سجّل الآن
           </Link>
         </div>
         

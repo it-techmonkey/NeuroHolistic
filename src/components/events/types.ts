@@ -1,4 +1,4 @@
-export type EventType = "Workshop" | "Retreat" | "Online Session";
+export type EventType = string;
 
 export interface EventItem {
   id: string;

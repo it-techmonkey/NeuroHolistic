@@ -20,7 +20,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
         <div className="mb-16 flex flex-col items-start justify-between gap-8 border-b border-[#E2E8F0] pb-10 lg:flex-row lg:items-end">
           <div>
             <h2 className="text-[34px] font-light leading-tight tracking-tight text-[#0F172A] md:text-[44px]">
-              Upcoming <span className="italic text-[#64748B]">Sessions</span>
+              الجلسات <span className="italic text-[#64748B]">القادمة</span>
             </h2>
           </div>
           
@@ -71,7 +71,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
                   </h3>
 
                   <div className="mb-6 flex flex-col gap-1 border-l border-[#E2E8F0] pl-4">
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">Location</span>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">الموقع</span>
                     <span className="text-[14px] text-[#475569]">{retreat.location}</span>
                   </div>
 
@@ -84,7 +84,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
                     className="mt-auto group inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-widest text-[#0F172A]"
                   >
                     <span className="border-b border-transparent pb-0.5 transition-all group-hover:border-[#0F172A]">
-                      View Registry
+                      عرض التسجيل
                     </span>
                     <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                   </Link>
