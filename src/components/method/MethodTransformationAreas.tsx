@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Standard, Clean UI Icons ─────────────────────────────────────────── */
 
@@ -31,30 +32,13 @@ const Icons = {
   ),
 };
 
-const AREAS = [
-  {
-    title: "Health",
-    description: "As the body moves out of chronic stress patterns, many individuals experience improvements in sleep, energy, and overall physical well-being. The nervous system regains its natural capacity for regulation, recovery, and resilience.",
-    Icon: Icons.Health,
-  },
-  {
-    title: "Mind",
-    description: "With new neural pathways forming, mental clarity increases and emotional reactivity begins to soften. Patterns of anxiety, overthinking, or inner tension gradually give way to greater stability, awareness, and cognitive flexibility.",
-    Icon: Icons.Mind,
-  },
-  {
-    title: "Relationships",
-    description: "As internal balance grows, relational patterns often shift as well. Communication becomes clearer, boundaries healthier, and connections with others more authentic and supportive.",
-    Icon: Icons.Relationships,
-  },
-  {
-    title: "Human Potential",
-    description: "When energy is no longer consumed by unresolved internal conflict, it becomes available for creativity, purpose, and meaningful engagement with life. Many individuals rediscover a deeper sense of direction and the confidence to pursue what truly matters.",
-    Icon: Icons.Potential,
-  },
-];
+const ICONS_LIST = [Icons.Health, Icons.Mind, Icons.Relationships, Icons.Potential];
 
-export default function TransformationAreas() {
+export default function MethodTransformationAreas() {
+  const { t } = useLang();
+  const mp = t.methodPage;
+  const areas = mp.transformationAreas;
+
   return (
     <section className="w-full bg-white py-16 md:py-20">
       <div className="mx-auto max-w-[1200px] px-6">
@@ -67,52 +51,55 @@ export default function TransformationAreas() {
             viewport={{ once: true }}
             className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl"
           >
-            Areas of Transformation
+            {mp.transformationAreasTitle}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-className="mx-auto mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-500"
+            className="mx-auto mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-500"
           >
-            When internal systems return to balance and coherence, change appears across multiple dimensions of life, altering how we think, feel, and engage with the world.
+            {mp.transformationAreasSubtitle}
           </motion.p>
         </div>
 
         {/* Compact 4-Column Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {AREAS.map((area, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link 
-                href="/programs"
-                className="group block h-full rounded-2xl border border-slate-100 bg-slate-50/30 p-6 transition-all duration-300 hover:border-slate-200 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40"
+          {areas.map((area: any, index: number) => {
+            const IconComponent = ICONS_LIST[index];
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                  <area.Icon />
-                </div>
-                
-                <h3 className="mb-2 text-lg font-semibold text-slate-900">
-                  {area.title}
-                </h3>
-                
-                <p className="text-[14px] leading-relaxed text-slate-500 group-hover:text-slate-600">
-                  {area.description}
-                </p>
+                <Link 
+                  href="/programs"
+                  className="group block h-full rounded-2xl border border-slate-100 bg-slate-50/30 p-6 transition-all duration-300 hover:border-slate-200 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40"
+                >
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                    <IconComponent />
+                  </div>
+                  
+                  <h3 className="mb-2 text-lg font-semibold text-slate-900">
+                    {area.title}
+                  </h3>
+                  
+                  <p className="text-[14px] leading-relaxed text-slate-500 group-hover:text-slate-600">
+                    {area.description}
+                  </p>
 
-                <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
-                  Explore
-                  <span className="text-[14px]">→</span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                  <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
+                    {mp.explore}
+                    <span className="text-[14px]">→</span>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
 
         <motion.div
@@ -123,7 +110,7 @@ className="mx-auto mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-500"
            className="mt-16 text-center max-w-3xl mx-auto"
         >
           <p className="text-[18px] leading-relaxed text-slate-600 font-medium italic">
-            For many individuals, the NeuroHolistic Method™ becomes not only a process of healing, but a pathway toward a more conscious, balanced, and empowered way of living.
+            {mp.closingParagraph}
           </p>
         </motion.div>
       </div>

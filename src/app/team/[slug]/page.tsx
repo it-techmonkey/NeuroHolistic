@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!profile) return { title: "Practitioner Not Found" };
 
   return {
-    title: `${profile.name} | NeuroHolistic Faculty`,
-    description: profile.shortBio,
+    title: `${profile.name.en} | NeuroHolistic Faculty`,
+    description: profile.shortBio.en,
   };
 }
 

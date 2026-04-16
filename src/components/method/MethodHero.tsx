@@ -1,19 +1,22 @@
+"use client";
+
 import PageHero from "@/components/ui/PageHero";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function MethodHero() {
+  const { t } = useLang();
+  const mp = t.methodPage;
+
   return (
     <PageHero
-    eyebrow="The Methodology"
-      title={<>The NeuroHolistic <br/>Method</>}
-      description="Systematic approaches to transformation. Harnessing neuroplasticity for lasting growth and systemic coherence."
+      eyebrow={mp.eyebrow}
+      title={<>{mp.title}</>}
+      description={mp.description}
       imageSrc="/images/pages/methods.jpg"
-      imageAlt="Clinical consultation"
+      imageAlt={mp.title}
       imagePosition="object-center"
-      primaryAction={{ label: "Book a Consultation", kind: "modal" }}
-      secondaryAction={{ label: "Explore Research", href: "/research" }}
+      primaryAction={{ label: mp.bookConsultation, kind: "modal" }}
+      secondaryAction={{ label: mp.exploreResearch, href: "/research" }}
     />
   );
 }
-
-
-

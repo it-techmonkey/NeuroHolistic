@@ -13,9 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const event = MOCK_EVENTS.find((item) => item.slug === slug || item.id === slug);
 
-  if (!event) {
-    return { title: "Event Not Found | NeuroHolistic" };
-  }
+  if (!event) return { title: "الفعالية غير موجودة | NeuroHolistic" };
 
   return {
     title: `${event.title} | NeuroHolistic`,
@@ -35,7 +33,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     <section className="bg-white pt-36 pb-24 md:pt-44 md:pb-28">
       <div className="mx-auto max-w-[1000px] px-6 md:px-10">
         <Link href="/events" className="text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5]">
-          Back to Events
+          العودة إلى الفعاليات
         </Link>
 
         <div className="mt-6 overflow-hidden rounded-[18px] border border-[#E2E8F0]">
@@ -51,10 +49,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         <p className="mt-6 text-[17px] leading-[1.8] text-[#475569]">{event.description}</p>
 
         <div className="mt-10 grid gap-4 rounded-[14px] border border-[#E2E8F0] bg-[#FAFBFF] p-6 md:grid-cols-2">
-          <p className="text-[15px] text-[#334155]"><strong>Date:</strong> {event.date}</p>
-          <p className="text-[15px] text-[#334155]"><strong>Time:</strong> {event.time || "TBD"}</p>
-          <p className="text-[15px] text-[#334155]"><strong>Location:</strong> {event.location}</p>
-          <p className="text-[15px] text-[#334155]"><strong>Type:</strong> {event.type}</p>
+          <p className="text-[15px] text-[#334155]"><strong>التاريخ:</strong> {event.date}</p>
+          <p className="text-[15px] text-[#334155]"><strong>الوقت:</strong> {event.time || "يحدد لاحقا"}</p>
+          <p className="text-[15px] text-[#334155]"><strong>الموقع:</strong> {event.location}</p>
+          <p className="text-[15px] text-[#334155]"><strong>النوع:</strong> {event.type}</p>
         </div>
       </div>
     </section>

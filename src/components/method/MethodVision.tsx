@@ -2,9 +2,13 @@
 
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function MethodVision() {
-  const containerVariants :Variants = {
+  const { t } = useLang();
+  const mp = t.methodPage;
+
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -12,12 +16,12 @@ export default function MethodVision() {
     },
   };
 
-  const itemVariants : Variants= {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.8, ease: [0.21, 1, 0.36, 1] } 
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: [0.21, 1, 0.36, 1] },
     },
   };
 
@@ -40,7 +44,7 @@ export default function MethodVision() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl shadow-slate-200/50">
               <Image
                 src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
-                alt="The Vision Behind the Method"
+                alt={mp.visionTitle}
                 fill
                 priority
                 className="object-cover"
@@ -69,7 +73,7 @@ export default function MethodVision() {
                 variants={itemVariants}
                 className="mb-8 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:leading-[1.1]"
               >
-                The Vision Behind <br className="hidden lg:block" /> the Method
+                {mp.visionTitle}
               </motion.h2>
 
               <div className="space-y-7 border-l border-slate-100 pl-8 lg:pl-10">
@@ -77,21 +81,21 @@ export default function MethodVision() {
                   variants={itemVariants}
                   className="text-lg leading-relaxed text-slate-600 font-light"
                 >
-                  The NeuroHolistic Method™ emerged from a long exploration of the deeper mechanisms that shape human experience. Over years of therapeutic work and observation, it became increasingly clear that many human challenges cannot be understood through isolated symptoms alone. They arise from complex interactions between the nervous system, cognition, emotional memory, and deeper layers of human awareness.
+                  {mp.visionParagraph1}
                 </motion.p>
 
                 <motion.p
                   variants={itemVariants}
                   className="text-lg leading-relaxed text-slate-600 font-light"
                 >
-                  Traditional approaches often address these dimensions separately. The vision behind the NeuroHolistic Method™ was to create a structured framework capable of working with the human system as an integrated whole, restoring coherence across its different levels while supporting meaningful and lasting transformation.
+                  {mp.visionParagraph2}
                 </motion.p>
 
                 <motion.p
                   variants={itemVariants}
                   className="text-lg leading-relaxed text-slate-600 font-light"
                 >
-                  By bringing together insights from neuroscience, psychology, and systemic approaches to human development, the method offers a pathway that not only helps resolve inner struggles but also expands the individual’s capacity for awareness, resilience, and conscious living.
+                  {mp.visionParagraph3}
                 </motion.p>
               </div>
             </div>

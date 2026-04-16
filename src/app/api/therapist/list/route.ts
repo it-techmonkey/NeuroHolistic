@@ -72,7 +72,7 @@ export async function GET() {
 
     // Add any missing team profiles (avoiding duplicates)
     TEAM_PROFILES.forEach(profile => {
-      const normalizedKey = normalizeName(profile.name);
+      const normalizedKey = normalizeName(profile.name.en);
 
       if (!seenNormalizedNames.has(normalizedKey)) {
         seenNormalizedNames.add(normalizedKey);
@@ -80,7 +80,7 @@ export async function GET() {
         therapists.push({
           id: profile.slug,
           slug: profile.slug,
-          name: profile.name,
+          name: profile.name.en,
           role: profile.slug === FOUNDER_SLUG ? 'Founder & Lead Practitioner' : 'Certified Practitioner',
         });
       }
@@ -96,7 +96,7 @@ export async function GET() {
     const seen = new Set<string>();
     const therapists = TEAM_PROFILES
       .filter(profile => {
-        const key = normalizeName(profile.name);
+        const key = normalizeName(profile.name.en);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -104,7 +104,7 @@ export async function GET() {
       .map(profile => ({
         id: profile.slug,
         slug: profile.slug,
-        name: profile.name,
+        name: profile.name.en,
         role: profile.slug === FOUNDER_SLUG ? 'Founder & Lead Practitioner' : 'Certified Practitioner',
       }));
 

@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, toggleLang } = useLang();
+  const { t, isUrdu, isArabic, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -118,9 +118,9 @@ export default function Navbar() {
 
   return (
     <header
-      dir={isUrdu ? "rtl" : "ltr"}
-      lang={isUrdu ? "ar" : "en"}
-      className={`fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4 ${isUrdu ? "font-urdu urdu-text" : ""}`}
+      dir="ltr"
+      lang={isArabic ? "ar" : "en"}
+      className={`fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4 ${isArabic ? "font-urdu urdu-text" : ""}`}
     >
       <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-colors duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
         
@@ -135,7 +135,7 @@ export default function Navbar() {
               onClick={toggleLang}
               className={`hover:opacity-100 opacity-60 text-[8px] sm:text-[9px] ${isUrdu ? "font-urdu normal-case tracking-normal" : "uppercase tracking-widest"}`}
             >
-              {isUrdu ? "العربية / English" : "English / العربية"}
+              {isArabic ? "العربية / English" : "English / العربية"}
             </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
