@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:test": "npx tsx scripts/run-with-env.ts .env.test.local next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup:test": "npx tsx scripts/setup-test-accounts.ts",
+    "seed:test": "npx tsx scripts/run-with-env.ts .env.test.local scripts/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1017.0",
@@ -33,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }

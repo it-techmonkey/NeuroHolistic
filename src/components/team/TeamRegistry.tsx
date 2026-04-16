@@ -39,14 +39,13 @@ export default function TeamRegistry() {
               className="group relative flex flex-col lg:flex-row items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
             >
               {/* Image Container - Left Side */}
-              <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px] bg-slate-50">
+              <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px] bg-white">
                 <Image
                   src={founder.image}
                   alt={founder.name}
                   fill
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-[#2B2F55]/5 group-hover:bg-transparent transition-colors duration-700" />
               </div>
 
               {/* Text Content - Right Side */}
@@ -91,8 +90,6 @@ export default function TeamRegistry() {
                       member.slug === "zekra-khayata" ? "object-[center_10%]" : "object-center"
                     }`}
                   />
-                  {/* Subtle vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-60" />
                 </div>
 
                 {/* Content */}

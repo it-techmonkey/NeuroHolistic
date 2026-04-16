@@ -64,9 +64,9 @@ export default function SessionsTab({ data }: { data: AdminData }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-indigo-400" />
               Completion Rate
             </h3>
@@ -98,22 +98,22 @@ export default function SessionsTab({ data }: { data: AdminData }) {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-white font-mono">{completionPct}%</span>
+                <span className="text-2xl font-bold text-slate-900 font-mono">{completionPct}%</span>
                 <span className="text-[10px] text-slate-500">completed</span>
               </div>
             </div>
             <div className="mt-4 text-center">
               <p className="text-xs text-slate-400">
-                <span className="font-mono text-white">{fmt(kpis.completedSessions)}</span> of{' '}
-                <span className="font-mono text-white">{fmt(kpis.totalSessions)}</span> sessions completed
+                <span className="font-mono text-slate-900">{fmt(kpis.completedSessions)}</span> of{' '}
+                <span className="font-mono text-slate-900">{fmt(kpis.totalSessions)}</span> sessions completed
               </p>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-violet-400" />
               Goal Readiness by Therapist
             </h3>
@@ -126,7 +126,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
               therapistGoalScores.map((t: any, i: number) => (
                 <div key={i} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-white">{t.name}</span>
+                    <span className="text-xs font-medium text-slate-900">{t.name}</span>
                     <span className="text-[10px] font-mono text-slate-400">
                       {t.clientCount} {t.clientCount === 1 ? 'client' : 'clients'}
                     </span>
@@ -142,7 +142,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
                         style={{ width: `${(t.avgScore / 10) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs font-mono text-white w-10 text-right">
+                    <span className="text-xs font-mono text-slate-900 w-10 text-right">
                       {t.avgScore?.toFixed(1)}/10
                     </span>
                   </div>
@@ -157,10 +157,10 @@ export default function SessionsTab({ data }: { data: AdminData }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white">Program Sessions</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Program Sessions</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">{activeProgramsDetail.length} active programs</p>
             </div>
             <Target className="w-4 h-4 text-amber-400" />
@@ -179,7 +179,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
                 return (
                   <div key={i} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-white">{p.clientName || 'Client'}</span>
+                      <span className="text-xs font-medium text-slate-900">{p.clientName || 'Client'}</span>
                       <span className="text-[10px] font-mono text-slate-400">
                         {completed}/{total} sessions
                       </span>
@@ -215,10 +215,10 @@ export default function SessionsTab({ data }: { data: AdminData }) {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white">Upcoming Sessions</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Upcoming Sessions</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">Scheduled bookings</p>
             </div>
             <Clock className="w-4 h-4 text-cyan-400" />
@@ -233,7 +233,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
               upcomingBookings.map((b: any, i: number) => (
                 <div key={i} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-white">{b.clientName || 'Client'}</span>
+                    <span className="text-xs font-medium text-slate-900">{b.clientName || 'Client'}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                       b.status === 'confirmed' ? 'bg-blue-500/10 text-blue-400' :
                       'bg-amber-500/10 text-amber-400'
@@ -265,8 +265,8 @@ export default function SessionsTab({ data }: { data: AdminData }) {
         </div>
       </div>
 
-      <div className="bg-[#111827] rounded-xl border border-white/5 p-5">
-        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-slate-500" />
           Session Type Distribution
         </h3>
@@ -278,7 +278,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
               const total = kpis.totalBookings || 1;
               const pct = ((count as number) / total) * 100;
               return (
-                <div key={type} className="bg-white/[0.02] rounded-lg p-3 border border-white/5">
+                <div key={type} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-slate-300 capitalize">{type.replace('_', ' ')}</span>
                     <span className="text-[10px] font-mono text-slate-500">{Math.round(pct)}%</span>
@@ -289,7 +289,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <p className="text-lg font-semibold text-white font-mono mt-2">{fmt(count as number)}</p>
+                  <p className="text-lg font-semibold text-slate-900 font-mono mt-2">{fmt(count as number)}</p>
                 </div>
               );
             })}
@@ -311,13 +311,13 @@ function SessionStatCard({ label, value, icon, color }: {
   };
 
   return (
-    <div className="bg-[#111827] rounded-xl border border-white/5 p-4 hover:border-white/10 transition-colors">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-300 transition-colors">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} border flex items-center justify-center`}>
           {icon}
         </div>
       </div>
-      <p className="text-[22px] font-semibold text-white font-mono tracking-tight">{value}</p>
+      <p className="text-[22px] font-semibold text-slate-900 font-mono tracking-tight">{value}</p>
       <p className="text-[11px] text-slate-500 mt-1">{label}</p>
     </div>
   );

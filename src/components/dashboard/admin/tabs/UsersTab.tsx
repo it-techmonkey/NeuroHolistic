@@ -58,7 +58,7 @@ export default function UsersTab({ data }: UsersTabProps) {
           <Users className="w-5 h-5 text-blue-400" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-white">Users</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Users</h2>
           <p className="text-sm text-slate-400">
             Manage platform users and their roles
           </p>
@@ -66,28 +66,28 @@ export default function UsersTab({ data }: UsersTabProps) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-slate-400" />
             <span className="text-xs text-slate-400 uppercase tracking-wide">Total</span>
           </div>
-          <p className="text-2xl font-semibold text-white font-mono">{data.users.length}</p>
+          <p className="text-2xl font-semibold text-slate-900 font-mono">{data.users.length}</p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <UserCheck className="w-4 h-4 text-blue-400" />
             <span className="text-xs text-slate-400 uppercase tracking-wide">Clients</span>
           </div>
           <p className="text-2xl font-semibold text-blue-400 font-mono">{stats.client}</p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Shield className="w-4 h-4 text-violet-400" />
             <span className="text-xs text-slate-400 uppercase tracking-wide">Therapists</span>
           </div>
           <p className="text-2xl font-semibold text-violet-400 font-mono">{stats.therapist}</p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <Shield className="w-4 h-4 text-amber-400" />
             <span className="text-xs text-slate-400 uppercase tracking-wide">Admins</span>
@@ -104,10 +104,10 @@ export default function UsersTab({ data }: UsersTabProps) {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[#111827] border border-white/5 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-white/10 transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder:text-slate-500 text-sm focus:outline-none focus:border-indigo-300 transition-colors"
           />
         </div>
-        <div className="flex items-center gap-1.5 bg-[#111827] border border-white/5 rounded-lg p-1">
+        <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg p-1">
           <Filter className="w-4 h-4 text-slate-400 ml-2 shrink-0" />
           {filters.map((f) => (
             <button
@@ -115,8 +115,8 @@ export default function UsersTab({ data }: UsersTabProps) {
               onClick={() => setRoleFilter(f.value)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 roleFilter === f.value
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {f.label}
@@ -128,11 +128,11 @@ export default function UsersTab({ data }: UsersTabProps) {
         </div>
       </div>
 
-      <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/5">
+              <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Name
                 </th>
@@ -174,10 +174,10 @@ export default function UsersTab({ data }: UsersTabProps) {
                 filteredUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <span className="text-white font-medium">
+                      <span className="text-slate-900 font-medium">
                         {user.fullName || 'Unnamed'}
                       </span>
                     </td>

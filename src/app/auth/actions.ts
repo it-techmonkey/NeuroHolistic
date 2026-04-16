@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/auth/server';
-import { getHomeRouteForRole, normalizeUserRole } from '@/lib/auth/role-routing';
+import { getHomeRouteForRole, resolveUserRole } from '@/lib/auth/role-routing';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { headers } from 'next/headers';
 
@@ -87,11 +87,22 @@ export async function signUp(formData: {
     userId = authData.user.id;
   }
 
+  // Preserve privileged roles when account already exists.
+  const { data: existingProfile } = await serviceSupabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+  const preservedRole =
+    existingProfile?.role === 'admin' || existingProfile?.role === 'therapist'
+      ? existingProfile.role
+      : 'client';
+
   // Create or update user record in public.users table
   const { error: insertError } = await serviceSupabase.from('users').upsert({
     id: userId,
     email: formData.email,
-    role: 'client',
+    role: preservedRole,
     full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
     phone: formData.phone.trim() || null,
     country: formData.country?.trim() ?? null,
@@ -165,10 +176,10 @@ export async function login(formData: {
     return { success: true, redirectTo };
   }
 
-  const role = normalizeUserRole(userData?.role as string | null | undefined);
+  const role = resolveUserRole(userData?.role as string | null | undefined, user);
   
-  // Always redirect to /dashboard which will handle role-based routing
-  const redirectUrl = '/dashboard';
+  // Redirect directly to role home to avoid stale/mismatched client-side routing.
+  const redirectUrl = getHomeRouteForRole(role);
   
   console.log('[Login] User:', user.email, 'DB Role:', userData?.role, 'Normalized:', role, 'Redirect:', redirectUrl);
 

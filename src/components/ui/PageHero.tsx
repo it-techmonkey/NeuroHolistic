@@ -54,10 +54,7 @@ export default function PageHero({
           sizes="100vw"
           quality={95}
         />
-        {/* Extended Gradient: Strong overlay for title readability across all images */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,16,40,0.7)_0%,rgba(11,16,40,0.5)_30%,rgba(11,16,40,0.35)_60%,rgba(11,16,40,0.5)_100%)]" />
-        <div className={`absolute inset-0 bg-[linear-gradient(${isUrdu ? 'to_left' : 'to_right'},rgba(11,16,40,0.95)_0%,rgba(11,16,40,0.6)_40%,rgba(11,16,40,0.3)_70%,rgba(11,16,40,0.15)_100%)]`} />
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(11,16,40,0.7)_0%,rgba(11,16,40,0.2)_40%,transparent_100%)]" />
+        <div className="absolute inset-0 bg-[#0B1028]/60" />
       </div>
 
       {/* ── Content Layer ── */}

@@ -30,6 +30,16 @@ if (!supabaseUrl || !supabaseServiceKey) {
   process.exit(1);
 }
 
+const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1] || '';
+const blockedProjectRefs = new Set(
+  ['cippnggwojzgfprgexvh', process.env.PRODUCTION_SUPABASE_PROJECT_REF || ''].filter(Boolean)
+);
+if (blockedProjectRefs.has(projectRef)) {
+  console.error('❌ BLOCKED: This script is pointing to a production Supabase project.');
+  console.error('   Use a test project URL before running migrations.');
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,

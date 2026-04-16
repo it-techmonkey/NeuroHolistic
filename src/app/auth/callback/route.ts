@@ -1,3 +1,4 @@
+import { resolveUserRole } from '@/lib/auth/role-routing';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .single();
 
-        const role = profile?.role || 'client';
+        const role = resolveUserRole(profile?.role as string | null | undefined, user);
         const redirectUrl = role === 'admin' ? '/dashboard/admin' 
           : role === 'therapist' ? '/dashboard/therapist' 
           : '/dashboard/client';

@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
 
       // Session data
       techniques_used: data.techniques_used || [],
+      targeted_therapy_specify: data.targeted_therapy_specify || null,
+      scanning_specify: data.scanning_specify || null,
       key_interventions: data.key_interventions || null,
       breakthroughs_resistance: data.breakthroughs_resistance || null,
 
@@ -123,35 +125,67 @@ export async function POST(request: NextRequest) {
       .eq('session_id', actualSessionId)
       .maybeSingle();
 
-    let form;
-    if (existingFormData) {
-      // Update existing form
-      const { data: updatedForm, error: updateError } = await supabase
-        .from('session_development_forms')
-        .update(insertData)
-        .eq('id', existingFormData.id)
-        .select()
-        .single();
+    const getMissingColumnFromError = (message?: string | null): string | null => {
+      if (!message) return null;
+      const match = message.match(/Could not find the '([^']+)' column/i);
+      return match?.[1] ?? null;
+    };
 
-      if (updateError) {
-        console.error('[Session Development] Update error:', updateError);
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
-      }
-      form = updatedForm;
-    } else {
-      // Insert new form
-      const { data: newForm, error: insertError } = await supabase
-        .from('session_development_forms')
-        .insert(insertData)
-        .select()
-        .single();
+    const writeFormWithFallback = async (isUpdate: boolean, formId?: string) => {
+      const payload = { ...insertData };
+      const removedColumns: string[] = [];
 
-      if (insertError) {
-        console.error('[Session Development] Insert error:', insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      let lastErrorMessage: string | null = null;
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const result = isUpdate
+          ? await supabase
+              .from('session_development_forms')
+              .update(payload)
+              .eq('id', formId!)
+              .select()
+              .single()
+          : await supabase
+              .from('session_development_forms')
+              .insert(payload)
+              .select()
+              .single();
+
+        if (!result.error) {
+          if (removedColumns.length > 0) {
+            console.warn(
+              '[Session Development] Missing columns skipped in this environment:',
+              removedColumns
+            );
+          }
+          return { data: result.data, error: null as string | null };
+        }
+
+        lastErrorMessage = result.error.message;
+        const missingColumn = getMissingColumnFromError(result.error.message);
+        if (!missingColumn || !(missingColumn in payload)) {
+          return { data: null, error: result.error.message };
+        }
+
+        delete payload[missingColumn];
+        removedColumns.push(missingColumn);
       }
-      form = newForm;
+
+      return {
+        data: null,
+        error: `Failed to save session development form after schema compatibility retries. Last error: ${lastErrorMessage || 'unknown'}`,
+      };
+    };
+
+    const result = existingFormData
+      ? await writeFormWithFallback(true, existingFormData.id)
+      : await writeFormWithFallback(false);
+
+    if (result.error) {
+      console.error('[Session Development] Save error:', result.error);
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
+
+    const form = result.data;
 
     // Update the session to mark development form as submitted
     await supabase

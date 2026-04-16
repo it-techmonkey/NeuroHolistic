@@ -25,11 +25,22 @@ interface TherapistInfo {
   slug?: string;
 }
 
+const THERAPIST_NAME_BY_SLUG: Record<string, string> = {
+  'fawzia-yassmina': 'Dr. Fawzia Yassmina',
+  'mariam-al-kaisi': 'Mariam Al Kaissi',
+  'noura-youssef': 'Noura Youssef',
+  'zekra-khayata': 'Zekra Khayata',
+  'reem-mobayed': 'Reem Mobayed',
+  'fawares-azaar': 'Fawares Azaar',
+  'joud-charafeddin': 'Joud Charafeddin',
+};
+
 export default function PaidProgramBookingForm({ userEmail, userName, isAuthenticated = true }: PaidProgramBookingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedType = searchParams.get('type') as ProgramType | null;
   const academyMode = searchParams.get('mode') === 'academy';
+  const preferredTherapistSlug = searchParams.get('therapist')?.trim() || '';
   const [step, setStep] = useState<'program_type' | 'payment' | 'details'>(
     academyMode || preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type'
   );
@@ -104,7 +115,16 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     fetchTherapist();
   }, [isAuthenticated]);
 
-  const isFawzia = isDrFawzia(therapist?.name, therapist?.slug);
+  const preferredTherapist: TherapistInfo | null = preferredTherapistSlug
+    ? {
+        slug: preferredTherapistSlug,
+        name:
+          THERAPIST_NAME_BY_SLUG[preferredTherapistSlug] ||
+          preferredTherapistSlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      }
+    : null;
+  const effectiveTherapist = preferredTherapist || therapist;
+  const isFawzia = isDrFawzia(effectiveTherapist?.name, effectiveTherapist?.slug);
   const [showConfirmPayment, setShowConfirmPayment] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
 
@@ -122,7 +142,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     if (academyMode) {
       return option === 'full' ? ACADEMY_PRICING.fullProgram : ACADEMY_PRICING.installment;
     }
-    return getPrice(type, option, therapist?.name, therapist?.slug);
+    return getPrice(type, option, effectiveTherapist?.name, effectiveTherapist?.slug);
   };
 
   const handlePayment = async (option: PaymentOption) => {
@@ -140,14 +160,14 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     // Get the Ziina link and redirect directly
     const ziinaLink = academyMode
       ? (option === 'full' ? ACADEMY_PRICING.ziinaLinks.fullProgram : ACADEMY_PRICING.ziinaLinks.installment)
-      : getZiinaLink(selectedProgramType, option, therapist?.name, therapist?.slug);
+      : getZiinaLink(selectedProgramType, option, effectiveTherapist?.name, effectiveTherapist?.slug);
     
     // Store payment context for confirmation
     sessionStorage.setItem('pendingPayment', JSON.stringify({
       programType: selectedProgramType,
       option,
       amount: getPriceForDisplay(selectedProgramType, option),
-      therapistName: therapist?.name,
+      therapistName: effectiveTherapist?.name,
     }));
 
     // Open Ziina in a new tab so user stays on this page
@@ -297,7 +317,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           </p>
         </div>
 
-        {therapist && (
+        {effectiveTherapist && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -305,7 +325,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <div>
                 <p className="text-sm font-medium text-indigo-900">Your Therapist</p>
-                <p className="text-lg font-semibold text-indigo-800">{therapist.name}</p>
+                <p className="text-lg font-semibold text-indigo-800">{effectiveTherapist.name}</p>
               </div>
             </div>
           </div>
@@ -360,7 +380,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       )}
 
       {/* Assigned Therapist Info */}
-      {therapist && (
+      {effectiveTherapist && (
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -368,10 +388,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             </div>
             <div>
               <p className="text-sm font-medium text-indigo-900">Your Assigned Therapist</p>
-              <p className="text-lg font-semibold text-indigo-800">{therapist.name}</p>
-              {isFawzia && (
-                <p className="text-xs text-indigo-600 mt-0.5">Premium Specialist</p>
-              )}
+              <p className="text-lg font-semibold text-indigo-800">{effectiveTherapist.name}</p>
             </div>
           </div>
         </div>
@@ -495,7 +512,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 <p className="font-semibold text-slate-900">
                   {academyMode ? 'Academy Program' : (selectedProgramType === 'private' ? 'Private Program' : 'Group Program')}
                 </p>
-                <p className="text-sm text-slate-500">{academyMode ? '8-month program' : '10 sessions included'}</p>
+                <p className="text-sm text-slate-500">{academyMode ? '5 sessions included' : '10 sessions included'}</p>
               </div>
             </div>
           </div>
@@ -529,7 +546,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
-                  ? 'Pay for full program upfront.'
+                  ? 'Pay for all 5 Academy sessions upfront.'
                   : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.'}
               </p>
               <div className="mb-6">
@@ -539,7 +556,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 <span className="text-slate-500 text-base ml-1">AED</span>
                 <p className="text-slate-500 text-sm mt-1">
                   {academyMode
-                    ? '8-month Academy program'
+                    ? `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} AED / session`
                     : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
                 </p>
               </div>
@@ -565,12 +582,10 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   Flexible
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">
-                {academyMode ? 'Pay in Instalments' : 'Pay Session by Session'}
-              </h3>
+              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Pay Session by Session</h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
-                  ? 'Pay in instalments across the Academy program.'
+                  ? 'Pay 5,000 AED per Academy session. Total Academy program consists of 5 sessions.'
                   : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.'}
               </p>
               <div className="mb-6">
@@ -578,7 +593,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
                 </span>
                 <span className="text-slate-500 text-base ml-1">AED</span>
-                <p className="text-slate-500 text-sm mt-1">{academyMode ? 'Per Instalment' : 'per session'}</p>
+                <p className="text-slate-500 text-sm mt-1">per session</p>
               </div>
               <button
                 onClick={() => handlePayment('per_session')}
@@ -723,7 +738,12 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 }
 
                 // Has completed consultation - proceed to payment
-                const link = getZiinaLink(selectedProgramType!, pendingPaymentOption!, therapist?.name, therapist?.slug);
+                const link = getZiinaLink(
+                  selectedProgramType!,
+                  pendingPaymentOption!,
+                  effectiveTherapist?.name,
+                  effectiveTherapist?.slug
+                );
                 if (link) {
                   sessionStorage.setItem('pendingPayment', JSON.stringify({
                     programType: selectedProgramType,

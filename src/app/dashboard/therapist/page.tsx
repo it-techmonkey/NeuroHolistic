@@ -246,16 +246,24 @@ export default function TherapistDashboardPage() {
         return;
       }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role, full_name, email')
-        .eq('id', user.id)
-        .single();
-
-      if (userData?.role !== 'therapist' && userData?.role !== 'admin') {
+      // Use server-side role resolution to avoid client-side RLS/profile race
+      // conditions that can incorrectly downgrade therapist users to client.
+      const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
+      const me = await meRes.json();
+      if (!me?.authenticated) {
+        router.push('/auth/login');
+        return;
+      }
+      if (me.role !== 'therapist' && me.role !== 'admin') {
         router.push('/dashboard/client');
         return;
       }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single();
 
       setTherapistId(user.id);
       setTherapistInfo({ ...userData, id: user.id });
@@ -1578,7 +1586,7 @@ function ClientDetailView({
       });
     });
 
-  (detail?.devForms || []).forEach((f: any, idx: number) => {
+  (detail?.devForms || []).forEach((f: any) => {
     const totalScore =
       (f.nervous_system_score || 0) +
       (f.emotional_state_score || 0) +
@@ -1586,17 +1594,29 @@ function ClientDetailView({
       (f.body_symptoms_score || 0) +
       (f.behavioral_patterns_score || 0) +
       (f.life_functioning_score || 0);
+    const sessionDate = f.session_date || f.created_at;
 
     overviewTimelineData.push({
-      date: f.created_at,
+      date: sessionDate,
       score: totalScore,
-      label: `Session ${f.session_number || idx + 1}`,
+      label: new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       type: 'session',
       data: f,
     });
   });
 
   overviewTimelineData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const latestAssessment = detail?.assessments?.length > 0
+    ? detail.assessments[detail.assessments.length - 1]
+    : null;
+  const baselineAssessment = detail?.assessments?.find((a: any) => a.is_baseline) || null;
+
+  const renderValue = (value: any) => {
+    if (value === null || value === undefined || value === '') return 'Not specified';
+    if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : 'Not specified';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    return String(value);
+  };
 
   return (
     <div className="space-y-6">
@@ -1769,47 +1789,57 @@ function ClientDetailView({
                     </div>
                   )}
 
-                  {/* Latest Assessment Overview */}
-                  {detail?.assessments?.length > 0 ? (
+                  {/* Latest Assessment Report */}
+                  {latestAssessment ? (
                     <div className="border border-slate-200 rounded-xl overflow-hidden">
                       <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
                         <div className="flex justify-between items-center">
                           <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                             <FileText className="w-4 h-4 text-indigo-600" />
-                            Latest Assessment
-                            {detail.assessments[detail.assessments.length - 1]?.is_baseline && (
+                            Diagnostic Assessment Report
+                            {latestAssessment?.is_baseline && (
                               <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">Baseline</span>
                             )}
                           </h4>
                           <span className="text-sm text-slate-500">
-                            {new Date(detail.assessments[detail.assessments.length - 1]?.assessed_at || detail.assessments[detail.assessments.length - 1]?.created_at).toLocaleDateString()}
+                            {new Date(latestAssessment?.assessed_at || latestAssessment?.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <div className="p-5 space-y-4">
-                        {/* Clinical Summary */}
-                        {detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief && (
-                          <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Condition Brief</p>
-                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief}</p>
+                        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                          <h5 className="text-xs text-indigo-700 uppercase tracking-wider mb-3 font-semibold">Client & Submission</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div><span className="text-slate-500">Client Name:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_name || detail?.clientProfile?.full_name || client.fullName)}</span></div>
+                            <div><span className="text-slate-500">Email:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_email || detail?.clientProfile?.email || client.email)}</span></div>
+                            <div><span className="text-slate-500">Phone:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_phone || detail?.clientProfile?.phone || client.phone)}</span></div>
+                            <div><span className="text-slate-500">Country:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_country || detail?.clientProfile?.country)}</span></div>
+                            <div><span className="text-slate-500">Occupation:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_occupation)}</span></div>
+                            <div><span className="text-slate-500">Relationship:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.relationship_status)}</span></div>
                           </div>
-                        )}
-                        {detail.assessments[detail.assessments.length - 1]?.therapist_focus && (
-                          <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapist Focus</p>
-                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapist_focus}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Main Complaint</p>
+                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.main_complaint)}</p>
                           </div>
-                        )}
-                        {detail.assessments[detail.assessments.length - 1]?.therapy_goal && (
-                          <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapy Goal</p>
-                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapy_goal}</p>
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Current Symptoms</p>
+                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.current_symptoms)}</p>
                           </div>
-                        )}
+                          <div className="rounded-lg border border-slate-200 p-4 lg:col-span-2">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Previous Therapy</p>
+                            <p className="text-sm text-slate-700">
+                              {renderValue(latestAssessment.previous_therapy)}
+                              {latestAssessment.previous_therapy_details ? ` — ${latestAssessment.previous_therapy_details}` : ''}
+                            </p>
+                          </div>
+                        </div>
 
                         {/* Scores Grid */}
                         <div className="pt-4 border-t border-slate-100">
-                          <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Assessment Scores</p>
+                          <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Symptoms & Scores</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {[
                               { label: 'Nervous System', key: 'nervous_system_score' },
@@ -1822,7 +1852,7 @@ function ClientDetailView({
                               <div key={metric.key} className="bg-slate-50 rounded-lg p-3">
                                 <p className="text-xs text-slate-500">{metric.label}</p>
                                 <p className="text-lg font-semibold text-slate-900">
-                                  {detail.assessments[detail.assessments.length - 1]?.[metric.key] || 0}
+                                  {latestAssessment?.[metric.key] || 0}
                                   <span className="text-sm font-normal text-slate-400">/10</span>
                                 </p>
                               </div>
@@ -1830,28 +1860,66 @@ function ClientDetailView({
                             <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
                               <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
                               <p className="text-lg font-bold text-indigo-700">
-                                {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}
+                                {latestAssessment?.goal_readiness_score || 0}
                                 <span className="text-sm font-normal text-indigo-400">/60</span>
                               </p>
                             </div>
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Pattern Selection</p>
+                            <div className="space-y-1 text-sm text-slate-700">
+                              <p><span className="text-slate-500">Nervous Pattern:</span> {renderValue(latestAssessment.nervous_system_pattern)}</p>
+                              <p><span className="text-slate-500">Emotional Patterns:</span> {renderValue(latestAssessment.emotional_patterns)}</p>
+                              <p><span className="text-slate-500">Cognitive Patterns:</span> {renderValue(latestAssessment.cognitive_patterns)}</p>
+                              <p><span className="text-slate-500">Body Symptoms:</span> {renderValue(latestAssessment.body_symptoms)}</p>
+                              <p><span className="text-slate-500">Behavioral Patterns:</span> {renderValue(latestAssessment.behavioral_patterns)}</p>
+                              <p><span className="text-slate-500">Life Functioning:</span> {renderValue(latestAssessment.life_functioning_patterns)}</p>
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Root Cause Analysis</p>
+                            <div className="space-y-1 text-sm text-slate-700">
+                              <p><span className="text-slate-500">Timeline:</span> {renderValue(latestAssessment.root_cause_pattern_timeline)}</p>
+                              <p><span className="text-slate-500">Parental Influence:</span> {renderValue(latestAssessment.root_cause_parental_influence)}</p>
+                              <p><span className="text-slate-500">Core Patterns:</span> {renderValue(latestAssessment.root_cause_core_patterns)}</p>
+                              <p><span className="text-slate-500">Contributing Factors:</span> {renderValue(latestAssessment.root_cause_contributing_factors)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 pt-2">
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Clinical Condition Brief</p>
+                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.clinical_condition_brief)}</p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Therapist Focus</p>
+                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.therapist_focus)}</p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Therapy Goal</p>
+                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.therapy_goal)}</p>
+                          </div>
+                        </div>
+
                         {/* Progress Comparison */}
-                        {detail.assessments.length > 1 && (
+                        {detail.assessments.length > 1 && baselineAssessment && (
                           <div className="pt-4 border-t border-slate-100">
                             <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Progress from Baseline</p>
                             <div className="flex items-center gap-4">
                               <div className="text-center">
                                 <p className="text-xs text-slate-500">Baseline</p>
                                 <p className="text-2xl font-bold text-slate-700">
-                                  {detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0}/60
+                                  {baselineAssessment?.goal_readiness_score || 0}/60
                                 </p>
                               </div>
                               <div className="flex-1 h-1 bg-slate-200 rounded">
                                 <div
                                   className="h-full bg-indigo-500 rounded"
-                                  style={{ width: `${((detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) / 60) * 100}%` }}
+                                  style={{ width: `${((baselineAssessment?.goal_readiness_score || 0) / 60) * 100}%` }}
                                 />
                               </div>
                               <TrendingUp className="w-5 h-5 text-green-500" />
@@ -1864,20 +1932,20 @@ function ClientDetailView({
                               <div className="text-center">
                                 <p className="text-xs text-green-600">Current</p>
                                 <p className="text-2xl font-bold text-green-700">
-                                  {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}/60
+                                  {latestAssessment?.goal_readiness_score || 0}/60
                                 </p>
                               </div>
                             </div>
                             <p className="text-center text-sm text-slate-600 mt-2">
                               Change: <span className={`font-semibold ${
-                                (detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
-                                (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0
+                                (latestAssessment?.goal_readiness_score || 0) -
+                                (baselineAssessment?.goal_readiness_score || 0) >= 0
                                   ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
-                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0 ? '+' : ''}
-                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
-                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0)} points
+                                {(latestAssessment?.goal_readiness_score || 0) -
+                                 (baselineAssessment?.goal_readiness_score || 0) >= 0 ? '+' : ''}
+                                {(latestAssessment?.goal_readiness_score || 0) -
+                                 (baselineAssessment?.goal_readiness_score || 0)} points
                               </span>
                             </p>
                           </div>

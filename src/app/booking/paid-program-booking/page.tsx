@@ -25,7 +25,7 @@ export default async function PaidProgramBookingPage({
     : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-16 pt-32">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-16 pt-24">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -37,7 +37,7 @@ export default async function PaidProgramBookingPage({
           </h1>
           <p className="text-slate-500 text-[16px] max-w-lg mx-auto leading-relaxed">
             {academyMode
-              ? 'Choose either full program payment or pay in instalments.'
+              ? 'Follow the same payment flow and choose either full payment or per-session Academy installments.'
               : 'View our program options and pricing. Choose the type that best suits your needs.'}
           </p>
         </div>

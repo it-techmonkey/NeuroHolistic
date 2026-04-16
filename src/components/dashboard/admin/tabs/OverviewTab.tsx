@@ -67,9 +67,9 @@ export default function OverviewTab({ data }: { data: AdminData }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-white">Revenue Trend</h3>
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900">Revenue Trend</h3>
             <p className="text-[11px] text-slate-500 mt-0.5">Last 6 months</p>
           </div>
           <div className="p-5">
@@ -97,9 +97,9 @@ export default function OverviewTab({ data }: { data: AdminData }) {
         </div>
 
         {/* Country Distribution */}
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
               <Globe className="w-4 h-4 text-indigo-400" />
               Clients by Country
             </h3>
@@ -130,10 +130,10 @@ export default function OverviewTab({ data }: { data: AdminData }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Programs */}
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white">Active Programs</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Active Programs</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">{activeProgramsDetail.length} in progress</p>
             </div>
             <Target className="w-4 h-4 text-amber-400" />
@@ -145,7 +145,7 @@ export default function OverviewTab({ data }: { data: AdminData }) {
               activeProgramsDetail.slice(0, 8).map((p, i) => (
                 <div key={i} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-white">{p.clientName}</span>
+                    <span className="text-xs font-medium text-slate-900">{p.clientName}</span>
                     <span className="text-[10px] font-mono text-slate-400">
                       {p.sessionsCompleted}/{p.totalSessions} sessions
                     </span>
@@ -166,10 +166,10 @@ export default function OverviewTab({ data }: { data: AdminData }) {
         </div>
 
         {/* Recent Activity Feed */}
-        <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Recent Activity</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">Latest platform events</p>
             </div>
             <Zap className="w-4 h-4 text-cyan-400" />
@@ -212,8 +212,8 @@ export default function OverviewTab({ data }: { data: AdminData }) {
       </div>
 
       {/* Status overview bar */}
-      <div className="bg-[#111827] rounded-xl border border-white/5 p-5">
-        <h3 className="text-sm font-semibold text-white mb-4">Booking Status Distribution</h3>
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 mb-4">Booking Status Distribution</h3>
         <div className="flex gap-1 h-8 rounded-lg overflow-hidden">
           {Object.entries(data.bookingStatusCounts).map(([status, count]) => {
             const total = kpis.totalBookings || 1;
@@ -271,13 +271,13 @@ function KpiCard({ label, value, icon, color, sub }: {
   };
 
   return (
-    <div className="bg-[#111827] rounded-xl border border-white/5 p-4 hover:border-white/10 transition-colors">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-300 transition-colors">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} border flex items-center justify-center`}>
           {icon}
         </div>
       </div>
-      <p className="text-[22px] font-semibold text-white font-mono tracking-tight">{value}</p>
+      <p className="text-[22px] font-semibold text-slate-900 font-mono tracking-tight">{value}</p>
       <p className="text-[11px] text-slate-500 mt-1">{label}</p>
       {sub && <p className="text-[10px] text-slate-600 mt-0.5">{sub}</p>}
     </div>
@@ -286,8 +286,8 @@ function KpiCard({ label, value, icon, color, sub }: {
 
 function MiniKpi({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="bg-[#111827] rounded-lg border border-white/5 px-4 py-3">
-      <p className={`text-lg font-semibold font-mono tracking-tight ${highlight ? 'text-emerald-400' : 'text-white'}`}>{value}</p>
+    <div className="bg-white rounded-lg border border-slate-200 px-4 py-3">
+      <p className={`text-lg font-semibold font-mono tracking-tight ${highlight ? 'text-emerald-600' : 'text-slate-900'}`}>{value}</p>
       <p className="text-[10px] text-slate-500 mt-0.5">{label}</p>
     </div>
   );

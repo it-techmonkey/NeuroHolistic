@@ -162,12 +162,46 @@ export default function DiagnosticAssessmentForm({
   onSave,
   isSessionCompleted = false,
 }: DiagnosticAssessmentFormProps) {
+  const parseMultiValue = (value: unknown): string[] => {
+    if (Array.isArray(value)) return value.filter((v) => typeof v === 'string') as string[];
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  const getParentalInfluenceKey = (value: unknown): string => {
+    const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    if (!normalized) return '';
+    const direct = PARENTAL_INFLUENCE_OPTIONS.find((opt) => opt.value === normalized);
+    if (direct) return direct.value;
+    const byLabel = PARENTAL_INFLUENCE_OPTIONS.find((opt) => opt.label.toLowerCase() === normalized);
+    return byLabel?.value || 'other';
+  };
+
   const isCompleted = existingAssessment?.status === 'completed' || isSessionCompleted;
-  const isReadOnly = isCompleted;
+  const isSubmitted = existingAssessment?.status === 'submitted';
+  const isReadOnly = isCompleted || isSubmitted;
 
   const [activeSection, setActiveSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [scorePromptedFields, setScorePromptedFields] = useState<Record<string, boolean>>({
+    nervous_system_score: (existingAssessment?.nervous_system_score ?? 0) > 0,
+    emotional_state_score: (existingAssessment?.emotional_state_score ?? 0) > 0,
+    cognitive_patterns_score: (existingAssessment?.cognitive_patterns_score ?? 0) > 0,
+    body_symptoms_score: (existingAssessment?.body_symptoms_score ?? 0) > 0,
+    behavioral_patterns_score: (existingAssessment?.behavioral_patterns_score ?? 0) > 0,
+    life_functioning_score: (existingAssessment?.life_functioning_score ?? 0) > 0,
+  });
+  const [scorePrompt, setScorePrompt] = useState<{
+    field: string;
+    title: string;
+    description: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
     // Basic Information
@@ -181,7 +215,7 @@ export default function DiagnosticAssessmentForm({
 
     // Main Concerns
     main_complaint: existingAssessment?.main_complaint ?? '',
-    current_symptoms: existingAssessment?.current_symptoms ?? [],
+    current_symptoms: parseMultiValue(existingAssessment?.current_symptoms),
     current_symptoms_other: existingAssessment?.current_symptoms_other ?? '',
 
     // Previous Therapy
@@ -193,33 +227,33 @@ export default function DiagnosticAssessmentForm({
     nervous_system_score: existingAssessment?.nervous_system_score ?? 0,
 
     // Symptoms - Emotional State
-    emotional_patterns: existingAssessment?.emotional_patterns ?? [],
+    emotional_patterns: parseMultiValue(existingAssessment?.emotional_patterns),
     emotional_state_score: existingAssessment?.emotional_state_score ?? 0,
 
     // Symptoms - Cognitive Patterns
-    cognitive_patterns: existingAssessment?.cognitive_patterns ?? [],
+    cognitive_patterns: parseMultiValue(existingAssessment?.cognitive_patterns),
     cognitive_patterns_score: existingAssessment?.cognitive_patterns_score ?? 0,
 
     // Symptoms - Body Symptoms
-    body_symptoms: existingAssessment?.body_symptoms ?? [],
+    body_symptoms: parseMultiValue(existingAssessment?.body_symptoms),
     health_condition_specify: existingAssessment?.health_condition_specify ?? '',
     body_symptoms_score: existingAssessment?.body_symptoms_score ?? 0,
 
     // Symptoms - Behavioral Patterns
-    behavioral_patterns: existingAssessment?.behavioral_patterns ?? [],
+    behavioral_patterns: parseMultiValue(existingAssessment?.behavioral_patterns),
     behavioral_patterns_score: existingAssessment?.behavioral_patterns_score ?? 0,
 
     // Symptoms - Life Functioning
-    life_functioning_patterns: existingAssessment?.life_functioning_patterns ?? [],
+    life_functioning_patterns: parseMultiValue(existingAssessment?.life_functioning_patterns),
     life_functioning_score: existingAssessment?.life_functioning_score ?? 0,
 
     // Root Cause Analysis
     root_cause_pattern_timeline: existingAssessment?.root_cause_pattern_timeline ?? '',
-    root_cause_parental_influence: existingAssessment?.root_cause_parental_influence ?? '',
+    root_cause_parental_influence: getParentalInfluenceKey(existingAssessment?.root_cause_parental_influence),
     root_cause_parental_influence_other: existingAssessment?.root_cause_parental_influence_other ?? '',
-    root_cause_core_patterns: existingAssessment?.root_cause_core_patterns ?? [],
+    root_cause_core_patterns: parseMultiValue(existingAssessment?.root_cause_core_patterns),
     root_cause_core_patterns_other: existingAssessment?.root_cause_core_patterns_other ?? '',
-    root_cause_contributing_factors: existingAssessment?.root_cause_contributing_factors ?? [],
+    root_cause_contributing_factors: parseMultiValue(existingAssessment?.root_cause_contributing_factors),
     root_cause_contributing_factors_other: existingAssessment?.root_cause_contributing_factors_other ?? '',
 
     // Clinical Summary
@@ -229,7 +263,7 @@ export default function DiagnosticAssessmentForm({
   });
 
   useEffect(() => {
-    if (existingAssessment?.status === 'submitted') return;
+    if (isReadOnly) return;
     if (!clientData) return;
     setForm((prev) => ({
       ...prev,
@@ -239,7 +273,7 @@ export default function DiagnosticAssessmentForm({
       client_country: prev.client_country || clientData.country || '',
     }));
   }, [
-    existingAssessment?.status,
+    isReadOnly,
     clientData?.full_name,
     clientData?.email,
     clientData?.phone,
@@ -248,6 +282,13 @@ export default function DiagnosticAssessmentForm({
 
   const updateField = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const openScorePrompt = (field: string, title: string, description: string) => {
+    if (isReadOnly) return;
+    if (scorePromptedFields[field]) return;
+    setScorePromptedFields((prev) => ({ ...prev, [field]: true }));
+    setScorePrompt({ field, title, description });
   };
 
   const toggleArrayItem = (field: string, item: string) => {
@@ -375,7 +416,21 @@ export default function DiagnosticAssessmentForm({
     </div>
   );
 
-  const PatternCheckbox = ({ options, field, disabled = false, maxSelect }: { options: string[]; field: string; disabled?: boolean; maxSelect?: number }) => (
+  const quickScoreOptions = [0, 3, 5, 7, 10];
+
+  const PatternCheckbox = ({
+    options,
+    field,
+    disabled = false,
+    maxSelect,
+    onSelectNew,
+  }: {
+    options: string[];
+    field: string;
+    disabled?: boolean;
+    maxSelect?: number;
+    onSelectNew?: () => void;
+  }) => (
     <div className="grid grid-cols-2 gap-2">
       {options.map(option => {
         const selectedArr = form[field as keyof typeof form] as string[];
@@ -385,7 +440,11 @@ export default function DiagnosticAssessmentForm({
           <button
             key={option}
             type="button"
-            onClick={() => !disabled && !atLimit && toggleArrayItem(field, option)}
+            onClick={() => {
+              if (disabled || atLimit) return;
+              toggleArrayItem(field, option);
+              if (!selected) onSelectNew?.();
+            }}
             disabled={disabled || atLimit}
             className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
               selected
@@ -404,13 +463,28 @@ export default function DiagnosticAssessmentForm({
     </div>
   );
 
-  const SingleSelect = ({ options, field, disabled = false }: { options: { value: string; label: string }[]; field: string; disabled?: boolean }) => (
+  const SingleSelect = ({
+    options,
+    field,
+    disabled = false,
+    onSelectNew,
+  }: {
+    options: { value: string; label: string }[];
+    field: string;
+    disabled?: boolean;
+    onSelectNew?: () => void;
+  }) => (
     <div className="grid grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option.value}
           type="button"
-          onClick={() => !disabled && updateField(field, option.value)}
+          onClick={() => {
+            if (disabled) return;
+            const current = form[field as keyof typeof form];
+            updateField(field, option.value);
+            if (current !== option.value) onSelectNew?.();
+          }}
           disabled={disabled}
           className={`text-left px-3 py-2 rounded border text-sm transition-colors ${
             form[field as keyof typeof form] === option.value
@@ -652,106 +726,213 @@ export default function DiagnosticAssessmentForm({
               <h3 className="font-medium text-slate-900 mb-4">Symptoms Assessment</h3>
 
               {/* 1. Nervous System */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern (select 1-2 dominant)</label>
-                <SingleSelect options={NERVOUS_SYSTEM_PATTERNS} field="nervous_system_pattern" disabled={isReadOnly} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How dysregulated is the client most of the time?"
-                    field="nervous_system_score"
-                    value={form.nervous_system_score}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.nervous_system_pattern ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern (select 1-2 dominant)</label>
+                  <SingleSelect
+                    options={NERVOUS_SYSTEM_PATTERNS}
+                    field="nervous_system_pattern"
                     disabled={isReadOnly}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'nervous_system_score',
+                        'Nervous System Score',
+                        'You selected a nervous system pattern. Set the severity now.'
+                      )
+                    }
                   />
                 </div>
-              </div>
-
-              {/* 2. Emotional State */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">2. Emotional State</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Emotional Pattern (top 2)</label>
-                <PatternCheckbox options={EMOTIONAL_PATTERNS} field="emotional_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much do emotions overwhelm or limit the client?"
-                    field="emotional_state_score"
-                    value={form.emotional_state_score}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              </div>
-
-              {/* 3. Cognitive Patterns */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">3. Cognitive Patterns</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Thought Patterns (top 2)</label>
-                <PatternCheckbox options={COGNITIVE_PATTERNS} field="cognitive_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much are thoughts repetitive or uncontrollable?"
-                    field="cognitive_patterns_score"
-                    value={form.cognitive_patterns_score}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              </div>
-
-              {/* 4. Body Symptoms */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">4. Body Symptoms</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Main Physical Expressions (top 2)</label>
-                <PatternCheckbox options={BODY_SYMPTOMS} field="body_symptoms" disabled={isReadOnly} maxSelect={2} />
-                {form.body_symptoms.includes('Health Condition') && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">If health condition specify</label>
-                    <input
-                      type="text"
-                      value={form.health_condition_specify}
-                      onChange={(e) => updateField('health_condition_specify', e.target.value)}
+                {form.nervous_system_pattern && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How dysregulated is the client most of the time?"
+                      field="nervous_system_score"
+                      value={form.nervous_system_score}
                       disabled={isReadOnly}
-                      placeholder="Specify the health condition..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                     />
                   </div>
                 )}
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much do physical symptoms affect the client?"
-                    field="body_symptoms_score"
-                    value={form.body_symptoms_score}
+              </div>
+
+              {/* 2. Emotional State */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.emotional_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">2. Emotional State</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Emotional Pattern (top 2)</label>
+                  <PatternCheckbox
+                    options={EMOTIONAL_PATTERNS}
+                    field="emotional_patterns"
                     disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'emotional_state_score',
+                        'Emotional State Score',
+                        'You selected an emotional pattern. Set the severity now.'
+                      )
+                    }
                   />
                 </div>
+                {form.emotional_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much do emotions overwhelm or limit the client?"
+                      field="emotional_state_score"
+                      value={form.emotional_state_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Cognitive Patterns */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.cognitive_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">3. Cognitive Patterns</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Thought Patterns (top 2)</label>
+                  <PatternCheckbox
+                    options={COGNITIVE_PATTERNS}
+                    field="cognitive_patterns"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'cognitive_patterns_score',
+                        'Cognitive Patterns Score',
+                        'You selected a cognitive pattern. Set the severity now.'
+                      )
+                    }
+                  />
+                </div>
+                {form.cognitive_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much are thoughts repetitive or uncontrollable?"
+                      field="cognitive_patterns_score"
+                      value={form.cognitive_patterns_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Body Symptoms */}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.body_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">4. Body Symptoms</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Main Physical Expressions (top 2)</label>
+                  <PatternCheckbox
+                    options={BODY_SYMPTOMS}
+                    field="body_symptoms"
+                    disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'body_symptoms_score',
+                        'Body Symptoms Score',
+                        'You selected a body symptom. Set the severity now.'
+                      )
+                    }
+                  />
+                  {form.body_symptoms.includes('Health Condition') && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">If health condition specify</label>
+                      <input
+                        type="text"
+                        value={form.health_condition_specify}
+                        onChange={(e) => updateField('health_condition_specify', e.target.value)}
+                        disabled={isReadOnly}
+                        placeholder="Specify the health condition..."
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                      />
+                    </div>
+                  )}
+                </div>
+                {form.body_symptoms.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much do physical symptoms affect the client?"
+                      field="body_symptoms_score"
+                      value={form.body_symptoms_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 5. Behavioral Patterns */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">5. Behavioral Patterns</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Behaviors (top 2)</label>
-                <PatternCheckbox options={BEHAVIORAL_PATTERNS} field="behavioral_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much are behaviors driven by these patterns?"
-                    field="behavioral_patterns_score"
-                    value={form.behavioral_patterns_score}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.behavioral_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">5. Behavioral Patterns</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Dominant Behaviors (top 2)</label>
+                  <PatternCheckbox
+                    options={BEHAVIORAL_PATTERNS}
+                    field="behavioral_patterns"
                     disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'behavioral_patterns_score',
+                        'Behavioral Patterns Score',
+                        'You selected a behavioral pattern. Set the severity now.'
+                      )
+                    }
                   />
                 </div>
+                {form.behavioral_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much are behaviors driven by these patterns?"
+                      field="behavioral_patterns_score"
+                      value={form.behavioral_patterns_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 6. Life Functioning */}
-              <div className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-800 mb-3">6. Life Functioning</h4>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas (top 2)</label>
-                <PatternCheckbox options={LIFE_FUNCTIONING} field="life_functioning_patterns" disabled={isReadOnly} maxSelect={2} />
-                <div className="mt-4">
-                  <ScoreSlider
-                    label="Severity — How much is the client's life impacted overall?"
-                    field="life_functioning_score"
-                    value={form.life_functioning_score}
+              <div className={`border rounded-lg overflow-hidden transition-colors ${
+                form.life_functioning_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+              }`}>
+                <div className="p-4">
+                  <h4 className="font-medium text-slate-800 mb-3">6. Life Functioning</h4>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas (top 2)</label>
+                  <PatternCheckbox
+                    options={LIFE_FUNCTIONING}
+                    field="life_functioning_patterns"
                     disabled={isReadOnly}
+                    maxSelect={2}
+                    onSelectNew={() =>
+                      openScorePrompt(
+                        'life_functioning_score',
+                        'Life Functioning Score',
+                        'You selected a life-impact pattern. Set the severity now.'
+                      )
+                    }
                   />
                 </div>
+                {form.life_functioning_patterns.length > 0 && (
+                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
+                    <ScoreSlider
+                      label="Severity — How much is the client's life impacted overall?"
+                      field="life_functioning_score"
+                      value={form.life_functioning_score}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Baseline Score Summary */}
@@ -976,6 +1157,48 @@ export default function DiagnosticAssessmentForm({
           </div>
         </div>
       </div>
+      {scorePrompt && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
+            <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
+            <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
+            <p className="text-xs text-slate-500 mb-3">
+              Tip: set a rough score now; you can fine-tune it anytime before submission.
+            </p>
+            <ScoreSlider
+              label="Severity"
+              field={scorePrompt.field}
+              value={(form[scorePrompt.field as keyof typeof form] as number) ?? 0}
+              disabled={false}
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickScoreOptions.map((score) => (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => updateField(scorePrompt.field, score)}
+                  className={`px-2.5 py-1.5 rounded text-xs border transition-colors ${
+                    (form[scorePrompt.field as keyof typeof form] as number) === score
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'
+                  }`}
+                >
+                  {score}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setScorePrompt(null)}
+                className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
