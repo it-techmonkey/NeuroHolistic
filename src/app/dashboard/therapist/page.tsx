@@ -41,6 +41,7 @@ import UploadMaterial from '@/components/dashboard/therapist/UploadMaterial';
 import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/TherapistTabs';
 import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
+import ArchiveTab from '@/components/dashboard/therapist/Archive';
 
 // Types
 type Session = {
@@ -120,7 +121,7 @@ type DashboardStats = {
   pendingAssessments: number;
 };
 
-type ViewMode = 'overview' | 'clients' | 'sessions';
+type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive';
 
 export default function TherapistDashboardPage() {
   const router = useRouter();
@@ -628,6 +629,7 @@ export default function TherapistDashboardPage() {
                 { id: 'overview' as ViewMode, label: 'Overview', icon: BarChart3 },
                 { id: 'clients' as ViewMode, label: 'Clients', icon: Users },
                 { id: 'sessions' as ViewMode, label: 'Sessions', icon: Calendar },
+                { id: 'archive' as ViewMode, label: 'Archive', icon: FileText },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1168,6 +1170,11 @@ export default function TherapistDashboardPage() {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ARCHIVE VIEW */}
+        {viewMode === 'archive' && therapistId && (
+          <ArchiveTab therapistId={therapistId} />
         )}
       </div>
 
