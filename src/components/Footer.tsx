@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Footer() {
-  const { t, isUrdu } = useLang();
+  const { t, isUrdu, isArabic, toggleLang } = useLang();
 
   const NAV_INDEX = useMemo(() => [
     { label: t.footer.home, href: "/" },
@@ -16,14 +16,22 @@ export default function Footer() {
     { label: t.footer.about, href: "/about" },
   ], [t]);
 
-  const PROGRAM_INDEX = useMemo(() => [
-    { label: t.footer.privateSessions, href: "/programs/private" },
-    { label: t.footer.groupPrograms, href: "/programs" },
-    { label: t.footer.retreats, href: "/retreats" },
-    { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
-    { label: t.footer.bookAConsultation, href: "/consultation/book" },
-    { label: t.footer.applyToAcademy, href: "/academy" },
-  ], [t]);
+  const PROGRAM_INDEX = useMemo(
+    () => [
+      { label: t.footer.privateSessions, href: "/programs/private" },
+      { label: t.footer.groupPrograms, href: "/programs" },
+      { label: t.footer.retreats, href: "/retreats" },
+      { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
+      { label: t.footer.bookAConsultation, href: "/consultation/book" },
+      { label: t.footer.applyToAcademy, href: "/academy" },
+      {
+        label: isArabic ? "العربية / English" : "English / العربية",
+        href: "#",
+        onClick: toggleLang,
+      },
+    ],
+    [t, isArabic, toggleLang]
+  );
 
   return (
     <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">
@@ -79,9 +87,19 @@ export default function Footer() {
             <ul className="space-y-4">
               {PROGRAM_INDEX.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
-                    {link.label}
-                  </Link>
+                  {"onClick" in link && link.onClick ? (
+                    <button
+                      type="button"
+                      onClick={link.onClick}
+                      className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 text-left"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

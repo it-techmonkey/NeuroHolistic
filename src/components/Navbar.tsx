@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, isArabic } = useLang();
+  const { t, isUrdu, isArabic, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -131,6 +131,13 @@ export default function Navbar() {
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+            <button
+              type="button"
+              onClick={toggleLang}
+              className={`hover:opacity-100 opacity-60 text-[8px] sm:text-[9px] ${isUrdu ? "font-urdu normal-case tracking-normal" : "uppercase tracking-widest"}`}
+            >
+              {isArabic ? "العربية / English" : "English / العربية"}
+            </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>
