@@ -164,13 +164,16 @@ ALTER TABLE public.archived_assessments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.archived_development_forms ENABLE ROW LEVEL SECURITY;
 
 -- Therapists can manage their own archived clients
+DROP POLICY IF EXISTS "Therapists manage archived_clients" ON public.archived_clients;
 CREATE POLICY "Therapists manage archived_clients" ON public.archived_clients
   FOR ALL USING (created_by = auth.uid());
 
 -- Therapists can manage their own archived assessments
+DROP POLICY IF EXISTS "Therapists manage archived_assessments" ON public.archived_assessments;
 CREATE POLICY "Therapists manage archived_assessments" ON public.archived_assessments
   FOR ALL USING (therapist_id = auth.uid());
 
 -- Therapists can manage their own archived development forms
+DROP POLICY IF EXISTS "Therapists manage archived_dev_forms" ON public.archived_development_forms;
 CREATE POLICY "Therapists manage archived_dev_forms" ON public.archived_development_forms
   FOR ALL USING (therapist_id = auth.uid());
