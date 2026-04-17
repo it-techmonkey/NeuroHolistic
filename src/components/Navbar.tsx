@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, isArabic, toggleLang } = useLang();
+  const { t, isUrdu } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -117,11 +117,7 @@ export default function Navbar() {
     `${base} ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`;
 
   return (
-    <header
-      dir="ltr"
-      lang={isArabic ? "ar" : "en"}
-      className={`fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4 ${isArabic ? "font-urdu urdu-text" : ""}`}
-    >
+    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4">
       <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-colors duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
         
         {/* ── 1. Secondary Navbar (Utility) ── */}
@@ -131,13 +127,6 @@ export default function Navbar() {
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-            <button
-              type="button"
-              onClick={toggleLang}
-              className={`hover:opacity-100 opacity-60 text-[8px] sm:text-[9px] ${isUrdu ? "font-urdu normal-case tracking-normal" : "uppercase tracking-widest"}`}
-            >
-              {isArabic ? "العربية / English" : "English / العربية"}
-            </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>

@@ -193,7 +193,7 @@ button:disabled {
 
 /* ── Urdu / RTL Utilities ── */
 .font-urdu {
-  font-family: var(--font-urdu), "Tajawal", "Noto Sans Arabic", "Segoe UI", sans-serif;
+  font-family: var(--font-urdu), "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif;
 }
 
 .urdu-text {

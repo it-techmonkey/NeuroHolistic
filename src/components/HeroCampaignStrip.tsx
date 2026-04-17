@@ -16,22 +16,21 @@ export default function HeroCampaignStrip() {
   const alt = isArabic ? "لافتة الحملة" : "Campaign banner";
 
   return (
-    <div className="mb-10 w-full sm:mb-12">
+    <div className="mb-8 w-full sm:mb-10">
       <motion.div
         key={banner.src}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto max-w-[min(100%,1100px)] overflow-hidden rounded-xl border border-white/[0.1] bg-black/30 p-1.5 sm:p-2"
+        className="mx-auto max-w-[min(100%,900px)] overflow-hidden rounded-lg border border-white/[0.08] bg-black/20"
       >
-        <div className="relative flex min-h-[min(40vh,280px)] items-center justify-center sm:min-h-[min(36vh,360px)] md:min-h-[min(34vh,400px)]">
+        <div className="relative aspect-[16/9] w-full">
           <Image
             src={banner.src}
             alt={alt}
-            width={1600}
-            height={900}
-            className="h-auto w-full max-w-full object-contain object-center"
-            sizes="(max-width: 768px) 100vw, 1100px"
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, 900px"
             priority
           />
         </div>

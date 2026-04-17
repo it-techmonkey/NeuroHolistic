@@ -1,23 +1,22 @@
-"use client";
-
 import TeamRegistry from "@/components/team/TeamRegistry";
 import PageHero from "@/components/ui/PageHero";
-import { useLang } from "@/lib/translations/LanguageContext";
+
+export const metadata = {
+  title: "Faculty & Practitioners | NeuroHolistic",
+  description: "The registry of certified NeuroHolistic practitioners and institute faculty.",
+};
 
 export default function TeamPage() {
-  const { t } = useLang();
-  const tp = t.teamPage;
-
   return (
     <main className="w-full bg-white">
       <PageHero
-        eyebrow={tp.eyebrow}
+        eyebrow=""
         title={
           <>
-            <span className="text-white font-normal">{tp.title}</span>
+            <span className="text-white font-normal">The NeuroHolistic Team</span>
           </>
         }
-        description={tp.description}
+        description="A registry of professionals trained in the intersection of neuroscience, psychology, and systemic transformation."
         imageSrc="/images/pages/teams.jpg"
         imageAlt="NeuroHolistic Faculty and Research Environment"
         metaTags={[]}
