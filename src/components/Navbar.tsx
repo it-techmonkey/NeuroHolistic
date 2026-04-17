@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, isArabic, toggleLang } = useLang();
+  const { t, isUrdu } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -150,13 +150,6 @@ export default function Navbar() {
                 <Link href="/auth/login" className="opacity-60 hover:opacity-100">{t.navbar.clientLogin}</Link>
               </>
             )}
-            <span className="opacity-20">|</span>
-            <button
-              onClick={toggleLang}
-              className="opacity-60 hover:opacity-100 uppercase tracking-widest text-[8px] sm:text-[9px]"
-            >
-              {isArabic ? "EN" : "عربي"}
-            </button>
           </div>
         </div>
 
@@ -395,14 +388,6 @@ export default function Navbar() {
               </nav>
 
               <div className="mt-auto pt-8 border-t border-white/10">
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={toggleLang}
-                    className={`px-4 py-2 rounded-lg font-medium text-[12px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100 border border-slate-200' : 'text-slate-400 hover:bg-white/5 border border-white/10'}`}
-                  >
-                    {isArabic ? "English" : "العربية"}
-                  </button>
-                </div>
                 <div className="grid grid-cols-3 gap-3 mb-6 text-center">
                   {isAuthenticated ? (
                     <button
