@@ -143,14 +143,17 @@ CREATE INDEX IF NOT EXISTS idx_archived_dev_forms_client ON public.archived_deve
 CREATE INDEX IF NOT EXISTS idx_archived_dev_forms_therapist ON public.archived_development_forms(therapist_id);
 
 -- 4. TRIGGERS FOR UPDATED_AT
+DROP TRIGGER IF EXISTS trigger_archived_clients_updated_at ON public.archived_clients;
 CREATE TRIGGER trigger_archived_clients_updated_at
   BEFORE UPDATE ON public.archived_clients
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_archived_assessments_updated_at ON public.archived_assessments;
 CREATE TRIGGER trigger_archived_assessments_updated_at
   BEFORE UPDATE ON public.archived_assessments
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_archived_dev_forms_updated_at ON public.archived_development_forms;
 CREATE TRIGGER trigger_archived_dev_forms_updated_at
   BEFORE UPDATE ON public.archived_development_forms
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
