@@ -7,6 +7,13 @@
 -- 1. ARCHIVED CLIENTS TABLE
 CREATE TABLE IF NOT EXISTS public.archived_clients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+
+
+
+
+
+  
   full_name TEXT NOT NULL,
   email TEXT,
   phone TEXT,
