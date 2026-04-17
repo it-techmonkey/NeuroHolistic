@@ -3,8 +3,32 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import {
   Loader2, User, Mail, Phone, Calendar, FileText, Plus, ChevronRight,
-  X, Search, Archive, TrendingUp, Edit2, Trash2, Globe, Briefcase, Heart
+  X, Search, Archive, TrendingUp, Edit2, Trash2, Globe, Briefcase, Heart,
+  BarChart3, Activity, TrendingDown, ChevronDown, ChevronUp
 } from 'lucide-react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 // Types
 type ArchivedClient = {
@@ -403,6 +427,373 @@ const DevFormModal = memo(function DevFormModal({
   );
 });
 
+// Archived Client Reports Component
+function ArchivedClientReports({ assessments, devForms }: { assessments: ArchivedAssessment[]; devForms: ArchivedDevForm[] }) {
+  const [activeReport, setActiveReport] = useState<'timeline' | 'comparison' | 'detailed'>('timeline');
+  const [selectedComparison, setSelectedComparison] = useState(0);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  const baseline = assessments[0]; // First assessment as baseline
+
+  const totalScore = (item: any) =>
+    (item.nervous_system_score || 0) + (item.emotional_state_score || 0) +
+    (item.cognitive_patterns_score || 0) + (item.body_symptoms_score || 0) +
+    (item.behavioral_patterns_score || 0) + (item.life_functioning_score || 0);
+
+  // Build timeline data
+  const timelineData = (() => {
+    const timeline: Array<{ date: string; score: number; label: string; type: string }> = [];
+
+    assessments.forEach(a => {
+      const date = a.assessment_date || a.created_at;
+      timeline.push({
+        date,
+        score: totalScore(a),
+        label: a.session_number ? `Assessment ${a.session_number}` : 'Baseline',
+        type: 'assessment',
+      });
+    });
+
+    devForms.forEach(f => {
+      const date = f.session_date || f.created_at;
+      timeline.push({
+        date,
+        score: totalScore(f),
+        label: f.session_number ? `Session ${f.session_number}` : 'Session',
+        type: 'session',
+      });
+    });
+
+    timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return timeline;
+  })();
+
+  const firstScore = timelineData[0]?.score || 0;
+  const lastScore = timelineData[timelineData.length - 1]?.score || firstScore;
+  const improvement = firstScore - lastScore;
+
+  // Build comparisons
+  const comparisons = (() => {
+    const result: Array<{
+      label: string;
+      from: { label: string; score: number; data: any };
+      to: { label: string; score: number; data: any };
+      improvement: number;
+    }> = [];
+
+    if (baseline && devForms.length > 0) {
+      const firstDev = devForms[0];
+      result.push({
+        label: 'Baseline → Session 1',
+        from: { label: 'Baseline', score: totalScore(baseline), data: baseline },
+        to: { label: 'Session 1', score: totalScore(firstDev), data: firstDev },
+        improvement: totalScore(baseline) - totalScore(firstDev),
+      });
+    }
+
+    for (let i = 0; i < devForms.length - 1; i++) {
+      const current = devForms[i];
+      const next = devForms[i + 1];
+      result.push({
+        label: `Session ${i + 1} → Session ${i + 2}`,
+        from: { label: `Session ${i + 1}`, score: totalScore(current), data: current },
+        to: { label: `Session ${i + 2}`, score: totalScore(next), data: next },
+        improvement: totalScore(current) - totalScore(next),
+      });
+    }
+
+    return result;
+  })();
+
+  const currentComparison = comparisons[selectedComparison] || comparisons[0];
+
+  if (assessments.length === 0 && devForms.length === 0) {
+    return (
+      <div className="text-center py-16 border border-slate-200 rounded-xl">
+        <BarChart3 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-slate-700">No Report Data Available</h3>
+        <p className="text-slate-500 mt-2">Add assessments and development forms to see reports.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Report Type Selector */}
+      <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+        {[
+          { id: 'timeline' as const, label: 'Progress Timeline', icon: FileText },
+          { id: 'comparison' as const, label: 'Session Comparison', icon: Activity },
+          { id: 'detailed' as const, label: 'Detailed Report', icon: BarChart3 },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveReport(tab.id)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+              activeReport === tab.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" /> {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Progress Summary */}
+      <div className={`border rounded-lg p-6 ${improvement >= 0 ? 'bg-white border-slate-200' : 'bg-amber-50 border-amber-200'}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`text-sm uppercase tracking-wider ${improvement >= 0 ? 'text-green-600' : 'text-amber-600'}`}>
+              {improvement >= 0 ? 'Symptom Reduction' : 'Symptom Increase'}
+            </p>
+            <p className={`text-3xl font-bold mt-1 ${improvement >= 0 ? 'text-green-700' : 'text-amber-700'}`}>
+              {improvement >= 0 ? '+' : ''}{improvement} points
+            </p>
+            <p className="text-sm text-slate-600 mt-1">From {firstScore} to {lastScore}/60</p>
+            <p className="text-xs text-slate-500 mt-1">Lower scores indicate improved wellbeing</p>
+          </div>
+          <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${improvement >= 0 ? 'bg-green-100' : 'bg-amber-100'}`}>
+            {improvement >= 0 ? <TrendingDown className="w-8 h-8 text-green-600" /> : <TrendingUp className="w-8 h-8 text-amber-600" />}
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline Tab */}
+      {activeReport === 'timeline' && timelineData.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Progress Timeline</h3>
+          <div className="h-64 w-full">
+            <Line
+              data={{
+                labels: timelineData.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                datasets: [{
+                  label: 'Dysregulation Level',
+                  data: timelineData.map(d => d.score),
+                  borderColor: '#6366F1',
+                  backgroundColor: '#EEF2FF',
+                  fill: true,
+                  tension: 0.4,
+                  pointBackgroundColor: timelineData.map(d => d.type === 'assessment' ? '#F59E0B' : '#10B981'),
+                  pointBorderColor: '#fff',
+                  pointBorderWidth: 2,
+                  pointRadius: 6,
+                }]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: '#1E293B',
+                    bodyColor: '#475569',
+                    borderColor: '#E2E8F0',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                      title: (items: any) => timelineData[items[0].dataIndex]?.label || '',
+                      label: (context: any) => `Score: ${context.raw}/60`,
+                    }
+                  }
+                },
+                scales: {
+                  x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 11 } } },
+                  y: { min: 0, max: 60, grid: { color: '#E2E8F0' }, ticks: { color: '#94A3B8', font: { size: 12 } } },
+                }
+              }}
+            />
+          </div>
+          <div className="flex gap-4 mt-4 justify-center text-xs">
+            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-amber-500" /><span className="text-slate-600">Assessment</span></div>
+            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-emerald-500" /><span className="text-slate-600">Session</span></div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison Tab */}
+      {activeReport === 'comparison' && (
+        <div className="space-y-6">
+          {comparisons.length > 0 ? (
+            <>
+              <div className="flex gap-2 flex-wrap">
+                {comparisons.map((c, idx) => (
+                  <button key={idx} onClick={() => setSelectedComparison(idx)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                      selectedComparison === idx ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >{c.label}</button>
+                ))}
+              </div>
+              {currentComparison && (
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-6">{currentComparison.label} Comparison</h3>
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    <div className="text-center p-6 border border-slate-200 rounded-lg bg-slate-50">
+                      <p className="text-sm text-slate-500 uppercase tracking-wider mb-2">Before</p>
+                      <p className="text-xl font-medium text-slate-700 mb-1">{currentComparison.from.label}</p>
+                      <p className="text-4xl font-bold text-slate-900 mt-2">{currentComparison.from.score}<span className="text-lg text-slate-400">/60</span></p>
+                    </div>
+                    <div className={`text-center p-6 border rounded-lg ${currentComparison.improvement >= 0 ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+                      <p className={`text-sm uppercase tracking-wider mb-2 ${currentComparison.improvement >= 0 ? 'text-green-600' : 'text-amber-600'}`}>After</p>
+                      <p className="text-xl font-medium text-slate-700 mb-1">{currentComparison.to.label}</p>
+                      <p className={`text-4xl font-bold mt-2 ${currentComparison.improvement >= 0 ? 'text-green-700' : 'text-amber-700'}`}>{currentComparison.to.score}<span className="text-lg opacity-60">/60</span></p>
+                    </div>
+                  </div>
+                  <div className={`p-4 rounded-lg text-center ${currentComparison.improvement >= 0 ? 'bg-green-100' : 'bg-amber-100'}`}>
+                    <p className={`text-2xl font-bold ${currentComparison.improvement >= 0 ? 'text-green-700' : 'text-amber-700'}`}>
+                      {currentComparison.improvement >= 0 ? '↓' : '↑'} {Math.abs(currentComparison.improvement)} points
+                    </p>
+                    <p className={`text-sm ${currentComparison.improvement >= 0 ? 'text-green-600' : 'text-amber-600'}`}>
+                      {currentComparison.improvement >= 0 ? 'Symptom Reduction' : 'Symptom Increase'}
+                    </p>
+                  </div>
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Domain Comparison</h4>
+                    <div className="space-y-3">
+                      {[
+                        { label: 'Nervous System', key: 'nervous_system_score' },
+                        { label: 'Emotional', key: 'emotional_state_score' },
+                        { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                        { label: 'Physical', key: 'body_symptoms_score' },
+                        { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                        { label: 'Life Functioning', key: 'life_functioning_score' },
+                      ].map(metric => {
+                        const fromScore = currentComparison.from.data[metric.key] || 0;
+                        const toScore = currentComparison.to.data[metric.key] || 0;
+                        const diff = fromScore - toScore;
+                        return (
+                          <div key={metric.key} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                            <span className="text-sm text-slate-700">{metric.label}</span>
+                            <div className="flex items-center gap-4">
+                              <span className="text-sm text-slate-500">{fromScore}/10</span>
+                              <span className="text-slate-300">→</span>
+                              <span className={`text-sm font-medium ${diff >= 0 ? 'text-green-600' : 'text-amber-600'}`}>{toScore}/10</span>
+                              {diff !== 0 && <span className={`text-xs px-2 py-0.5 rounded ${diff > 0 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{diff > 0 ? '-' : '+'}{Math.abs(diff)}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
+              <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500">Add at least two entries to see comparisons</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Detailed Report Tab */}
+      {activeReport === 'detailed' && (
+        <div className="space-y-4">
+          {assessments.map(a => (
+            <div key={a.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <button onClick={() => setExpandedItem(expandedItem === a.id ? null : a.id)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center"><FileText className="w-5 h-5 text-amber-600" /></div>
+                  <div className="text-left">
+                    <h3 className="font-medium text-slate-900">{a.session_number ? `Assessment - Session ${a.session_number}` : 'Diagnostic Assessment'}</h3>
+                    <p className="text-sm text-slate-500">{new Date(a.assessment_date || a.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-indigo-600">{totalScore(a)}/60</span>
+                  {expandedItem === a.id ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                </div>
+              </button>
+              {expandedItem === a.id && (
+                <div className="px-6 pb-6 border-t border-slate-100">
+                  {a.main_complaint && <div className="mt-4"><p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Main Complaint</p><p className="text-sm text-slate-700">{a.main_complaint}</p></div>}
+                  {a.current_symptoms?.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Symptoms</p>
+                      <div className="flex flex-wrap gap-2">{a.current_symptoms.map(s => <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">{s}</span>)}</div>
+                    </div>
+                  )}
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Domain Scores</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { label: 'Nervous System', key: 'nervous_system_score' },
+                        { label: 'Emotional', key: 'emotional_state_score' },
+                        { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                        { label: 'Physical', key: 'body_symptoms_score' },
+                        { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                        { label: 'Life Functioning', key: 'life_functioning_score' },
+                      ].map(d => (
+                        <div key={d.key} className="bg-slate-50 rounded-lg p-3">
+                          <p className="text-xs text-slate-500">{d.label}</p>
+                          <p className="text-lg font-semibold text-slate-900">{a[d.key as keyof ArchivedAssessment] || 0}/10</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {devForms.map((f, idx) => {
+            const itemId = `dev-${f.id}`;
+            return (
+              <div key={f.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <button onClick={() => setExpandedItem(expandedItem === itemId ? null : itemId)}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><Activity className="w-5 h-5 text-green-600" /></div>
+                    <div className="text-left">
+                      <h3 className="font-medium text-slate-900">Session {f.session_number || idx + 1}</h3>
+                      <p className="text-sm text-slate-500">{new Date(f.session_date || f.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-green-600">{totalScore(f)}/60</span>
+                    {expandedItem === itemId ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                  </div>
+                </button>
+                {expandedItem === itemId && (
+                  <div className="px-6 pb-6 border-t border-slate-100">
+                    {f.techniques_used?.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Techniques Used</p>
+                        <div className="flex flex-wrap gap-2">{f.techniques_used.map(t => <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">{t}</span>)}</div>
+                      </div>
+                    )}
+                    {f.key_interventions && <div className="mt-4"><p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Key Interventions</p><p className="text-sm text-slate-700">{f.key_interventions}</p></div>}
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Domain Scores</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          { label: 'Nervous System', key: 'nervous_system_score' },
+                          { label: 'Emotional', key: 'emotional_state_score' },
+                          { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                          { label: 'Physical', key: 'body_symptoms_score' },
+                          { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                          { label: 'Life Functioning', key: 'life_functioning_score' },
+                        ].map(d => (
+                          <div key={d.key} className="bg-slate-50 rounded-lg p-3">
+                            <p className="text-xs text-slate-500">{d.label}</p>
+                            <p className="text-lg font-semibold text-slate-900">{(f as any)[d.key] || 0}/10</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main Archive Component
 export default function ArchiveTab({ therapistId }: { therapistId: string }) {
   const [loading, setLoading] = useState(true);
@@ -412,7 +803,7 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
   const [devForms, setDevForms] = useState<ArchivedDevForm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [modal, setModal] = useState<'newClient' | 'editClient' | 'assessment' | 'devForm' | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development'>('overview');
+  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development' | 'reports'>('overview');
   const [saving, setSaving] = useState(false);
 
   const fetchClients = useCallback(async () => {
@@ -612,6 +1003,7 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
                 { id: 'overview' as const, label: 'Overview', icon: User },
                 { id: 'assessments' as const, label: 'Assessments', icon: FileText },
                 { id: 'development' as const, label: 'Development Forms', icon: TrendingUp },
+                { id: 'reports' as const, label: 'Reports', icon: BarChart3 },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setDetailTab(tab.id)}
                   className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -697,6 +1089,10 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
                   </div>
                 )}
               </div>
+            )}
+
+            {detailTab === 'reports' && (
+              <ArchivedClientReports assessments={assessments} devForms={devForms} />
             )}
           </div>
         </div>
