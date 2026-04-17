@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import {
-  FileText, TrendingUp, TrendingDown, BarChart3, Activity
+  FileText, TrendingUp, TrendingDown, BarChart3, Activity, Download, ChevronDown, ChevronUp
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -28,8 +28,9 @@ ChartJS.register(
 );
 
 export default function Progress({ assessments, devForms = [] }: { assessments: any[]; devForms?: any[] }) {
-  const [activeReport, setActiveReport] = useState<'timeline' | 'comparison'>('timeline');
+  const [activeReport, setActiveReport] = useState<'timeline' | 'comparison' | 'detailed'>('timeline');
   const [selectedComparison, setSelectedComparison] = useState<number>(0);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   const baseline = assessments.find((a: any) => a.is_baseline);
 
@@ -164,6 +165,16 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
           }`}
         >
           <Activity className="w-4 h-4" /> Session Comparison
+        </button>
+        <button
+          onClick={() => setActiveReport('detailed')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+            activeReport === 'detailed'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <FileText className="w-4 h-4" /> Detailed Report
         </button>
       </div>
 
@@ -399,6 +410,162 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
             <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
               <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500">Complete at least one session to see comparisons</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Detailed Report Tab */}
+      {activeReport === 'detailed' && (
+        <div className="space-y-6">
+          {/* Baseline Assessment */}
+          {baseline && (
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedItem(expandedItem === 'baseline' ? null : 'baseline')}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-medium text-slate-900">Baseline Assessment (Free Consultation)</h3>
+                    <p className="text-sm text-slate-500">
+                      {new Date(baseline.assessed_at || baseline.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-indigo-600">{baseline.goal_readiness_score || 0}/60</span>
+                  {expandedItem === 'baseline' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                </div>
+              </button>
+              {expandedItem === 'baseline' && (
+                <div className="px-6 pb-6 border-t border-slate-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    {baseline.clinical_condition_brief && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Clinical Summary</p>
+                        <p className="text-sm text-slate-700">{baseline.clinical_condition_brief}</p>
+                      </div>
+                    )}
+                    {baseline.therapist_focus && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Therapist Focus</p>
+                        <p className="text-sm text-slate-700">{baseline.therapist_focus}</p>
+                      </div>
+                    )}
+                    {baseline.therapy_goal && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Therapy Goal</p>
+                        <p className="text-sm text-slate-700">{baseline.therapy_goal}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Domain Scores</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { label: 'Nervous System', key: 'nervous_system_score' },
+                        { label: 'Emotional', key: 'emotional_state_score' },
+                        { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                        { label: 'Physical', key: 'body_symptoms_score' },
+                        { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                        { label: 'Life Functioning', key: 'life_functioning_score' },
+                      ].map(domain => (
+                        <div key={domain.key} className="bg-slate-50 rounded-lg p-3">
+                          <p className="text-xs text-slate-500">{domain.label}</p>
+                          <p className="text-lg font-semibold text-slate-900">{baseline[domain.key] || 0}/10</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Development Forms */}
+          {devForms.map((form: any, idx: number) => {
+            const totalScore = (form.nervous_system_score || 0) + (form.emotional_state_score || 0) +
+              (form.cognitive_patterns_score || 0) + (form.body_symptoms_score || 0) +
+              (form.behavioral_patterns_score || 0) + (form.life_functioning_score || 0);
+            const itemId = `dev-${form.id}`;
+            return (
+              <div key={form.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setExpandedItem(expandedItem === itemId ? null : itemId)}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-medium text-slate-900">Session {form.session_number || idx + 1}</h3>
+                      <p className="text-sm text-slate-500">
+                        {new Date(form.session_date || form.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-green-600">{totalScore}/60</span>
+                    {expandedItem === itemId ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                  </div>
+                </button>
+                {expandedItem === itemId && (
+                  <div className="px-6 pb-6 border-t border-slate-100">
+                    {form.techniques_used?.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Techniques Used</p>
+                        <div className="flex flex-wrap gap-2">
+                          {form.techniques_used.map((t: string) => (
+                            <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {form.key_interventions && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Key Interventions</p>
+                        <p className="text-sm text-slate-700">{form.key_interventions}</p>
+                      </div>
+                    )}
+                    {form.integration_notes && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Integration Notes</p>
+                        <p className="text-sm text-slate-700">{form.integration_notes}</p>
+                      </div>
+                    )}
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Domain Scores</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          { label: 'Nervous System', key: 'nervous_system_score' },
+                          { label: 'Emotional', key: 'emotional_state_score' },
+                          { label: 'Cognitive', key: 'cognitive_patterns_score' },
+                          { label: 'Physical', key: 'body_symptoms_score' },
+                          { label: 'Behavioral', key: 'behavioral_patterns_score' },
+                          { label: 'Life Functioning', key: 'life_functioning_score' },
+                        ].map(domain => (
+                          <div key={domain.key} className="bg-slate-50 rounded-lg p-3">
+                            <p className="text-xs text-slate-500">{domain.label}</p>
+                            <p className="text-lg font-semibold text-slate-900">{form[domain.key] || 0}/10</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {assessments.length === 0 && devForms.length === 0 && (
+            <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500">No detailed reports available yet</p>
             </div>
           )}
         </div>
