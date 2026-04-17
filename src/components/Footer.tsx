@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Footer() {
-  const { t, isUrdu, isArabic, toggleLang } = useLang();
+  const { t, isUrdu } = useLang();
 
   const NAV_INDEX = useMemo(() => [
     { label: t.footer.home, href: "/" },
@@ -23,8 +23,7 @@ export default function Footer() {
     { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
     { label: t.footer.bookAConsultation, href: "/consultation/book" },
     { label: t.footer.applyToAcademy, href: "/academy" },
-    { label: isArabic ? "العربية / English" : "English / العربية", href: "#", onClick: toggleLang },
-  ], [t, isArabic, toggleLang]);
+  ], [t]);
 
   return (
     <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">
