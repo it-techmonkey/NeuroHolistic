@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useLang } from "@/lib/translations/LanguageContext";
+import ClientReviewVideos from "@/components/ClientReviewVideos";
 
 /* ─── Clean UI Icons ─────────────────────────────────────────────────────── */
 
@@ -168,6 +169,13 @@ export default function Testimonials() {
             </motion.div>
           ))}
         </div>
+
+        <motion.div variants={itemVariants}>
+          <ClientReviewVideos
+            heading={t.testimonials.videoReviewsHeading}
+            subtitle={t.testimonials.videoReviewsSubtitle}
+          />
+        </motion.div>
       </motion.div>
     </section>
   );

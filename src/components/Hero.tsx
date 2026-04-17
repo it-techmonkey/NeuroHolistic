@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
+import HeroCampaignStrip from "@/components/HeroCampaignStrip";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Hero() {
@@ -19,7 +20,8 @@ export default function Hero() {
         <div className="hero-noise-texture absolute inset-0 opacity-[0.045]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-6 py-32 sm:py-40 md:py-44 lg:px-10">
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6 pb-32 pt-28 sm:pb-40 sm:pt-32 md:pb-44 md:pt-36 lg:px-10">
+        <HeroCampaignStrip />
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

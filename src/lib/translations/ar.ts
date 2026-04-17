@@ -160,6 +160,8 @@ export const ar = {
     heading: "الشهادات",
     subtitle:
       "98% من العملاء يختبرون تحولاً ملموساً • +7,400 عميل حول العالم • نعمل على الجذر لخلق تغيير يدوم",
+    videoReviewsHeading: "مراجعات بالفيديو من العملاء",
+    videoReviewsSubtitle: "استمع إلى تجارب مباشرة من أشخاص عملوا مع نيوروهوليستك.",
   },
 
   // ── Scientific Foundation ──

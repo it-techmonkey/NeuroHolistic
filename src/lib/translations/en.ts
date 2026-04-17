@@ -160,6 +160,8 @@ export const en = {
     heading: "Testimonials",
     subtitle:
       "98% of Clients Experience Meaningful Transformation \u2022 7,400+ Clients Worldwide \u2022 Working at the root to create lasting change.",
+    videoReviewsHeading: "Client Video Reviews",
+    videoReviewsSubtitle: "Hear from people sharing their experience in their own words.",
   },
 
   // ── Scientific Foundation ──
