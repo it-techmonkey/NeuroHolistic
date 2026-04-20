@@ -1,15 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { ar } from './ar';
 import { en } from './en';
 
-type Lang = 'en' | 'ar';
+type Lang = 'en';
 
 type LanguageContextType = {
   lang: Lang;
   toggleLang: () => void;
-  t: typeof en | typeof ar;
+  t: typeof en;
   isUrdu: boolean;
   isArabic: boolean;
 };
@@ -26,11 +25,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('en');
 
   const toggleLang = useCallback(() => {
-    setLang(prev => prev === 'en' ? 'ar' : 'en');
+    setLang('en');
   }, []);
 
-  const t = lang === 'ar' ? ar : en;
-  const isArabic = lang === 'ar';
+  const t = en;
+  const isArabic = false;
   // Keep UI layout fixed LTR; language only changes copy.
   const isUrdu = false;
 
