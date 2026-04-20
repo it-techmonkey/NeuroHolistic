@@ -9,7 +9,7 @@ import { useLang } from "@/lib/translations/LanguageContext";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isArabic } = useLang();
+  const { isUrdu } = useLang();
   const isBookingFlow =
     pathname === '/consultation/book' ||
     pathname?.startsWith('/booking/paid-program-booking');
@@ -48,8 +48,8 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
       {isPublicPage ? (
         <main
           dir="ltr"
-          lang={isArabic ? "ar" : "en"}
-          className={isArabic ? "urdu-text font-urdu" : ""}
+          lang={isUrdu ? "ur" : "en"}
+          className={isUrdu ? "urdu-text font-urdu" : ""}
         >
           {children}
         </main>

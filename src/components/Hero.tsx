@@ -1,9 +1,16 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
-import HeroCampaignStrip from "@/components/HeroCampaignStrip";
 import { useLang } from "@/lib/translations/LanguageContext";
+
+const HERO_VISUAL_ROTATION_MS = 5500;
+const CAMPAIGN_BANNER = {
+  en: { src: "/Campeigns/en.PNG" },
+  ar: { src: "/Campeigns/ar.PNG" },
+} as const;
 
 export default function Hero() {
   const { t, isUrdu } = useLang();
@@ -20,8 +27,7 @@ export default function Hero() {
         <div className="hero-noise-texture absolute inset-0 opacity-[0.045]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-6 pb-32 pt-28 sm:pb-40 sm:pt-32 md:pb-44 md:pt-36 lg:px-10">
-        <HeroCampaignStrip />
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6 pb-32 pt-36 sm:pb-40 sm:pt-40 md:pb-44 md:pt-44 lg:px-10">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -52,11 +58,71 @@ export default function Hero() {
             transition={{ delay: 0.22, duration: 0.85 }}
             className={`relative flex justify-center ${isUrdu ? 'lg:justify-start' : 'lg:justify-end'}`}
           >
-            <NeuralGraphic />
+            <HeroVisualCarousel />
           </motion.div>
         </div>
       </div>
     </motion.section>
+  );
+}
+
+function HeroVisualCarousel() {
+  const [showBanner, setShowBanner] = useState(true);
+
+  useEffect(() => {
+    const rotationTimer = window.setInterval(() => {
+      setShowBanner((current) => !current);
+    }, HERO_VISUAL_ROTATION_MS);
+
+    return () => window.clearInterval(rotationTimer);
+  }, []);
+
+  return (
+    <div className="relative h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[400px] md:w-[400px] lg:h-[550px] lg:w-[550px]">
+      <AnimatePresence mode="wait">
+        {showBanner ? (
+          <BannerVisual key="hero-banner" />
+        ) : (
+          <motion.div
+            key="hero-animation"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full w-full"
+          >
+            <NeuralGraphic />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function BannerVisual() {
+  const { isArabic } = useLang();
+  const banner = isArabic ? CAMPAIGN_BANNER.ar : CAMPAIGN_BANNER.en;
+  const alt = isArabic ? "لافتة الحملة" : "Campaign banner";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className="flex h-full w-full items-center justify-center"
+    >
+      <div className="relative aspect-[16/9] w-full max-w-[820px] overflow-hidden rounded-2xl border border-white/[0.08] bg-black/25 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+        <Image
+          src={banner.src}
+          alt={alt}
+          fill
+          className="object-contain object-center"
+          sizes="(max-width: 640px) 280px, (max-width: 768px) 340px, (max-width: 1024px) 400px, 540px"
+          priority
+        />
+      </div>
+    </motion.div>
   );
 }
 

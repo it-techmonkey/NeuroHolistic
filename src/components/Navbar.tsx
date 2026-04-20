@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, isArabic, toggleLang } = useLang();
+  const { t, isUrdu, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -131,7 +131,7 @@ export default function Navbar() {
               onClick={toggleLang}
               className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
             >
-              {isArabic ? "EN" : "عربي"}
+              {isUrdu ? "EN" : "اردو"}
             </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
