@@ -38,7 +38,7 @@ export default function PageHero({
   secondaryAction,
 }: PageHeroProps) {
   const hasCustomDesc = !!customDescription;
-  const { isUrdu } = useLang();
+  const { isArabic } = useLang();
   
   return (
     <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-12 sm:min-h-[85vh] sm:pt-32 sm:pb-14 md:min-h-[90vh] md:pt-40 md:pb-16">
@@ -74,7 +74,7 @@ export default function PageHero({
           {hasCustomDesc ? (
             customDescription
           ) : description ? (
-            <p className={`mb-7 max-w-[620px] text-[15px] ${isUrdu ? 'leading-[2]' : 'leading-[1.6]'} text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10`}>
+            <p className={`mb-7 max-w-[620px] text-[15px] ${isArabic ? 'leading-[2]' : 'leading-[1.6]'} text-white/70 sm:text-[16px] md:text-[18px] lg:mb-10`}>
               {description}
             </p>
           ) : null}
@@ -103,7 +103,7 @@ export default function PageHero({
                   {secondaryAction.label}
                   <span className="absolute -bottom-1 left-0 h-px w-full origin-right scale-x-0 bg-white transition-transform duration-300 group-hover:origin-left group-hover:scale-x-100" />
                 </span>
-                <span className="transition-transform duration-300 group-hover:translate-x-1 rtl-flip">{isUrdu ? '←' : '→'}</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
             )}
           </div>

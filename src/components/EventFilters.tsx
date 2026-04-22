@@ -1,16 +1,16 @@
 "use client";
 
-import type { EventType } from "./events/types";
+import type { EventTypeKey } from "./events/types";
 
-const TYPE_OPTIONS: { value: "all" | EventType; label: string }[] = [
+const TYPE_OPTIONS: { value: "all" | EventTypeKey; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "Workshop", label: "Workshops" },
-  { value: "Retreat", label: "Retreats" },
-  { value: "Online Session", label: "Online Sessions" },
+  { value: "workshop", label: "Workshops" },
+  { value: "retreat", label: "Retreats" },
+  { value: "online", label: "Online Sessions" },
 ];
 
 export interface EventFiltersState {
-  type: "all" | EventType;
+  type: "all" | EventTypeKey;
   date: string;
 }
 

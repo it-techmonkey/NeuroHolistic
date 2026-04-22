@@ -37,7 +37,7 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu, toggleLang } = useLang();
+  const { t, lang, toggleLang } = useLang();
 
   const isLightPage = pathname?.startsWith("/team/") && pathname !== "/team";
 
@@ -128,10 +128,12 @@ export default function Navbar() {
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
             <button
+              type="button"
+              title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
               onClick={toggleLang}
               className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
             >
-              {isUrdu ? "EN" : "اردو"}
+              {lang === "en" ? "العربية" : "English"}
             </button>
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
@@ -232,7 +234,7 @@ export default function Navbar() {
                   <motion.div 
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className={`absolute top-[85%] ${isUrdu ? 'right-0' : 'left-0'} pt-3 w-48 z-[110]`}
+                    className="absolute top-[85%] left-0 pt-3 w-48 z-[110]"
                   >
                     <div className={`rounded-xl border p-2 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       {COMPANY_LINKS.map(link => (
@@ -264,7 +266,7 @@ export default function Navbar() {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className={`absolute top-full ${isUrdu ? 'right-0' : 'left-0'} mt-2 w-52 z-[110]`}
+                    className="absolute top-full left-0 mt-2 w-52 z-[110]"
                   >
                     <div className={`rounded-xl border p-3 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       <a href={`mailto:${CONTACT_INFO.email}`} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -334,11 +336,11 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)} 
             />
             <motion.div 
-              initial={{ x: isUrdu ? "-100%" : "100%" }} 
-              animate={{ x: 0 }} 
-              exit={{ x: isUrdu ? "-100%" : "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className={`fixed top-0 ${isUrdu ? 'left-0' : 'right-0'} h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col will-change-transform ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
+              className={`fixed top-0 right-0 h-full w-[100%] sm:w-[90%] max-w-sm z-[160] shadow-2xl p-4 sm:p-6 flex flex-col will-change-transform ${isLightPage ? 'bg-white text-slate-900' : 'bg-[#080C20] text-white'}`}
             >
               <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
@@ -350,14 +352,14 @@ export default function Navbar() {
                 </button>
               </div>
 
-              <nav className={`flex flex-col gap-5 overflow-y-auto flex-1 pb-4 ${isUrdu ? 'text-right' : ''}`}>
+              <nav className="flex flex-col gap-5 overflow-y-auto flex-1 pb-4">
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <div key={item.label}>
                     <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
                       {item.label}
                     </Link>
                     {'children' in item && item.children && (
-                      <div className={`flex flex-col gap-2 mt-2 ${isUrdu ? 'mr-3' : 'ml-3'}`}>
+                      <div className="ml-3 flex flex-col gap-2 mt-2">
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
@@ -378,6 +380,18 @@ export default function Navbar() {
                 ))}
                 
                 <div className={`h-px w-full my-2 ${isLightPage ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                <button
+                  type="button"
+                  title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
+                  onClick={() => {
+                    toggleLang();
+                    setMobileOpen(false);
+                  }}
+                  className={`text-left text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}
+                >
+                  {lang === "en" ? "العربية" : "English"}
+                </button>
 
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'} ${!isAuthenticated ? 'hidden' : ''}`}>
                   {t.navbar.dashboard}

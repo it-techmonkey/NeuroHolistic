@@ -282,6 +282,23 @@ export const en = {
       "The Institute's long-term vision is to deepen the scientific understanding of human transformation while supporting the emergence of a new generation of practitioners capable of working responsibly with the complexity of human experience.",
     visionParagraph3:
       "Through continued exploration, collaboration, and structured practice, the NeuroHolistic framework aims to contribute to a broader evolution in how human wellbeing, awareness, and transformation are understood and facilitated.",
+    evolutionHeroTitle: "The Evolution of the NeuroHolistic Method™",
+    evolutionHeroSubtitle: "A new definition of how true transformation happens",
+    evolutionMetaTags: ["20+ Years", "Practical Experience", "Cross-Disciplinary"],
+    evolutionJourney1: [
+      "More than twenty years ago, Dr. Fawzia Yassmina began working closely with individuals facing complex emotional and psychological challenges. Through thousands of hours of observation, deeper patterns of human perception and transformation began to reveal themselves.",
+      "These early experiences laid the foundation for what would eventually become the NeuroHolistic Method™.",
+    ],
+    evolutionJourney2: [
+      "As the work deepened, insights from neuroscience, psychology, and systemic awareness began to converge. It became clear that lasting transformation could not be understood through a single discipline alone.",
+      "Through years of refinement, recurring mechanisms of change became visible across diverse backgrounds and life situations.",
+    ],
+    evolutionJourney3: [
+      "Over time, these insights were organized into a coherent framework. What emerged through practice was articulated into a structured model of transformation.",
+      "This led to the five-phase architecture of the NeuroHolistic Method™, providing a systematic way to facilitate human change.",
+    ],
+    instituteGrowthParagraph:
+      "As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method.",
   },
 
   // ── Contact Page ──
@@ -364,6 +381,60 @@ export const en = {
     viewRetreats: "View Upcoming Retreats",
     joinWishList: "Join Wish List",
     metaTags: ["Deep Immersion", "Nature Based", "Held Container"],
+  },
+
+  retreatsListing: {
+    time: "Time",
+    duration: "Duration",
+    capacity: "Capacity",
+    status: "Status",
+    registrationOpen: "Registration open",
+    participantsLabel: "participants",
+    registerNow: "Register now",
+    viewDetails: "View details",
+    upcomingLine1: "Upcoming",
+    upcomingLine2: "sessions",
+    locationLabel: "Location",
+    viewRegistration: "View registration",
+  },
+
+  eventsListing: {
+    headingLine1: "Upcoming",
+    headingLine2: "events",
+    filterType: "Type",
+    filterSchedule: "Schedule",
+    filterAllTypes: "All types",
+    filterAllDates: "All dates",
+    filterWorkshops: "Workshops",
+    filterRetreats: "Retreats",
+    filterLiveOnline: "Live online",
+    noResults: "No results match the current filters.",
+    registerNow: "Register now",
+    dateLocationLabel: "Date // Location",
+    periods: {
+      "2025-04": "April 2025",
+      "2025-05": "May 2025",
+      "2025-06": "June 2025",
+    },
+    notFoundTitle: "Event not found | NeuroHolistic",
+    backToEvents: "Back to Events",
+    detailDateLabel: "Date:",
+    detailTimeLabel: "Time:",
+    detailLocationLabel: "Location:",
+    detailTypeLabel: "Type:",
+    detailTimeTbd: "TBD",
+  },
+
+  retreatsDetail: {
+    notFoundTitle: "Retreat Not Found | NeuroHolistic",
+    backToRetreats: "Back to Retreats",
+    detailDateLabel: "Date:",
+    detailDurationLabel: "Duration:",
+    detailLocationLabel: "Location:",
+    detailCapacityLabel: "Capacity:",
+    detailCapacityParticipants: "participants",
+    detailDurationTbd: "TBD",
+    detailCapacityTbd: "TBD",
   },
 
   programsHero: {
@@ -497,6 +568,163 @@ export const en = {
     ],
     explore: "Explore",
     closingParagraph: "For many individuals, the NeuroHolistic Method™ becomes not only a process of healing, but a pathway toward a more conscious, balanced, and empowered way of living.",
+    differenceLine1: "What Makes The",
+    differenceMethodWord: "Method ",
+    differenceItalicWord: "Different",
+  },
+
+  /** Retreats landing page sections (below hero) */
+  retreatsLanding: {
+    experienceTitleStart: "What You Will ",
+    experienceTitleAccent: "Experience",
+    experiences: [
+      {
+        title: "Deep Nervous System Regulation",
+        description:
+          "Guided practices to restore balance and coherence within the autonomic nervous system, creating a foundation for lasting change.",
+      },
+      {
+        title: "Guided Transformational Processes",
+        description:
+          "Structured sessions that move through the five-phase architecture of the NeuroHolistic Method™ in a held container.",
+      },
+      {
+        title: "Group Reflection & Integration",
+        description:
+          "Shared circles and dialogue that support integration of new patterns and collective learning.",
+      },
+      {
+        title: "Nature-Based Restoration",
+        description:
+          "Time in nature to support regulation, reflection, and connection to the body and environment.",
+      },
+    ],
+    formatTitleLine1: "How The Experience",
+    formatTitleAccent: "Is Structured",
+    formatIntro:
+      "Our retreats are designed as immersive containers. We move beyond daily distractions to engage deeply with the transformational process through a precise balance of structure and space.",
+    formatItems: [
+      {
+        label: "Instruction",
+        title: "Guided Method Sessions",
+        description: "Deep dives into the NeuroHolistic Method™ led by certified practitioners.",
+      },
+      {
+        label: "Integration",
+        title: "Group Reflection Circles",
+        description: "Shared spaces to process emerging patterns and collective insights.",
+      },
+      {
+        label: "Somatic",
+        title: "Nature-Based Restoration",
+        description: "Time held in natural environments to support nervous system regulation.",
+      },
+      {
+        label: "Autonomy",
+        title: "Individual Reflection",
+        description: "Dedicated space for personal silence, journaling, and self-integration.",
+      },
+    ],
+    registryTitleStart: "Join the ",
+    registryTitleAccent: "Registry",
+    registryDescription:
+      "Formal updates regarding upcoming clinical workshops, retreats, and live integration sessions.",
+    registryEmailPlaceholder: "Email address",
+    registrySubscribe: "Subscribe",
+    registryFooter: "Institutional Updates // NeuroHolistic Institute",
+    retreatStructureImageAlt: "Retreat structure and experience",
+  },
+
+  /** Corporate wellbeing landing sections */
+  corporateWellbeing: {
+    whyTitleStart: "Why It ",
+    whyTitleAccent: "Matters",
+    whyParagraph1:
+      "Modern organizations face growing challenges: stress, burnout, cognitive overload, and reduced engagement. These issues often stem from nervous system dysregulation—yet traditional initiatives rarely address the underlying mechanisms.",
+    whyParagraph2:
+      "The NeuroHolistic approach supports internal regulation and sustainable performance by working with the human system as a whole. When teams regulate effectively, they collaborate better and perform under pressure without depletion.",
+    whyImageAlt: "Corporate wellness and team collaboration",
+    approachTitleLine1: "The Approach for",
+    approachTitleAccent: "Organizations",
+    approachParagraph1:
+      "Our corporate programs integrate neuroscience-informed principles—regulation, perception, and cognitive flexibility—to support teams navigating complexity.",
+    approachParagraph2:
+      "We focus on building resilience and sustainable performance without relying on short-term fixes. By working with the human system as a whole, we help individuals think more clearly and perform under pressure without depletion.",
+    approachImageAlt: "Corporate approach",
+    focusTitleMain: "Strategic Program ",
+    focusTitleAccent: "Focus Areas",
+    focusItems: [
+      {
+        title: "Mental Clarity & Cognitive Performance",
+        description:
+          "Supporting focus, decision-making, and psychological flexibility through systemic neuro-logic.",
+      },
+      {
+        title: "Stress Regulation & Resilience",
+        description:
+          "Helping individuals regulate pressure and recover from mental overload by stabilizing the autonomic system.",
+      },
+      {
+        title: "Leadership Awareness",
+        description:
+          "Developing self-awareness and emotional intelligence in leadership roles to foster coherent team dynamics.",
+      },
+      {
+        title: "Organizational Culture",
+        description:
+          "Strengthening communication, psychological safety, and collaboration via collective regulation.",
+      },
+    ],
+    programFormatTitleMain: "Program ",
+    programFormatTitleAccent: "Format",
+    programFormatIntro:
+      "Corporate programs can be delivered through various structured mediums, and can be adapted to the specific needs of each organization.",
+    programFormatList: [
+      "Executive workshops",
+      "Team development sessions",
+      "Leadership programs",
+      "Organizational wellbeing seminars",
+    ],
+    impactTitleLine1: "Measurable Impact Across",
+    impactTitleAccent: "The Organization",
+    impactItems: [
+      {
+        title: "Focus and Cognitive Performance",
+        description:
+          "Clearer thinking, better decision-making, and improved problem-solving capacity.",
+      },
+      {
+        title: "Productivity and Work Efficiency",
+        description:
+          "Reduced cognitive overload and greater mental clarity during demanding work cycles.",
+      },
+      {
+        title: "Employee Retention and Loyalty",
+        description: "Strengthening psychological safety and long-term engagement.",
+      },
+      {
+        title: "Team Collaboration and Communication",
+        description: "Improved emotional awareness and healthier relational dynamics.",
+      },
+      {
+        title: "Resilience in High-Pressure Environments",
+        description:
+          "Helping individuals maintain stability and performance during periods of change.",
+      },
+      {
+        title: "Absenteeism and Burnout Reduction",
+        description:
+          "Supporting nervous system regulation and recovery from chronic stress patterns.",
+      },
+    ],
+    closingTitleLine1: "Bring the NeuroHolistic",
+    closingTitleLine2: "Method to Your ",
+    closingTitleAccent: "Organization",
+    closingDescription:
+      "Partner with the Institute to build systemic resilience, cognitive clarity, and sustainable performance within your executive and operational teams.",
+    bookConsultation: "Book a Consultation",
+    contactInstitute: "Contact the Institute",
+    directCorrespondence: "Direct Correspondence",
   },
 
   // ── Resources Page ──

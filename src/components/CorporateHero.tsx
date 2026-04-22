@@ -4,7 +4,7 @@ import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function CorporateHero() {
-  const { t } = useLang();
+  const { t, isArabic } = useLang();
   const ch = t.corporateHero;
 
   return (
@@ -15,7 +15,13 @@ export default function CorporateHero() {
       customDescription={
         <div className="mb-7 max-w-[620px] sm:mb-7 lg:mb-10">
           <p className="text-[15px] leading-[1.7] text-white/70 sm:text-[16px] md:text-[18px]">
-            {ch.description1} <em>state</em>.
+            {isArabic ? (
+              ch.description1
+            ) : (
+              <>
+                {ch.description1} <em>state</em>.
+              </>
+            )}
           </p>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
             {ch.description2.split('·').map((item: string, i: number) => (

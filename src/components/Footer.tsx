@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Footer() {
-  const { t, isUrdu, toggleLang } = useLang();
+  const { t, lang, isArabic, toggleLang } = useLang();
 
   const NAV_INDEX = useMemo(() => [
     { label: t.footer.home, href: "/" },
@@ -25,12 +25,12 @@ export default function Footer() {
       { label: t.footer.bookAConsultation, href: "/consultation/book" },
       { label: t.footer.applyToAcademy, href: "/academy" },
       {
-        label: isUrdu ? "اردو / English" : "English / اردو",
+        label: lang === "en" ? "العربية" : "English",
         href: "#",
         onClick: toggleLang,
       },
     ],
-    [t, isUrdu, toggleLang]
+    [t, lang, toggleLang]
   );
 
   return (
@@ -46,8 +46,8 @@ export default function Footer() {
               <Link href="/" className="text-[22px] font-bold text-white tracking-tighter">
                 NeuroHolistic<span className="italic font-light opacity-40">.</span>
               </Link>
-              <div className={`mt-8 max-w-[340px] ${isUrdu ? 'border-r border-white/10 pr-6' : 'border-l border-white/10 pl-6'}`}>
-                <p className={`text-[15px] text-slate-400 font-light ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'}`}>
+              <div className="mt-8 max-w-[340px] border-l border-white/10 pl-6">
+                <p className={`text-[15px] text-slate-400 font-light ${isArabic ? 'leading-[2]' : 'leading-[1.7]'}`}>
                   {t.footer.description}
                 </p>
               </div>

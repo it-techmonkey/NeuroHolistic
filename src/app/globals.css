@@ -85,7 +85,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-inter), "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-display), "Quicksand", "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: -0.02em;
   line-height: 1.2;
   font-style: normal;
@@ -103,22 +103,44 @@ h6 * {
 /* Clean sans-serif font for large headings */
 h1,
 h2 {
-  font-family: var(--font-display), "Outfit", system-ui, sans-serif;
-  font-weight: 500;
+  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
+  font-weight: 700;
 }
 
 h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
   font-weight: 600;
 }
 
 /* Utility class for display headings */
 .font-display {
-  font-family: var(--font-display), "Outfit", system-ui, sans-serif;
-  font-weight: 500;
+  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* When document is Arabic, use Tajawal for all UI (avoids wrong glyph shaping) */
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] h5,
+html[lang="ar"] h6,
+html[lang="ar"] .font-display,
+html[lang="ar"] p,
+html[lang="ar"] a,
+html[lang="ar"] button,
+html[lang="ar"] input,
+html[lang="ar"] textarea,
+html[lang="ar"] select,
+html[lang="ar"] label,
+html[lang="ar"] span,
+html[lang="ar"] li,
+html[lang="ar"] dd,
+html[lang="ar"] dt {
+  font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif;
 }
 
 p {
@@ -194,6 +216,14 @@ button:disabled {
 /* ── Urdu / RTL Utilities ── */
 .font-urdu {
   font-family: var(--font-urdu), "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif;
+}
+
+.font-arabic {
+  font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif;
+}
+
+.arabic-text {
+  line-height: 1.75;
 }
 
 .urdu-text {
