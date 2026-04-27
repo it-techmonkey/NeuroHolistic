@@ -122,19 +122,19 @@ type DashboardStats = {
 };
 
 type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive';
+const MAX_SEVERITY = 60;
+const toReadinessScore = (severity: number) =>
+  Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
+const totalSeverityScore = (item: any) =>
+  (item?.nervous_system_score || 0) +
+  (item?.emotional_state_score || 0) +
+  (item?.cognitive_patterns_score || 0) +
+  (item?.body_symptoms_score || 0) +
+  (item?.behavioral_patterns_score || 0) +
+  (item?.life_functioning_score || 0);
 
 export default function TherapistDashboardPage() {
   const router = useRouter();
-  const MAX_SEVERITY = 60;
-  const toReadinessScore = (severity: number) =>
-    Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
-  const totalSeverityScore = (item: any) =>
-    (item?.nervous_system_score || 0) +
-    (item?.emotional_state_score || 0) +
-    (item?.cognitive_patterns_score || 0) +
-    (item?.body_symptoms_score || 0) +
-    (item?.behavioral_patterns_score || 0) +
-    (item?.life_functioning_score || 0);
   const [loading, setLoading] = useState(true);
   const [therapistId, setTherapistId] = useState<string | null>(null);
   const [therapistInfo, setTherapistInfo] = useState<any>(null);
