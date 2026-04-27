@@ -88,20 +88,48 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'block_full_day') {
-      // Block entire day
-      const { data, error } = await supabase
+      // Block entire day without relying on ON CONFLICT.
+      // Some environments don't have a matching unique index for this tuple.
+      const { data: existing, error: existingError } = await supabase
         .from('therapist_availability')
-        .upsert({
-          therapist_id: therapistId,
-          exception_date: date,
-          day_of_week: null,
-          start_time: '00:00',
-          end_time: '23:59',
-          is_blocked: true,
-        }, {
-          onConflict: 'therapist_id,exception_date,start_time,end_time'
-        })
-        .select();
+        .select('id')
+        .eq('therapist_id', therapistId)
+        .eq('exception_date', date)
+        .eq('is_blocked', true)
+        .eq('start_time', '00:00')
+        .eq('end_time', '23:59')
+        .maybeSingle();
+
+      if (existingError) {
+        return NextResponse.json({ error: existingError.message }, { status: 500 });
+      }
+
+      let data: any = null;
+      let error: any = null;
+
+      if (existing?.id) {
+        ({ data, error } = await supabase
+          .from('therapist_availability')
+          .update({
+            day_of_week: null,
+            is_blocked: true,
+          })
+          .eq('id', existing.id)
+          .eq('therapist_id', therapistId)
+          .select());
+      } else {
+        ({ data, error } = await supabase
+          .from('therapist_availability')
+          .insert({
+            therapist_id: therapistId,
+            exception_date: date,
+            day_of_week: null,
+            start_time: '00:00',
+            end_time: '23:59',
+            is_blocked: true,
+          })
+          .select());
+      }
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

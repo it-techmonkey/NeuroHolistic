@@ -31,6 +31,13 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
   const [activeReport, setActiveReport] = useState<'timeline' | 'comparison' | 'detailed'>('timeline');
   const [selectedComparison, setSelectedComparison] = useState<number>(0);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const MAX_SEVERITY = 60;
+  const toReadinessScore = (severity: number) =>
+    Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
+  const totalSeverityScore = (item: any) =>
+    (item?.nervous_system_score || 0) + (item?.emotional_state_score || 0) +
+    (item?.cognitive_patterns_score || 0) + (item?.body_symptoms_score || 0) +
+    (item?.behavioral_patterns_score || 0) + (item?.life_functioning_score || 0);
 
   const baseline = assessments.find((a: any) => a.is_baseline);
 
@@ -48,7 +55,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
     if (baseline) {
       timeline.push({
         date: baseline.assessed_at || baseline.created_at,
-        score: baseline.goal_readiness_score || 0,
+        score: toReadinessScore(baseline.goal_readiness_score || 0),
         label: 'Baseline (Free Consult)',
         type: 'baseline',
         data: baseline
@@ -57,14 +64,12 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
 
     // Add development forms with their scores
     devForms.forEach((f: any) => {
-      const totalScore = (f.nervous_system_score || 0) + (f.emotional_state_score || 0) +
-        (f.cognitive_patterns_score || 0) + (f.body_symptoms_score || 0) +
-        (f.behavioral_patterns_score || 0) + (f.life_functioning_score || 0);
+      const readinessScore = toReadinessScore(totalSeverityScore(f));
       const sessionDate = f.session_date || f.created_at;
       
       timeline.push({
         date: sessionDate,
-        score: totalScore,
+        score: readinessScore,
         label: new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         type: 'session',
         data: f
@@ -77,9 +82,9 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
   };
 
   const timelineData = buildTimelineData();
-  const firstScore = timelineData[0]?.score || baseline?.goal_readiness_score || assessments[0]?.goal_readiness_score || 0;
+  const firstScore = timelineData[0]?.score || toReadinessScore(baseline?.goal_readiness_score || assessments[0]?.goal_readiness_score || 0);
   const lastScore = timelineData[timelineData.length - 1]?.score || firstScore;
-  const improvement = firstScore - lastScore;
+  const improvement = lastScore - firstScore;
 
   // Build comparison pairs (baseline vs session 1, session 1 vs session 2, etc.)
   const buildComparisons = () => {
@@ -93,15 +98,14 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
     // Baseline vs Session 1 (first dev form)
     if (baseline && devForms.length > 0) {
       const firstDevForm = devForms[0];
-      const firstDevFormScore = (firstDevForm.nervous_system_score || 0) + (firstDevForm.emotional_state_score || 0) +
-        (firstDevForm.cognitive_patterns_score || 0) + (firstDevForm.body_symptoms_score || 0) +
-        (firstDevForm.behavioral_patterns_score || 0) + (firstDevForm.life_functioning_score || 0);
+      const firstDevFormReadiness = toReadinessScore(totalSeverityScore(firstDevForm));
+      const baselineReadiness = toReadinessScore(baseline.goal_readiness_score || 0);
       
       comparisons.push({
         label: 'Baseline → Session 1',
-        from: { label: 'Baseline (Free Consult)', score: baseline.goal_readiness_score || 0, data: baseline },
-        to: { label: `Session 1`, score: firstDevFormScore, data: firstDevForm },
-        improvement: (baseline.goal_readiness_score || 0) - firstDevFormScore
+        from: { label: 'Baseline (Free Consult)', score: baselineReadiness, data: baseline },
+        to: { label: `Session 1`, score: firstDevFormReadiness, data: firstDevForm },
+        improvement: firstDevFormReadiness - baselineReadiness
       });
     }
 
@@ -110,19 +114,15 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
       const current = devForms[i];
       const next = devForms[i + 1];
       
-      const currentScore = (current.nervous_system_score || 0) + (current.emotional_state_score || 0) +
-        (current.cognitive_patterns_score || 0) + (current.body_symptoms_score || 0) +
-        (current.behavioral_patterns_score || 0) + (current.life_functioning_score || 0);
+      const currentReadiness = toReadinessScore(totalSeverityScore(current));
       
-      const nextScore = (next.nervous_system_score || 0) + (next.emotional_state_score || 0) +
-        (next.cognitive_patterns_score || 0) + (next.body_symptoms_score || 0) +
-        (next.behavioral_patterns_score || 0) + (next.life_functioning_score || 0);
+      const nextReadiness = toReadinessScore(totalSeverityScore(next));
 
       comparisons.push({
         label: `Session ${i + 1} → Session ${i + 2}`,
-        from: { label: `Session ${i + 1}`, score: currentScore, data: current },
-        to: { label: `Session ${i + 2}`, score: nextScore, data: next },
-        improvement: currentScore - nextScore
+        from: { label: `Session ${i + 1}`, score: currentReadiness, data: current },
+        to: { label: `Session ${i + 2}`, score: nextReadiness, data: next },
+        improvement: nextReadiness - currentReadiness
       });
     }
 
@@ -187,7 +187,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
             <p className={`text-sm uppercase tracking-wider ${
               improvement >= 0 ? 'text-green-600' : 'text-amber-600'
             }`}>
-              {improvement >= 0 ? 'Symptom Reduction' : 'Symptom Increase'}
+              {improvement >= 0 ? 'Readiness Increase' : 'Readiness Decrease'}
             </p>
             <p className={`text-3xl font-bold mt-1 ${
               improvement >= 0 ? 'text-green-700' : 'text-amber-700'
@@ -198,7 +198,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
               From {firstScore} to {lastScore}/60
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Lower scores indicate improved wellbeing
+              Higher scores indicate improved wellbeing
             </p>
           </div>
           <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
@@ -228,7 +228,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                       new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     ),
                     datasets: [{
-                      label: 'Dysregulation Level',
+                      label: 'Goal Readiness',
                       data: timelineData.map(d => d.score),
                       borderColor: '#6366F1',
                       backgroundColor: '#EEF2FF',
@@ -260,7 +260,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                             const idx = items[0].dataIndex;
                             return timelineData[idx]?.label || '';
                           },
-                          label: (context: any) => `Score: ${context.raw}/60`
+                          label: (context: any) => `Readiness: ${context.raw}/60`
                         }
                       }
                     },
@@ -488,9 +488,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
 
           {/* Development Forms */}
           {devForms.map((form: any, idx: number) => {
-            const totalScore = (form.nervous_system_score || 0) + (form.emotional_state_score || 0) +
-              (form.cognitive_patterns_score || 0) + (form.body_symptoms_score || 0) +
-              (form.behavioral_patterns_score || 0) + (form.life_functioning_score || 0);
+            const readinessScore = toReadinessScore(totalSeverityScore(form));
             const itemId = `dev-${form.id}`;
             return (
               <div key={form.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -510,7 +508,7 @@ export default function Progress({ assessments, devForms = [] }: { assessments: 
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-green-600">{totalScore}/60</span>
+                    <span className="text-sm font-medium text-green-600">{readinessScore}/60</span>
                     {expandedItem === itemId ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </div>
                 </button>

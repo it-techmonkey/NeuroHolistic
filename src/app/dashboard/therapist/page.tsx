@@ -125,6 +125,16 @@ type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive';
 
 export default function TherapistDashboardPage() {
   const router = useRouter();
+  const MAX_SEVERITY = 60;
+  const toReadinessScore = (severity: number) =>
+    Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
+  const totalSeverityScore = (item: any) =>
+    (item?.nervous_system_score || 0) +
+    (item?.emotional_state_score || 0) +
+    (item?.cognitive_patterns_score || 0) +
+    (item?.body_symptoms_score || 0) +
+    (item?.behavioral_patterns_score || 0) +
+    (item?.life_functioning_score || 0);
   const [loading, setLoading] = useState(true);
   const [therapistId, setTherapistId] = useState<string | null>(null);
   const [therapistInfo, setTherapistInfo] = useState<any>(null);
@@ -448,9 +458,7 @@ export default function TherapistDashboardPage() {
                 body_symptoms_score: prevForm.body_symptoms_score ?? 0,
                 behavioral_patterns_score: prevForm.behavioral_patterns_score ?? 0,
                 life_functioning_score: prevForm.life_functioning_score ?? 0,
-                goal_readiness_score: (prevForm.nervous_system_score ?? 0) + (prevForm.emotional_state_score ?? 0) +
-                  (prevForm.cognitive_patterns_score ?? 0) + (prevForm.body_symptoms_score ?? 0) +
-                  (prevForm.behavioral_patterns_score ?? 0) + (prevForm.life_functioning_score ?? 0),
+                goal_readiness_score: toReadinessScore(totalSeverityScore(prevForm)),
                 source: 'session' as const,
                 sessionNumber: prevSessionNum,
               });
@@ -1540,13 +1548,7 @@ function ClientDetailView({
         body_symptoms: form.body_symptoms_score || 0,
         behavioral_patterns: form.behavioral_patterns_score || 0,
         life_functioning: form.life_functioning_score || 0,
-        goal_readiness:
-          (form.nervous_system_score || 0) +
-          (form.emotional_state_score || 0) +
-          (form.cognitive_patterns_score || 0) +
-          (form.body_symptoms_score || 0) +
-          (form.behavioral_patterns_score || 0) +
-          (form.life_functioning_score || 0),
+        goal_readiness: toReadinessScore(totalSeverityScore(form)),
       };
     })
     .filter((item: any, index: number, arr: any[]) => {
@@ -1566,7 +1568,7 @@ function ClientDetailView({
   if (overviewBaseline) {
     overviewTimelineData.push({
       date: overviewBaseline.assessed_at || overviewBaseline.created_at,
-      score: overviewBaseline.goal_readiness_score || 0,
+      score: toReadinessScore(overviewBaseline.goal_readiness_score || 0),
       label: 'Baseline (Free Consult)',
       type: 'baseline',
       data: overviewBaseline,
@@ -1578,7 +1580,7 @@ function ClientDetailView({
     .forEach((a: any) => {
       overviewTimelineData.push({
         date: a.assessed_at || a.created_at,
-        score: a.goal_readiness_score || 0,
+        score: toReadinessScore(a.goal_readiness_score || 0),
         label: 'Assessment',
         type: 'assessment',
         data: a,
@@ -1586,17 +1588,11 @@ function ClientDetailView({
     });
 
   (detail?.devForms || []).forEach((f: any, idx: number) => {
-    const totalScore =
-      (f.nervous_system_score || 0) +
-      (f.emotional_state_score || 0) +
-      (f.cognitive_patterns_score || 0) +
-      (f.body_symptoms_score || 0) +
-      (f.behavioral_patterns_score || 0) +
-      (f.life_functioning_score || 0);
+    const readinessScore = toReadinessScore(totalSeverityScore(f));
 
     overviewTimelineData.push({
       date: f.created_at,
-      score: totalScore,
+      score: readinessScore,
       label: `Session ${f.session_number || idx + 1}`,
       type: 'session',
       data: f,
@@ -2181,7 +2177,8 @@ function AvailabilityModal({
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
-  const [blockDate, setBlockDate] = useState('');
+  const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
+  const [blockCalendarDate, setBlockCalendarDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'recurring' | 'block'>('recurring');
 
@@ -2194,6 +2191,36 @@ function AvailabilityModal({
   const toggleDay = (day: number) => {
     setSelectedDays(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
+  const blockedDates = availability
+    .filter(a => a.is_blocked && a.exception_date)
+    .map(a => a.exception_date as string)
+    .sort((a, b) => a.localeCompare(b));
+  const blockedDateSet = new Set(blockedDates);
+
+  const formatDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const clearTime = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = clearTime(new Date());
+
+  const currentBlockYear = blockCalendarDate.getFullYear();
+  const currentBlockMonth = blockCalendarDate.getMonth();
+  const daysInBlockMonth = new Date(currentBlockYear, currentBlockMonth + 1, 0).getDate();
+  const blockMonthStartDay = new Date(currentBlockYear, currentBlockMonth, 1).getDay();
+  const blockCalendarDays: (number | null)[] = [];
+  for (let i = 0; i < blockMonthStartDay; i++) blockCalendarDays.push(null);
+  for (let day = 1; day <= daysInBlockMonth; day++) blockCalendarDays.push(day);
+
+  const toggleBlockDate = (dateKey: string) => {
+    setSelectedBlockDates(prev =>
+      prev.includes(dateKey) ? prev.filter(d => d !== dateKey) : [...prev, dateKey]
     );
   };
 
@@ -2215,17 +2242,30 @@ function AvailabilityModal({
   };
 
   const handleBlockDay = async () => {
-    if (!blockDate) return;
+    if (selectedBlockDates.length === 0) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/therapist/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'block_full_day', date: blockDate }),
-      });
-      if (res.ok) onSave();
+      const datesToBlock = selectedBlockDates.filter(date => !blockedDateSet.has(date));
+      if (datesToBlock.length === 0) {
+        onSave();
+        return;
+      }
+
+      const responses = await Promise.all(
+        datesToBlock.map(date =>
+          fetch('/api/therapist/availability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'block_full_day', date }),
+          })
+        )
+      );
+      if (responses.every(r => r.ok)) {
+        setSelectedBlockDates([]);
+        onSave();
+      }
     } catch (error) {
-      console.error('Failed to block day:', error);
+      console.error('Failed to block selected days:', error);
     } finally {
       setLoading(false);
     }
@@ -2317,21 +2357,84 @@ function AvailabilityModal({
           {tab === 'block' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Block a Date</label>
-                <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-lg" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-700">Select Dates to Block</label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <button
+                      onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth - 1, 1))}
+                      className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-medium text-slate-700 min-w-[120px] text-center">
+                      {blockCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth + 1, 1))}
+                      className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-xs text-center text-slate-500 mb-2">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
+                    <div key={`${d}-${idx}`} className="py-1">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {blockCalendarDays.map((day, idx) => {
+                    if (day === null) {
+                      return <div key={`empty-${idx}`} className="h-9" />;
+                    }
+
+                    const date = new Date(currentBlockYear, currentBlockMonth, day);
+                    const dateKey = formatDateKey(date);
+                    const isPast = clearTime(date) < today;
+                    const isBlocked = blockedDateSet.has(dateKey);
+                    const isSelected = selectedBlockDates.includes(dateKey);
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() => !isPast && !isBlocked && toggleBlockDate(dateKey)}
+                        disabled={isPast || isBlocked}
+                        className={`h-9 text-sm rounded border transition ${
+                          isBlocked
+                            ? 'bg-red-100 border-red-200 text-red-600 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                            : isPast
+                            ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedBlockDates.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-600">
+                    Selected: {selectedBlockDates.length} day{selectedBlockDates.length > 1 ? 's' : ''}
+                  </p>
+                )}
                 <button
                   onClick={handleBlockDay}
-                  disabled={loading || !blockDate}
+                  disabled={loading || selectedBlockDates.length === 0}
                   className="mt-2 w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
-                  {loading ? 'Blocking...' : 'Block This Day'}
+                  {loading ? 'Blocking...' : `Block Selected Dates (${selectedBlockDates.length})`}
                 </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Blocked Dates</label>
                 <div className="space-y-2">
-                  {availability.filter(a => a.is_blocked && a.exception_date).map(block => (
+                  {blockedDates.map(date => {
+                    const block = availability.find(a => a.is_blocked && a.exception_date === date);
+                    if (!block) return null;
+                    return (
                     <div key={block.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                       <span className="text-sm text-red-700">
                         {new Date(block.exception_date + 'T00:00:00').toLocaleDateString()}
@@ -2340,8 +2443,8 @@ function AvailabilityModal({
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
-                  {availability.filter(a => a.is_blocked && a.exception_date).length === 0 && (
+                  );})}
+                  {blockedDates.length === 0 && (
                     <p className="text-sm text-slate-500 text-center py-4">No blocked dates</p>
                   )}
                 </div>
