@@ -30,15 +30,15 @@ export default async function PaidProgramBookingPage({
         {/* Header */}
         <div className="text-center mb-12">
           <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#6366F1] mb-3">
-            {academyMode ? 'NeuroHolistic Academy' : 'NeuroHolistic Program'}
+            {academyMode ? 'NeuroHolistic Academy' : 'البرنامج NeuroHolistic'}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            {academyMode ? 'Choose Your Academy Plan' : 'Choose Your Program'}
+            {academyMode ? 'Choose Your Academy Plan' : 'اختر برنامجك'}
           </h1>
           <p className="text-slate-500 text-[16px] max-w-lg mx-auto leading-relaxed">
             {academyMode
               ? 'Follow the same payment flow and choose either full payment or per-session Academy installments.'
-              : 'View our program options and pricing. Choose the type that best suits your needs.'}
+              : 'اطّلع على خيارات البرامج والأسعار. اختر النوع الذي يناسب احتياجاتك بشكل أفضل.'}
           </p>
         </div>
 

@@ -488,7 +488,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Back to program type</span>
+              <span className="text-sm">العودة إلى نوع البرنامج</span>
             </button>
           )}
 
@@ -510,19 +510,21 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <div>
                 <p className="font-semibold text-slate-900">
-                  {academyMode ? 'Academy Program' : (selectedProgramType === 'private' ? 'Private Program' : 'Group Program')}
+                  {academyMode ? 'Academy Program' : (selectedProgramType === 'private' ? 'Private Program' : 'البرنامج الجماعي')}
                 </p>
-                <p className="text-sm text-slate-500">{academyMode ? '5 sessions included' : '10 sessions included'}</p>
+                <p className="text-sm text-slate-500">{academyMode ? '5 sessions included' : 'يشمل 10 جلسات'}</p>
               </div>
             </div>
           </div>
 
           <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Choose Payment Option</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">اختر طريقة الدفع</h2>
             <p className="text-slate-500 text-sm">
               {academyMode
                 ? 'Select your Academy payment option.'
-                : `Select how you'd like to pay for your ${selectedProgramType === 'private' ? 'Private' : 'Group'} Program.`}
+                : selectedProgramType === 'group'
+                  ? 'اختر كيف تود الدفع مقابل البرنامج الجماعي'
+                  : `Select how you'd like to pay for your Private Program.`}
             </p>
           </div>
 
@@ -530,6 +532,8 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             {/* Full Program Payment */}
             <div className={`bg-white rounded-2xl border-2 shadow-md p-8 flex flex-col relative overflow-hidden transition-all ${
               selectedPaymentOption === 'full' ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-slate-200'
+            } ${
+              selectedProgramType === 'group' && !academyMode ? 'order-2' : ''
             }`}>
               <div className={`absolute top-0 left-0 right-0 h-1 ${
                 selectedProgramType === 'private' ? 'bg-indigo-500' : 'bg-emerald-500'
@@ -540,24 +544,32 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                     ? 'bg-indigo-100 text-indigo-700' 
                     : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                  Best Value
+                  {selectedProgramType === 'group' && !academyMode ? 'أفضل قيمة' : 'Best Value'}
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Full Payment</h3>
+              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">
+                {selectedProgramType === 'group' && !academyMode ? 'الدفع الكامل (أفضل قيمة)' : 'Full Payment'}
+              </h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
                   ? 'Pay for all 5 Academy sessions upfront.'
-                  : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.'}
+                  : selectedProgramType === 'group'
+                    ? 'ادفع مقابل جميع الجلسات العشر مقدماً ووفر. التزم برحلة التحول الكاملة الخاصة بك.'
+                    : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.'}
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
                   {getPriceForDisplay(selectedProgramType, 'full').toLocaleString()}
                 </span>
-                <span className="text-slate-500 text-base ml-1">AED</span>
+                <span className="text-slate-500 text-base ml-1">
+                  {selectedProgramType === 'group' && !academyMode ? 'درهم إماراتي' : 'AED'}
+                </span>
                 <p className="text-slate-500 text-sm mt-1">
                   {academyMode
                     ? `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} AED / session`
-                    : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
+                    : selectedProgramType === 'group'
+                      ? `10 جلسات – ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full')).toLocaleString()} درهم لكل جلسة`
+                      : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
                 </p>
               </div>
               <button
@@ -569,31 +581,41 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 }`}
               >
                 <CreditCard className="w-4 h-4" />
-                Proceed to Payment
+                {selectedProgramType === 'group' && !academyMode ? 'المتابعة إلى الدفع' : 'Proceed to Payment'}
               </button>
             </div>
 
             {/* Per Session Payment */}
             <div className={`bg-white rounded-2xl border-2 shadow-md p-8 flex flex-col transition-all ${
               selectedPaymentOption === 'per_session' ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-slate-200'
+            } ${
+              selectedProgramType === 'group' && !academyMode ? 'order-1' : ''
             }`}>
               <div className="mb-1">
                 <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full uppercase tracking-wider">
-                  Flexible
+                  {selectedProgramType === 'group' && !academyMode ? 'مرونة' : 'Flexible'}
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">Pay Session by Session</h3>
+              <h3 className="text-xl font-bold text-slate-900 mt-3 mb-2">
+                {selectedProgramType === 'group' && !academyMode ? 'الدفع لكل جلسة' : 'Pay Session by Session'}
+              </h3>
               <p className="text-slate-500 text-sm mb-6 flex-1">
                 {academyMode
                   ? 'Pay 5,000 AED per Academy session. Total Academy program consists of 5 sessions.'
-                  : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.'}
+                  : selectedProgramType === 'group'
+                    ? 'ادفع لكل جلسة بشكل منفصل. مرونة للاستمرار حسب وتيرتك الخاصة.'
+                    : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.'}
               </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-slate-900">
                   {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
                 </span>
-                <span className="text-slate-500 text-base ml-1">AED</span>
-                <p className="text-slate-500 text-sm mt-1">per session</p>
+                <span className="text-slate-500 text-base ml-1">
+                  {selectedProgramType === 'group' && !academyMode ? 'درهم إماراتي' : 'AED'}
+                </span>
+                <p className="text-slate-500 text-sm mt-1">
+                  {selectedProgramType === 'group' && !academyMode ? 'لكل جلسة' : 'per session'}
+                </p>
               </div>
               <button
                 onClick={() => handlePayment('per_session')}
@@ -608,7 +630,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4" />
-                    Proceed to Payment
+                    {selectedProgramType === 'group' && !academyMode ? 'المتابعة إلى الدفع' : 'Proceed to Payment'}
                   </>
                 )}
               </button>
