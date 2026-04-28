@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, Tajawal } from "next/font/google";
+import { Plus_Jakarta_Sans, Quicksand, Noto_Nastaliq_Urdu, Tajawal } from "next/font/google";
 import "./globals.css";
 import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
@@ -12,15 +12,23 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const outfit = Outfit({
+const quicksand = Quicksand({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
+  weight: ["500", "600", "700"],
 });
 
-const tajawalArabic = Tajawal({
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
   subsets: ["arabic"],
   variable: "--font-urdu",
+  display: "swap",
+  weight: ["400", "700"],
+});
+
+const tajawal = Tajawal({
+  subsets: ["arabic"],
+  variable: "--font-arabic",
   display: "swap",
   weight: ["400", "500", "700"],
 });
@@ -38,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} ${outfit.variable} ${tajawalArabic.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} ${quicksand.variable} ${notoNastaliqUrdu.variable} ${tajawal.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
         <AuthProvider>
           <LanguageProvider>
             <BookingModalProvider>

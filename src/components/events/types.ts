@@ -1,14 +1,26 @@
-export type EventType = string;
+export type ContentLocale = "en" | "ar";
 
-export interface EventItem {
-  id: string;
+export type EventTypeKey = "workshop" | "retreat" | "online";
+
+export interface EventLocaleFields {
   title: string;
   description: string;
   date: string;
   time?: string;
   location: string;
-  type: EventType;
+  typeLabel: string;
+}
+
+export interface EventItem {
+  id: string;
   image: string;
-  capacity?: number;
   slug?: string;
+  capacity?: number;
+  typeKey: EventTypeKey;
+  /** Stable filter grouping, e.g. "2025-04" */
+  filterPeriod: string;
+  locales: {
+    en: EventLocaleFields;
+    ar: EventLocaleFields;
+  };
 }

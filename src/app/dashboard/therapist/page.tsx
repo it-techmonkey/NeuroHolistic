@@ -41,6 +41,7 @@ import UploadMaterial from '@/components/dashboard/therapist/UploadMaterial';
 import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/TherapistTabs';
 import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
+import ArchiveTab from '@/components/dashboard/therapist/Archive';
 
 // Types
 type Session = {
@@ -120,7 +121,17 @@ type DashboardStats = {
   pendingAssessments: number;
 };
 
-type ViewMode = 'overview' | 'clients' | 'sessions';
+type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive';
+const MAX_SEVERITY = 60;
+const toReadinessScore = (severity: number) =>
+  Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
+const totalSeverityScore = (item: any) =>
+  (item?.nervous_system_score || 0) +
+  (item?.emotional_state_score || 0) +
+  (item?.cognitive_patterns_score || 0) +
+  (item?.body_symptoms_score || 0) +
+  (item?.behavioral_patterns_score || 0) +
+  (item?.life_functioning_score || 0);
 
 export default function TherapistDashboardPage() {
   const router = useRouter();
@@ -246,24 +257,16 @@ export default function TherapistDashboardPage() {
         return;
       }
 
-      // Use server-side role resolution to avoid client-side RLS/profile race
-      // conditions that can incorrectly downgrade therapist users to client.
-      const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
-      const me = await meRes.json();
-      if (!me?.authenticated) {
-        router.push('/auth/login');
-        return;
-      }
-      if (me.role !== 'therapist' && me.role !== 'admin') {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role, full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (userData?.role !== 'therapist' && userData?.role !== 'admin') {
         router.push('/dashboard/client');
         return;
       }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('full_name, email')
-        .eq('id', user.id)
-        .single();
 
       setTherapistId(user.id);
       setTherapistInfo({ ...userData, id: user.id });
@@ -455,9 +458,7 @@ export default function TherapistDashboardPage() {
                 body_symptoms_score: prevForm.body_symptoms_score ?? 0,
                 behavioral_patterns_score: prevForm.behavioral_patterns_score ?? 0,
                 life_functioning_score: prevForm.life_functioning_score ?? 0,
-                goal_readiness_score: (prevForm.nervous_system_score ?? 0) + (prevForm.emotional_state_score ?? 0) +
-                  (prevForm.cognitive_patterns_score ?? 0) + (prevForm.body_symptoms_score ?? 0) +
-                  (prevForm.behavioral_patterns_score ?? 0) + (prevForm.life_functioning_score ?? 0),
+                goal_readiness_score: toReadinessScore(totalSeverityScore(prevForm)),
                 source: 'session' as const,
                 sessionNumber: prevSessionNum,
               });
@@ -636,6 +637,7 @@ export default function TherapistDashboardPage() {
                 { id: 'overview' as ViewMode, label: 'Overview', icon: BarChart3 },
                 { id: 'clients' as ViewMode, label: 'Clients', icon: Users },
                 { id: 'sessions' as ViewMode, label: 'Sessions', icon: Calendar },
+                { id: 'archive' as ViewMode, label: 'Archive', icon: FileText },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1177,6 +1179,11 @@ export default function TherapistDashboardPage() {
             </section>
           </div>
         )}
+
+        {/* ARCHIVE VIEW */}
+        {viewMode === 'archive' && therapistId && (
+          <ArchiveTab therapistId={therapistId} />
+        )}
       </div>
 
       {/* Availability Modal */}
@@ -1541,13 +1548,7 @@ function ClientDetailView({
         body_symptoms: form.body_symptoms_score || 0,
         behavioral_patterns: form.behavioral_patterns_score || 0,
         life_functioning: form.life_functioning_score || 0,
-        goal_readiness:
-          (form.nervous_system_score || 0) +
-          (form.emotional_state_score || 0) +
-          (form.cognitive_patterns_score || 0) +
-          (form.body_symptoms_score || 0) +
-          (form.behavioral_patterns_score || 0) +
-          (form.life_functioning_score || 0),
+        goal_readiness: toReadinessScore(totalSeverityScore(form)),
       };
     })
     .filter((item: any, index: number, arr: any[]) => {
@@ -1567,7 +1568,7 @@ function ClientDetailView({
   if (overviewBaseline) {
     overviewTimelineData.push({
       date: overviewBaseline.assessed_at || overviewBaseline.created_at,
-      score: overviewBaseline.goal_readiness_score || 0,
+      score: toReadinessScore(overviewBaseline.goal_readiness_score || 0),
       label: 'Baseline (Free Consult)',
       type: 'baseline',
       data: overviewBaseline,
@@ -1579,44 +1580,26 @@ function ClientDetailView({
     .forEach((a: any) => {
       overviewTimelineData.push({
         date: a.assessed_at || a.created_at,
-        score: a.goal_readiness_score || 0,
+        score: toReadinessScore(a.goal_readiness_score || 0),
         label: 'Assessment',
         type: 'assessment',
         data: a,
       });
     });
 
-  (detail?.devForms || []).forEach((f: any) => {
-    const totalScore =
-      (f.nervous_system_score || 0) +
-      (f.emotional_state_score || 0) +
-      (f.cognitive_patterns_score || 0) +
-      (f.body_symptoms_score || 0) +
-      (f.behavioral_patterns_score || 0) +
-      (f.life_functioning_score || 0);
-    const sessionDate = f.session_date || f.created_at;
+  (detail?.devForms || []).forEach((f: any, idx: number) => {
+    const readinessScore = toReadinessScore(totalSeverityScore(f));
 
     overviewTimelineData.push({
-      date: sessionDate,
-      score: totalScore,
-      label: new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: f.created_at,
+      score: readinessScore,
+      label: `Session ${f.session_number || idx + 1}`,
       type: 'session',
       data: f,
     });
   });
 
   overviewTimelineData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const latestAssessment = detail?.assessments?.length > 0
-    ? detail.assessments[detail.assessments.length - 1]
-    : null;
-  const baselineAssessment = detail?.assessments?.find((a: any) => a.is_baseline) || null;
-
-  const renderValue = (value: any) => {
-    if (value === null || value === undefined || value === '') return 'Not specified';
-    if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : 'Not specified';
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    return String(value);
-  };
 
   return (
     <div className="space-y-6">
@@ -1789,57 +1772,47 @@ function ClientDetailView({
                     </div>
                   )}
 
-                  {/* Latest Assessment Report */}
-                  {latestAssessment ? (
+                  {/* Latest Assessment Overview */}
+                  {detail?.assessments?.length > 0 ? (
                     <div className="border border-slate-200 rounded-xl overflow-hidden">
                       <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
                         <div className="flex justify-between items-center">
                           <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                             <FileText className="w-4 h-4 text-indigo-600" />
-                            Diagnostic Assessment Report
-                            {latestAssessment?.is_baseline && (
+                            Latest Assessment
+                            {detail.assessments[detail.assessments.length - 1]?.is_baseline && (
                               <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">Baseline</span>
                             )}
                           </h4>
                           <span className="text-sm text-slate-500">
-                            {new Date(latestAssessment?.assessed_at || latestAssessment?.created_at).toLocaleDateString()}
+                            {new Date(detail.assessments[detail.assessments.length - 1]?.assessed_at || detail.assessments[detail.assessments.length - 1]?.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <div className="p-5 space-y-4">
-                        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
-                          <h5 className="text-xs text-indigo-700 uppercase tracking-wider mb-3 font-semibold">Client & Submission</h5>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                            <div><span className="text-slate-500">Client Name:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_name || detail?.clientProfile?.full_name || client.fullName)}</span></div>
-                            <div><span className="text-slate-500">Email:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_email || detail?.clientProfile?.email || client.email)}</span></div>
-                            <div><span className="text-slate-500">Phone:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_phone || detail?.clientProfile?.phone || client.phone)}</span></div>
-                            <div><span className="text-slate-500">Country:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_country || detail?.clientProfile?.country)}</span></div>
-                            <div><span className="text-slate-500">Occupation:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.client_occupation)}</span></div>
-                            <div><span className="text-slate-500">Relationship:</span> <span className="text-slate-800 font-medium">{renderValue(latestAssessment.relationship_status)}</span></div>
+                        {/* Clinical Summary */}
+                        {detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Condition Brief</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.clinical_condition_brief}</p>
                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Main Complaint</p>
-                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.main_complaint)}</p>
+                        )}
+                        {detail.assessments[detail.assessments.length - 1]?.therapist_focus && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapist Focus</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapist_focus}</p>
                           </div>
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Current Symptoms</p>
-                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.current_symptoms)}</p>
+                        )}
+                        {detail.assessments[detail.assessments.length - 1]?.therapy_goal && (
+                          <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Therapy Goal</p>
+                            <p className="text-sm text-slate-700">{detail.assessments[detail.assessments.length - 1]?.therapy_goal}</p>
                           </div>
-                          <div className="rounded-lg border border-slate-200 p-4 lg:col-span-2">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Previous Therapy</p>
-                            <p className="text-sm text-slate-700">
-                              {renderValue(latestAssessment.previous_therapy)}
-                              {latestAssessment.previous_therapy_details ? ` — ${latestAssessment.previous_therapy_details}` : ''}
-                            </p>
-                          </div>
-                        </div>
+                        )}
 
                         {/* Scores Grid */}
                         <div className="pt-4 border-t border-slate-100">
-                          <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Symptoms & Scores</p>
+                          <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Assessment Scores</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {[
                               { label: 'Nervous System', key: 'nervous_system_score' },
@@ -1852,7 +1825,7 @@ function ClientDetailView({
                               <div key={metric.key} className="bg-slate-50 rounded-lg p-3">
                                 <p className="text-xs text-slate-500">{metric.label}</p>
                                 <p className="text-lg font-semibold text-slate-900">
-                                  {latestAssessment?.[metric.key] || 0}
+                                  {detail.assessments[detail.assessments.length - 1]?.[metric.key] || 0}
                                   <span className="text-sm font-normal text-slate-400">/10</span>
                                 </p>
                               </div>
@@ -1860,66 +1833,28 @@ function ClientDetailView({
                             <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
                               <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
                               <p className="text-lg font-bold text-indigo-700">
-                                {latestAssessment?.goal_readiness_score || 0}
+                                {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}
                                 <span className="text-sm font-normal text-indigo-400">/60</span>
                               </p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Pattern Selection</p>
-                            <div className="space-y-1 text-sm text-slate-700">
-                              <p><span className="text-slate-500">Nervous Pattern:</span> {renderValue(latestAssessment.nervous_system_pattern)}</p>
-                              <p><span className="text-slate-500">Emotional Patterns:</span> {renderValue(latestAssessment.emotional_patterns)}</p>
-                              <p><span className="text-slate-500">Cognitive Patterns:</span> {renderValue(latestAssessment.cognitive_patterns)}</p>
-                              <p><span className="text-slate-500">Body Symptoms:</span> {renderValue(latestAssessment.body_symptoms)}</p>
-                              <p><span className="text-slate-500">Behavioral Patterns:</span> {renderValue(latestAssessment.behavioral_patterns)}</p>
-                              <p><span className="text-slate-500">Life Functioning:</span> {renderValue(latestAssessment.life_functioning_patterns)}</p>
-                            </div>
-                          </div>
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Root Cause Analysis</p>
-                            <div className="space-y-1 text-sm text-slate-700">
-                              <p><span className="text-slate-500">Timeline:</span> {renderValue(latestAssessment.root_cause_pattern_timeline)}</p>
-                              <p><span className="text-slate-500">Parental Influence:</span> {renderValue(latestAssessment.root_cause_parental_influence)}</p>
-                              <p><span className="text-slate-500">Core Patterns:</span> {renderValue(latestAssessment.root_cause_core_patterns)}</p>
-                              <p><span className="text-slate-500">Contributing Factors:</span> {renderValue(latestAssessment.root_cause_contributing_factors)}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 pt-2">
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Clinical Condition Brief</p>
-                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.clinical_condition_brief)}</p>
-                          </div>
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Therapist Focus</p>
-                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.therapist_focus)}</p>
-                          </div>
-                          <div className="rounded-lg border border-slate-200 p-4">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Therapy Goal</p>
-                            <p className="text-sm text-slate-700">{renderValue(latestAssessment.therapy_goal)}</p>
-                          </div>
-                        </div>
-
                         {/* Progress Comparison */}
-                        {detail.assessments.length > 1 && baselineAssessment && (
+                        {detail.assessments.length > 1 && (
                           <div className="pt-4 border-t border-slate-100">
                             <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Progress from Baseline</p>
                             <div className="flex items-center gap-4">
                               <div className="text-center">
                                 <p className="text-xs text-slate-500">Baseline</p>
                                 <p className="text-2xl font-bold text-slate-700">
-                                  {baselineAssessment?.goal_readiness_score || 0}/60
+                                  {detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0}/60
                                 </p>
                               </div>
                               <div className="flex-1 h-1 bg-slate-200 rounded">
                                 <div
                                   className="h-full bg-indigo-500 rounded"
-                                  style={{ width: `${((baselineAssessment?.goal_readiness_score || 0) / 60) * 100}%` }}
+                                  style={{ width: `${((detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) / 60) * 100}%` }}
                                 />
                               </div>
                               <TrendingUp className="w-5 h-5 text-green-500" />
@@ -1932,20 +1867,20 @@ function ClientDetailView({
                               <div className="text-center">
                                 <p className="text-xs text-green-600">Current</p>
                                 <p className="text-2xl font-bold text-green-700">
-                                  {latestAssessment?.goal_readiness_score || 0}/60
+                                  {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}/60
                                 </p>
                               </div>
                             </div>
                             <p className="text-center text-sm text-slate-600 mt-2">
                               Change: <span className={`font-semibold ${
-                                (latestAssessment?.goal_readiness_score || 0) -
-                                (baselineAssessment?.goal_readiness_score || 0) >= 0
+                                (detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0
                                   ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {(latestAssessment?.goal_readiness_score || 0) -
-                                 (baselineAssessment?.goal_readiness_score || 0) >= 0 ? '+' : ''}
-                                {(latestAssessment?.goal_readiness_score || 0) -
-                                 (baselineAssessment?.goal_readiness_score || 0)} points
+                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0) >= 0 ? '+' : ''}
+                                {(detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0) -
+                                 (detail.assessments.find((a: any) => a.is_baseline)?.goal_readiness_score || 0)} points
                               </span>
                             </p>
                           </div>
@@ -2242,7 +2177,8 @@ function AvailabilityModal({
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
-  const [blockDate, setBlockDate] = useState('');
+  const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
+  const [blockCalendarDate, setBlockCalendarDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'recurring' | 'block'>('recurring');
 
@@ -2255,6 +2191,36 @@ function AvailabilityModal({
   const toggleDay = (day: number) => {
     setSelectedDays(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
+  const blockedDates = availability
+    .filter(a => a.is_blocked && a.exception_date)
+    .map(a => a.exception_date as string)
+    .sort((a, b) => a.localeCompare(b));
+  const blockedDateSet = new Set(blockedDates);
+
+  const formatDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const clearTime = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = clearTime(new Date());
+
+  const currentBlockYear = blockCalendarDate.getFullYear();
+  const currentBlockMonth = blockCalendarDate.getMonth();
+  const daysInBlockMonth = new Date(currentBlockYear, currentBlockMonth + 1, 0).getDate();
+  const blockMonthStartDay = new Date(currentBlockYear, currentBlockMonth, 1).getDay();
+  const blockCalendarDays: (number | null)[] = [];
+  for (let i = 0; i < blockMonthStartDay; i++) blockCalendarDays.push(null);
+  for (let day = 1; day <= daysInBlockMonth; day++) blockCalendarDays.push(day);
+
+  const toggleBlockDate = (dateKey: string) => {
+    setSelectedBlockDates(prev =>
+      prev.includes(dateKey) ? prev.filter(d => d !== dateKey) : [...prev, dateKey]
     );
   };
 
@@ -2276,17 +2242,30 @@ function AvailabilityModal({
   };
 
   const handleBlockDay = async () => {
-    if (!blockDate) return;
+    if (selectedBlockDates.length === 0) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/therapist/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'block_full_day', date: blockDate }),
-      });
-      if (res.ok) onSave();
+      const datesToBlock = selectedBlockDates.filter(date => !blockedDateSet.has(date));
+      if (datesToBlock.length === 0) {
+        onSave();
+        return;
+      }
+
+      const responses = await Promise.all(
+        datesToBlock.map(date =>
+          fetch('/api/therapist/availability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'block_full_day', date }),
+          })
+        )
+      );
+      if (responses.every(r => r.ok)) {
+        setSelectedBlockDates([]);
+        onSave();
+      }
     } catch (error) {
-      console.error('Failed to block day:', error);
+      console.error('Failed to block selected days:', error);
     } finally {
       setLoading(false);
     }
@@ -2378,21 +2357,84 @@ function AvailabilityModal({
           {tab === 'block' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Block a Date</label>
-                <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-lg" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-700">Select Dates to Block</label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <button
+                      onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth - 1, 1))}
+                      className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-medium text-slate-700 min-w-[120px] text-center">
+                      {blockCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth + 1, 1))}
+                      className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-xs text-center text-slate-500 mb-2">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
+                    <div key={`${d}-${idx}`} className="py-1">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {blockCalendarDays.map((day, idx) => {
+                    if (day === null) {
+                      return <div key={`empty-${idx}`} className="h-9" />;
+                    }
+
+                    const date = new Date(currentBlockYear, currentBlockMonth, day);
+                    const dateKey = formatDateKey(date);
+                    const isPast = clearTime(date) < today;
+                    const isBlocked = blockedDateSet.has(dateKey);
+                    const isSelected = selectedBlockDates.includes(dateKey);
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() => !isPast && !isBlocked && toggleBlockDate(dateKey)}
+                        disabled={isPast || isBlocked}
+                        className={`h-9 text-sm rounded border transition ${
+                          isBlocked
+                            ? 'bg-red-100 border-red-200 text-red-600 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                            : isPast
+                            ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedBlockDates.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-600">
+                    Selected: {selectedBlockDates.length} day{selectedBlockDates.length > 1 ? 's' : ''}
+                  </p>
+                )}
                 <button
                   onClick={handleBlockDay}
-                  disabled={loading || !blockDate}
+                  disabled={loading || selectedBlockDates.length === 0}
                   className="mt-2 w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
-                  {loading ? 'Blocking...' : 'Block This Day'}
+                  {loading ? 'Blocking...' : `Block Selected Dates (${selectedBlockDates.length})`}
                 </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Blocked Dates</label>
                 <div className="space-y-2">
-                  {availability.filter(a => a.is_blocked && a.exception_date).map(block => (
+                  {blockedDates.map(date => {
+                    const block = availability.find(a => a.is_blocked && a.exception_date === date);
+                    if (!block) return null;
+                    return (
                     <div key={block.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                       <span className="text-sm text-red-700">
                         {new Date(block.exception_date + 'T00:00:00').toLocaleDateString()}
@@ -2401,8 +2443,8 @@ function AvailabilityModal({
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
-                  {availability.filter(a => a.is_blocked && a.exception_date).length === 0 && (
+                  );})}
+                  {blockedDates.length === 0 && (
                     <p className="text-sm text-slate-500 text-center py-4">No blocked dates</p>
                   )}
                 </div>

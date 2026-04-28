@@ -160,6 +160,8 @@ export const ur = {
     heading: "کلائنٹس کے تجربات",
     subtitle:
       "98% کلائنٹس معنی خیز تبدیلی کا تجربہ کرتے ہیں • 7,400+ عالمی کلائنٹس • مستقل تبدیلی کے لیے بنیادی سطح پر کام کر رہے ہیں۔",
+    videoReviewsHeading: "کلائنٹس کی ویڈیو جائزے",
+    videoReviewsSubtitle: "ان لوگوں سے سنیں جنہوں نے اپنے الفاظ میں اپنا تجربہ شیئر کیا۔",
   },
 
   // ── Scientific Foundation ──
@@ -355,13 +357,68 @@ export const ur = {
   },
 
   retreatHero: {
-    eyebrow: "رحلة تحولية",
-    title1: "اخرج من روتينك",
-    title2: "وادخل في رحلة تحوّل عميق",
-    description: "رحلات غامرة صُمّمت لتساعدك على الانفصال عن ضغط الحياة اليومية، وتنظيم منظومتك الداخلية، والعبور نحو تحوّل داخلي عميق ومستدام.",
-    viewRetreats: "اطّلع على الرحلات القادمة",
-    joinWishList: "انضم إلى قائمة الانتظار",
-    metaTags: ["تنظيم عصبي", "ممارسات طبيعية", "دمج جماعي"],
+    eyebrow: "ڈوب کر تبدیلی",
+    title1: "روٹین سے باہر نکلیں۔",
+    title2: "گہری تبدیلی میں داخل ہوں۔",
+    description:
+      "ایسی گہری رٹریٹس جو روزمرہ کے بوجھ سے علیحدگی، نظام کو ریگولیٹ کرنا، اور پائیدار اندرونی تبدیلی میں مدد دےتی ہیں۔",
+    viewRetreats: "آنے والی رٹریٹس دیکھیں",
+    joinWishList: "ویٹ لسٹ میں شامل ہوں",
+    metaTags: ["گہری غرقیت", "فطرت پر مبنی", "محفوظ فریم"],
+  },
+
+  retreatsListing: {
+    time: "وقت",
+    duration: "مدت",
+    capacity: "گنجائش",
+    status: "حالت",
+    registrationOpen: "رجسٹریشن کھلی ہے",
+    participantsLabel: "شرکاء",
+    registerNow: "ابھی رجسٹر کریں",
+    viewDetails: "تفصیلات دیکھیں",
+    upcomingLine1: "آنے والی",
+    upcomingLine2: "سیشنز",
+    locationLabel: "مقام",
+    viewRegistration: "رجسٹریشن دیکھیں",
+  },
+
+  eventsListing: {
+    headingLine1: "آنے والے",
+    headingLine2: "ایونٹس",
+    filterType: "قسم",
+    filterSchedule: "شیڈول",
+    filterAllTypes: "تمام اقسام",
+    filterAllDates: "تمام تاریخیں",
+    filterWorkshops: "ورکشاپس",
+    filterRetreats: "رٹریٹس",
+    filterLiveOnline: "لائیو آن لائن",
+    noResults: "موجودہ فلٹرز سے کوئی نتیجہ نہیں ملا۔",
+    registerNow: "ابھی رجسٹر کریں",
+    dateLocationLabel: "تاریخ // مقام",
+    periods: {
+      "2025-04": "اپریل 2025",
+      "2025-05": "مئی 2025",
+      "2025-06": "جون 2025",
+    },
+    notFoundTitle: "ایونٹ نہیں ملا | نیوروحولسٹک",
+    backToEvents: "ایونٹس پر واپس",
+    detailDateLabel: "تاریخ:",
+    detailTimeLabel: "وقت:",
+    detailLocationLabel: "مقام:",
+    detailTypeLabel: "قسم:",
+    detailTimeTbd: "بعد میں طے ہوگا",
+  },
+
+  retreatsDetail: {
+    notFoundTitle: "رٹریٹ نہیں ملی | نیوروحولسٹک",
+    backToRetreats: "رٹریٹس پر واپس",
+    detailDateLabel: "تاریخ:",
+    detailDurationLabel: "مدت:",
+    detailLocationLabel: "مقام:",
+    detailCapacityLabel: "گنجائش:",
+    detailCapacityParticipants: "شرکاء",
+    detailDurationTbd: "بعد میں طے ہوگا",
+    detailCapacityTbd: "بعد میں طے ہوگا",
   },
 
   programsHero: {

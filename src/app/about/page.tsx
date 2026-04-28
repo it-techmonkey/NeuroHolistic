@@ -8,50 +8,30 @@ import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function AboutPage() {
-  const { t, isUrdu, isArabic } = useLang();
+  const { t, isArabic } = useLang();
 
-  const JOURNEY = useMemo(() => [
-    {
-      title: t.about.theBeginning,
-      description: isArabic
-        ? [
-            "قبل أكثر من عشرين عاما، بدأت د. فوزية ياسمينة العمل عن قرب مع أفراد يواجهون تحديات عاطفية ونفسية معقّدة.",
-            "ومن خلال آلاف الساعات من الملاحظة، بدأت أنماط أعمق في الإدراك الإنساني والتحوّل تتكشف تدريجيا.",
-          ]
-        : [
-            "More than twenty years ago, Dr. Fawzia Yassmina began working closely with individuals facing complex emotional and psychological challenges. Through thousands of hours of observation, deeper patterns of human perception and transformation began to reveal themselves.",
-            "These early experiences laid the foundation for what would eventually become the NeuroHolistic Method™.",
-          ],
-      image: "/images/team/Fawzia Yassmina.png",
-      isFullWidth: true,
-    },
-    {
-      title: t.about.yearsOfExploration,
-      description: isArabic
-        ? [
-            "مع تعمّق العمل، بدأت الرؤى القادمة من علوم الأعصاب، وعلم النفس، والوعي المنظومي تتقاطع وتتلاقى.",
-            "وأصبح واضحا أن التحوّل المستدام لا يمكن فهمه من خلال تخصص واحد فقط.",
-          ]
-        : [
-            "As the work deepened, insights from neuroscience, psychology, and systemic awareness began to converge. It became clear that lasting transformation could not be understood through a single discipline alone.",
-            "Through years of refinement, recurring mechanisms of change became visible across diverse backgrounds and life situations.",
-          ],
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80",
-    },
-    {
-      title: t.about.structuringMethod,
-      description: isArabic
-        ? [
-            "مع مرور الوقت، جرى تنظيم هذه الرؤى ضمن إطار متماسك.",
-            "وقد قاد ذلك إلى البنية الخماسية لمراحل طريقة نيوروهوليستك™، بما يوفّر منهجا منظّما لتيسير التغيير الإنساني.",
-          ]
-        : [
-            "Over time, these insights were organized into a coherent framework. What emerged through practice was articulated into a structured model of transformation.",
-            "This led to the five-phase architecture of the NeuroHolistic Method™, providing a systematic way to facilitate human change.",
-          ],
-      image: "/images/pages/dna.jpeg",
-    },
-  ] as { title: string; description: string[]; image: string; isFullWidth?: boolean }[], [t, isUrdu]);
+  const JOURNEY = useMemo(
+    () =>
+      [
+        {
+          title: t.about.theBeginning,
+          description: [...t.about.evolutionJourney1],
+          image: "/images/team/Fawzia Yassmina.png",
+          isFullWidth: true,
+        },
+        {
+          title: t.about.yearsOfExploration,
+          description: [...t.about.evolutionJourney2],
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80",
+        },
+        {
+          title: t.about.structuringMethod,
+          description: [...t.about.evolutionJourney3],
+          image: "/images/pages/dna.jpeg",
+        },
+      ] as { title: string; description: string[]; image: string; isFullWidth?: boolean }[],
+    [t],
+  );
 
   return (
     <div className="w-full bg-white">
@@ -59,13 +39,16 @@ export default function AboutPage() {
         eyebrow={t.pageHero.aboutUs}
         title={
           <>
-            <span className="text-white font-normal">{isArabic ? 'تطوّر طريقة نيوروهوليستك™' : 'The Evolution of the NeuroHolistic Method™'}<br /></span>
+            <span className="text-white font-normal">
+              {t.about.evolutionHeroTitle}
+              <br />
+            </span>
           </>
         }
-        description={isArabic ? 'تعريف جديد لكيفية حدوث التحوّل الحقيقي.' : 'A new definition of how true transformation happens'}
+        description={t.about.evolutionHeroSubtitle}
         imageSrc="/images/pages/about.jpg"
         imageAlt="Premium wellbeing consultation environment"
-        metaTags={isArabic ? ["20+ عاما", "ممارسة تطبيقية", "تخصصات متعددة"] : ["20+ Years", "Practical Experience", "Cross-Disciplinary"]}
+        metaTags={[...t.about.evolutionMetaTags]}
       />
 
       {/* ── Section 01: The Chronology (Editorial Spreads) ── */}
@@ -92,7 +75,7 @@ export default function AboutPage() {
                     className="mx-auto max-w-[700px] space-y-6"
                   >
                     {block.description.map((p, idx) => (
-                      <p key={idx} className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
+                      <p key={idx} className={`text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
                     ))}
                   </motion.div>
                 </div>
@@ -109,9 +92,9 @@ export default function AboutPage() {
                     <h2 className="mb-8 text-[36px] font-light leading-[1.4] tracking-tight text-[#0F172A] md:text-[52px]">
                       {block.title}
                     </h2>
-                    <div className={`space-y-6 ${isUrdu ? 'border-r' : 'border-l'} border-[#E2E8F0] ${isUrdu ? 'pr-8' : 'pl-8'}`}>
+                    <div className="space-y-6 border-l border-[#E2E8F0] pl-8">
                       {block.description.map((p, idx) => (
-                        <p key={idx} className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
+                        <p key={idx} className={`text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
                       ))}
                     </div>
                   </motion.div>
@@ -149,11 +132,8 @@ export default function AboutPage() {
             <div>
               <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">{t.about.birthOfInstitute}</h2>
             </div>
-            <div className={`flex flex-col justify-center space-y-6 text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
-              <p>{isArabic
-                ? "ومع استمرار الاهتمام بهذا العمل في التوسّع، تأسّس معهد نيوروهوليستك لدعم التطوير المستمر للطريقة ونشرها بمسؤولية."
-                : "As interest in the work continued to grow, the NeuroHolistic Institute was established to support the continued development and responsible dissemination of the method."
-              }</p>
+            <div className={`flex flex-col justify-center space-y-6 text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+              <p>{t.about.instituteGrowthParagraph}</p>
               <p>{t.about.todayFunctions}</p>
             </div>
           </div>
@@ -214,7 +194,7 @@ export default function AboutPage() {
         whileInView={{ opacity: 1, y: 0 }} 
         className="lg:col-span-6"
       >
-        <div className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569] space-y-12 lg:pt-4`}>
+        <div className={`text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569] space-y-12 lg:pt-4`}>
           
           <div className="space-y-4">
             <h3 className="text-xl font-semibold text-[#0F172A]">
@@ -277,7 +257,7 @@ export default function AboutPage() {
                 <span className="mb-8 block font-mono text-[12px] text-[#6366F1]/50 group-hover:text-[#6366F1] transition-colors">
                   0{i + 1}
                 </span>
-                <p className={`text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                <p className={`text-[16px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
                   {text}
                 </p>
               </motion.div>

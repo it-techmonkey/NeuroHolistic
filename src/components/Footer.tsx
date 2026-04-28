@@ -6,7 +6,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Footer() {
-  const { t, isUrdu } = useLang();
+  const { t, lang, isArabic, toggleLang } = useLang();
 
   const NAV_INDEX = useMemo(() => [
     { label: t.footer.home, href: "/" },
@@ -16,14 +16,22 @@ export default function Footer() {
     { label: t.footer.about, href: "/about" },
   ], [t]);
 
-  const PROGRAM_INDEX = useMemo(() => [
-    { label: t.footer.privateSessions, href: "/programs/private" },
-    { label: t.footer.groupPrograms, href: "/programs" },
-    { label: t.footer.retreats, href: "/retreats" },
-    { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
-    { label: t.footer.bookAConsultation, href: "/consultation/book" },
-    { label: t.footer.applyToAcademy, href: "/academy" },
-  ], [t]);
+  const PROGRAM_INDEX = useMemo(
+    () => [
+      { label: t.footer.privateSessions, href: "/programs/private" },
+      { label: t.footer.groupPrograms, href: "/programs" },
+      { label: t.footer.retreats, href: "/retreats" },
+      { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
+      { label: t.footer.bookAConsultation, href: "/consultation/book" },
+      { label: t.footer.applyToAcademy, href: "/academy" },
+      {
+        label: lang === "en" ? "العربية" : "English",
+        href: "#",
+        onClick: toggleLang,
+      },
+    ],
+    [t, lang, toggleLang]
+  );
 
   return (
     <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">
@@ -38,8 +46,8 @@ export default function Footer() {
               <Link href="/" className="text-[22px] font-bold text-white tracking-tighter">
                 NeuroHolistic<span className="italic font-light opacity-40">.</span>
               </Link>
-              <div className={`mt-8 max-w-[340px] ${isUrdu ? 'border-r border-white/10 pr-6' : 'border-l border-white/10 pl-6'}`}>
-                <p className={`text-[15px] text-slate-400 font-light ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'}`}>
+              <div className="mt-8 max-w-[340px] border-l border-white/10 pl-6">
+                <p className={`text-[15px] text-slate-400 font-light ${isArabic ? 'leading-[2]' : 'leading-[1.7]'}`}>
                   {t.footer.description}
                 </p>
               </div>
@@ -79,9 +87,19 @@ export default function Footer() {
             <ul className="space-y-4">
               {PROGRAM_INDEX.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
-                    {link.label}
-                  </Link>
+                  {"onClick" in link && link.onClick ? (
+                    <button
+                      type="button"
+                      onClick={link.onClick}
+                      className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 text-left"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import FreeConsultationForm from './FreeConsultationForm';
 import { supabase } from '@/lib/supabase/client';
+import { useLang } from '@/lib/translations/LanguageContext';
 
 type BookingModalContextType = {
   openBookingModal: (type?: 'consultation' | 'program' | null) => void;
@@ -163,6 +164,8 @@ function ChooserView({
   onChooseConsultation: () => void;
   onChooseProgram: () => void;
 }) {
+  const { isArabic } = useLang();
+
   if (loading) {
     return (
       <div className="p-10 text-center">
@@ -175,8 +178,12 @@ function ChooserView({
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-900">How would you like to begin?</h2>
-        <p className="text-sm text-slate-500 mt-1">Choose the path that suits you</p>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          {isArabic ? 'كيف تود أن تبدأ؟' : 'How would you like to begin?'}
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          {isArabic ? 'اختر المسار الذي يناسبك' : 'Choose the path that suits you'}
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -193,11 +200,17 @@ function ChooserView({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-slate-900">Free Consultation</h3>
-                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[11px] font-bold rounded-full uppercase">Free</span>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {isArabic ? 'استشارة مجانية' : 'Free Consultation'}
+                </h3>
+                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[11px] font-bold rounded-full uppercase">
+                  {isArabic ? 'مجانية' : 'Free'}
+                </span>
               </div>
               <p className="text-sm text-slate-500 mt-1">
-                A complimentary session to understand your needs and explore how we can help.
+                {isArabic
+                  ? 'جلسة مجانية لفهم احتياجاتك واستكشاف كيف يمكننا مساعدتك'
+                  : 'A complimentary session to understand your needs and explore how we can help.'}
               </p>
             </div>
             <span className="text-slate-300 group-hover:text-indigo-500 transition-colors mt-3">→</span>
@@ -217,9 +230,13 @@ function ChooserView({
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-slate-900">Paid Program</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {isArabic ? 'برنامج مدفوع' : 'Paid Program'}
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  View pricing for Private (1-on-1) or Group programs and choose your plan.
+                  {isArabic
+                    ? 'اطّلع على الأسعار للبرامج الفردية (واحد لواحد) أو الجماعية واختر الخطة المناسبة لك'
+                    : 'View pricing for Private (1-on-1) or Group programs and choose your plan.'}
                 </p>
               </div>
               <span className="text-slate-300 group-hover:text-indigo-500 transition-colors mt-3">→</span>
