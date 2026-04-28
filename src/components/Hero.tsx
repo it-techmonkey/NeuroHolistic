@@ -28,7 +28,7 @@ export default function Hero() {
 
       <div className="relative z-10 flex w-full flex-1 flex-col justify-center px-6 pb-16 pt-28 sm:px-8 sm:pb-20 sm:pt-32 lg:px-10">
         <div className="mx-auto grid w-full max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div className="max-w-[650px] text-center lg:text-left">
+          <div className="order-2 max-w-[650px] text-center lg:order-1 lg:text-left">
             <h1
               className={`${isArabic ? 'leading-[1.35] tracking-normal' : 'leading-[1.05] tracking-[-0.035em]'} text-[#EAF0FF]`}
               style={
@@ -54,7 +54,7 @@ export default function Hero() {
             <HeroBookingForm />
           </div>
 
-          <div className="relative flex justify-center lg:justify-end">
+          <div className="relative order-1 flex justify-center lg:order-2 lg:justify-end">
             <HeroRotatingVisual />
           </div>
         </div>
