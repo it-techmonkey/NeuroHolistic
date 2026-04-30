@@ -64,7 +64,7 @@ export default function ScientificFoundation() {
           </div>
           <motion.div variants={itemVariants} className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200">
             <Image
-              src="/images/pages/dna.jpeg"
+              src="/images/scientificfoundation.webp"
               alt="Scientific foundation"
               fill
               sizes="(max-width: 1024px) 100vw, 500px"
