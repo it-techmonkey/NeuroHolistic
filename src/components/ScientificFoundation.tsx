@@ -55,7 +55,7 @@ export default function ScientificFoundation() {
           </div>
           <motion.div variants={itemVariants} className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200">
             <Image
-              src="https://images.unsplash.com/photo-1554475901-4538ddfbccc2?w=1400&q=80"
+              src="/images/pages/dna.jpeg"
               alt="Scientific foundation"
               fill
               className="object-cover"
