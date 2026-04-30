@@ -68,6 +68,7 @@ export default function ScientificFoundation() {
               alt="Scientific foundation"
               fill
               sizes="(max-width: 1024px) 100vw, 500px"
+              unoptimized
               className="object-cover"
             />
           </motion.div>
