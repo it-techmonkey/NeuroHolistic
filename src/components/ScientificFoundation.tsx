@@ -13,9 +13,18 @@ export default function ScientificFoundation() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const } },
   };
 
+  /** Parent must define `hidden` / `visible` so child `variants` actually run; otherwise children stay at `hidden` (opacity 0). */
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+    },
+  };
+
   return (
     <section className="relative w-full bg-white py-16 md:py-20 overflow-hidden">
       <motion.div
+        variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
@@ -58,6 +67,7 @@ export default function ScientificFoundation() {
               src="/images/pages/dna.jpeg"
               alt="Scientific foundation"
               fill
+              sizes="(max-width: 1024px) 100vw, 500px"
               className="object-cover"
             />
           </motion.div>
