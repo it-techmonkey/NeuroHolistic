@@ -52,15 +52,15 @@ export default function PaymentButtons({ userEmail, userName }: PaymentButtonsPr
 
   if (success) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-8 text-center">
+        <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-indigo-600" />
         </div>
-        <h3 className="text-xl font-bold text-green-800 mb-2">Payment Successful!</h3>
-        <p className="text-green-600 text-sm mb-4">
+        <h3 className="text-xl font-bold text-indigo-800 mb-2">Payment Successful!</h3>
+        <p className="text-indigo-600 text-sm mb-4">
           Your {selectedPlan === 'full' ? 'full program' : 'session'} has been confirmed.
         </p>
-        <p className="text-green-500 text-xs">Redirecting to schedule your first session...</p>
+        <p className="text-indigo-500 text-xs">Redirecting to schedule your first session...</p>
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function PaymentButtons({ userEmail, userName }: PaymentButtonsPr
           selectedPlan === 'per_session' ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-slate-200'
         }`}>
           <div className="mb-1">
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider">
+            <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider">
               Flexible
             </span>
           </div>

@@ -47,7 +47,7 @@ export default function FeaturedRetreat({ retreat }: FeaturedRetreatProps) {
   return (
     <div className="relative w-full border-b border-[#E2E8F0] py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24">
+        <div className={`grid grid-cols-1 items-start gap-16 lg:grid-cols-12 lg:gap-24 ${isArabic ? "rtl-grid-reverse" : ""}`}>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}

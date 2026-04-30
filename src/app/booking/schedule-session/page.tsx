@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
+import { useLang } from '@/lib/translations/LanguageContext';
 
 type Therapist = {
   id: string;
@@ -20,6 +21,7 @@ function ScheduleSessionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const { isArabic } = useLang();
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -38,10 +40,12 @@ function ScheduleSessionContent() {
   const [schedulingSuccess, setSchedulingSuccess] = useState(false);
   const [needsConsultFirst, setNeedsConsultFirst] = useState(false);
 
-  const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdayLabels = isArabic
+    ? ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const getMonthLabel = (date: Date) =>
-    date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    date.toLocaleDateString(isArabic ? 'ar' : 'en-US', { month: 'long', year: 'numeric' });
 
   const toDateValue = (date: Date) => {
     const year = date.getFullYear();
@@ -178,12 +182,12 @@ function ScheduleSessionContent() {
       setSchedulingError('');
       try {
         const res = await fetch(`/api/bookings/availability?therapistId=${selectedTherapist}&date=${selectedDate}`);
-        if (!res.ok) throw new Error('Failed to load slots');
+        if (!res.ok) throw new Error(isArabic ? 'فشل تحميل المواعيد' : 'Failed to load slots');
         const data = await res.json();
         setSlots(data.slots || []);
       } catch (err) {
         console.error(err);
-        setSchedulingError('Could not load availability.');
+        setSchedulingError(isArabic ? 'تعذر تحميل الأوقات المتاحة.' : 'Could not load availability.');
       } finally {
         setSlotsLoading(false);
       }
@@ -220,7 +224,7 @@ function ScheduleSessionContent() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Scheduling failed');
+      if (!res.ok) throw new Error(data.error || (isArabic ? 'فشل جدولة الجلسة' : 'Scheduling failed'));
 
       setSchedulingSuccess(true);
     } catch (err: any) {
@@ -231,29 +235,31 @@ function ScheduleSessionContent() {
   };
 
   if (loading && !user) {
-    return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>;
+    return <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-white flex items-center justify-center">{isArabic ? 'جارٍ التحميل...' : 'Loading...'}</div>;
   }
 
   if (needsConsultFirst) {
     return (
-      <div className="min-h-screen bg-slate-50 pt-28 sm:pt-32 md:pt-40 px-4 sm:px-6 lg:px-8 pb-16 flex flex-col items-center justify-center">
-        <div className="max-w-lg mx-auto text-center space-y-4">
-          <h1 className="text-2xl font-light text-slate-900">Complete your free consultation first</h1>
+      <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-slate-50 pt-28 sm:pt-32 md:pt-40 px-4 sm:px-6 lg:px-8 pb-16 flex flex-col items-center justify-center">
+        <div className={`max-w-lg mx-auto space-y-4 ${isArabic ? 'text-right' : 'text-center'}`}>
+          <h1 className="text-2xl font-light text-slate-900">{isArabic ? 'أكمل الاستشارة المجانية أولاً' : 'Complete your free consultation first'}</h1>
           <p className="text-slate-600 leading-relaxed">
-            Program sessions unlock after your free consultation is completed. Book or finish your consultation, then return here to schedule.
+            {isArabic
+              ? 'تُفتح جلسات البرنامج بعد إكمال الاستشارة المجانية. احجز أو أكمل الاستشارة ثم عُد هنا للجدولة.'
+              : 'Program sessions unlock after your free consultation is completed. Book or finish your consultation, then return here to schedule.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <Link
               href="/consultation/book"
               className="inline-flex justify-center px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
             >
-              Book free consultation
+              {isArabic ? 'احجز استشارة مجانية' : 'Book free consultation'}
             </Link>
             <Link
               href="/dashboard/client"
               className="inline-flex justify-center px-6 py-3 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
             >
-              Back to dashboard
+              {isArabic ? 'العودة إلى لوحة التحكم' : 'Back to dashboard'}
             </Link>
           </div>
         </div>
@@ -263,33 +269,37 @@ function ScheduleSessionContent() {
 
   if (schedulingSuccess) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
+      <div dir={isArabic ? 'rtl' : 'ltr'} className={`min-h-screen bg-white flex flex-col items-center justify-center p-6 ${isArabic ? 'text-right' : 'text-center'}`}>
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
           <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-3xl font-light text-slate-900 mb-4">Session Scheduled</h1>
+        <h1 className="text-3xl font-light text-slate-900 mb-4">{isArabic ? 'تمت جدولة الجلسة' : 'Session Scheduled'}</h1>
         <p className="text-slate-500 max-w-md mb-8">
-          Your session has been scheduled. You will receive a confirmation email with the Google Meet link.
+          {isArabic
+            ? 'تمت جدولة جلستك. ستتلقى رسالة تأكيد عبر البريد الإلكتروني تتضمن رابط Google Meet.'
+            : 'Your session has been scheduled. You will receive a confirmation email with the Google Meet link.'}
         </p>
         <Link
           href="/dashboard/client"
           className="px-8 py-3 bg-[#2B2F55] text-white rounded-lg font-medium hover:bg-[#1E2140] transition-colors"
         >
-          Go to Dashboard
+          {isArabic ? 'اذهب إلى لوحة التحكم' : 'Go to Dashboard'}
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-light text-slate-900">Schedule Your Session</h1>
+        <div className={`mb-10 ${isArabic ? 'text-right' : 'text-center'}`}>
+          <h1 className="text-3xl font-light text-slate-900">{isArabic ? 'جدولة جلستك' : 'Schedule Your Session'}</h1>
           <p className="mt-2 text-slate-600">
-            {session ? `Session ${session.session_number}` : 'Your first session'} — Select a date and time.
+            {session
+              ? (isArabic ? `الجلسة ${session.session_number}` : `Session ${session.session_number}`)
+              : (isArabic ? 'جلستك الأولى' : 'Your first session')} — {isArabic ? 'اختر التاريخ والوقت.' : 'Select a date and time.'}
           </p>
         </div>
 
@@ -302,13 +312,13 @@ function ScheduleSessionContent() {
 
           {/* Therapist Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Select Therapist</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">{isArabic ? 'اختر المعالج' : 'Select Therapist'}</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {therapists.map(therapist => (
                 <button
                   key={therapist.id}
                   onClick={() => setSelectedTherapist(therapist.id)}
-                  className={`p-4 border rounded-lg text-left transition-all relative ${
+                  className={`p-4 border rounded-lg transition-all relative ${isArabic ? 'text-right' : 'text-left'} ${
                     selectedTherapist === therapist.id
                       ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
                       : 'border-slate-200 hover:border-indigo-300'
@@ -316,12 +326,12 @@ function ScheduleSessionContent() {
                 >
                   {therapist.role === 'Founder & Lead Practitioner' && (
                     <span className="absolute top-2 right-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-medium rounded-full">
-                      Founder
+                      {isArabic ? 'المؤسسة' : 'Founder'}
                     </span>
                   )}
                   <div className="font-medium text-slate-900">{therapist.name}</div>
                   <div className="text-xs text-slate-500 mt-1">
-                    {therapist.role || 'NeuroHolistic Specialist'}
+                    {therapist.role || (isArabic ? 'أخصائي NeuroHolistic' : 'NeuroHolistic Specialist')}
                   </div>
                 </button>
               ))}
@@ -330,7 +340,7 @@ function ScheduleSessionContent() {
 
           {/* Date Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Select Date</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">{isArabic ? 'اختر التاريخ' : 'Select Date'}</label>
             <div className="mt-1 border border-slate-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <button
@@ -342,7 +352,7 @@ function ScheduleSessionContent() {
                   }
                   className="px-3 py-1.5 text-sm border border-slate-200 rounded-md text-slate-700 hover:border-indigo-300 disabled:text-slate-300 disabled:border-slate-100 disabled:cursor-not-allowed"
                 >
-                  Prev
+                  {isArabic ? 'السابق' : 'Prev'}
                 </button>
                 <div className="text-sm font-medium text-slate-800">{getMonthLabel(calendarMonth)}</div>
                 <button
@@ -350,7 +360,7 @@ function ScheduleSessionContent() {
                   onClick={goToNextMonth}
                   className="px-3 py-1.5 text-sm border border-slate-200 rounded-md text-slate-700 hover:border-indigo-300"
                 >
-                  Next
+                  {isArabic ? 'التالي' : 'Next'}
                 </button>
               </div>
 
@@ -397,12 +407,12 @@ function ScheduleSessionContent() {
           {/* Time Slots */}
           {(selectedDate && selectedTherapist) && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Select Time</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">{isArabic ? 'اختر الوقت' : 'Select Time'}</label>
               {slotsLoading ? (
-                <div className="text-slate-400 text-sm">Loading availability...</div>
+                <div className="text-slate-400 text-sm">{isArabic ? 'جارٍ تحميل الأوقات المتاحة...' : 'Loading availability...'}</div>
               ) : slots.length === 0 ? (
                 <div className="text-amber-600 text-sm bg-amber-50 p-3 rounded">
-                  No slots available for this date. Please try another day.
+                  {isArabic ? 'لا توجد أوقات متاحة لهذا التاريخ. يرجى تجربة يوم آخر.' : 'No slots available for this date. Please try another day.'}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -425,7 +435,7 @@ function ScheduleSessionContent() {
           )}
 
           {/* Action */}
-          <div className="pt-6 border-t border-slate-100 flex justify-end">
+          <div className={`pt-6 border-t border-slate-100 flex ${isArabic ? 'justify-start' : 'justify-end'}`}>
             <button
               onClick={handleSchedule}
               disabled={!selectedSlot || loading}
@@ -435,7 +445,7 @@ function ScheduleSessionContent() {
                   : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
               }`}
             >
-              {loading ? 'Scheduling...' : 'Confirm Session'}
+              {loading ? (isArabic ? 'جارٍ الجدولة...' : 'Scheduling...') : (isArabic ? 'تأكيد الجلسة' : 'Confirm Session')}
             </button>
           </div>
         </div>

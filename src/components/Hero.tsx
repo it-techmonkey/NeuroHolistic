@@ -27,8 +27,8 @@ export default function Hero() {
       </div>
 
       <div className="relative z-10 flex w-full flex-1 flex-col justify-center px-6 pb-16 pt-28 sm:px-8 sm:pb-20 sm:pt-32 lg:px-10">
-        <div className="mx-auto grid w-full max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div className="order-2 max-w-[650px] text-center lg:order-1 lg:text-left">
+        <div className={`mx-auto grid w-full max-w-[1200px] items-center gap-12 lg:grid-cols-2 lg:gap-16 ${isArabic ? "rtl-grid-reverse" : ""}`}>
+          <div className={`order-2 max-w-[650px] text-center lg:order-1 ${isArabic ? "lg:text-right" : "lg:text-left"}`}>
             <h1
               className={`${isArabic ? 'leading-[1.35] tracking-normal' : 'leading-[1.05] tracking-[-0.035em]'} text-[#EAF0FF]`}
               style={
@@ -48,13 +48,13 @@ export default function Hero() {
                 {t.hero.transformYourLife}
               </span>
             </h1>
-            <p className={`mt-6 mx-auto lg:mx-0 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] ${isArabic ? 'leading-[2]' : 'leading-[1.7]'} text-[#C3CBE8] lg:text-[17.5px]`}>
+            <p className={`mt-6 max-w-[50ch] text-[15px] sm:text-[16px] md:text-[18px] ${isArabic ? 'mx-auto lg:mx-auto leading-[2]' : 'mx-auto lg:mx-0 leading-[1.7]'} text-[#C3CBE8] lg:text-[17.5px]`}>
               {t.hero.designedForResults}
             </p>
             <HeroBookingForm />
           </div>
 
-          <div className="relative order-1 flex justify-center lg:order-2 lg:justify-end">
+          <div className={`relative order-1 flex justify-center lg:order-2 ${isArabic ? "lg:justify-start" : "lg:justify-end"}`}>
             <HeroRotatingVisual />
           </div>
         </div>

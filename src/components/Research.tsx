@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Research() {
-  const { t, isUrdu } = useLang();
+  const { t, isArabic } = useLang();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -24,13 +24,13 @@ export default function Research() {
   return (
     <section className="w-full bg-white py-12 md:py-16 lg:py-10">
       <div className="mx-auto max-w-[1200px] px-6 md:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="text-left"
+            className={isArabic ? "text-right" : "text-left"}
           >
             <motion.div variants={itemVariants} className="mb-8 flex items-center justify-center gap-3">
 

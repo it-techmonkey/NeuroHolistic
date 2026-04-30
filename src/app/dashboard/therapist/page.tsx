@@ -1831,7 +1831,7 @@ function ClientDetailView({
                               </div>
                             ))}
                             <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                              <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
+                              <p className="text-xs text-indigo-600 font-medium">Goal Distance</p>
                               <p className="text-lg font-bold text-indigo-700">
                                 {detail.assessments[detail.assessments.length - 1]?.goal_readiness_score || 0}
                                 <span className="text-sm font-normal text-indigo-400">/60</span>
@@ -2036,7 +2036,7 @@ function ClientDetailView({
                                 </div>
                               ))}
                               <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                                <p className="text-xs text-indigo-600 font-medium">Goal Readiness</p>
+                                <p className="text-xs text-indigo-600 font-medium">Goal Distance</p>
                                 <p className="text-lg font-bold text-indigo-700">
                                   {a.goal_readiness_score || 0}<span className="text-sm font-normal text-indigo-400">/60</span>
                                 </p>

@@ -13,7 +13,7 @@ type LanguageContextType = {
   /** @deprecated Use cycleLang */
   toggleLang: () => void;
   t: typeof en | typeof ar;
-  /** Retained for legacy components; always false when only EN/AR are used. */
+  /** Retained for legacy components; mirrors Arabic state for backward compatibility. */
   isUrdu: boolean;
   isArabic: boolean;
 };
@@ -36,7 +36,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = lang === 'ar' ? ar : en;
   const isArabic = lang === 'ar';
-  const isUrdu = false;
+  // Legacy flag used by older UI sections for RTL styling.
+  const isUrdu = isArabic;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;

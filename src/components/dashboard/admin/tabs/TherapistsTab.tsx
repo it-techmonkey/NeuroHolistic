@@ -113,7 +113,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                   {stats.avgGoalReadiness != null && (
                     <div className="flex items-center gap-2">
                       <Target className="w-3 h-3 text-amber-400" />
-                      <span className="text-[11px] text-slate-400">Avg Goal Readiness:</span>
+                      <span className="text-[11px] text-slate-400">Avg Goal Distance:</span>
                       <span className="text-xs font-mono font-semibold text-amber-400">{stats.avgGoalReadiness}%</span>
                     </div>
                   )}
@@ -172,7 +172,7 @@ export default function TherapistsTab({ data }: { data: AdminData }) {
                               {assessment && (
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
                                   <Target className="w-3 h-3 text-amber-400" />
-                                  <span className="text-[10px] text-slate-500">Goal Readiness:</span>
+                                  <span className="text-[10px] text-slate-500">Goal Distance:</span>
                                   <span className="text-[10px] font-mono font-semibold text-amber-400">
                                     {assessment.goalReadinessScore}%
                                   </span>

@@ -48,7 +48,7 @@ export default function Team() {
           >
             <Link 
               href={`/team/${founder.slug}`}
-              className="group relative flex flex-col lg:flex-row items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
+              className="group relative flex flex-col lg:flex-row rtl-row-reverse-lg items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
             >
               {/* Image Container - Left Side */}
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
@@ -61,7 +61,7 @@ export default function Team() {
               </div>
 
               {/* Text Content - Right Side */}
-              <div className="w-full lg:w-7/12 flex flex-col items-start pr-4">
+              <div className={`w-full lg:w-7/12 flex flex-col items-start ${isArabic ? "pl-4" : "pr-4"}`}>
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-4">
                   {t.team.founder}   
                 </span>

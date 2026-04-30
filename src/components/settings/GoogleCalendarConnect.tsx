@@ -142,6 +142,7 @@ export default function GoogleCalendarConnect({ className = '' }: GoogleCalendar
           <h3 className="text-lg font-medium text-slate-900">Google Calendar</h3>
           <p className="text-sm text-slate-500">
             Connect your Google Calendar to automatically create Meet links for therapy sessions.
+            Session confirmation emails are sent separately by the platform (not via Gmail).
           </p>
         </div>
 

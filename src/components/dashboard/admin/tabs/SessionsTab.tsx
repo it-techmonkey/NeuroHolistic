@@ -115,7 +115,7 @@ export default function SessionsTab({ data }: { data: AdminData }) {
           <div className="px-5 py-4 border-b border-slate-200">
             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-violet-400" />
-              Goal Readiness by Therapist
+              Goal Distance by Therapist
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">Average assessment scores</p>
           </div>

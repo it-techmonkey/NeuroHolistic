@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function ScientificFoundation() {
-  const { t, isUrdu } = useLang();
+  const { t, isArabic } = useLang();
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -21,8 +21,8 @@ export default function ScientificFoundation() {
         viewport={{ once: true, margin: "-100px" }}
         className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className={isUrdu ? 'text-right' : 'text-left'}>
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
+          <div className={isArabic ? 'text-right' : 'text-left'}>
           <motion.h2
             variants={itemVariants}
             className="mb-8 text-[36px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
