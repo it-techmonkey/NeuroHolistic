@@ -1,9 +1,14 @@
 /**
- * Defaults (e.g. production / main): Arabic UI off, hero campaign banner off.
- * Dev/preview: set `NEXT_PUBLIC_ENABLE_ARABIC=true` and
- * `NEXT_PUBLIC_ENABLE_HERO_CAMPAIGN_BANNER=true` on that environment.
+ * Arabic UI + hero campaign banner:
+ * - **Production** (`NEXT_PUBLIC_VERCEL_ENV === "production"`): off (main site).
+ * - **Everything else** (Vercel preview / dev branch deploys, local `next dev`, local prod-like builds without Vercel): on.
+ *
+ * Vercel sets `VERCEL_ENV` at build time; we expose it via `next.config.ts`. Self-hosted production should set
+ * `VERCEL_ENV=production` before building if you want the same toggles as Vercel production.
  */
-export const arabicUiEnabled = process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
+const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV ?? "";
+const isProductionDeploy = vercelEnv === "production";
 
-export const heroCampaignBannerEnabled =
-  process.env.NEXT_PUBLIC_ENABLE_HERO_CAMPAIGN_BANNER === "true";
+export const arabicUiEnabled = !isProductionDeploy;
+
+export const heroCampaignBannerEnabled = !isProductionDeploy;
