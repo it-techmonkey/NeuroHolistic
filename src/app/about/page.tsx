@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { publicImageSrc } from "@/lib/public-image";
 import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
@@ -178,7 +179,7 @@ export default function AboutPage() {
         <div className="group relative w-full bg-[#FAFBFF] p-4 border border-[#F1F5F9] rounded-xl">
           <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-lg bg-white">
             <Image 
-              src="/images/team/Fawzia Yassmina.png" 
+              src={publicImageSrc("/images/team/Fawzia Yassmina.png")} 
               alt={t.about.founderName} 
               fill 
               unoptimized 

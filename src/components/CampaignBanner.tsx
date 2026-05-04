@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
-export const CAMPAIGN_BANNER_SRC = "/Campeigns/Blank Banner.PNG";
+const CAMPAIGN_BANNER_PATH = "/Campeigns/Blank Banner.PNG";
+
+export const CAMPAIGN_BANNER_SRC = publicImageSrc(CAMPAIGN_BANNER_PATH);
 
 /** Legibility on photo without panels or image gradients — layered shadow only. */
 const TEXT_SHADE =

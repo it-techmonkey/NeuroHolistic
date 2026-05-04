@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
 import { CampaignBannerFigure } from "@/components/CampaignBanner";
+import { heroCampaignBannerEnabled } from "@/lib/site-features";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 /** Show framed banner first, then neural — loop. Crossfade duration (ms). */
@@ -64,6 +65,27 @@ export default function Hero() {
 }
 
 function HeroRotatingVisual() {
+  if (!heroCampaignBannerEnabled) {
+    return <HeroNeuralOnlyVisual />;
+  }
+  return <HeroBannerNeuralCarousel />;
+}
+
+function HeroNeuralOnlyVisual() {
+  return (
+    <div className="relative mx-auto w-full min-w-0 max-w-[min(96vw,640px)] lg:max-w-[min(640px,52vw)]">
+      <div className="relative aspect-[2/1] w-full overflow-visible">
+        <div className="absolute inset-0 z-20 flex items-center justify-center overflow-visible">
+          <div className="relative flex h-[112%] w-[112%] max-h-none min-h-0 origin-center items-center justify-center sm:h-[118%] sm:w-[118%] md:h-[122%] md:w-[122%]">
+            <NeuralGraphic compact />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeroBannerNeuralCarousel() {
   const [phase, setPhase] = useState<"banner" | "neural">("banner");
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 

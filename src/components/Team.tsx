@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { TEAM_PROFILES } from "./team/team-profiles";
+import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Team() {
@@ -53,9 +54,10 @@ export default function Team() {
               {/* Image Container - Left Side */}
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
                 <Image
-                  src="/images/team/Fawzia Yassmina Landing.png"
+                  src={publicImageSrc("/images/team/Fawzia Yassmina Landing.png")}
                   alt={isArabic ? founder.name.ar : founder.name.en}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 42vw"
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
               </div>
@@ -94,7 +96,7 @@ export default function Team() {
                 {/* Image Wrap */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
                   <Image
-                    src={member.image}
+                    src={publicImageSrc(member.image)}
                     alt={isArabic ? member.name.ar : member.name.en}
                     fill
                     unoptimized

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { arabicUiEnabled } from "@/lib/site-features";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Footer() {
@@ -16,22 +17,27 @@ export default function Footer() {
     { label: t.footer.about, href: "/about" },
   ], [t]);
 
-  const PROGRAM_INDEX = useMemo(
-    () => [
+  const PROGRAM_INDEX = useMemo(() => {
+    const base: (
+      | { label: string; href: string }
+      | { label: string; href: string; onClick: () => void }
+    )[] = [
       { label: t.footer.privateSessions, href: "/programs/private" },
       { label: t.footer.groupPrograms, href: "/programs" },
       { label: t.footer.retreats, href: "/retreats" },
       { label: t.footer.corporateStrategy, href: "/corporate-wellbeing" },
       { label: t.footer.bookAConsultation, href: "/consultation/book" },
       { label: t.footer.applyToAcademy, href: "/academy" },
-      {
+    ];
+    if (arabicUiEnabled) {
+      base.push({
         label: lang === "en" ? "العربية" : "English",
         href: "#",
         onClick: toggleLang,
-      },
-    ],
-    [t, lang, toggleLang]
-  );
+      });
+    }
+    return base;
+  }, [t, lang, toggleLang]);
 
   return (
     <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">

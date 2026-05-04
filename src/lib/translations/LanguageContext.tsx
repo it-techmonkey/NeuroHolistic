@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { arabicUiEnabled } from '@/lib/site-features';
 import { en } from './en';
 import { ar } from './ar';
 
@@ -31,23 +32,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('en');
 
   const cycleLang = useCallback(() => {
+    if (!arabicUiEnabled) return;
     setLang((prev) => (prev === 'en' ? 'ar' : 'en'));
   }, []);
 
-  const t = lang === 'ar' ? ar : en;
-  const isArabic = lang === 'ar';
+  const effectiveLang: Lang = arabicUiEnabled ? lang : 'en';
+  const t = effectiveLang === 'ar' ? ar : en;
+  const isArabic = effectiveLang === 'ar';
   // Legacy flag used by older UI sections for RTL styling.
   const isUrdu = isArabic;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  }, [lang]);
+    document.documentElement.lang = effectiveLang === 'ar' ? 'ar' : 'en';
+    document.documentElement.dir = effectiveLang === 'ar' ? 'rtl' : 'ltr';
+  }, [effectiveLang]);
 
   return (
     <LanguageContext.Provider
-      value={{ lang, cycleLang, toggleLang: cycleLang, t, isUrdu, isArabic }}
+      value={{ lang: effectiveLang, cycleLang, toggleLang: cycleLang, t, isUrdu, isArabic }}
     >
       {children}
     </LanguageContext.Provider>
