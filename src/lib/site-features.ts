@@ -1,9 +1,9 @@
 /**
- * Production (main) deployments: set `NEXT_PUBLIC_DISABLE_ARABIC=true` and
- * `NEXT_PUBLIC_DISABLE_HERO_CAMPAIGN_BANNER=true` in Vercel/host env.
- * Dev/preview: omit these or set to `false` so Arabic UI and the hero campaign banner stay enabled.
+ * Defaults (e.g. production / main): Arabic UI off, hero campaign banner off.
+ * Dev/preview: set `NEXT_PUBLIC_ENABLE_ARABIC=true` and
+ * `NEXT_PUBLIC_ENABLE_HERO_CAMPAIGN_BANNER=true` on that environment.
  */
-export const arabicUiEnabled = process.env.NEXT_PUBLIC_DISABLE_ARABIC !== "true";
+export const arabicUiEnabled = process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
 
 export const heroCampaignBannerEnabled =
-  process.env.NEXT_PUBLIC_DISABLE_HERO_CAMPAIGN_BANNER !== "true";
+  process.env.NEXT_PUBLIC_ENABLE_HERO_CAMPAIGN_BANNER === "true";
