@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
 import type { TeamProfile } from "./team-profiles";
 
@@ -37,7 +38,7 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
               <div className="group relative w-full bg-white p-4 border border-[#F1F5F9]">
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-white">
                   <Image 
-                    src={profile.image} 
+                    src={publicImageSrc(profile.image)} 
                     alt={name} 
                     fill 
                     unoptimized 

@@ -31,6 +31,7 @@ interface FreeConsultationFormProps {
 
 export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsultationFormProps) {
   const { t, isUrdu } = useLang();
+  const isArabic = isUrdu;
   const [step, setStep] = useState<'details' | 'schedule' | 'success'>('details');
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
@@ -151,7 +152,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
       })
       .catch(err => {
         console.error('Failed to load slots:', err);
-        setError('Failed to load time slots');
+        setError(isArabic ? 'فشل تحميل المواعيد المتاحة' : 'Failed to load time slots');
         setSlots([]);
       })
       .finally(() => setSlotsLoading(false));
@@ -173,7 +174,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
 
   const handleBooking = async () => {
     if (!selectedTherapist || !selectedDate || !selectedSlot) {
-      setError('Please select a therapist, date, and time');
+      setError(isArabic ? 'يرجى اختيار المعالج والتاريخ والوقت' : 'Please select a therapist, date, and time');
       return;
     }
 
@@ -224,7 +225,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
           phone: formData.phone,
           country: formData.country || '',
           therapistId: selectedTherapist,
-          therapistName: therapist?.name || 'Therapist',
+          therapistName: therapist?.name || (isArabic ? 'المعالج' : 'Therapist'),
           date: dateStr,
           time: selectedSlot,
           type: 'free_consultation',
@@ -294,7 +295,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
     const loadingContent = (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-        <p className="text-white/60 text-sm">Loading...</p>
+        <p className="text-white/60 text-sm">{isArabic ? 'جارٍ التحميل...' : 'Loading...'}</p>
       </div>
     );
 
@@ -318,14 +319,14 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
         <p className="text-sm text-white/60 mt-1">
           {step === 'details' && t.consultationForm.enterDetails}
           {step === 'schedule' && (isLoggedIn
-            ? 'Select your preferred date and time'
+            ? (isArabic ? 'اختر التاريخ والوقت المناسبين لك' : 'Select your preferred date and time')
             : t.consultationForm.selectDateTime
           )}
           {step === 'success' && t.consultationForm.consultationBooked}
         </p>
         {isLoggedIn && step === 'schedule' && (
           <p className="text-xs text-indigo-300 mt-2">
-            Booking as {formData.name} ({formData.email})
+            {isArabic ? 'الحجز باسم' : 'Booking as'} {formData.name} ({formData.email})
           </p>
         )}
       </div>
@@ -584,7 +585,7 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
               {loading
                 ? t.consultationForm.signingIn
                 : isLoggedIn
-                ? 'Go to Dashboard'
+                ? (isArabic ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard')
                 : t.consultationForm.goToDashboard
               }
             </button>

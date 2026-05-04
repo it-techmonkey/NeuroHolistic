@@ -117,6 +117,23 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    /** Therapist OAuth / DB user id (UUID). Required for Google Calendar & Meet. */
+    let therapistUserId: string | null = null;
+    if (uuidRegex.test(therapistId)) {
+      therapistUserId = therapistId;
+    } else {
+      const nameFromSlug = therapistId.replace(/-/g, ' ');
+      const { data: therapistUser } = await supabase
+        .from('users')
+        .select('id')
+        .ilike('full_name', `%${nameFromSlug}%`)
+        .eq('role', 'therapist')
+        .maybeSingle();
+      therapistUserId = therapistUser?.id ?? null;
+    }
+
     // Get or create user account
     let userId = clientUserId;
     let tempPassword = null;
@@ -257,15 +274,20 @@ export async function POST(request: NextRequest) {
       const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
       const endDateTime = `${date}T${endTime}:00`;
 
-      console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime, therapistId });
-      
+      const oauthTherapistId = therapistUserId;
+      if (!oauthTherapistId) {
+        throw new Error('Could not resolve therapist user id for Google Meet (slug/UUID lookup failed)');
+      }
+
+      console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime, oauthTherapistId });
+
       const result = await createMeetEvent({
         summary: `NeuroHolistic ${bookingType === 'free_consultation' ? 'Free Consultation' : 'Session'}${sessionNumber ? ` #${sessionNumber}` : ''} - ${name}`,
         description: `${bookingType === 'free_consultation' ? 'Free consultation' : 'Program session'} via NeuroHolistic platform`,
         startDateTime,
         endDateTime,
         attendeeEmails: [email],
-        therapistId, // Pass therapist ID to use their connected Google Calendar if available
+        therapistId: oauthTherapistId,
       });
       
       console.log('[CreateBooking] Meet result:', result);
@@ -279,27 +301,6 @@ export async function POST(request: NextRequest) {
       const meetingCode = Math.random().toString(36).substring(2, 10).replace(/(.{3})/g, '$1-').slice(0, -1);
       meetLink = `https://meet.google.com/${meetingCode}`;
       console.log('[CreateBooking] Using generated meet link:', meetLink);
-    }
-
-    // Determine therapist_user_id - if therapistId is a slug, look up the actual user ID
-    let therapistUserId: string | null = null;
-    
-    // Check if therapistId is a valid UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (uuidRegex.test(therapistId)) {
-      // It's a UUID, use it directly
-      therapistUserId = therapistId;
-    } else {
-      // It's a slug, try to find the therapist by name
-      const therapistName = therapistId.replace(/-/g, ' ');
-      const { data: therapistUser } = await supabase
-        .from('users')
-        .select('id')
-        .ilike('full_name', `%${therapistName}%`)
-        .eq('role', 'therapist')
-        .maybeSingle();
-      
-      therapistUserId = therapistUser?.id || null;
     }
 
     // Create booking record

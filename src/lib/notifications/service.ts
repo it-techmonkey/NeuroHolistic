@@ -1,12 +1,13 @@
 /**
  * Notification service — sends email via Resend and logs to notifications_log.
  * WhatsApp/SMS is stubbed (requires customer's API setup).
+ *
+ * Note: Connecting Google Calendar in the dashboard does NOT send these emails.
+ * Transactional email requires RESEND_API_KEY and a verified BOOKING_EMAIL_FROM domain in Resend.
  */
 
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface NotificationPayload {
   bookingId?: string;
@@ -26,6 +27,24 @@ interface NotificationPayload {
  */
 export async function sendBookingEmail(payload: NotificationPayload): Promise<{ success: boolean; error?: string }> {
   const supabase = getServiceSupabase();
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    const msg = 'RESEND_API_KEY is not set — session emails are not sent';
+    console.error('[Notification]', msg);
+    await supabase.from('notifications_log').insert({
+      booking_id: payload.bookingId ?? null,
+      user_id: payload.userId ?? null,
+      channel: 'email',
+      trigger_type: payload.triggerType,
+      recipient_email: payload.recipientEmail,
+      status: 'failed',
+      error_message: msg,
+    });
+    return { success: false, error: msg };
+  }
+
+  const resend = new Resend(apiKey);
 
   try {
     const { error: emailError } = await resend.emails.send({

@@ -531,7 +531,7 @@ export default function DiagnosticAssessmentForm({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-500">Goal Readiness</p>
+              <p className="text-sm text-slate-500">Goal Distance</p>
               <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
             </div>
           </div>
@@ -965,7 +965,7 @@ export default function DiagnosticAssessmentForm({
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
-                  <span>Goal Readiness:</span>
+                  <span>Goal Distance:</span>
                   <span className="text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>
@@ -1109,7 +1109,7 @@ export default function DiagnosticAssessmentForm({
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
-                  <span>Goal Readiness:</span>
+                  <span>Goal Distance:</span>
                   <span className="text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>

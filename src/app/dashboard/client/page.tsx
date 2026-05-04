@@ -631,7 +631,7 @@ export default function ClientDashboardPage() {
                 </div>
                 <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-indigo-900">Goal Readiness Score</span>
+                    <span className="text-sm font-medium text-indigo-900">Goal Distance Score</span>
                     <span className="text-2xl font-bold text-indigo-700">
                       {(() => {
                         const latestDevForm = data?.devForms?.[data.devForms.length - 1];

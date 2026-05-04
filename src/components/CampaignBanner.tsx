@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
-export const CAMPAIGN_BANNER_SRC = "/Campeigns/Blank Banner.PNG";
+const CAMPAIGN_BANNER_PATH = "/Campeigns/Blank Banner.PNG";
+
+export const CAMPAIGN_BANNER_SRC = publicImageSrc(CAMPAIGN_BANNER_PATH);
 
 /** Legibility on photo without panels or image gradients — layered shadow only. */
 const TEXT_SHADE =
@@ -15,7 +18,7 @@ function CampaignBannerCopy({ compact }: { compact?: boolean }) {
   const gapBodyClosing = compact ? "mt-5 sm:mt-6" : "mt-6 sm:mt-7 md:mt-8";
 
   const arabicBlock = (
-    <div className="w-full max-w-[min(38ch,88vw)] text-left">
+    <div className="w-full max-w-[min(38ch,88vw)] text-right">
       <div dir="rtl" lang="ar" className={`font-arabic space-y-0 ${TEXT_SHADE}`}>
         <h3 className="text-[clamp(1.05rem,3.6vw,1.75rem)] font-semibold leading-snug tracking-tight text-white">
           معًا خلاله والمرّة
@@ -90,13 +93,13 @@ export function CampaignBannerFigure({
           src={CAMPAIGN_BANNER_SRC}
           alt={alt}
           fill
-          className="object-cover object-[center_right]"
+          className={`object-cover ${isArabic ? "object-[center_left]" : "object-[center_right]"}`}
           sizes={sizes}
           priority={priority}
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-start px-[clamp(14px,5vw,88px)] py-4 sm:py-6 md:py-8">
+      <div className={`pointer-events-none absolute inset-0 z-20 flex items-center px-[clamp(14px,5vw,88px)] py-4 sm:py-6 md:py-8 ${isArabic ? "justify-end" : "justify-start"}`}>
         <div className="pointer-events-auto max-h-full min-w-0 overflow-visible">
           <CampaignBannerCopy compact={compactCopy} />
         </div>

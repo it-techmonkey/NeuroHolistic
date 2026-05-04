@@ -176,7 +176,7 @@ function ChooserView({
   }
 
   return (
-    <div className="p-6">
+    <div dir={isArabic ? 'rtl' : 'ltr'} className={`p-6 ${isArabic ? 'text-right' : ''}`}>
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-slate-900">
           {isArabic ? 'كيف تود أن تبدأ؟' : 'How would you like to begin?'}
@@ -190,7 +190,7 @@ function ChooserView({
         {/* Free Consultation — always available */}
         <button
           onClick={onChooseConsultation}
-          className="w-full text-left p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
+          className={`w-full p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group ${isArabic ? 'text-right' : 'text-left'}`}
         >
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
@@ -221,7 +221,7 @@ function ChooserView({
         {!hasActiveProgram ? (
           <button
             onClick={onChooseProgram}
-            className="w-full text-left p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
+          className={`w-full p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group ${isArabic ? 'text-right' : 'text-left'}`}
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
@@ -245,7 +245,10 @@ function ChooserView({
         ) : (
           <div className="p-4 rounded-xl bg-green-50 border border-green-200">
             <p className="text-sm text-green-700">
-              <span className="font-medium">✓ Active program</span> — You already have an active program. Visit your dashboard to manage sessions.
+              <span className="font-medium">{isArabic ? '✓ برنامج نشط' : '✓ Active program'}</span>
+              {isArabic
+                ? ' — لديك برنامج نشط بالفعل. انتقل إلى لوحة التحكم لإدارة الجلسات.'
+                : ' — You already have an active program. Visit your dashboard to manage sessions.'}
             </p>
           </div>
         )}

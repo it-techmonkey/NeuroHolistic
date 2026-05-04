@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { TEAM_PROFILES } from "./team/team-profiles";
+import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Team() {
@@ -48,20 +49,21 @@ export default function Team() {
           >
             <Link 
               href={`/team/${founder.slug}`}
-              className="group relative flex flex-col lg:flex-row items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
+              className="group relative flex flex-col lg:flex-row rtl-row-reverse-lg items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
             >
               {/* Image Container - Left Side */}
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
                 <Image
-                  src="/images/team/Fawzia Yassmina Landing.png"
+                  src={publicImageSrc("/images/team/Fawzia Yassmina Landing.png")}
                   alt={isArabic ? founder.name.ar : founder.name.en}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 42vw"
                   className="object-cover object-top transition-transform duration-1000 group-hover:scale-105"
                 />
               </div>
 
               {/* Text Content - Right Side */}
-              <div className="w-full lg:w-7/12 flex flex-col items-start pr-4">
+              <div className={`w-full lg:w-7/12 flex flex-col items-start ${isArabic ? "pl-4" : "pr-4"}`}>
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-4">
                   {t.team.founder}   
                 </span>
@@ -94,7 +96,7 @@ export default function Team() {
                 {/* Image Wrap */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
                   <Image
-                    src={member.image}
+                    src={publicImageSrc(member.image)}
                     alt={isArabic ? member.name.ar : member.name.en}
                     fill
                     unoptimized

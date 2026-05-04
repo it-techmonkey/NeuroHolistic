@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getServiceSupabase();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     // 1. Fetch existing booking
     const { data: booking, error: fetchError } = await supabase
@@ -26,6 +27,23 @@ export async function POST(request: NextRequest) {
 
     if (fetchError || !booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    /** UUID for therapist Google OAuth — required by Meet/Calendar helpers */
+    let therapistOAuthId: string | null = booking.therapist_user_id;
+    if (!therapistOAuthId && booking.therapist_id) {
+      if (uuidRegex.test(booking.therapist_id)) {
+        therapistOAuthId = booking.therapist_id;
+      } else {
+        const nameFromSlug = booking.therapist_id.replace(/-/g, ' ');
+        const { data: therapistUser } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('full_name', `%${nameFromSlug}%`)
+          .eq('role', 'therapist')
+          .maybeSingle();
+        therapistOAuthId = therapistUser?.id ?? null;
+      }
     }
 
     if (booking.status === 'cancelled') {
@@ -54,17 +72,18 @@ export async function POST(request: NextRequest) {
     let meetLink = booking.meeting_link;
     let calendarEventId = booking.google_calendar_event_id;
 
-    if (calendarEventId) {
+    if (calendarEventId && therapistOAuthId) {
       try {
         const startDateTime = `${newDate}T${newTime}:00`;
         const [hours, minutes] = newTime.split(':').map(Number);
-        const endHours = hours + 1;
+        const endHours = Math.min(hours + 1, 23);
         const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         const endDateTime = `${newDate}T${endTime}:00`;
 
         const result = await updateMeetEvent(calendarEventId, {
           startDateTime,
           endDateTime,
+          therapistId: therapistOAuthId,
         });
         meetLink = result.meetLink;
       } catch (meetError) {
@@ -73,7 +92,7 @@ export async function POST(request: NextRequest) {
         try {
           const startDateTime = `${newDate}T${newTime}:00`;
           const [hours, minutes] = newTime.split(':').map(Number);
-          const endHours = hours + 1;
+          const endHours = Math.min(hours + 1, 23);
           const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
           const endDateTime = `${newDate}T${endTime}:00`;
 
@@ -83,9 +102,10 @@ export async function POST(request: NextRequest) {
             startDateTime,
             endDateTime,
             attendeeEmails: [booking.email],
+            therapistId: therapistOAuthId,
           });
           meetLink = result.meetLink;
-          calendarEventId = result.calendarEventId;
+          calendarEventId = result.calendarEventId ?? calendarEventId;
         } catch (createError) {
           console.error('[Reschedule] Failed to create new Meet event:', createError);
         }

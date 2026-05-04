@@ -422,7 +422,7 @@ function OverviewTab({ therapist }: { therapist: Therapist }) {
             <span className="font-semibold text-indigo-700">{therapist.stats.devForms}</span>
           </div>
           <div className="flex items-center justify-between p-3 bg-rose-50 rounded-lg">
-            <span className="text-rose-700">Avg Goal Readiness</span>
+            <span className="text-rose-700">Avg Goal Distance</span>
             <span className="font-semibold text-rose-700">{therapist.stats.avgGoalReadiness}/60</span>
           </div>
         </div>

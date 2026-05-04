@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { useAuth } from "@/lib/auth/context";
 import { supabase } from "@/lib/supabase/client";
+import { arabicUiEnabled } from "@/lib/site-features";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 const CONTACT_INFO = {
@@ -127,14 +128,16 @@ export default function Navbar() {
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-            <button
-              type="button"
-              title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
-              onClick={toggleLang}
-              className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
-            >
-              {lang === "en" ? "العربية" : "English"}
-            </button>
+            {arabicUiEnabled && (
+              <button
+                type="button"
+                title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
+                onClick={toggleLang}
+                className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]"
+              >
+                {lang === "en" ? "العربية" : "English"}
+              </button>
+            )}
             <Link href="/consultation/book" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.bookConsultation}</Link>
             <Link href="/booking/paid-program-booking?mode=academy" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.applyAcademy}</Link>
             <Link href="/faqs" className="hover:opacity-100 opacity-60 uppercase tracking-widest text-[8px] sm:text-[9px]">{t.navbar.faq}</Link>
@@ -381,17 +384,19 @@ export default function Navbar() {
                 
                 <div className={`h-px w-full my-2 ${isLightPage ? 'bg-slate-200' : 'bg-white/10'}`} />
 
-                <button
-                  type="button"
-                  title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
-                  onClick={() => {
-                    toggleLang();
-                    setMobileOpen(false);
-                  }}
-                  className={`text-left text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}
-                >
-                  {lang === "en" ? "العربية" : "English"}
-                </button>
+                {arabicUiEnabled && (
+                  <button
+                    type="button"
+                    title={lang === "en" ? "Switch to Arabic" : "Switch to English"}
+                    onClick={() => {
+                      toggleLang();
+                      setMobileOpen(false);
+                    }}
+                    className={`text-left text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}
+                  >
+                    {lang === "en" ? "العربية" : "English"}
+                  </button>
+                )}
 
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'} ${!isAuthenticated ? 'hidden' : ''}`}>
                   {t.navbar.dashboard}

@@ -296,7 +296,7 @@ export default function SessionDevelopmentForm({
               <p className="text-sm text-slate-500 mt-1">Session {sessionNumber} — {sessionDate}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-500">Goal Readiness</p>
+              <p className="text-sm text-slate-500">Goal Distance</p>
               <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
             </div>
           </div>
@@ -599,7 +599,7 @@ export default function SessionDevelopmentForm({
 
               <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-indigo-900">Goal Readiness:</span>
+                  <span className="font-medium text-indigo-900">Goal Distance:</span>
                   <span className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</span>
                 </div>
               </div>
@@ -662,7 +662,7 @@ export default function SessionDevelopmentForm({
                           );
                         })}
                         <tr className="bg-slate-100 font-semibold">
-                          <td className="py-2 px-3 text-slate-900">Goal Readiness</td>
+                          <td className="py-2 px-3 text-slate-900">Goal Distance</td>
                           <td className="py-2 px-3 text-center text-slate-600">{comparisonBaseline.goal_readiness_score ?? 0}/60</td>
                           <td className="py-2 px-3 text-center text-indigo-600">{goalReadinessScore}/60</td>
                           <td className={`py-2 px-3 text-center ${

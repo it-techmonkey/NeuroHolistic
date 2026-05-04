@@ -259,3 +259,25 @@ button:disabled {
   left: 0;
 }
 
+/* RTL: generic row/media swaps for mixed image + text layouts */
+[dir="rtl"] .rtl-row-reverse {
+  flex-direction: row-reverse;
+}
+
+@media (min-width: 768px) {
+  [dir="rtl"] .rtl-row-reverse-md {
+    flex-direction: row-reverse;
+  }
+}
+
+@media (min-width: 1024px) {
+  [dir="rtl"] .rtl-row-reverse-lg {
+    flex-direction: row-reverse;
+  }
+}
+
+/* RTL: reverse visual column flow while keeping DOM order */
+[dir="rtl"] .rtl-grid-reverse {
+  direction: rtl;
+}
+
