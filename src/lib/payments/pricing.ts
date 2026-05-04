@@ -69,13 +69,17 @@ export function isDrFawzia(therapistName?: string | null, therapistSlug?: string
   const nameLower = (therapistName || '').toLowerCase().trim();
   const slugLower = (therapistSlug || '').toLowerCase().trim();
 
-  // Check for slug match (old and new slugs for compatibility)
-  if (slugLower === DR_FAWZIA_SLUG || slugLower === 'dr-fawzia-yassmina' || slugLower.includes('fawzia')) {
+  if (
+    slugLower === DR_FAWZIA_SLUG ||
+    slugLower === 'dr-fawzia-yassmina' ||
+    slugLower === 'fawzia-yasmina'
+  ) {
     return true;
   }
 
-  // Check for name match - contains both fawzia and yassmina
-  return nameLower.includes('fawzia') && nameLower.includes('yassmina');
+  // Name: Fawzia + Yassmina or common "Yasmina" spelling
+  if (!nameLower.includes('fawzia')) return false;
+  return nameLower.includes('yassmina') || nameLower.includes('yasmina');
 }
 
 /**
