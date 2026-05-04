@@ -72,6 +72,7 @@ export function isDrFawzia(therapistName?: string | null, therapistSlug?: string
   if (
     slugLower === DR_FAWZIA_SLUG ||
     slugLower === 'dr-fawzia-yassmina' ||
+    slugLower === 'dr-fawzia-yasmina' ||
     slugLower === 'fawzia-yasmina'
   ) {
     return true;

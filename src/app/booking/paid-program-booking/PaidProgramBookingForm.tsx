@@ -10,7 +10,8 @@ import {
   getPrice,
   getZiinaLink,
   getPerSessionFromFull,
-  isDrFawzia,
+  DR_FAWZIA_NAME,
+  DR_FAWZIA_SLUG,
   ACADEMY_PRICING,
 } from '@/lib/payments/pricing';
 import { useLang } from '@/lib/translations/LanguageContext';
@@ -126,7 +127,15 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       }
     : null;
   const effectiveTherapist = preferredTherapist || therapist;
-  const isFawzia = isDrFawzia(effectiveTherapist?.name, effectiveTherapist?.slug);
+
+  /** Private program: no therapist in URL / account → founder tier (public default). Group unchanged. */
+  const therapistForPricing = (programType: ProgramType): TherapistInfo | null => {
+    if (programType === 'private' && !effectiveTherapist) {
+      return { name: DR_FAWZIA_NAME, slug: DR_FAWZIA_SLUG };
+    }
+    return effectiveTherapist;
+  };
+
   const [showConfirmPayment, setShowConfirmPayment] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const copy = {
@@ -159,7 +168,8 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     if (academyMode) {
       return option === 'full' ? ACADEMY_PRICING.fullProgram : ACADEMY_PRICING.installment;
     }
-    return getPrice(type, option, effectiveTherapist?.name, effectiveTherapist?.slug);
+    const ctx = therapistForPricing(type);
+    return getPrice(type, option, ctx?.name, ctx?.slug);
   };
 
   const handlePayment = async (option: PaymentOption) => {
@@ -175,16 +185,17 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     setSelectedPaymentOption(option);
 
     // Get the Ziina link and redirect directly
+    const payCtx = therapistForPricing(selectedProgramType);
     const ziinaLink = academyMode
       ? (option === 'full' ? ACADEMY_PRICING.ziinaLinks.fullProgram : ACADEMY_PRICING.ziinaLinks.installment)
-      : getZiinaLink(selectedProgramType, option, effectiveTherapist?.name, effectiveTherapist?.slug);
+      : getZiinaLink(selectedProgramType, option, payCtx?.name, payCtx?.slug);
     
     // Store payment context for confirmation
     sessionStorage.setItem('pendingPayment', JSON.stringify({
       programType: selectedProgramType,
       option,
       amount: getPriceForDisplay(selectedProgramType, option),
-      therapistName: effectiveTherapist?.name,
+      therapistName: payCtx?.name,
     }));
 
     // Open Ziina in a new tab so user stays on this page
@@ -818,11 +829,12 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 }
 
                 // Has completed consultation - proceed to payment
+                const payCtx = therapistForPricing(selectedProgramType!);
                 const link = getZiinaLink(
                   selectedProgramType!,
                   pendingPaymentOption!,
-                  effectiveTherapist?.name,
-                  effectiveTherapist?.slug
+                  payCtx?.name,
+                  payCtx?.slug
                 );
                 if (link) {
                   sessionStorage.setItem('pendingPayment', JSON.stringify({
