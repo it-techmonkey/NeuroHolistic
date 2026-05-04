@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 
+const FOUNDER_SLUG = 'fawzia-yassmina';
+
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^(dr|doctor)\s+/i, '')
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim();
+}
+
+function isFounderTherapist(fullName: string | null, email: string | null): boolean {
+  const e = email?.toLowerCase().trim();
+  if (e === 'fawzia@neuroholistic.com' || e === 'dr.fawzia@neuroholistic.com') return true;
+  const key = normalizeName(fullName || '');
+  return key.includes('fawzia') && (key.includes('yassmina') || key.includes('yasmina'));
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -56,11 +76,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ therapist: null });
     }
 
-    // Generate slug from name (simplified version)
-    const slug = therapist.full_name
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+    // Canonical founder slug matches team profiles + pricing.ts (not derived name slug)
+    const slug = isFounderTherapist(therapist.full_name, therapist.email)
+      ? FOUNDER_SLUG
+      : therapist.full_name
+          ?.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '');
 
     return NextResponse.json({
       therapist: {

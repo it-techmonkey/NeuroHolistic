@@ -214,7 +214,7 @@ export default function ClientDashboardPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/auth/login');
+    window.location.replace('/');
   };
 
   const getSessionDocuments = (session: Session) => {

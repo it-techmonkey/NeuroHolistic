@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
-
-/**
- * Generate a slug from a name (same logic as therapist list API)
- */
-function generateSlug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+import { generateSlug, therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,25 +27,7 @@ export async function GET(request: NextRequest) {
       .order('date', { ascending: true });
 
     if (userData?.role === 'therapist') {
-      // Match by:
-      // 1. therapist_user_id (UUID) - for database therapists
-      // 2. therapist_id (UUID) - for database therapists  
-      // 3. therapist_name (for slug-based therapists stored as name)
-      const filters = [
-        `therapist_user_id.eq.${user.id}`,
-        `therapist_id.eq.${user.id}`,
-      ];
-      
-      // Also try to match by therapist name if available
-      if (userData.full_name) {
-        // Try exact name match
-        filters.push(`therapist_name.eq.${userData.full_name}`);
-        // Also try slug-based match
-        const therapistSlug = generateSlug(userData.full_name);
-        filters.push(`therapist_id.eq.${therapistSlug}`);
-      }
-      
-      bookingsQuery = bookingsQuery.or(filters.join(','));
+      bookingsQuery = bookingsQuery.or(therapistBookingsOrFilter(user.id, userData.full_name));
     }
 
     if (status) {

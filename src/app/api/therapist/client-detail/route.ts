@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
+import { bookingMatchesTherapist } from '@/lib/bookings/therapist-scope';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,11 +12,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await authClient.from('users').select('role').eq('id', user.id).single();
+    const { data: userData } = await authClient
+      .from('users')
+      .select('role, full_name')
+      .eq('id', user.id)
+      .single();
     const role = userData?.role;
     if (role !== 'therapist' && role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+    const scopeTherapist = role === 'therapist';
 
     const clientId = request.nextUrl.searchParams.get('clientId');
     if (!clientId) {
@@ -42,7 +48,13 @@ export async function GET(request: NextRequest) {
       bookingsQuery = bookingsQuery.eq('user_id', clientId);
     }
 
-    const { data: bookings } = await bookingsQuery;
+    let { data: bookings } = await bookingsQuery;
+
+    if (scopeTherapist) {
+      bookings = (bookings ?? []).filter((b) =>
+        bookingMatchesTherapist(b, user.id, userData?.full_name)
+      );
+    }
 
     // Fetch all sessions for this client (empty for guest clients)
     let sessions: any[] = [];
@@ -50,27 +62,37 @@ export async function GET(request: NextRequest) {
     let devFormsRaw: any[] = [];
 
     if (!isGuestClient) {
-      const { data: sessionsData } = await supabase
+      let sessionsQuery = supabase
         .from('sessions')
         .select('*')
         .eq('client_id', clientId)
         .order('session_number', { ascending: true });
+      if (scopeTherapist) {
+        sessionsQuery = sessionsQuery.eq('therapist_id', user.id);
+      }
+      const { data: sessionsData } = await sessionsQuery;
       sessions = sessionsData ?? [];
 
-      // Fetch all assessments (strip internal data for non-admin)
-      const { data: assessmentsData } = await supabase
+      let assessmentsQuery = supabase
         .from('diagnostic_assessments')
         .select('id, session_id, client_id, therapist_id, is_baseline, main_complaint, current_symptoms, previous_therapy, nervous_system_pattern, nervous_system_score, emotional_state_score, cognitive_patterns_score, body_symptoms_score, behavioral_patterns_score, life_functioning_score, goal_readiness_score, clinical_condition_brief, therapist_focus, therapy_goal, assessed_at, created_at')
         .eq('client_id', clientId)
         .order('assessed_at', { ascending: true });
+      if (scopeTherapist) {
+        assessmentsQuery = assessmentsQuery.eq('therapist_id', user.id);
+      }
+      const { data: assessmentsData } = await assessmentsQuery;
       assessments = assessmentsData ?? [];
 
-      // Fetch session development forms
-      const { data: devFormsData } = await supabase
+      let devFormsQuery = supabase
         .from('session_development_forms')
         .select('*')
         .eq('client_id', clientId)
         .order('created_at', { ascending: true });
+      if (scopeTherapist) {
+        devFormsQuery = devFormsQuery.eq('therapist_id', user.id);
+      }
+      const { data: devFormsData } = await devFormsQuery;
       devFormsRaw = devFormsData ?? [];
     }
 
