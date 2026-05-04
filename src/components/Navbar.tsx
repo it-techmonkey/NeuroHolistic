@@ -100,7 +100,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    window.location.replace('/');
   }
 
   const textColor = isLightPage ? "text-slate-900" : "text-white";

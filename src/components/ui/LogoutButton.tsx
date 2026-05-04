@@ -11,8 +11,8 @@ export default function LogoutButton({ className, children }: LogoutButtonProps)
   async function handleLogout() {
     // Sign out on the client side (clears cookies + localStorage)
     await supabase.auth.signOut();
-    // Hard navigation resets the entire React tree and Auth context cleanly
-    window.location.href = '/';
+    // Replace so Back doesn't return to protected route → login redirect loop
+    window.location.replace('/');
   }
 
   return (

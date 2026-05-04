@@ -8,6 +8,7 @@ import { useLang } from '@/lib/translations/LanguageContext';
 type Therapist = {
   id: string;
   name: string;
+  slug?: string;
 };
 
 type Slot = {
@@ -27,9 +28,14 @@ function normalizeTherapistName(name: string): string {
 interface FreeConsultationFormProps {
   /** Render mode: 'page' wraps in a full-page dark layout, 'embedded' renders form only */
   mode?: 'page' | 'embedded';
+  /** From `/consultation/book?therapist=...` (UUID or slug) */
+  preselectTherapistIdOrSlug?: string;
 }
 
-export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsultationFormProps) {
+export default function FreeConsultationForm({
+  mode = 'embedded',
+  preselectTherapistIdOrSlug,
+}: FreeConsultationFormProps) {
   const { t, isUrdu } = useLang();
   const isArabic = isUrdu;
   const [step, setStep] = useState<'details' | 'schedule' | 'success'>('details');
@@ -121,14 +127,23 @@ export default function FreeConsultationForm({ mode = 'embedded' }: FreeConsulta
             return true;
           });
           setTherapists(unique);
-          if (unique.length > 0) setSelectedTherapist(unique[0].id);
+          if (unique.length === 0) return;
+          const param = preselectTherapistIdOrSlug?.trim();
+          if (param) {
+            const match = unique.find(
+              (t: Therapist) => t.id === param || t.slug === param
+            );
+            setSelectedTherapist(match ? match.id : unique[0].id);
+          } else {
+            setSelectedTherapist(unique[0].id);
+          }
         })
         .catch(err => {
           console.error('Failed to load therapists:', err);
           setTherapists([]);
         });
     }
-  }, [therapists.length]);
+  }, [therapists.length, preselectTherapistIdOrSlug]);
 
   // Load slots when therapist and date change
   useEffect(() => {

@@ -42,6 +42,7 @@ import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/Therap
 import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
 import ArchiveTab from '@/components/dashboard/therapist/Archive';
+import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
 
 // Types
 type Session = {
@@ -535,7 +536,7 @@ export default function TherapistDashboardPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/auth/login');
+    window.location.replace('/');
   };
 
   // Upload document using server-side R2 upload (bypasses CORS)
@@ -627,8 +628,9 @@ export default function TherapistDashboardPage() {
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-slate-900">Therapist Dashboard</h1>
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <DashboardHomeLogo />
+              <h1 className="text-xl font-semibold text-slate-900 truncate">Therapist Dashboard</h1>
             </div>
 
             {/* Navigation Tabs */}
@@ -1189,10 +1191,9 @@ export default function TherapistDashboardPage() {
       {/* Availability Modal */}
       {showAvailabilityModal && (
         <AvailabilityModal
-          therapistId={therapistId!}
           availability={availability}
           onClose={() => setShowAvailabilityModal(false)}
-          onSave={() => { fetchAvailability(therapistId!); setShowAvailabilityModal(false); }}
+          onSave={() => { void fetchAvailability(therapistId!); }}
         />
       )}
 
@@ -2166,10 +2167,20 @@ function ClientDetailView({
   );
 }
 
+function isFullDayBlockRow(row: Availability): boolean {
+  const st = row.start_time?.slice(0, 5);
+  const et = row.end_time?.slice(0, 5);
+  return st === '00:00' && (et === '23:59' || et === '24:00');
+}
+
+function blockRangeLabel(row: Availability): string {
+  if (isFullDayBlockRow(row)) return 'All day';
+  return `${row.start_time?.slice(0, 5)} – ${row.end_time?.slice(0, 5)}`;
+}
+
 function AvailabilityModal({
-  therapistId, availability, onClose, onSave
+  availability, onClose, onSave
 }: {
-  therapistId: string;
   availability: Availability[];
   onClose: () => void;
   onSave: () => void;
@@ -2179,8 +2190,37 @@ function AvailabilityModal({
   const [endTime, setEndTime] = useState('17:00');
   const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
   const [blockCalendarDate, setBlockCalendarDate] = useState(new Date());
+  const [blockScope, setBlockScope] = useState<'full' | 'range'>('full');
+  const [blockRangeStart, setBlockRangeStart] = useState('09:00');
+  const [blockRangeEnd, setBlockRangeEnd] = useState('12:00');
+  const [editingBlock, setEditingBlock] = useState<Availability | null>(null);
+  const [editDate, setEditDate] = useState('');
+  const [editStart, setEditStart] = useState('09:00');
+  const [editEnd, setEditEnd] = useState('10:00');
+  const [editFullDay, setEditFullDay] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'recurring' | 'block'>('recurring');
+
+  const blockedRows = useMemo(
+    () =>
+      [...availability]
+        .filter((a) => a.is_blocked && a.exception_date)
+        .sort(
+          (a, b) =>
+            (a.exception_date ?? '').localeCompare(b.exception_date ?? '') ||
+            (a.start_time ?? '').localeCompare(b.start_time ?? ''),
+        ),
+    [availability],
+  );
+
+  const blockCountByDate = useMemo(() => {
+    const m = new Map<string, number>();
+    blockedRows.forEach((r) => {
+      const k = r.exception_date!;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    });
+    return m;
+  }, [blockedRows]);
 
   const daysOfWeek = [
     { id: 0, label: 'Sunday' }, { id: 1, label: 'Monday' }, { id: 2, label: 'Tuesday' },
@@ -2193,12 +2233,6 @@ function AvailabilityModal({
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
-
-  const blockedDates = availability
-    .filter(a => a.is_blocked && a.exception_date)
-    .map(a => a.exception_date as string)
-    .sort((a, b) => a.localeCompare(b));
-  const blockedDateSet = new Set(blockedDates);
 
   const formatDateKey = (date: Date) => {
     const year = date.getFullYear();
@@ -2241,33 +2275,91 @@ function AvailabilityModal({
     }
   };
 
-  const handleBlockDay = async () => {
+  const handleApplyBlocks = async () => {
     if (selectedBlockDates.length === 0) return;
+    if (blockScope === 'range' && blockRangeStart >= blockRangeEnd) {
+      alert('End time must be after start time.');
+      return;
+    }
     setLoading(true);
     try {
-      const datesToBlock = selectedBlockDates.filter(date => !blockedDateSet.has(date));
-      if (datesToBlock.length === 0) {
-        onSave();
-        return;
-      }
-
       const responses = await Promise.all(
-        datesToBlock.map(date =>
-          fetch('/api/therapist/availability', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'block_full_day', date }),
-          })
-        )
+        selectedBlockDates.map((date) =>
+          blockScope === 'full'
+            ? fetch('/api/therapist/availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'block_full_day', date }),
+              })
+            : fetch('/api/therapist/availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'block_time_slot',
+                  date,
+                  start_time: blockRangeStart,
+                  end_time: blockRangeEnd,
+                }),
+              }),
+        ),
       );
-      if (responses.every(r => r.ok)) {
+      if (responses.every((r) => r.ok)) {
         setSelectedBlockDates([]);
         onSave();
+      } else {
+        const failed = await responses.find((r) => !r.ok)?.json().catch(() => ({}));
+        alert((failed as { error?: string })?.error || 'Could not save blocks.');
       }
     } catch (error) {
-      console.error('Failed to block selected days:', error);
+      console.error('Failed to block:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveEditBlock = async () => {
+    if (!editingBlock) return;
+    if (!editFullDay && editStart >= editEnd) {
+      alert('End time must be after start time.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/therapist/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_block',
+          id: editingBlock.id,
+          exception_date: editDate,
+          start_time: editFullDay ? '00:00' : editStart,
+          end_time: editFullDay ? '23:59' : editEnd,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setEditingBlock(null);
+        onSave();
+      } else {
+        alert((data as { error?: string })?.error || 'Update failed.');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditBlock = (row: Availability) => {
+    setEditingBlock(row);
+    setEditDate(row.exception_date ?? '');
+    setEditFullDay(isFullDayBlockRow(row));
+    if (isFullDayBlockRow(row)) {
+      setEditStart('09:00');
+      setEditEnd('10:00');
+    } else {
+      setEditStart(row.start_time?.slice(0, 5) ?? '09:00');
+      setEditEnd(row.end_time?.slice(0, 5) ?? '10:00');
     }
   };
 
@@ -2308,7 +2400,7 @@ function AvailabilityModal({
                 tab === 'block' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
               }`}
             >
-              Block Dates
+              Block time off
             </button>
           </div>
 
@@ -2355,12 +2447,13 @@ function AvailabilityModal({
           )}
 
           {tab === 'block' && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-slate-700">Select Dates to Block</label>
+                  <label className="block text-sm font-medium text-slate-700">Select dates</label>
                   <div className="flex items-center gap-2 text-sm">
                     <button
+                      type="button"
                       onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth - 1, 1))}
                       className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
                     >
@@ -2370,6 +2463,7 @@ function AvailabilityModal({
                       {blockCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setBlockCalendarDate(new Date(currentBlockYear, currentBlockMonth + 1, 1))}
                       className="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
                     >
@@ -2377,6 +2471,9 @@ function AvailabilityModal({
                     </button>
                   </div>
                 </div>
+                <p className="text-xs text-slate-500 mb-2">
+                  Same date can have multiple blocks (e.g. morning + afternoon). Dot = existing block(s).
+                </p>
                 <div className="grid grid-cols-7 gap-1 text-xs text-center text-slate-500 mb-2">
                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
                     <div key={`${d}-${idx}`} className="py-1">{d}</div>
@@ -2391,26 +2488,29 @@ function AvailabilityModal({
                     const date = new Date(currentBlockYear, currentBlockMonth, day);
                     const dateKey = formatDateKey(date);
                     const isPast = clearTime(date) < today;
-                    const isBlocked = blockedDateSet.has(dateKey);
                     const isSelected = selectedBlockDates.includes(dateKey);
+                    const nBlocks = blockCountByDate.get(dateKey) ?? 0;
 
                     return (
                       <button
                         key={dateKey}
                         type="button"
-                        onClick={() => !isPast && !isBlocked && toggleBlockDate(dateKey)}
-                        disabled={isPast || isBlocked}
-                        className={`h-9 text-sm rounded border transition ${
-                          isBlocked
-                            ? 'bg-red-100 border-red-200 text-red-600 cursor-not-allowed'
-                            : isSelected
+                        onClick={() => !isPast && toggleBlockDate(dateKey)}
+                        disabled={isPast}
+                        className={`relative h-9 text-sm rounded border transition ${
+                          isSelected
                             ? 'bg-indigo-600 border-indigo-600 text-white'
                             : isPast
                             ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                            : nBlocks > 0
+                            ? 'bg-rose-50 border-rose-200 text-slate-800 hover:border-indigo-300'
                             : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50'
                         }`}
                       >
                         {day}
+                        {nBlocks > 0 && !isSelected && (
+                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-rose-500" />
+                        )}
                       </button>
                     );
                   })}
@@ -2420,35 +2520,172 @@ function AvailabilityModal({
                     Selected: {selectedBlockDates.length} day{selectedBlockDates.length > 1 ? 's' : ''}
                   </p>
                 )}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 p-4 space-y-3 bg-slate-50/80">
+                <p className="text-sm font-medium text-slate-800">Block type for selected dates</p>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="blockScope"
+                      checked={blockScope === 'full'}
+                      onChange={() => setBlockScope('full')}
+                      className="rounded-full border-slate-300"
+                    />
+                    Entire day
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="blockScope"
+                      checked={blockScope === 'range'}
+                      onChange={() => setBlockScope('range')}
+                      className="rounded-full border-slate-300"
+                    />
+                    Specific hours
+                  </label>
+                </div>
+                {blockScope === 'range' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">From</label>
+                      <input
+                        type="time"
+                        value={blockRangeStart}
+                        onChange={(e) => setBlockRangeStart(e.target.value)}
+                        className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">To</label>
+                      <input
+                        type="time"
+                        value={blockRangeEnd}
+                        onChange={(e) => setBlockRangeEnd(e.target.value)}
+                        className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
                 <button
-                  onClick={handleBlockDay}
+                  type="button"
+                  onClick={handleApplyBlocks}
                   disabled={loading || selectedBlockDates.length === 0}
-                  className="mt-2 w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
                 >
-                  {loading ? 'Blocking...' : `Block Selected Dates (${selectedBlockDates.length})`}
+                  {loading ? 'Saving…' : `Apply to ${selectedBlockDates.length} selected date(s)`}
                 </button>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Blocked Dates</label>
-                <div className="space-y-2">
-                  {blockedDates.map(date => {
-                    const block = availability.find(a => a.is_blocked && a.exception_date === date);
-                    if (!block) return null;
-                    return (
-                    <div key={block.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                      <span className="text-sm text-red-700">
-                        {new Date(block.exception_date + 'T00:00:00').toLocaleDateString()}
-                      </span>
-                      <button onClick={() => handleDeleteBlock(block.id)} className="text-red-600 hover:text-red-700">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Your blocks</label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {blockedRows.map((row) => (
+                    <div
+                      key={row.id}
+                      className="flex items-center justify-between gap-2 p-3 bg-red-50 rounded-lg border border-red-100"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-red-900 truncate">
+                          {row.exception_date
+                            ? new Date(row.exception_date + 'T12:00:00').toLocaleDateString(undefined, {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : '—'}
+                        </p>
+                        <p className="text-xs text-red-700/90">{blockRangeLabel(row)}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => openEditBlock(row)}
+                          className="p-2 rounded-lg text-red-700 hover:bg-red-100"
+                          aria-label="Edit block"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBlock(row.id)}
+                          className="p-2 rounded-lg text-red-600 hover:bg-red-100"
+                          aria-label="Remove block"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  );})}
-                  {blockedDates.length === 0 && (
-                    <p className="text-sm text-slate-500 text-center py-4">No blocked dates</p>
+                  ))}
+                  {blockedRows.length === 0 && (
+                    <p className="text-sm text-slate-500 text-center py-4">No blocks yet</p>
                   )}
                 </div>
               </div>
+
+              {editingBlock && (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-slate-900">Edit block</p>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Date</label>
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={editFullDay}
+                      onChange={(e) => setEditFullDay(e.target.checked)}
+                      className="rounded border-slate-300"
+                    />
+                    Entire day
+                  </label>
+                  {!editFullDay && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">From</label>
+                        <input
+                          type="time"
+                          value={editStart}
+                          onChange={(e) => setEditStart(e.target.value)}
+                          className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">To</label>
+                        <input
+                          type="time"
+                          value={editEnd}
+                          onChange={(e) => setEditEnd(e.target.value)}
+                          className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleSaveEditBlock}
+                      disabled={loading}
+                      className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      Save changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingBlock(null)}
+                      className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,171 +1,151 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
-import { TEAM_PROFILES } from '@/components/team/team-profiles';
+import {
+  defaultHourlyBookingSlots,
+  generateHourlySlotStarts,
+  therapistBookingsOrFilter,
+} from '@/lib/bookings/therapist-scope';
+import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
 
-function getTherapistFromSlug(slug: string) {
-  return TEAM_PROFILES.find(p => p.slug === slug);
+function parseTimeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
 }
 
-// Default time slots matching BOOKING_TIME_SLOTS + extended evening slots
-const DEFAULT_TIME_SLOTS = ['09:00', '11:00', '14:00', '16:00', '18:00', '20:00'];
+/** 1-hour session starting at slotStartMin overlaps [blockStart, blockEnd) in minutes-of-day. */
+function hourSlotBlocked(slotStartMin: number, blockStart: number, blockEnd: number): boolean {
+  const slotEnd = slotStartMin + 60;
+  return slotStartMin < blockEnd && slotEnd > blockStart;
+}
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    let therapistId = searchParams.get('therapistId');
+    const rawTherapistId = searchParams.get('therapistId');
     const date = searchParams.get('date');
 
-    console.log('[Availability] Request:', { therapistId, date });
-
-    if (!therapistId || !date) {
+    if (!rawTherapistId || !date) {
       return NextResponse.json({ error: 'therapistId and date are required.' }, { status: 400 });
     }
 
-    // If therapistId is a slug (like "fawzia-yassmina"), resolve to UUID
-    const profile = getTherapistFromSlug(therapistId);
-    if (profile) {
-      // This is a slug - check if there's a user record in the database
-      const supabase = getServiceSupabase();
-      const { data: therapistUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('full_name', profile.name.en)
-        .eq('role', 'therapist')
-        .maybeSingle();
-
-      if (therapistUser) {
-        therapistId = therapistUser.id;
-      } else {
-        // No user record yet - use default slots anyway
-        therapistId = null;
-      }
-    }
-
     const supabase = getServiceSupabase();
+    const resolved = await resolveTherapistUserRow(supabase, rawTherapistId);
 
-    // Check for blocked dates first (only if we have a valid UUID)
-    let blocked = [];
-    if (therapistId) {
-      const { data: blockedData } = await supabase
+    console.log('[Availability] Request:', { rawTherapistId, date, resolvedId: resolved?.id });
+
+    // ── Blocked exception rows (full-day + partial time-off) ─────────────────
+    let partialBlockRanges: { start: number; end: number }[] = [];
+    if (resolved) {
+      const { data: blockRows } = await supabase
         .from('therapist_availability')
-        .select('id')
-        .eq('therapist_id', therapistId)
+        .select('start_time, end_time')
+        .eq('therapist_id', resolved.id)
         .eq('exception_date', date)
         .eq('is_blocked', true);
-      blocked = blockedData || [];
-    }
 
-    if (blocked.length > 0) {
-      console.log('[Availability] Date is blocked');
-      return NextResponse.json({ slots: [], message: 'Therapist is not available on this date.' });
-    }
-
-    // Get day of week
-    const dayOfWeek = new Date(`${date}T12:00:00`).getDay();
-    console.log('[Availability] Day of week:', dayOfWeek);
-
-    // Generate time slots - use defaults if no availability configured
-    const allSlots: string[] = [];
-
-    // Try to get availability if we have a valid UUID
-    let availability = [];
-    if (therapistId) {
-      const { data: availData } = await supabase
-        .from('therapist_availability')
-        .select('*')
-        .eq('therapist_id', therapistId)
-        .or(`day_of_week.eq.${dayOfWeek},exception_date.eq.${date}`)
-        .eq('is_blocked', false);
-      availability = availData || [];
-    }
-
-    if (availability.length > 0) {
-      // Use configured availability windows - generate 2-hour interval slots
-      for (const window of availability) {
-        const [startH, startM] = window.start_time.split(':').map(Number);
-        const [endH, endM] = window.end_time.split(':').map(Number);
-        const startMinutes = startH * 60 + startM;
-        const endMinutes = endH * 60 + endM;
-
-        // Generate slots at 2-hour intervals (matching BOOKING_TIME_SLOTS pattern)
-        for (let mins = startMinutes; mins + 120 <= endMinutes; mins += 120) {
-          const h = Math.floor(mins / 60);
-          const m = mins % 60;
-          allSlots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      for (const b of blockRows ?? []) {
+        const bs = b.start_time ?? '00:00';
+        const be = b.end_time ?? '23:59';
+        const fullDay =
+          bs === '00:00' && (be === '23:59' || be === '24:00' || be === '23:59:00');
+        if (fullDay) {
+          console.log('[Availability] Date is fully blocked');
+          return NextResponse.json({
+            slots: [],
+            message: 'Therapist is not available on this date.',
+          });
         }
+        partialBlockRanges.push({
+          start: parseTimeToMinutes(bs.slice(0, 5)),
+          end: parseTimeToMinutes(be.slice(0, 5)),
+        });
+      }
+    }
+
+    const dayOfWeek = new Date(`${date}T12:00:00`).getDay();
+    const allSlotsSet = new Set<string>();
+
+    if (resolved) {
+      const { data: availRows } = await supabase
+        .from('therapist_availability')
+        .select('start_time, end_time, day_of_week, exception_date')
+        .eq('therapist_id', resolved.id)
+        .eq('is_blocked', false)
+        .or(`day_of_week.eq.${dayOfWeek},exception_date.eq.${date}`);
+
+      const windows = (availRows ?? []).filter((row) => {
+        if (row.exception_date === date) return true;
+        if (row.day_of_week === dayOfWeek && !row.exception_date) return true;
+        return false;
+      });
+
+      if (windows.length > 0) {
+        for (const w of windows) {
+          const starts = generateHourlySlotStarts(w.start_time ?? '09:00', w.end_time ?? '17:00');
+          starts.forEach((t) => allSlotsSet.add(t));
+        }
+      } else {
+        defaultHourlyBookingSlots().forEach((t) => allSlotsSet.add(t));
       }
     } else {
-      // No availability configured - use default time slots
-      console.log('[Availability] Using default slots');
-      allSlots.push(...DEFAULT_TIME_SLOTS);
+      defaultHourlyBookingSlots().forEach((t) => allSlotsSet.add(t));
     }
 
-    console.log('[Availability] All slots:', allSlots);
+    let allSlots = Array.from(allSlotsSet).sort((a, b) => a.localeCompare(b));
 
-    // If we don't have a valid therapistId, return default slots
-    if (!therapistId) {
-      return NextResponse.json({
-        slots: allSlots.map((time) => ({
-          time,
-          display: formatTimeDisplay(time),
-        })),
+    // Remove slots overlapping partial-day blocks
+    if (partialBlockRanges.length > 0) {
+      allSlots = allSlots.filter((slot) => {
+        const sm = parseTimeToMinutes(slot);
+        return !partialBlockRanges.some((r) => hourSlotBlocked(sm, r.start, r.end));
       });
     }
 
-    // Get existing bookings for this therapist on this date
-    const { data: existingBookings } = await supabase
-      .from('bookings')
-      .select('time')
-      .eq('therapist_id', therapistId)
-      .eq('date', date)
-      .neq('status', 'cancelled');
-
-    // Also check by therapist_user_id
-    const { data: existingBookingsByUserId } = await supabase
-      .from('bookings')
-      .select('time')
-      .eq('therapist_user_id', therapistId)
-      .eq('date', date)
-      .neq('status', 'cancelled');
-
+    // ── Existing bookings & sessions ────────────────────────────────────────
     const bookedTimes = new Set<string>();
 
-    for (const b of existingBookings ?? []) {
-      if (b.time) bookedTimes.add(b.time);
+    if (resolved) {
+      const orBook = therapistBookingsOrFilter(
+        resolved.id,
+        resolved.full_name,
+        rawTherapistId
+      );
+
+      const { data: bookingRows } = await supabase
+        .from('bookings')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .or(orBook);
+
+      const { data: sessionRows } = await supabase
+        .from('sessions')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .eq('therapist_id', resolved.id);
+
+      for (const b of bookingRows ?? []) {
+        if (b.time) bookedTimes.add(b.time.slice(0, 5));
+      }
+      for (const s of sessionRows ?? []) {
+        if (s.time) bookedTimes.add(s.time.slice(0, 5));
+      }
+    } else {
+      const { data: bookingRows } = await supabase
+        .from('bookings')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .eq('therapist_id', rawTherapistId);
+
+      for (const b of bookingRows ?? []) {
+        if (b.time) bookedTimes.add(b.time.slice(0, 5));
+      }
     }
-    for (const b of existingBookingsByUserId ?? []) {
-      if (b.time) bookedTimes.add(b.time);
-    }
 
-    // Also check sessions table
-    const { data: existingSessions } = await supabase
-      .from('sessions')
-      .select('time')
-      .eq('therapist_id', therapistId)
-      .eq('date', date)
-      .neq('status', 'cancelled');
-
-    // Also check by therapist_user_id
-    const { data: existingSessionsByUserId } = await supabase
-      .from('sessions')
-      .select('time')
-      .eq('therapist_id', therapistId)
-      .eq('date', date)
-      .neq('status', 'cancelled');
-
-    for (const s of existingSessions ?? []) {
-      if (s.time) bookedTimes.add(s.time);
-    }
-    for (const s of existingSessionsByUserId ?? []) {
-      if (s.time) bookedTimes.add(s.time);
-    }
-
-    console.log('[Availability] Booked times:', bookedTimes);
-
-    // Filter out booked slots
     let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
 
-    // Filter out past time slots if booking for today
     const now = new Date();
     const todayYear = now.getFullYear();
     const todayMonth = String(now.getMonth() + 1).padStart(2, '0');
@@ -174,15 +154,10 @@ export async function GET(request: NextRequest) {
 
     if (date === today) {
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
       availableSlots = availableSlots.filter((slot) => {
-        const [slotHour, slotMinute] = slot.split(':').map(Number);
-        const slotMinutes = slotHour * 60 + slotMinute;
-        // Only show slots that are at least 1 hour (60 minutes) in the future
+        const slotMinutes = parseTimeToMinutes(slot);
         return slotMinutes >= currentMinutes + 60;
       });
-
-      console.log('[Availability] Filtered past slots for today. Current time:', `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`, 'Available:', availableSlots);
     }
 
     console.log('[Availability] Available slots:', availableSlots);
@@ -195,9 +170,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Bookings Availability] Error:', error);
-    // Return default slots on error to avoid blocking the user
     return NextResponse.json({
-      slots: DEFAULT_TIME_SLOTS.map((time) => ({
+      slots: defaultHourlyBookingSlots().map((time) => ({
         time,
         display: formatTimeDisplay(time),
       })),

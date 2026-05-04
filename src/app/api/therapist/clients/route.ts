@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getCurrentUserWithRole } from '@/lib/auth/server';
+import { therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
 
 function getServiceSupabase() {
   return createServiceClient(
@@ -10,42 +12,57 @@ function getServiceSupabase() {
 
 export async function GET() {
   try {
+    const authUser = await getCurrentUserWithRole();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (authUser.role !== 'therapist' && authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const supabase = getServiceSupabase();
+    const scopeTherapist = authUser.role === 'therapist';
 
-    // Get all users with therapist role to verify current user
-    const { data: allUsers } = await supabase.from('users').select('id, email, role').eq('role', 'therapist');
-    
-    // For now, return clients for ALL therapists (demo mode)
-    // In production, you'd filter by the logged-in therapist's ID
+    let bookingsQuery = supabase.from('bookings').select('*');
+    if (scopeTherapist) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', authUser.id)
+        .single();
+      bookingsQuery = bookingsQuery.or(therapistBookingsOrFilter(authUser.id, userData?.full_name));
+    }
+    const { data: bookings } = await bookingsQuery.order('date', { ascending: false });
 
-    // Get ALL bookings - include therapist_user_id filter
-    const { data: bookings } = await supabase
-      .from('bookings')
-      .select('*')
-      .order('date', { ascending: false });
-
-    // Get all users (clients)
+    // Get all users (clients) — only used to merge guest booking emails with accounts
     const { data: users } = await supabase
       .from('users')
       .select('id, full_name, email, phone')
       .eq('role', 'client');
 
-    // Get diagnostic assessments
-    const { data: assessments } = await supabase
+    let assessmentsQuery = supabase
       .from('diagnostic_assessments')
       .select('*')
       .order('assessed_at', { ascending: false });
+    if (scopeTherapist) {
+      assessmentsQuery = assessmentsQuery.eq('therapist_id', authUser.id);
+    }
+    const { data: assessments } = await assessmentsQuery;
 
-    // Get session development forms
-    const { data: devFormsRaw } = await supabase
+    let devFormsQuery = supabase
       .from('session_development_forms')
       .select('*')
       .order('created_at', { ascending: false });
+    if (scopeTherapist) {
+      devFormsQuery = devFormsQuery.eq('therapist_id', authUser.id);
+    }
+    const { data: devFormsRaw } = await devFormsQuery;
 
-    // Get sessions to build session_number map
-    const { data: allSessions } = await supabase
-      .from('sessions')
-      .select('id, session_number');
+    let allSessionsQuery = supabase.from('sessions').select('id, session_number');
+    if (scopeTherapist) {
+      allSessionsQuery = allSessionsQuery.eq('therapist_id', authUser.id);
+    }
+    const { data: allSessions } = await allSessionsQuery;
 
     const sessionNumberMap = new Map<string, number>();
     (allSessions ?? []).forEach((s: any) => {
@@ -60,13 +77,19 @@ export async function GET() {
       session_number: sessionNumberMap.get(f.session_id) ?? null,
     }));
 
-    // Get programs
-    const { data: programs } = await supabase.from('programs').select('*');
+    let programsQuery = supabase.from('programs').select('*');
+    if (scopeTherapist) {
+      programsQuery = programsQuery.eq('therapist_user_id', authUser.id);
+    }
+    const { data: programs } = await programsQuery;
 
-    // Get sessions for accurate program completion counts
-    const { data: sessions } = await supabase
+    let sessionsCompletionQuery = supabase
       .from('sessions')
       .select('id, program_id, client_id, status');
+    if (scopeTherapist) {
+      sessionsCompletionQuery = sessionsCompletionQuery.eq('therapist_id', authUser.id);
+    }
+    const { data: sessions } = await sessionsCompletionQuery;
 
     // Build unique client list from bookings OR users
     const clientMap = new Map<string, any>();

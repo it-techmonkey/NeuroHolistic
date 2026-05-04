@@ -18,6 +18,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import LogoutButton from '@/components/ui/LogoutButton';
+import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
 
 type Role = 'client' | 'therapist' | 'admin';
 
@@ -75,6 +76,7 @@ export default function DashboardShell({
       <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
         <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <DashboardHomeLogo className="mr-1" />
             <Link href="/" className="text-lg font-semibold text-[#2B2F55] tracking-tight">
               NeuroHolistic
             </Link>

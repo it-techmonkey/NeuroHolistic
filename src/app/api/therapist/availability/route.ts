@@ -139,17 +139,84 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'block_time_slot') {
-      // Block specific time slot
+      if (!date || !start_time || !end_time) {
+        return NextResponse.json(
+          { error: 'date, start_time, and end_time are required for block_time_slot.' },
+          { status: 400 }
+        );
+      }
+      const st = String(start_time).slice(0, 5);
+      const et = String(end_time).slice(0, 5);
+      if (st >= et) {
+        return NextResponse.json({ error: 'end_time must be after start_time.' }, { status: 400 });
+      }
+
       const { data, error } = await supabase
         .from('therapist_availability')
         .insert({
           therapist_id: therapistId,
           exception_date: date,
           day_of_week: null,
-          start_time: start_time,
-          end_time: end_time,
+          start_time: st,
+          end_time: et,
           is_blocked: true,
         })
+        .select();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
+    if (action === 'update_block') {
+      const id = body.id as string | undefined;
+      if (!id) {
+        return NextResponse.json({ error: 'id is required.' }, { status: 400 });
+      }
+
+      const { data: existing } = await supabase
+        .from('therapist_availability')
+        .select('id, exception_date, start_time, end_time')
+        .eq('id', id)
+        .eq('therapist_id', therapistId)
+        .eq('is_blocked', true)
+        .maybeSingle();
+
+      if (!existing) {
+        return NextResponse.json({ error: 'Block not found.' }, { status: 404 });
+      }
+
+      const nextStart =
+        body.start_time !== undefined
+          ? String(body.start_time).slice(0, 5)
+          : (existing.start_time?.slice(0, 5) ?? '00:00');
+      const nextEnd =
+        body.end_time !== undefined
+          ? String(body.end_time).slice(0, 5)
+          : (existing.end_time?.slice(0, 5) ?? '23:59');
+      const nextDate =
+        body.exception_date !== undefined ? body.exception_date : existing.exception_date;
+
+      if (!nextDate) {
+        return NextResponse.json({ error: 'exception_date required.' }, { status: 400 });
+      }
+      if (nextStart >= nextEnd) {
+        return NextResponse.json({ error: 'end_time must be after start_time.' }, { status: 400 });
+      }
+
+      const updates = {
+        exception_date: nextDate,
+        start_time: nextStart,
+        end_time: nextEnd,
+      };
+
+      const { data, error } = await supabase
+        .from('therapist_availability')
+        .update(updates)
+        .eq('id', id)
+        .eq('therapist_id', therapistId)
         .select();
 
       if (error) {
@@ -176,6 +243,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('[Availability POST]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/** DELETE /api/therapist/availability?id=… — same as POST action delete */
+export async function DELETE(request: NextRequest) {
+  try {
+    const authClient = await createClient();
+    const {
+      data: { user },
+    } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const id = request.nextUrl.searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'id query param required' }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabase();
+    const { error } = await supabase
+      .from('therapist_availability')
+      .delete()
+      .eq('id', id)
+      .eq('therapist_id', user.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[Availability DELETE]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,7 +1,14 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import FreeConsultationForm from '@/components/booking/FreeConsultationForm';
+
+function BookConsultationWithQuery() {
+  const searchParams = useSearchParams();
+  const therapist = searchParams.get('therapist')?.trim() || undefined;
+  return <FreeConsultationForm mode="page" preselectTherapistIdOrSlug={therapist} />;
+}
 
 export default function BookConsultationPage() {
   return (
@@ -13,7 +20,7 @@ export default function BookConsultationPage() {
         </div>
       </div>
     }>
-      <FreeConsultationForm mode="page" />
+      <BookConsultationWithQuery />
     </Suspense>
   );
 }
