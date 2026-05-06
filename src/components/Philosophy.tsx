@@ -21,13 +21,13 @@ export default function Philosophy() {
 
   return (
     // Outer section provides padding so the inner rounded container can "float"
-    <section className="px-4 py-10 md:px-6 md:py-14">
+    <section className="px-4 py-6 md:px-6 md:py-8">
       {/* The Rounded Floating Rectangle */}
       <motion.div
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[32px] border border-[#E2E8F0]/60 bg-[#FAFBFF] py-16 shadow-[0_8px_40px_rgba(0,0,0,0.02)] md:rounded-[40px] md:py-20"
+        className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[32px] border border-[#E2E8F0]/60 bg-[#FAFBFF] py-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] md:rounded-[40px] md:py-10"
       >
         {/* Soft Inner Gradients (Replaced the harsh straight lines) */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(240,244,255,0.6)_100%)]" />
@@ -39,14 +39,14 @@ export default function Philosophy() {
           <div className="mx-auto max-w-[840px] text-center">
             <motion.h2
               variants={itemVariants}
-              className="mb-6 text-[32px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[46px] lg:text-[52px]"
+              className="mb-3 text-[16px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[23px] lg:text-[26px]"
             >
               {t.philosophy.heading}
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
-              className="mx-auto max-w-[680px] text-[16px] leading-[2] text-[#475569] md:text-[17px] mt-3"
+              className="mx-auto max-w-[680px] text-[16px] leading-[2] text-[#475569] md:text-[17px] mt-2"
             >
               {t.philosophy.description}
             </motion.p>

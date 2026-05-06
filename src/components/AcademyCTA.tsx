@@ -8,7 +8,7 @@ export default function AcademyCTA() {
   const { t, isUrdu } = useLang();
 
   return (
-    <section className="w-full bg-[#FAFBFF] px-4 py-10 md:px-6 md:py-20">
+    <section className="w-full bg-[#FAFBFF] px-4 py-6 md:px-6 md:py-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -32,7 +32,7 @@ export default function AcademyCTA() {
         <div className="pointer-events-none absolute left-0 top-0 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.15)_0%,transparent_70%)] blur-3xl" />
 
         <div className="relative z-10 px-8 lg:py-0 md:px-16 lg:h-[220px] flex items-center lg:px-24">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-20 w-full py-16 lg:py-0">
+            <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12 w-full py-12 lg:py-0">
             
             {/* Left Column: The Hook (Spans 7 Cols) */}
             <div className="lg:col-span-7 flex flex-col justify-center">

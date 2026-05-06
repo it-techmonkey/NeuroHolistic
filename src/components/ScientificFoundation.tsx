@@ -22,7 +22,7 @@ export default function ScientificFoundation() {
   };
 
   return (
-    <section className="relative w-full bg-white py-16 md:py-20 overflow-hidden">
+    <section className="relative w-full bg-white py-8 md:py-10 overflow-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -30,25 +30,25 @@ export default function ScientificFoundation() {
         viewport={{ once: true, margin: "-100px" }}
         className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
       >
-        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
           <div className={isArabic ? 'text-right' : 'text-left'}>
           <motion.h2
             variants={itemVariants}
-            className="mb-8 text-[36px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-4 text-[36px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
           >
             {t.scientificFoundation.heading}
           </motion.h2>
 
           <motion.p
             variants={itemVariants}
-            className="mb-5 text-[16px] leading-[2] text-[#475569]"
+            className="mb-3 text-[16px] leading-[2] text-[#475569]"
           >
             {t.scientificFoundation.paragraph1}
           </motion.p>
 
           <motion.p
             variants={itemVariants}
-            className="mb-10 text-[16px] leading-[2] text-[#475569]"
+            className="mb-6 text-[16px] leading-[2] text-[#475569]"
           >
             {t.scientificFoundation.paragraph2}
           </motion.p>

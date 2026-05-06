@@ -14,11 +14,11 @@ export default function Team() {
   const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
 
   return (
-    <section className="bg-[#FCFCFD] py-16 lg:py-20">
+    <section className="bg-[#FCFCFD] py-8 md:py-10">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* ── Header: Editorial Style ── */}
-        <div className="max-w-[800px] mb-12">
+        <div className="max-w-[800px] mb-6">
           <motion.p 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -45,11 +45,11 @@ export default function Team() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-12"
+            className="mb-6"
           >
             <Link 
               href={`/team/${founder.slug}`}
-              className="group relative flex flex-col lg:flex-row rtl-row-reverse-lg items-center gap-8 lg:gap-12 bg-white p-6 md:p-8 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
+              className="group relative flex flex-col lg:flex-row rtl-row-reverse-lg items-center gap-6 lg:gap-8 bg-white p-5 md:p-6 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-700"
             >
               {/* Image Container - Left Side */}
               <div className="w-full lg:w-5/12 aspect-[4/5] relative overflow-hidden rounded-[24px]">
@@ -67,10 +67,10 @@ export default function Team() {
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-[#2B2F55] mb-4">
                   {t.team.founder}   
                 </span>
-                <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
+                <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
                   {isArabic ? founder.name.ar : founder.name.en}
                 </h3>
-                <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light mb-8 italic">
+                <p className="text-lg md:text-xl text-slate-600 leading-relaxed font-light mb-6 italic">
                   &quot;{isArabic ? founder.shortBio.ar : founder.shortBio.en}&quot;
                 </p>
                 <div className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#2B2F55]">
@@ -83,7 +83,7 @@ export default function Team() {
         )}
 
         {/* ── Practitioners Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
           {practitioners.map((member, i) => (
             <motion.div
               key={member.slug}
@@ -94,7 +94,7 @@ export default function Team() {
             >
               <Link href={`/team/${member.slug}`} className="group block">
                 {/* Image Wrap */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-8 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#FCFCFD] mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-slate-200">
                   <Image
                     src={publicImageSrc(member.image)}
                     alt={isArabic ? member.name.ar : member.name.en}
@@ -108,10 +108,10 @@ export default function Team() {
 
                 {/* Content */}
                 <div className="px-2">
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#2B2F55] transition-colors">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#2B2F55] transition-colors">
                     {isArabic ? member.name.ar : member.name.en}
                   </h3>
-                  <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-6">
+                  <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-3">
                     {isArabic ? member.shortBio.ar : member.shortBio.en}
                   </p>
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 group-hover:text-[#2B2F55] transition-all">

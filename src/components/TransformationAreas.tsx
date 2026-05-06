@@ -42,11 +42,11 @@ export default function TransformationAreas() {
     Icon: AREAS_ICONS[i],
   }));
   return (
-    <section className="w-full bg-white pt-16 pb-8 md:pt-20 md:pb-12">
+    <section className="w-full bg-white pt-8 pb-4 md:pt-10 md:pb-6">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* Header: Compact & Centered */}
-        <div className="mb-12 text-center">
+        <div className="mb-6 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -55,19 +55,19 @@ export default function TransformationAreas() {
           >
             {t.transformationAreas.heading}
           </motion.h2>
-          <motion.p
+            <motion.p
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-500"
+            className="mx-auto mt-2 max-w-2xl text-[15px] leading-relaxed text-slate-500"
           >
             {t.transformationAreas.subtitle}
           </motion.p>
         </div>
 
         {/* Compact 4-Column Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {AREAS.map((area, index) => (
             <motion.div
               key={index}
@@ -78,9 +78,9 @@ export default function TransformationAreas() {
             >
               <Link 
                 href="/programs"
-                className="group block h-full rounded-2xl border border-slate-100 bg-slate-50/30 p-6 transition-all duration-300 hover:border-slate-200 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40"
+                className="group block h-full rounded-2xl border border-slate-100 bg-slate-50/30 p-5 transition-all duration-300 hover:border-slate-200 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40"
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
                   <area.Icon />
                 </div>
                 

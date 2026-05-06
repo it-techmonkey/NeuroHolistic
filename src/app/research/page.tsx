@@ -39,17 +39,19 @@ export default function ResearchPage() {
               viewport={{ once: true }}
               className="lg:col-span-6"
             >
-              <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
-                {rp.visionTitle1} <br />
-                <span className="italic text-[#64748B] font-normal">{rp.visionTitle2}</span>
-              </h2>
-              <div className={`space-y-4 ${isUrdu ? 'border-r pr-8' : 'border-l pl-8'} border-[#E2E8F0]`}>
-                <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
-                  {rp.visionParagraph1}
-                </p>
-                <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
-                  {rp.visionParagraph2}
-                </p>
+              <div className={`${isUrdu ? 'border-r pr-8' : 'border-l pl-8'} border-[#E2E8F0]`}>
+                <h2 className="mb-8 text-[36px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[52px]">
+                  {rp.visionTitle1} <br />
+                  <span className="italic text-[#64748B] font-normal">{rp.visionTitle2}</span>
+                </h2>
+                <div className="space-y-4">
+                  <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                    {rp.visionParagraph1}
+                  </p>
+                  <p className={`text-[17px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                    {rp.visionParagraph2}
+                  </p>
+                </div>
               </div>
             </motion.div>
 

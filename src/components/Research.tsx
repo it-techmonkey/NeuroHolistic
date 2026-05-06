@@ -22,9 +22,9 @@ export default function Research() {
   };
 
   return (
-    <section className="w-full bg-white py-12 md:py-16 lg:py-10">
+    <section className="w-full bg-white py-6 md:py-8 lg:py-6">
       <div className="mx-auto max-w-[1200px] px-6 md:px-12">
-        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
           <motion.div 
             variants={containerVariants}
             initial="hidden"
@@ -39,21 +39,21 @@ export default function Research() {
 
             <motion.h2
               variants={itemVariants}
-              className="mb-8 text-[36px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[44px]"
+              className="mb-4 text-[36px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[44px]"
             >
               {t.research.heading}
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
-              className="mb-6 text-[16px] leading-[1.8] text-[#475569]"
+              className="mb-3 text-[16px] leading-[1.8] text-[#475569]"
             >
               {t.research.paragraph1}
             </motion.p>
 
             <motion.p
               variants={itemVariants}
-              className="mb-12 text-[16px] leading-[1.8] text-[#475569]"
+              className="mb-6 text-[16px] leading-[1.8] text-[#475569]"
             >
               {t.research.paragraph2}
             </motion.p>

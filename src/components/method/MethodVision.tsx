@@ -66,7 +66,7 @@ export default function MethodVision() {
             viewport={{ once: true, margin: "-100px" }}
             className="lg:col-span-6 lg:col-start-7 flex flex-col justify-center order-1 lg:order-2"
           >
-            <div>
+            <div className="border-l border-slate-100 pl-8 lg:pl-10">
               {/* Eyebrow text adds professional hierarchy */}
               
               <motion.h2
@@ -76,7 +76,7 @@ export default function MethodVision() {
                 {mp.visionTitle}
               </motion.h2>
 
-              <div className="space-y-7 border-l border-slate-100 pl-8 lg:pl-10">
+              <div className="space-y-7">
                 <motion.p
                   variants={itemVariants}
                   className="text-lg leading-relaxed text-slate-600 font-light"

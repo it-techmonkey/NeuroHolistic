@@ -5,7 +5,7 @@ import LandingBookingCTA from "@/components/booking/LandingBookingCTA";
 
 export default function FinalCTA() {
   return (
-    <section className="w-full bg-white px-4 py-16 md:px-6 md:py-20">
+    <section className="w-full bg-white px-4 py-8 md:px-6 md:py-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -13,7 +13,7 @@ export default function FinalCTA() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
         className="mx-auto max-w-[1280px]"
       >
-        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#F8FAFC] via-[#FAFBFF] to-[#F1F5F9] px-8 py-16 text-center md:px-12 md:py-24 border border-[#E2E8F0]">
+        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#F8FAFC] via-[#FAFBFF] to-[#F1F5F9] px-8 py-10 text-center md:px-12 md:py-14 border border-[#E2E8F0]">
           <LandingBookingCTA
             dashboardLabel="Go to Dashboard"
             signupLabel="Signup Now"

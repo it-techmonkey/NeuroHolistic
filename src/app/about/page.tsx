@@ -90,13 +90,15 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     className={`lg:col-span-5 ${i % 2 === 1 ? "lg:order-2" : ""}`}
                   >
-                    <h2 className="mb-8 text-[36px] font-light leading-[1.4] tracking-tight text-[#0F172A] md:text-[52px]">
-                      {block.title}
-                    </h2>
-                    <div className="space-y-6 border-l border-[#E2E8F0] pl-8">
-                      {block.description.map((p, idx) => (
-                        <p key={idx} className={`text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
-                      ))}
+                    <div className="border-l border-[#E2E8F0] pl-8">
+                      <h2 className="mb-8 text-[36px] font-light leading-[1.4] tracking-tight text-[#0F172A] md:text-[52px]">
+                        {block.title}
+                      </h2>
+                      <div className="space-y-6">
+                        {block.description.map((p, idx) => (
+                          <p key={idx} className={`text-[17px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>{p}</p>
+                        ))}
+                      </div>
                     </div>
                   </motion.div>
 

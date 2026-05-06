@@ -62,21 +62,23 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
                 </span>
               </div>
 
-              <h1 className="mb-6 text-[clamp(32px,10vw,64px)] font-light leading-[1.05] tracking-tight text-[#0F172A]">
-                {name.split(' ').slice(0, -1).join(' ')} <br/>
-                <span className="italic text-[#64748B] font-normal">{name.split(' ').pop()}</span>
-              </h1>
+              <div className="border-l border-[#E2E8F0] pl-5 sm:pl-8">
+                <h1 className="mb-6 text-[clamp(32px,10vw,64px)] font-light leading-[1.05] tracking-tight text-[#0F172A]">
+                  {name.split(' ').slice(0, -1).join(' ')} <br/>
+                  <span className="italic text-[#64748B] font-normal">{name.split(' ').pop()}</span>
+                </h1>
 
-              <p className="mb-10 max-w-[580px] text-[16px] font-medium leading-relaxed text-[#0F172A] sm:mb-12 sm:text-[18px]">
-                {role}
-              </p>
+                <p className="mb-10 max-w-[580px] text-[16px] font-medium leading-relaxed text-[#0F172A] sm:mb-12 sm:text-[18px]">
+                  {role}
+                </p>
 
-              <div className="space-y-6 border-l border-[#E2E8F0] pl-5 sm:space-y-8 sm:pl-8">
-                {paragraphs.map((p, i) => (
-                  <p key={i} className="text-[15px] leading-[1.8] text-[#475569] sm:text-[17px]">
-                    {p}
-                  </p>
-                ))}
+                <div className="space-y-6 sm:space-y-8">
+                  {paragraphs.map((p, i) => (
+                    <p key={i} className="text-[15px] leading-[1.8] text-[#475569] sm:text-[17px]">
+                      {p}
+                    </p>
+                  ))}
+                </div>
               </div>
 
               {/* Book Options */}

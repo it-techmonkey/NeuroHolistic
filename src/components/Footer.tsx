@@ -40,11 +40,11 @@ export default function Footer() {
   }, [t, lang, toggleLang]);
 
   return (
-    <footer className="bg-[#0B0F2B] border-t border-white/5 pt-24 pb-12">
+    <footer className="bg-[#0B0F2B] border-t border-white/5 pt-12 pb-6">
       <div className="max-w-[1280px] mx-auto px-6 md:px-12">
         
         {/* ── Main Registry Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-6 border-b border-white/5 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-6 border-b border-white/5 pb-8">
           
           {/* Identity Column */}
           <div className="lg:col-span-5 flex flex-col justify-between">
@@ -129,7 +129,7 @@ export default function Footer() {
         </div>
 
         {/* ── Sub-Footer Metadata ── */}
-        <div className="mt-12 flex flex-col md:flex-row items-start justify-between gap-8">
+        <div className="mt-6 flex flex-col md:flex-row items-start justify-between gap-6">
           <div className="flex flex-col gap-2">
             <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-600">
               © {new Date().getFullYear()} NeuroHolistic Institute

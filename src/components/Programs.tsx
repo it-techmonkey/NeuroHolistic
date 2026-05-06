@@ -73,7 +73,7 @@ export default function Programs() {
   };
 
   return (
-    <section className="relative w-full bg-[#070913] py-24 overflow-hidden md:py-32">
+    <section className="relative w-full bg-[#070913] py-10 overflow-hidden md:py-14">
       {/* Deep Background Illumination */}
       <div className="pointer-events-none absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(61,90,255,0.05)_0%,transparent_70%)] blur-3xl" />
@@ -86,7 +86,7 @@ export default function Programs() {
         className="relative z-10 mx-auto max-w-[1200px] px-6 md:px-12"
       >
         {/* ── Section header ── */}
-        <div className="mb-16 flex flex-col items-center text-center md:mb-24">
+        <div className="mb-8 flex flex-col items-center text-center md:mb-10">
           <motion.h2
             variants={itemVariants}
             className="text-[36px] font-medium leading-[1.4] tracking-tight text-white md:text-[46px]"
@@ -96,7 +96,7 @@ export default function Programs() {
         </div>
 
         {/* ── Cards Grid ── */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
           {PROGRAMS.map((program, i) => (
             <ProgramCard key={program.id} program={program} index={i} isUrdu={isUrdu} />
           ))}
@@ -125,7 +125,7 @@ function ProgramCard({
         hidden: { opacity: 0, y: 30 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } },
       }}
-      className="group relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0B0F1F] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-white/20 hover:shadow-[0_32px_64px_-15px_rgba(99,102,241,0.12)] md:p-12"
+      className="group relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0B0F1F] p-6 transition-all duration-500 hover:-translate-y-2 hover:border-white/20 hover:shadow-[0_32px_64px_-15px_rgba(99,102,241,0.12)] md:p-8"
     >
       {/* Top Gradient Highlight on Hover */}
       <div className="absolute left-0 top-0 h-1.5 w-full scale-x-0 bg-gradient-to-r from-[#6366F1] to-[#8B8BFF] transition-transform duration-500 group-hover:scale-x-100 origin-left" />
@@ -134,16 +134,16 @@ function ProgramCard({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.06)_0%,transparent_50%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
 
       {/* Icon Pill */}
-      <div className="relative z-10 mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/5 bg-white/5 text-[#8B8BFF] transition-all duration-500 group-hover:bg-[#6366F1] group-hover:border-[#6366F1] group-hover:text-white group-hover:shadow-[0_0_24px_rgba(99,102,241,0.4)]">
+      <div className="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-white/5 text-[#8B8BFF] transition-all duration-500 group-hover:bg-[#6366F1] group-hover:border-[#6366F1] group-hover:text-white group-hover:shadow-[0_0_24px_rgba(99,102,241,0.4)]">
         <Icon />
       </div>
 
       {/* Content */}
-      <h3 className="relative z-10 mb-4 text-[26px] font-medium tracking-tight text-white">
+      <h3 className="relative z-10 mb-3 text-[26px] font-medium tracking-tight text-white">
         {program.title}
       </h3>
       
-      <p className={`relative z-10 mb-10 flex-1 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'} text-[#94A3B8]`}>
+      <p className={`relative z-10 mb-6 flex-1 text-[16px] ${isUrdu ? 'leading-[2]' : 'leading-[1.7]'} text-[#94A3B8]`}>
         {program.description}
       </p>
 

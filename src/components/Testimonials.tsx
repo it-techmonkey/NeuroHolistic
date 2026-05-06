@@ -82,8 +82,8 @@ function TestimonialCard({
 }: (typeof TESTIMONIALS)[0]) {
   return (
     <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#CBD5E1] hover:shadow-[0_20px_40px_-15px_rgba(15,23,42,0.08)]">
-      <div className="p-8 md:p-10">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="p-6 md:p-8">
+        <div className="mb-4 flex items-start justify-between gap-4">
           <QuoteIcon />
           <span className="inline-flex items-center rounded-full bg-[#F1F5F9] px-3.5 py-1.5 text-[12px] font-medium tracking-wide text-[#475569] transition-colors group-hover:bg-[#EEF2FF] group-hover:text-[#6366F1]">
             {outcome}
@@ -92,12 +92,12 @@ function TestimonialCard({
         
         <StarRating stars={rating} />
         
-        <blockquote className="mt-5 text-[16px] leading-[1.75] text-[#334155]">
+        <blockquote className="mt-3 text-[16px] leading-[1.75] text-[#334155]">
           "{text}"
         </blockquote>
       </div>
 
-      <div className="mt-auto border-t border-[#F1F5F9] bg-[#FAFBFF] px-8 py-6 transition-colors group-hover:bg-white md:px-10">
+      <div className="mt-auto border-t border-[#F1F5F9] bg-[#FAFBFF] px-6 py-5 transition-colors group-hover:bg-white md:px-8">
         <div className="flex items-center gap-4">
           {/* Avatar Base */}
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0F172A] text-[14px] font-medium tracking-wide text-white shadow-sm">
@@ -132,7 +132,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="w-full bg-white pt-8 pb-16 md:pt-12 md:pb-20">
+    <section className="w-full bg-white pt-4 pb-8 md:pt-6 md:pb-10">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -141,14 +141,14 @@ export default function Testimonials() {
         className="mx-auto max-w-[1200px] px-6 md:px-12"
       >
         {/* Header Section */}
-        <div className="mb-16 flex flex-col items-center text-center md:mb-16">
+        <div className="mb-8 flex flex-col items-center text-center md:mb-8">
           <motion.div variants={itemVariants} className="mb-5">
 
           </motion.div>
 
           <motion.h2 
             variants={itemVariants} 
-            className="mb-6 max-w-[700px] text-[32px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-4 max-w-[700px] text-[32px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
           >
             {t.testimonials.heading}
           </motion.h2>
@@ -162,7 +162,7 @@ export default function Testimonials() {
         </div>
 
         {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div key={testimonial.name} variants={itemVariants} className="h-full">
               <TestimonialCard {...testimonial} />
