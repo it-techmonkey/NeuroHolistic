@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 
 interface SessionDevelopmentFormProps {
-  sessionId: string;
-  clientId: string;
+  sessionId?: string;
+  clientId?: string;
+  archivedClientId?: string;
+  submitMode?: 'normal' | 'archive';
   therapistId: string;
-  sessionNumber: number;
-  sessionDate: string;
+  sessionNumber?: number;
+  sessionDate?: string;
   existingForm?: any;
   // Comparison baseline - either the consultation assessment (for session 1)
   // or the previous session's development form (for session 2+)
@@ -66,9 +68,11 @@ const SCORE_LABELS: Record<number, string> = {
 export default function SessionDevelopmentForm({
   sessionId,
   clientId,
+  archivedClientId,
+  submitMode = 'normal',
   therapistId,
-  sessionNumber,
-  sessionDate,
+  sessionNumber = 1,
+  sessionDate = new Date().toISOString().split('T')[0],
   existingForm,
   comparisonBaseline,
   onClose,
@@ -191,23 +195,40 @@ export default function SessionDevelopmentForm({
   const intensityChange = form.pre_session_intensity - form.post_session_intensity;
 
   const handleSave = async () => {
+    if (submitMode === 'archive' && !archivedClientId) {
+      setError('Archived client id is required');
+      return;
+    }
     setLoading(true);
     setError('');
 
     try {
-      const payload = {
-        sessionId,
-        clientId,
-        therapistId,
-        data: {
-          session_number: sessionNumber,
-          session_date: sessionDate,
-          ...form,
-          submitted_at: new Date().toISOString(),
-        },
-      };
+      const payload = submitMode === 'archive'
+        ? {
+            archivedClientId,
+            therapistId,
+            data: {
+              session_number: sessionNumber,
+              session_date: sessionDate,
+              ...form,
+            },
+          }
+        : {
+            sessionId,
+            clientId,
+            therapistId,
+            data: {
+              session_number: sessionNumber,
+              session_date: sessionDate,
+              ...form,
+              submitted_at: new Date().toISOString(),
+            },
+          };
 
-      const res = await fetch('/api/assessments/session-development', {
+      const endpoint = submitMode === 'archive'
+        ? '/api/archive/development-forms'
+        : '/api/assessments/session-development';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -224,7 +245,7 @@ export default function SessionDevelopmentForm({
         throw new Error(data.error || 'Failed to save form');
       }
 
-      onSave(data.data);
+      onSave(submitMode === 'archive' ? data.form : data.data);
     } catch (err: any) {
       setError(err.message);
     } finally {

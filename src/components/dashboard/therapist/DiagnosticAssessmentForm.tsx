@@ -6,6 +6,8 @@ interface DiagnosticAssessmentFormProps {
   clientId: string | null;
   therapistId: string;
   sessionId?: string;
+  archivedClientId?: string;
+  submitMode?: 'normal' | 'archive';
   existingAssessment?: any;
   baselineExists?: boolean;
   clientData?: {
@@ -155,6 +157,8 @@ export default function DiagnosticAssessmentForm({
   clientId,
   therapistId,
   sessionId,
+  archivedClientId,
+  submitMode = 'normal',
   existingAssessment,
   baselineExists = false,
   clientData,
@@ -330,6 +334,10 @@ export default function DiagnosticAssessmentForm({
       setError('At least one current symptom is required');
       return;
     }
+    if (submitMode === 'archive' && !archivedClientId) {
+      setError('Archived client id is required');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -347,24 +355,38 @@ export default function DiagnosticAssessmentForm({
         ? form.root_cause_contributing_factors.map(f => f === 'Other' && form.root_cause_contributing_factors_other ? `Other: ${form.root_cause_contributing_factors_other}` : f).join(', ')
         : form.root_cause_contributing_factors || null;
 
-      const payload = {
-        clientId: clientId || null,
-        therapistId,
-        sessionId,
-        data: {
-          ...form,
-          root_cause_pattern_timeline: rootCauseTimeline,
-          root_cause_parental_influence: rootCauseParental,
-          root_cause_core_patterns: rootCauseCore,
-          root_cause_contributing_factors: rootCauseContributing,
-          assessed_at: new Date().toISOString(),
-          status: 'submitted',
-        },
+      const normalizedData = {
+        ...form,
+        root_cause_pattern_timeline: rootCauseTimeline,
+        root_cause_parental_influence: rootCauseParental,
+        root_cause_core_patterns: rootCauseCore,
+        root_cause_contributing_factors: rootCauseContributing,
+        assessed_at: new Date().toISOString(),
+        status: 'submitted',
       };
+
+      const payload = submitMode === 'archive'
+        ? {
+            archivedClientId,
+            therapistId,
+            data: {
+              ...normalizedData,
+              assessment_date: new Date().toISOString().split('T')[0],
+            },
+          }
+        : {
+            clientId: clientId || null,
+            therapistId,
+            sessionId,
+            data: normalizedData,
+          };
 
       console.log('[DiagnosticAssessmentForm] Submitting payload:', JSON.stringify(payload, null, 2));
 
-      const res = await fetch('/api/assessments/diagnostic', {
+      const endpoint = submitMode === 'archive'
+        ? '/api/archive/assessments'
+        : '/api/assessments/diagnostic';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -381,7 +403,7 @@ export default function DiagnosticAssessmentForm({
         throw new Error(data.error || 'Failed to save assessment');
       }
 
-      onSave(data.data);
+      onSave(submitMode === 'archive' ? data.assessment : data.data);
     } catch (err: any) {
       setError(err.message);
     } finally {

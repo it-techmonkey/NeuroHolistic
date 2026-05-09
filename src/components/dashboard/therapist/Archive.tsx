@@ -6,6 +6,8 @@ import {
   X, Search, Archive, TrendingUp, Edit2, Trash2, Globe, Briefcase, Heart,
   BarChart3, Activity, TrendingDown, ChevronDown, ChevronUp
 } from 'lucide-react';
+import DiagnosticAssessmentForm from './DiagnosticAssessmentForm';
+import SessionDevelopmentForm from './SessionDevelopmentForm';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -1098,8 +1100,39 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
         </div>
 
         {modal === 'editClient' && <ClientFormModal onClose={() => setModal(null)} onSave={handleUpdateClient} saving={saving} initialData={selectedClient} title="Edit Archived Client" />}
-        {modal === 'assessment' && <AssessmentFormModal onClose={() => setModal(null)} onSave={handleCreateAssessment} saving={saving} />}
-        {modal === 'devForm' && <DevFormModal onClose={() => setModal(null)} onSave={handleCreateDevForm} saving={saving} />}
+        {modal === 'assessment' && selectedClient && (
+          <DiagnosticAssessmentForm
+            clientId={null}
+            archivedClientId={selectedClient.id}
+            submitMode="archive"
+            therapistId={therapistId}
+            clientData={{
+              full_name: selectedClient.full_name,
+              email: selectedClient.email || '',
+              phone: selectedClient.phone || '',
+              country: selectedClient.country || '',
+            }}
+            onClose={() => setModal(null)}
+            onSave={(assessment) => {
+              setAssessments(prev => [assessment, ...prev]);
+              setModal(null);
+            }}
+          />
+        )}
+        {modal === 'devForm' && selectedClient && (
+          <SessionDevelopmentForm
+            archivedClientId={selectedClient.id}
+            submitMode="archive"
+            therapistId={therapistId}
+            sessionNumber={(devForms[0]?.session_number || 0) + 1}
+            sessionDate={new Date().toISOString().split('T')[0]}
+            onClose={() => setModal(null)}
+            onSave={(form) => {
+              setDevForms(prev => [form, ...prev]);
+              setModal(null);
+            }}
+          />
+        )}
       </div>
     );
   }
