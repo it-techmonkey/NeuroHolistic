@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Quicksand, Noto_Nastaliq_Urdu, Tajawal } from "next/font/google";
+import { Plus_Jakarta_Sans, Lato, Noto_Nastaliq_Urdu, Tajawal } from "next/font/google";
 import "./globals.css";
 import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
@@ -12,11 +12,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const quicksand = Quicksand({
+const lato = Lato({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["500", "600", "700"],
+  weight: ["300", "400", "700", "900"],
 });
 
 const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
@@ -46,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} ${quicksand.variable} ${notoNastaliqUrdu.variable} ${tajawal.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} ${lato.variable} ${notoNastaliqUrdu.variable} ${tajawal.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
         <AuthProvider>
           <LanguageProvider>
             <BookingModalProvider>

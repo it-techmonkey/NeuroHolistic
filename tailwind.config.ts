@@ -10,7 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         body: ['var(--font-body)', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'Outfit', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Lato', 'system-ui', 'sans-serif'],
         urdu: ['var(--font-urdu)', 'Noto Nastaliq Urdu', 'serif'],
       },
       colors: {

@@ -3,12 +3,28 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import {
-  UserCircle, Mail, Phone, MapPin, Lock, Save, Loader2, CheckCircle, AlertCircle
+  UserCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Lock,
+  Save,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export default function Account({ user }: { user: any }) {
-  const [loading, setLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
   
   const [form, setForm] = useState({
     full_name: user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || '',
@@ -17,6 +33,7 @@ export default function Account({ user }: { user: any }) {
   });
 
   const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -26,7 +43,7 @@ export default function Account({ user }: { user: any }) {
   };
 
   const handleProfileUpdate = async () => {
-    setLoading(true);
+    setProfileSaving(true);
     setMessage({ type: '', text: '' });
 
     try {
@@ -55,11 +72,21 @@ export default function Account({ user }: { user: any }) {
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
     } finally {
-      setLoading(false);
+      setProfileSaving(false);
     }
   };
 
   const handlePasswordChange = async () => {
+    const email = user?.email as string | undefined;
+    if (!email) {
+      setMessage({ type: 'error', text: 'Cannot update password: missing email on session.' });
+      return;
+    }
+
+    if (!passwordForm.currentPassword) {
+      setMessage({ type: 'error', text: 'Enter current password.' });
+      return;
+    }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setMessage({ type: 'error', text: 'New passwords do not match.' });
       return;
@@ -68,11 +95,31 @@ export default function Account({ user }: { user: any }) {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
       return;
     }
+    if (passwordForm.newPassword === passwordForm.currentPassword) {
+      setMessage({ type: 'error', text: 'New password must differ from current password.' });
+      return;
+    }
 
-    setLoading(true);
+    setPasswordSaving(true);
     setMessage({ type: '', text: '' });
 
     try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: passwordForm.currentPassword,
+      });
+
+      if (signInError) {
+        const wrong =
+          signInError.message?.toLowerCase().includes('invalid') ||
+          signInError.message?.includes('Invalid login credentials');
+        throw new Error(
+          wrong
+            ? 'Current password is incorrect.'
+            : signInError.message,
+        );
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: passwordForm.newPassword,
       });
@@ -80,11 +127,15 @@ export default function Account({ user }: { user: any }) {
       if (error) throw error;
 
       setMessage({ type: 'success', text: 'Password changed successfully.' });
-      setPasswordForm({ newPassword: '', confirmPassword: '' });
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
     } finally {
-      setLoading(false);
+      setPasswordSaving(false);
     }
   };
 
@@ -191,15 +242,15 @@ export default function Account({ user }: { user: any }) {
           <div className="pt-4">
             <button
               onClick={handleProfileUpdate}
-              disabled={loading}
+              disabled={profileSaving}
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {loading ? (
+              {profileSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              {loading ? 'Saving...' : 'Save Changes'}
+              {profileSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -219,15 +270,65 @@ export default function Account({ user }: { user: any }) {
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
               <Lock className="w-4 h-4 text-slate-400" />
+              Current Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords.current ? 'text' : 'password'}
+                value={passwordForm.currentPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+                }
+                autoComplete="current-password"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Current password"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPasswords((s) => ({ ...s, current: !s.current }))
+                }
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 rounded-md"
+                aria-label={showPasswords.current ? 'Hide password' : 'Show password'}
+              >
+                {showPasswords.current ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+              <Lock className="w-4 h-4 text-slate-400" />
               New Password
             </label>
-            <input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="At least 8 characters"
-            />
+            <div className="relative">
+              <input
+                type={showPasswords.new ? 'text' : 'password'}
+                value={passwordForm.newPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+                }
+                autoComplete="new-password"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="At least 8 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswords((s) => ({ ...s, new: !s.new }))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 rounded-md"
+                aria-label={showPasswords.new ? 'Hide password' : 'Show password'}
+              >
+                {showPasswords.new ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div>
@@ -235,27 +336,62 @@ export default function Account({ user }: { user: any }) {
               <Lock className="w-4 h-4 text-slate-400" />
               Confirm New Password
             </label>
-            <input
-              type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Confirm your new password"
-            />
+            <div className="relative">
+              <input
+                type={showPasswords.confirm ? 'text' : 'password'}
+                value={passwordForm.confirmPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                }
+                autoComplete="new-password"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Confirm your new password"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPasswords((s) => ({ ...s, confirm: !s.confirm }))
+                }
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 rounded-md"
+                aria-label={showPasswords.confirm ? 'Hide password' : 'Show password'}
+              >
+                {showPasswords.confirm ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
+
+          <p className="text-xs text-slate-500">
+            OAuth-only sign-in: use{' '}
+            <a
+              href="/auth/forgot-password"
+              className="text-indigo-600 hover:underline font-medium"
+            >
+              Forgot password
+            </a>{' '}
+            to set email/password first.
+          </p>
 
           <div className="pt-4">
             <button
               onClick={handlePasswordChange}
-              disabled={loading || !passwordForm.newPassword || !passwordForm.confirmPassword}
+              disabled={
+                passwordSaving ||
+                !passwordForm.currentPassword ||
+                !passwordForm.newPassword ||
+                !passwordForm.confirmPassword
+              }
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 disabled:opacity-50 transition-colors"
             >
-              {loading ? (
+              {passwordSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Lock className="w-4 h-4" />
               )}
-              {loading ? 'Updating...' : 'Update Password'}
+              {passwordSaving ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </div>

@@ -85,7 +85,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-display), "Quicksand", "Inter", "Satoshi", "Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-display), "Lato", -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: -0.02em;
   line-height: 1.2;
   font-style: normal;
@@ -103,7 +103,7 @@ h6 * {
 /* Clean sans-serif font for large headings */
 h1,
 h2 {
-  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 700;
 }
 
@@ -111,13 +111,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 600;
 }
 
 /* Utility class for display headings */
 .font-display {
-  font-family: var(--font-display), "Quicksand", system-ui, sans-serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 700;
 }
 
@@ -280,4 +280,3 @@ button:disabled {
 [dir="rtl"] .rtl-grid-reverse {
   direction: rtl;
 }
-

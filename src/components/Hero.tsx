@@ -35,7 +35,7 @@ export default function Hero() {
               style={
                 isArabic
                   ? { fontFamily: "var(--font-arabic), 'Tajawal', sans-serif" }
-                  : { fontFamily: "var(--font-display), 'Quicksand', system-ui, sans-serif" }
+                  : { fontFamily: "var(--font-display), 'Lato', system-ui, sans-serif" }
               }
             >
               <span
