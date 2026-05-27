@@ -10,11 +10,7 @@ import { useAuth } from "@/lib/auth/context";
 import { supabase } from "@/lib/supabase/client";
 import { arabicUiEnabled } from "@/lib/site-features";
 import { useLang } from "@/lib/translations/LanguageContext";
-
-const CONTACT_INFO = {
-  email: "info@neuroholistic.com",
-  phone: "+1 (555) 123-4567",
-};
+import { CONTACT_INFO } from "@/lib/contact";
 
 function ChevronIcon({ isOpen }: { isOpen: boolean }) {
   return (
@@ -69,7 +65,10 @@ export default function Navbar() {
     if (scrollTimeoutRef.current) return;
     
     scrollTimeoutRef.current = requestAnimationFrame(() => {
-      const isScrolled = window.scrollY > 15;
+      const headerHeight = window.innerWidth >= 768 ? 120 : window.innerWidth >= 640 ? 80 : 64;
+      const heroOffset = window.innerWidth >= 768 ? 64 : 36;
+      const floatingThreshold = headerHeight + heroOffset;
+      const isScrolled = window.scrollY >= floatingThreshold;
       setScrolled(prev => prev === isScrolled ? prev : isScrolled);
       scrollTimeoutRef.current = undefined;
     }) as unknown as NodeJS.Timeout;
@@ -77,6 +76,7 @@ export default function Navbar() {
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (scrollTimeoutRef.current) cancelAnimationFrame(scrollTimeoutRef.current as unknown as number);
@@ -106,25 +106,32 @@ export default function Navbar() {
   const textColor = isLightPage ? "text-slate-900" : "text-white";
   const borderColor = isLightPage ? "border-slate-200/50" : "border-white/10";
 
-  const getAdaptiveBg = () => {
+  const getAdaptiveBg = (isFloatingHeader: boolean) => {
     if (isLightPage) {
-      return "bg-white/70 backdrop-blur-md";
+      return "bg-white/95 backdrop-blur-md";
     }
-    return "bg-[#080C20]/80 backdrop-blur-md";
+    return isFloatingHeader
+      ? "bg-[#080C20]/95 backdrop-blur-md"
+      : "bg-[#090D1D]";
   };
 
   // Auth link classname helper
   const authLinkClass = (base: string) =>
     `${base} ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`;
 
-  return (
-    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-4 pt-3 sm:pt-4">
-      <div className={`relative w-full max-w-[1200px] rounded-xl sm:rounded-[26px] border transition-colors duration-300 ease-out ${borderColor} ${getAdaptiveBg()}`}>
+  const renderHeaderContent = (isFloatingHeader: boolean) => (
+      <div
+        className={`relative w-full border transition-all duration-300 ease-out ${
+          isFloatingHeader
+            ? "max-w-[1200px] rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.28)] sm:rounded-[26px]"
+            : "max-w-none rounded-none border-x-0 border-t-0 shadow-[0_1px_0_rgba(255,255,255,0.06)]"
+        } ${borderColor} ${getAdaptiveBg(isFloatingHeader)}`}
+      >
         
         {/* ── 1. Secondary Navbar (Utility) ── */}
         <div 
           className={`hidden md:flex items-center justify-between px-4 sm:px-6 md:px-8 text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wide transition-[max-height,opacity,padding] duration-300 ease-out overflow-hidden ${
-            scrolled ? "max-h-0 opacity-0 pointer-events-none" : "py-2 md:h-10 md:max-h-10 border-b opacity-100"
+            isFloatingHeader ? "max-h-0 opacity-0 pointer-events-none" : "py-2 md:h-10 md:max-h-10 border-b opacity-100"
           } ${borderColor} ${textColor}`}
         >
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
@@ -165,7 +172,7 @@ export default function Navbar() {
         </div>
 
         {/* ── 2. Main Navbar ── */}
-        <div className={`flex items-center justify-between px-3 sm:px-6 md:px-10 transition-[height] duration-300 ${scrolled ? "h-14 sm:h-16" : "h-16 sm:h-20"}`}>
+        <div className={`flex items-center justify-between px-3 sm:px-6 md:px-10 transition-[height] duration-300 ${isFloatingHeader ? "h-14 sm:h-16" : "h-16 sm:h-20"}`}>
           
           <Link href="/" className={`flex items-center gap-2 sm:gap-2.5 shrink-0 transition-colors ${textColor}`}>
             <Image src="/images/logo.svg" alt="NeuroHolistic" width={32} height={28} className="w-7 h-6 sm:w-8 sm:h-7" unoptimized />
@@ -269,17 +276,23 @@ export default function Navbar() {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 w-52 z-[110]"
+                    className="absolute top-full left-0 mt-2 w-64 z-[110]"
                   >
                     <div className={`rounded-xl border p-3 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       <a href={`mailto:${CONTACT_INFO.email}`} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         {CONTACT_INFO.email}
                       </a>
-                      <a href={`tel:${CONTACT_INFO.phone}`} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium mt-1 ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                      <a href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium mt-1 ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                        {CONTACT_INFO.phone}
+                        WhatsApp: {CONTACT_INFO.whatsapp.label}
                       </a>
+                      {CONTACT_INFO.mobiles.map((mobile, index) => (
+                        <a key={mobile.href} href={mobile.href} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium mt-1 ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          Mobile {index + 1}: {mobile.label}
+                        </a>
+                      ))}
                       <div className="border-t border-white/10 my-2 pt-2">
                         <div className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${isLightPage ? 'text-slate-600' : 'text-slate-500'}`}>
                           {isAuthenticated ? t.navbar.account : t.navbar.logins}
@@ -325,6 +338,25 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <>
+      <div className="relative h-16 sm:h-20 md:h-[120px] z-[100]">
+        <header className="absolute top-0 left-0 right-0 block px-0 pt-0">
+          {renderHeaderContent(false)}
+        </header>
+      </div>
+
+      <header
+        className={`fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 pt-3 transition-[opacity,transform,filter] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform sm:px-4 sm:pt-4 ${
+          scrolled
+            ? "translate-y-0 scale-100 opacity-100 blur-0"
+            : "pointer-events-none -translate-y-4 scale-[0.985] opacity-0 blur-[1px]"
+        }`}
+      >
+        {renderHeaderContent(true)}
+      </header>
 
       {/* ── 3. Mobile Menu Overlay ── */}
       <AnimatePresence>
@@ -445,6 +477,6 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }

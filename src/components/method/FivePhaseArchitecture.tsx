@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 const PHASE_IMAGES = [
+  "/images/pages/method-img7.webp",
   "/images/pages/method-img1.webp",
-  "/images/pages/method-img2.webp",
   "/images/pages/method-img5.webp",
+  "/images/pages/method-img2.webp",
   "/images/pages/method-img4.webp",
-  "/images/pages/method-img6.webp",
 ];
 
 export default function FivePhaseArchitecture() {

@@ -7,21 +7,28 @@ import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function ResearchPage() {
-  const { t, isUrdu } = useLang();
+  const { t, isUrdu, lang } = useLang();
   const rp = t.researchPage;
   const RESEARCH_FOCUS = rp.focusAreas;
   const SYMBOLS = ["◆", "◇", "○", "△"];
+  const researchHeroTitle =
+    lang === "en" ? (
+      <>
+        Advancing the science <br />
+        <span className="whitespace-nowrap text-white font-normal">of transformation.</span>
+      </>
+    ) : (
+      <>
+        {rp.heroTitle1} <br />
+        <span className="text-white font-normal">{rp.heroTitle2}</span>
+      </>
+    );
 
   return (
     <div className="w-full bg-white">
       <PageHero
         eyebrow={rp.eyebrow}
-        title={
-          <>
-            {rp.heroTitle1} <br />
-            <span className="text-white font-normal">{rp.heroTitle2}</span>
-          </>
-        }
+        title={researchHeroTitle}
         description={rp.heroDescription}
         imageSrc="/images/pages/research-img1.webp"
         imageAlt="Neuroscience research environment"

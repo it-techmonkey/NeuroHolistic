@@ -104,28 +104,6 @@ export default function ProgramsSection() {
           </h2>
         </div>
 
-        <div className="mb-14 grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-7">
-            <div className="relative aspect-[16/9] overflow-hidden border border-[#E2E8F0] bg-[#FAFBFF]">
-              <Image
-                src="/images/pages/programs-img1.webp"
-                alt={ps.heading}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 60vw"
-              />
-            </div>
-          </div>
-          <div className="border-l border-[#E2E8F0] pl-8 lg:col-span-5">
-            <p className="text-[17px] leading-[1.8] text-[#475569]">
-              {p.privateDescription}
-            </p>
-            <p className="mt-5 text-[16px] leading-[1.8] text-[#64748B]">
-              {p.groupDescription}
-            </p>
-          </div>
-        </div>
-
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
           {PROGRAMS.map((program) => (
             <ProgramCard key={program.title} {...program} idealFor={ps.idealFor} bookConsultation={ps.bookConsultation} />

@@ -30,7 +30,7 @@ export default function MethodVision() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         
         {/* Using a 12-column grid for precise control */}
-        <div className="grid grid-cols-1 gap-y-16 lg:grid-cols-12 lg:items-start lg:gap-x-12">
+        <div className="grid grid-cols-1 gap-y-16 lg:grid-cols-12 lg:items-start">
 
           {/* ── Imagery (5 Columns) ── */}
           <motion.div
@@ -43,7 +43,7 @@ export default function MethodVision() {
             {/* Aspect ratio changed to 4/5 to match the vertical height of 3 paragraphs */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl shadow-slate-200/50">
               <Image
-                src="/images/pages/method-img3.webp"
+                src="/images/pages/method-img6.webp"
                 alt={mp.visionTitle}
                 fill
                 priority
