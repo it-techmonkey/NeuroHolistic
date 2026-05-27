@@ -57,7 +57,7 @@ export default function RetreatFormat() {
             <div className="group relative w-full border border-[#F1F5F9] bg-[#FAFBFF] p-4">
               <div className="relative aspect-[4/5] w-full overflow-hidden md:aspect-[16/11]">
                 <Image
-                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                  src="/images/pages/retreat-img2.webp"
                   alt={rl.retreatStructureImageAlt}
                   fill
                   className="object-cover grayscale-[15%] transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"

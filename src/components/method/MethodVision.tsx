@@ -43,7 +43,7 @@ export default function MethodVision() {
             {/* Aspect ratio changed to 4/5 to match the vertical height of 3 paragraphs */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl shadow-slate-200/50">
               <Image
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                src="/images/pages/method-img3.webp"
                 alt={mp.visionTitle}
                 fill
                 priority

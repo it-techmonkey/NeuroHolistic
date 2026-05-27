@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Lato, Noto_Nastaliq_Urdu, Tajawal } from "next/font/google";
+import { Plus_Jakarta_Sans, Lato, Montserrat, Noto_Nastaliq_Urdu, Playfair_Display, Tajawal } from "next/font/google";
 import "./globals.css";
 import { BookingModalProvider } from "@/components/booking/BookingModal";
 import { AuthProvider } from "@/lib/auth/context";
@@ -17,6 +17,20 @@ const lato = Lato({
   variable: "--font-display",
   display: "swap",
   weight: ["300", "400", "700", "900"],
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-hero-display",
+  display: "swap",
+  weight: ["400", "700", "800", "900"],
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-hero-copy",
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
@@ -46,7 +60,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} ${lato.variable} ${notoNastaliqUrdu.variable} ${tajawal.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.variable} ${lato.variable} ${playfairDisplay.variable} ${montserrat.variable} ${notoNastaliqUrdu.variable} ${tajawal.variable} antialiased min-h-screen bg-[#F8FAFC] text-slate-900`} suppressHydrationWarning>
         <AuthProvider>
           <LanguageProvider>
             <BookingModalProvider>

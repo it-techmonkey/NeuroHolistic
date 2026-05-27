@@ -23,12 +23,12 @@ export default function AboutPage() {
         {
           title: t.about.yearsOfExploration,
           description: [...t.about.evolutionJourney2],
-          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80",
+          image: "/images/pages/aboutus-img1.webp",
         },
         {
           title: t.about.structuringMethod,
           description: [...t.about.evolutionJourney3],
-          image: "/images/pages/dna.jpeg",
+          image: "/images/pages/aboutus-img2.webp",
         },
       ] as { title: string; description: string[]; image: string; isFullWidth?: boolean }[],
     [t],

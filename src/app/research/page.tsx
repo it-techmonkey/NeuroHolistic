@@ -23,7 +23,7 @@ export default function ResearchPage() {
           </>
         }
         description={rp.heroDescription}
-        imageSrc="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1920&q=80"
+        imageSrc="/images/pages/research-img1.webp"
         imageAlt="Neuroscience research environment"
         metaTags={[]}
         primaryAction={{ label: rp.inquireCollaboration, href: "mailto:info@neuroholistic.com" }}
