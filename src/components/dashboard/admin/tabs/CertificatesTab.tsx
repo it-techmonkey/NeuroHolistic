@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, CheckCircle2, Copy, ExternalLink, FileText, Loader2, QrCode, RefreshCw, Upload } from 'lucide-react';
+import { Award, CheckCircle2, Copy, ExternalLink, FileText, Loader2, QrCode, RefreshCw, Trash2, Upload } from 'lucide-react';
 import type { AdminData } from './types';
 
 type Certificate = {
@@ -27,13 +27,11 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [title, setTitle] = useState('Certificate of Completion');
+  const [title, setTitle] = useState('Certificate Of Professional Mastery');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issuedAt, setIssuedAt] = useState(new Date().toISOString().slice(0, 10));
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
-  const [qrPosition, setQrPosition] = useState('bottom-right');
-  const [qrSize, setQrSize] = useState('96');
   const [file, setFile] = useState<File | null>(null);
 
   const clients = useMemo(
@@ -87,8 +85,6 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
     formData.append('userId', selectedUserId);
     formData.append('recipientName', recipientName);
     formData.append('recipientEmail', recipientEmail);
-    formData.append('qrPosition', qrPosition);
-    formData.append('qrSize', qrSize);
 
     try {
       const res = await fetch('/api/admin/certificates', {
@@ -121,6 +117,26 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
       });
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || 'Failed to update certificate');
+      await loadCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
+  async function deleteCertificate(certificateId: string, certificateNumber: string) {
+    const confirmed = window.confirm(`Delete certificate ${certificateNumber}? This will remove the uploaded certificate file and its QR verification page.`);
+    if (!confirmed) return;
+
+    setError('');
+    setMessage('');
+
+    try {
+      const res = await fetch(`/api/admin/certificates/${certificateId}`, {
+        method: 'DELETE',
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to delete certificate');
+      setMessage('Certificate deleted.');
       await loadCertificates();
     } catch (err: any) {
       setError(err.message);
@@ -230,33 +246,6 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
             />
           </label>
 
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-slate-500">QR position on certificate</span>
-            <select
-              value={qrPosition}
-              onChange={(event) => setQrPosition(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
-            >
-              <option value="bottom-right">Bottom right</option>
-              <option value="bottom-left">Bottom left</option>
-              <option value="top-right">Top right</option>
-              <option value="top-left">Top left</option>
-            </select>
-          </label>
-
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-slate-500">QR size</span>
-            <select
-              value={qrSize}
-              onChange={(event) => setQrSize(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
-            >
-              <option value="80">Small</option>
-              <option value="96">Medium</option>
-              <option value="120">Large</option>
-              <option value="150">Extra large</option>
-            </select>
-          </label>
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
@@ -343,6 +332,13 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
                     >
                       {certificate.status === 'active' ? 'Revoke' : 'Reactivate'}
+                    </button>
+                    <button
+                      onClick={() => deleteCertificate(certificate.id, certificate.certificate_number)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
                     </button>
                   </div>
                 </div>

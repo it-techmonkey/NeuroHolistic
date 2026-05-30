@@ -1,118 +1,155 @@
-import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { Client } from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
-// Load environment variables from .env.local
-const envPath = `${__dirname}/../.env.local`;
-if (fs.existsSync(envPath)) {
+function loadEnvFile(fileName: string) {
+  const envPath = path.join(projectRoot, fileName);
+  if (!fs.existsSync(envPath)) return;
+
   const envContent = fs.readFileSync(envPath, 'utf-8');
   envContent.split('\n').forEach((line) => {
     const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const [key, ...valueParts] = trimmed.split('=');
-      const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
-      if (key && value && !process.env[key]) {
-        process.env[key] = value;
-      }
+    if (!trimmed || trimmed.startsWith('#')) return;
+
+    const [key, ...valueParts] = trimmed.split('=');
+    const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+    if (key && value && !process.env[key]) {
+      process.env[key] = value;
     }
   });
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+loadEnvFile('.env.local');
+loadEnvFile('.env');
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing Supabase environment variables');
+const args = process.argv.slice(2);
+const dryRun = args.includes('--dry-run');
+const migrationArg = args.find((arg) => !arg.startsWith('--'));
+
+if (!migrationArg) {
+  console.error('Usage: npx tsx scripts/run_sql_migration.ts <path-to-sql-file> [--dry-run]');
+  console.error('Example: npx tsx scripts/run_sql_migration.ts supabase/migrations/019_add_certificates.sql');
   process.exit(1);
 }
 
-// TypeScript type assertion after null check
-const apiUrl: string = supabaseUrl;
-const apiKey: string = supabaseServiceKey;
+const migrationPath = path.isAbsolute(migrationArg)
+  ? migrationArg
+  : path.resolve(projectRoot, migrationArg);
 
-const supabase = createClient(apiUrl, apiKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+if (!fs.existsSync(migrationPath)) {
+  console.error(`Migration file not found: ${migrationPath}`);
+  process.exit(1);
+}
 
-// Function to execute SQL statement
-async function executeSQL(sql: string): Promise<void> {
-  // Split by semicolon and filter out empty statements
-  const statements = sql
-    .split(';')
-    .map(stmt => stmt.trim())
-    .filter(stmt => stmt.length > 0);
-  
-  for (const statement of statements) {
-    // Skip comments and empty lines
-    if (statement.startsWith('--') || statement.length === 0) {
-      continue;
-    }
-    
-    try {
-      console.log(`Executing: ${statement.substring(0, Math.min(50, statement.length))}...`);
-      // Use rpc to call a PostgreSQL function that executes SQL
-      // Since we don't have exec_sql, we'll try to use the supabase client's 
-      // ability to query via select with a raw SQL? Not directly possible.
-      
-      // Alternative: Use the supabase sql.js approach if available in edge runtime?
-      // For now, let's try to use the REST API with a different endpoint
-      
-      // Let's try to use the supabase client to do a simple query that doesn't return data
-      // to test connection, then we'll have to execute via a different method
-      
-      // Actually, let's just try to use the fetch approach directly
-      const response = await fetch(`${apiUrl}/rest/v1/rpc/exec_sql`, {
-        method: 'POST',
-        headers: {
-          'apikey': apiKey,
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify({ sql: statement }),
-      });
-      
-      if (!response.ok) {
-        // If exec_sql is not available, we'll try to execute via PostgREST directly
-        // by attempting to insert/select from a dummy table? Not ideal.
-        console.log(`⚠️  RPC exec_sql failed, trying direct approach for: ${statement.substring(0, Math.min(30, statement.length))}...`);
-        
-        // For DDL statements, we might need to use a different approach
-        // Let's skip for now and rely on the manual execution instructions
-        console.log(`⚠️  Please execute manually: ${statement}`);
-        continue;
-      }
-      
-      const result = await response.json();
-      console.log(`✅ Executed: ${statement.substring(0, Math.min(30, statement.length))}...`);
-    } catch (error) {
-      console.error(`❌ Failed to execute: ${statement.substring(0, Math.min(30, statement.length))}...`);
-      console.error(error);
-      // Continue with other statements
-    }
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.DIRECT_URL ||
+  process.env.SUPABASE_DB_URL ||
+  process.env.POSTGRES_URL;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
+  process.exit(1);
+}
+
+const apiUrl = supabaseUrl;
+const apiKey = supabaseServiceKey;
+
+async function runWithPostgres(migrationSQL: string) {
+  if (!databaseUrl) return false;
+
+  const client = new Client({
+    connectionString: databaseUrl,
+    ssl: databaseUrl.includes('supabase.') || databaseUrl.includes('pooler.supabase.')
+      ? { rejectUnauthorized: false }
+      : undefined,
+  });
+
+  await client.connect();
+  try {
+    await client.query(migrationSQL);
+  } finally {
+    await client.end();
   }
+
+  return true;
+}
+
+async function runWithSupabaseRpc(migrationSQL: string, relativePath: string) {
+  const response = await fetch(`${apiUrl}/rest/v1/rpc/exec_sql`, {
+    method: 'POST',
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ sql: migrationSQL }),
+  });
+
+  if (response.ok) {
+    return true;
+  }
+
+  const details = await response.text();
+  console.error('Migration failed.');
+  console.error(`Supabase responded with ${response.status} ${response.statusText}.`);
+  console.error(details);
+
+  if (details.includes('PGRST202') || details.includes('exec_sql')) {
+    console.error('\nYour Supabase project does not expose a public.exec_sql RPC function.');
+    console.error('Use one of these options:');
+    console.error('1. Run the SQL file manually in Supabase Dashboard -> SQL Editor.');
+    console.error(`   File: ${relativePath}`);
+    console.error('2. Add a direct database connection string to .env.local as DATABASE_URL, then rerun this command.');
+    console.error('   Supabase Dashboard -> Project Settings -> Database -> Connection string');
+  }
+
+  return false;
 }
 
 async function runMigration() {
-  console.log('🔧 Running migration 009: Full system restructure...\n');
-  
-  // Read the migration file
-  const migrationPath = `${__dirname}/../src/lib/supabase/migrations/009_full_restructure.sql`;
-  const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
-  
-  // Execute the migration
-  await executeSQL(migrationSQL);
-  
-  console.log('\n✅ Migration 009 executed successfully!');
-  console.log('\n📝 NOTE: Some statements may have failed if exec_sql is not available.');
-  console.log('   Please check the Supabase SQL Editor for any failed statements and run them manually.\n');
+  const migrationSQL = fs.readFileSync(migrationPath, 'utf-8').trim();
+
+  if (!migrationSQL) {
+    console.error(`Migration file is empty: ${migrationPath}`);
+    process.exit(1);
+  }
+
+  const relativePath = path.relative(projectRoot, migrationPath);
+  console.log(`Running SQL migration: ${relativePath}`);
+
+  if (dryRun) {
+    console.log(`Dry run OK. SQL size: ${migrationSQL.length} characters.`);
+    return true;
+  }
+
+  if (databaseUrl) {
+    console.log('Using direct Postgres connection from DATABASE_URL/DIRECT_URL/SUPABASE_DB_URL/POSTGRES_URL.');
+    await runWithPostgres(migrationSQL);
+    console.log('Migration executed successfully.');
+    return true;
+  }
+
+  const ranWithRpc = await runWithSupabaseRpc(migrationSQL, relativePath);
+  if (ranWithRpc) {
+    console.log('Migration executed successfully.');
+  }
+  return ranWithRpc;
 }
 
-runMigration().catch(error => {
-  console.error('❌ Migration failed:', error);
-  process.exit(1);
+runMigration().then((success) => {
+  if (!success) {
+    process.exitCode = 1;
+  }
+}).catch((error) => {
+  console.error('Migration failed:', error);
+  process.exitCode = 1;
 });

@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS public.certificates (
   file_name TEXT NOT NULL,
   file_size BIGINT,
   qr_token TEXT NOT NULL UNIQUE,
-  qr_position TEXT NOT NULL DEFAULT 'bottom-right',
-  qr_size INTEGER NOT NULL DEFAULT 96,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

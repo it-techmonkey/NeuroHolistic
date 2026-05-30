@@ -8,7 +8,9 @@ import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import getR2Client, { R2_BUCKET_NAME } from '@/lib/r2/client';
 
-type QrPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+type QrPosition = 'cma-logo-left' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+const DEFAULT_QR_POSITION: QrPosition = 'cma-logo-left';
+const DEFAULT_QR_SIZE = 58;
 
 async function requireAdmin() {
   const authClient = await createClient();
@@ -40,17 +42,6 @@ function normalizeCertificateNumber(value: string) {
   return value.trim().replace(/\s+/g, '-');
 }
 
-function parseQrPosition(value: FormDataEntryValue | null): QrPosition {
-  const allowed: QrPosition[] = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
-  return allowed.includes(value as QrPosition) ? value as QrPosition : 'bottom-right';
-}
-
-function parseQrSize(value: FormDataEntryValue | null) {
-  const size = Number(value);
-  if (!Number.isFinite(size)) return 96;
-  return Math.max(64, Math.min(180, Math.round(size)));
-}
-
 function getPdfQrCoordinates(
   pageWidth: number,
   pageHeight: number,
@@ -64,6 +55,11 @@ function getPdfQrCoordinates(
   const top = pageHeight - qrSize - margin;
 
   switch (position) {
+    case 'cma-logo-left':
+      return {
+        x: pageWidth - (pageWidth * 0.25) - qrSize,
+        y: pageHeight * 0.148,
+      };
     case 'bottom-left':
       return { x: left, y: bottom };
     case 'top-left':
@@ -152,8 +148,17 @@ async function stampImageCertificate(
     .toBuffer();
 
   const framedSize = qrPixelSize + padding * 2;
-  const left = position.endsWith('left') ? margin : width - framedSize - margin;
-  const top = position.startsWith('top') ? margin : height - framedSize - margin;
+  const isCmaLogoLeft = position === 'cma-logo-left';
+  const left = isCmaLogoLeft
+    ? Math.round(width - (width * 0.25) - framedSize)
+    : position.endsWith('left')
+      ? margin
+      : width - framedSize - margin;
+  const top = isCmaLogoLeft
+    ? Math.round(height - (height * 0.148) - framedSize)
+    : position.startsWith('top')
+      ? margin
+      : height - framedSize - margin;
 
   return image
     .composite([{ input: framedQr, left: Math.max(0, left), top: Math.max(0, top) }])
@@ -214,8 +219,8 @@ export async function POST(request: NextRequest) {
     const recipientName = String(formData.get('recipientName') || '').trim() || null;
     const recipientEmail = String(formData.get('recipientEmail') || '').trim() || null;
     const issuedAt = String(formData.get('issuedAt') || '').trim() || null;
-    const qrPosition = parseQrPosition(formData.get('qrPosition'));
-    const qrSize = parseQrSize(formData.get('qrSize'));
+    const qrPosition = DEFAULT_QR_POSITION;
+    const qrSize = DEFAULT_QR_SIZE;
 
     if (!file || !title || !certificateNumber) {
       return NextResponse.json({ error: 'File, title, and certificate number are required' }, { status: 400 });
@@ -275,8 +280,6 @@ export async function POST(request: NextRequest) {
         file_name: file.name,
         file_size: stampedBuffer.length,
         qr_token: qrToken,
-        qr_position: qrPosition,
-        qr_size: qrSize,
         status: 'active',
       })
       .select()
