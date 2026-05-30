@@ -85,8 +85,9 @@ export async function PATCH(
       updates.recipient_name = String(body.recipientName || '').trim() || null;
     }
 
-    if ('recipientEmail' in body) {
-      updates.recipient_email = String(body.recipientEmail || '').trim() || null;
+    if ('issuedAt' in body) {
+      const issuedAt = String(body.issuedAt || '').trim();
+      updates.issued_at = issuedAt || null;
     }
 
     const { data: certificate, error } = await supabase
