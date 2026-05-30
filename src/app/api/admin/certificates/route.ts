@@ -216,7 +216,6 @@ export async function POST(request: NextRequest) {
     const userId = String(formData.get('userId') || '').trim() || null;
     const recipientName = String(formData.get('recipientName') || '').trim() || null;
     const recipientEmail = String(formData.get('recipientEmail') || '').trim() || null;
-    const issuedAt = String(formData.get('issuedAt') || '').trim() || null;
     const qrPosition = DEFAULT_QR_POSITION;
     const qrSize = DEFAULT_QR_SIZE;
 
@@ -273,7 +272,7 @@ export async function POST(request: NextRequest) {
         title,
         recipient_name: recipientName,
         recipient_email: recipientEmail,
-        issued_at: issuedAt || null,
+        issued_at: null,
         file_key: fileKey,
         file_name: file.name,
         file_size: stampedBuffer.length,

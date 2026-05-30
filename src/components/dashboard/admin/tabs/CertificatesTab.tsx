@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, CheckCircle2, Copy, ExternalLink, FileText, Loader2, QrCode, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { Award, CheckCircle2, Copy, ExternalLink, FileText, Loader2, Pencil, QrCode, RefreshCw, Save, Trash2, Upload, X } from 'lucide-react';
 import type { AdminData } from './types';
 
 type Certificate = {
@@ -20,6 +20,14 @@ type Certificate = {
   user?: { id: string; full_name?: string; email?: string } | null;
 };
 
+type EditForm = {
+  userId: string;
+  title: string;
+  certificateNumber: string;
+  recipientName: string;
+  recipientEmail: string;
+};
+
 export default function CertificatesTab({ data }: { data: AdminData }) {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,10 +37,12 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [title, setTitle] = useState('Certificate Of Professional Mastery');
   const [certificateNumber, setCertificateNumber] = useState('');
-  const [issuedAt, setIssuedAt] = useState(new Date().toISOString().slice(0, 10));
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [editingCertificateId, setEditingCertificateId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const clients = useMemo(
     () => data.users.filter(user => user.role === 'client'),
@@ -81,7 +91,6 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
     formData.append('file', file);
     formData.append('title', title);
     formData.append('certificateNumber', certificateNumber);
-    formData.append('issuedAt', issuedAt);
     formData.append('userId', selectedUserId);
     formData.append('recipientName', recipientName);
     formData.append('recipientEmail', recipientEmail);
@@ -146,6 +155,51 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
   async function copyLink(url: string) {
     await navigator.clipboard.writeText(url);
     setMessage('Verification link copied.');
+  }
+
+  function startEditing(certificate: Certificate) {
+    setError('');
+    setMessage('');
+    setEditingCertificateId(certificate.id);
+    setEditForm({
+      userId: certificate.user_id || '',
+      title: certificate.title,
+      certificateNumber: certificate.certificate_number,
+      recipientName: certificate.recipient_name || '',
+      recipientEmail: certificate.recipient_email || '',
+    });
+  }
+
+  function updateEditForm(field: keyof EditForm, value: string) {
+    setEditForm((current) => current ? { ...current, [field]: value } : current);
+  }
+
+  async function saveCertificateUpdate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingCertificateId || !editForm) return;
+
+    setSavingEdit(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const res = await fetch(`/api/admin/certificates/${editingCertificateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to update certificate');
+
+      setMessage('Certificate information updated.');
+      setEditingCertificateId(null);
+      setEditForm(null);
+      await loadCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSavingEdit(false);
+    }
   }
 
   const qrImage = (url: string) =>
@@ -232,16 +286,6 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
               type="email"
               value={recipientEmail}
               onChange={(event) => setRecipientEmail(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
-            />
-          </label>
-
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-slate-500">Issued date</span>
-            <input
-              type="date"
-              value={issuedAt}
-              onChange={(event) => setIssuedAt(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
             />
           </label>
@@ -334,6 +378,13 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
                       {certificate.status === 'active' ? 'Revoke' : 'Reactivate'}
                     </button>
                     <button
+                      onClick={() => startEditing(certificate)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                    <button
                       onClick={() => deleteCertificate(certificate.id, certificate.certificate_number)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50"
                     >
@@ -341,6 +392,86 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
                       Delete
                     </button>
                   </div>
+
+                  {editingCertificateId === certificate.id && editForm && (
+                    <form onSubmit={saveCertificateUpdate} className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-slate-500">Assign to user</span>
+                          <select
+                            value={editForm.userId}
+                            onChange={(event) => updateEditForm('userId', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+                          >
+                            <option value="">Unassigned public certificate</option>
+                            {clients.map(user => (
+                              <option key={user.id} value={user.id}>
+                                {user.fullName || user.email} ({user.email})
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-slate-500">Certificate title</span>
+                          <input
+                            value={editForm.title}
+                            onChange={(event) => updateEditForm('title', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+                            required
+                          />
+                        </label>
+
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-slate-500">Certificate number</span>
+                          <input
+                            value={editForm.certificateNumber}
+                            onChange={(event) => updateEditForm('certificateNumber', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+                            required
+                          />
+                        </label>
+
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-slate-500">Recipient name</span>
+                          <input
+                            value={editForm.recipientName}
+                            onChange={(event) => updateEditForm('recipientName', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+                          />
+                        </label>
+
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-slate-500">Recipient email</span>
+                          <input
+                            type="email"
+                            value={editForm.recipientEmail}
+                            onChange={(event) => updateEditForm('recipientEmail', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="submit"
+                          disabled={savingEdit}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-60"
+                        >
+                          {savingEdit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                          Save changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingCertificateId(null); setEditForm(null); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-medium hover:bg-slate-50"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <img
