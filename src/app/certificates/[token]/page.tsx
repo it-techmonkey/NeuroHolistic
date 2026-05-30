@@ -1,6 +1,6 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Award, CalendarDays, FileText, ShieldCheck, ShieldX } from 'lucide-react';
+import { Award, FileText, ShieldCheck, ShieldX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import getR2Client, { R2_BUCKET_NAME } from '@/lib/r2/client';
 import { getServiceSupabase } from '@/lib/supabase/service';
@@ -56,14 +56,6 @@ export default async function CertificateVerificationPage({ params }: PageProps)
     { expiresIn: 3600 }
   );
 
-  const issuedLabel = certificate.issued_at
-    ? new Date(`${certificate.issued_at}T00:00:00`).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : 'Not specified';
-
   return (
     <CertificateShell>
       <div className="space-y-6">
@@ -92,10 +84,9 @@ export default async function CertificateVerificationPage({ params }: PageProps)
             </a>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3 mt-6">
+          <div className="grid sm:grid-cols-2 gap-3 mt-6">
             <Detail label="Recipient" value={certificate.recipient_name || 'Certificate holder'} />
             <Detail label="Email" value={certificate.recipient_email || 'Not listed'} />
-            <Detail label="Issued" value={issuedLabel} icon={<CalendarDays className="w-4 h-4" />} />
           </div>
         </div>
 
