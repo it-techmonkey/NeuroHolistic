@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { CONTACT_INFO } from "@/lib/contact";
 import { arabicUiEnabled } from "@/lib/site-features";
 import { useLang } from "@/lib/translations/LanguageContext";
 
@@ -117,9 +118,19 @@ export default function Footer() {
               {t.footer.contact03}
             </span>
             <div className="flex flex-col gap-6">
-              <a href="mailto:info@neuroholistic.com" className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
-                info@neuroholistic.com
+              <a href={`mailto:${CONTACT_INFO.email}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+                {CONTACT_INFO.email}
               </a>
+              <div className="flex flex-col gap-2">
+                <a href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer" className="text-[13px] text-slate-400 hover:text-white transition-colors w-fit">
+                  WhatsApp: {CONTACT_INFO.whatsapp.label}
+                </a>
+                {CONTACT_INFO.mobiles.map((mobile, index) => (
+                  <a key={mobile.href} href={mobile.href} className="text-[13px] text-slate-400 hover:text-white transition-colors w-fit">
+                    Mobile {index + 1}: {mobile.label}
+                  </a>
+                ))}
+              </div>
               <p className="text-[11px] font-mono tracking-widest text-slate-600 uppercase">
                 {t.footer.remoteGlobal} <br />
                 {t.footer.dubaiLondon}

@@ -38,7 +38,7 @@ export default function CorporateApproach() {
           >
             <div className="relative h-[260px] overflow-hidden rounded-2xl border border-slate-200 md:h-[320px]">
               <Image
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80"
+                src="/images/pages/corporate-wellbeing-img2.webp"
                 alt={cw.approachImageAlt}
                 fill
                 className="object-cover"

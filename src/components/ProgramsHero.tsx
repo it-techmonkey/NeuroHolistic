@@ -12,7 +12,7 @@ export default function ProgramsHero() {
       eyebrow={ph.eyebrow}
       title={ph.title}
       description={ph.description}
-      imageSrc="/images/pages/programs.jpg"
+      imageSrc="/images/pages/programs-img1.webp"
       imageAlt="Professional wellbeing coaching session"
       imagePosition="object-[center_60%]"
       metaTags={[]}

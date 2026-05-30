@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { AdminData } from '@/components/dashboard/admin/tabs/types';
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, Activity,
-  BarChart3, Loader2, RefreshCw, LogOut, CreditCard
+  BarChart3, Loader2, RefreshCw, LogOut, CreditCard, Award
 } from 'lucide-react';
 import OverviewTab from '@/components/dashboard/admin/tabs/OverviewTab';
 import UsersTab from '@/components/dashboard/admin/tabs/UsersTab';
@@ -15,6 +15,7 @@ import BookingsTab from '@/components/dashboard/admin/tabs/BookingsTab';
 import SessionsTab from '@/components/dashboard/admin/tabs/SessionsTab';
 import AnalyticsTab from '@/components/dashboard/admin/tabs/AnalyticsTab';
 import PaymentsTab from '@/components/dashboard/admin/tabs/PaymentsTab';
+import CertificatesTab from '@/components/dashboard/admin/tabs/CertificatesTab';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -24,6 +25,7 @@ const tabs = [
   { id: 'sessions', label: 'Sessions', icon: Activity },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'payments', label: 'Payments', icon: CreditCard },
+  { id: 'certificates', label: 'Certificates', icon: Award },
 ];
 
 const tabMeta: Record<string, { title: string; description: string }> = {
@@ -54,6 +56,10 @@ const tabMeta: Record<string, { title: string; description: string }> = {
   payments: {
     title: 'Payments',
     description: 'Manual payment approvals and verification workflow.',
+  },
+  certificates: {
+    title: 'Certificates',
+    description: 'Issue certificates, generate QR links, and manage public verification.',
   },
 };
 
@@ -220,6 +226,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'sessions' && <SessionsTab data={data} />}
         {activeTab === 'analytics' && <AnalyticsTab data={data} />}
         {activeTab === 'payments' && <PaymentsTab />}
+        {activeTab === 'certificates' && <CertificatesTab data={data} />}
       </main>
     </div>
   );

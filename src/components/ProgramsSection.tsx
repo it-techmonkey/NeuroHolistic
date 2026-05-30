@@ -3,6 +3,7 @@
 import Section from '@/components/ui/Section';
 import { User, Users } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLang } from '@/lib/translations/LanguageContext';
 
 function ProgramCard({ icon, title, type, description, descriptionSecondary, suitedBullets, idealFor, bookConsultation }: {

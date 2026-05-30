@@ -2,7 +2,7 @@ import type { FeaturedRetreatData, RetreatItem } from "./types";
 
 export const FEATURED_RETREAT: FeaturedRetreatData = {
   id: "featured-1",
-  image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
+  image: "/images/pages/retreat-img2.webp",
   capacity: 20,
   slug: "meet-and-greet-oxford-2026",
   tags: ["Deep regulation", "Guided processes", "Group integration", "Nature"],

@@ -285,7 +285,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
   {
     slug: "joud-charafeddin",
     name: {
-      en: "Joud Charafeddin",
+      en: "Joud Charafeddine",
       ar: "جود شرف الدين",
     },
     role: {
@@ -293,7 +293,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "ممارِس معتمد في نيوروهوليستك",
     },
     heroTitle: {
-      en: "Joud Charafeddin",
+      en: "Joud Charafeddine",
       ar: "جود شرف الدين، ممارِس معتمد في نيوروهوليستك",
     },
     shortBio: {

@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 const PHASE_IMAGES = [
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=2070&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=2070&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070&auto=format&fit=crop",
+  "/images/pages/method-img7.webp",
+  "/images/pages/method-img1.webp",
+  "/images/pages/method-img5.webp",
+  "/images/pages/method-img2.webp",
+  "/images/pages/method-img4.webp",
 ];
 
 export default function FivePhaseArchitecture() {

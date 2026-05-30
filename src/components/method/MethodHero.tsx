@@ -12,7 +12,7 @@ export default function MethodHero() {
       eyebrow={mp.eyebrow}
       title={<>{mp.title}</>}
       description={mp.description}
-      imageSrc="/images/pages/methods.jpg"
+      imageSrc="/images/pages/method-img3.webp"
       imageAlt={mp.title}
       imagePosition="object-center"
       primaryAction={{ label: mp.bookConsultation, kind: "modal" }}

@@ -1,6 +1,7 @@
 "use client";
 
 import PageHero from "@/components/ui/PageHero";
+import { CONTACT_INFO } from "@/lib/contact";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function ContactPage() {
@@ -29,10 +30,24 @@ export default function ContactPage() {
             <div className="mt-6 space-y-3 text-slate-700">
               <p>
                 {t.contactPage.emailLabel}{" "}
-                <a className="text-indigo-600 hover:underline" href="mailto:info@neuroholistic.com">
-                  info@neuroholistic.com
+                <a className="text-indigo-600 hover:underline" href={`mailto:${CONTACT_INFO.email}`}>
+                  {CONTACT_INFO.email}
                 </a>
               </p>
+              <p>
+                WhatsApp{" "}
+                <a className="text-indigo-600 hover:underline" href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer">
+                  {CONTACT_INFO.whatsapp.label}
+                </a>
+              </p>
+              {CONTACT_INFO.mobiles.map((mobile, index) => (
+                <p key={mobile.href}>
+                  Mobile {index + 1}{" "}
+                  <a className="text-indigo-600 hover:underline" href={mobile.href}>
+                    {mobile.label}
+                  </a>
+                </p>
+              ))}
               <p>{t.contactPage.locations}</p>
             </div>
           </div>

@@ -7,10 +7,11 @@ import {
   Loader2, Calendar, Clock, CheckCircle, AlertCircle,
   Video, FileText, User, Mail, TrendingUp, ChevronRight,
   Search, BarChart3, Settings, LogOut, UserCircle,
-  ChevronDown, Download, Eye, File, Image, Hourglass
+  ChevronDown, Download, Eye, File, Image, Hourglass, Award
 } from 'lucide-react';
 import Progress from '@/components/dashboard/client/Progress';
 import Account from '@/components/dashboard/client/Account';
+import Certificates from '@/components/dashboard/client/Certificates';
 
 // Types
 type Session = {
@@ -98,7 +99,7 @@ type DashboardData = {
   } | null;
 };
 
-type ViewMode = 'overview' | 'sessions' | 'progress' | 'account';
+type ViewMode = 'overview' | 'sessions' | 'certificates' | 'progress' | 'account';
 type SessionFilter = 'all' | 'upcoming' | 'completed';
 
 export default function ClientDashboardPage() {
@@ -286,6 +287,7 @@ export default function ClientDashboardPage() {
               {[
                 { id: 'overview' as ViewMode, label: 'Overview', icon: BarChart3 },
                 { id: 'sessions' as ViewMode, label: 'Sessions', icon: Calendar },
+                { id: 'certificates' as ViewMode, label: 'Certificates', icon: Award },
                 { id: 'progress' as ViewMode, label: 'Progress', icon: TrendingUp },
                 { id: 'account' as ViewMode, label: 'Account', icon: Settings },
               ].map(tab => (
@@ -363,6 +365,7 @@ export default function ClientDashboardPage() {
           {[
             { id: 'overview' as ViewMode, label: 'Overview' },
             { id: 'sessions' as ViewMode, label: 'Sessions' },
+            { id: 'certificates' as ViewMode, label: 'Certificates' },
             { id: 'progress' as ViewMode, label: 'Progress' },
             { id: 'account' as ViewMode, label: 'Account' },
           ].map(tab => (
@@ -889,6 +892,11 @@ export default function ClientDashboardPage() {
               );
             })()}
           </div>
+        )}
+
+        {/* CERTIFICATES VIEW */}
+        {viewMode === 'certificates' && (
+          <Certificates />
         )}
 
         {/* PROGRESS VIEW */}

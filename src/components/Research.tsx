@@ -75,7 +75,7 @@ export default function Research() {
             className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200"
           >
             <Image
-              src="/images/pages/test-tube.png"
+              src="/images/pages/home-img2.webp"
               alt="Research and systems development"
               fill
               unoptimized

@@ -16,11 +16,11 @@ export default function HeroBookingForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
-        className="mt-10 flex items-center justify-center lg:justify-start gap-3"
+        className="mt-6 flex items-center justify-start gap-3"
       >
         <button
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-white px-7 py-4 text-[15px] font-semibold text-[#0B0F2B] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(161,184,255,0.2)] hover:bg-[#F3F6FF] active:scale-95"
+          className="inline-flex min-h-[52px] min-w-[190px] items-center justify-center gap-2 rounded-[12px] bg-white px-6 py-3.5 text-[18px] font-semibold text-[#050B1F] transition-all duration-300 hover:bg-[#F7F8FC] hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] active:scale-95"
         >
           {t.heroBookingForm.bookConsultation}
         </button>

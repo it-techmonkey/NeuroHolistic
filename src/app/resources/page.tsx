@@ -33,7 +33,7 @@ export default function ResourcesPage() {
           </>
         }
         description={rp.description}
-        imageSrc="/images/pages/teams.jpg"
+        imageSrc="/images/pages/resources-img1.webp"
         imageAlt={rp.eyebrow}
         metaTags={[...rp.metaTags]}
       />
