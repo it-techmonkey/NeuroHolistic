@@ -57,7 +57,7 @@ function getPdfQrCoordinates(
   switch (position) {
     case 'cma-logo-left':
       return {
-        x: pageWidth - (pageWidth * 0.235) - qrSize,
+        x: pageWidth - (pageWidth * 0.29) - qrSize,
         y: pageHeight * 0.16,
       };
     case 'bottom-left':
@@ -148,7 +148,7 @@ async function stampImageCertificate(
   const framedSize = qrPixelSize + padding * 2;
   const isCmaLogoLeft = position === 'cma-logo-left';
   const left = isCmaLogoLeft
-    ? Math.round(width - (width * 0.235) - framedSize)
+    ? Math.round(width - (width * 0.29) - framedSize)
     : position.endsWith('left')
       ? margin
       : width - framedSize - margin;
