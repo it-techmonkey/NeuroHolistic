@@ -25,7 +25,7 @@ type EditForm = {
   title: string;
   certificateNumber: string;
   recipientName: string;
-  recipientEmail: string;
+  issuedAt: string;
 };
 
 export default function CertificatesTab({ data }: { data: AdminData }) {
@@ -37,8 +37,8 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [title, setTitle] = useState('Certificate Of Professional Mastery');
   const [certificateNumber, setCertificateNumber] = useState('');
+  const [issuedAt, setIssuedAt] = useState(new Date().toISOString().slice(0, 10));
   const [recipientName, setRecipientName] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [editingCertificateId, setEditingCertificateId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
@@ -57,7 +57,6 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
     const selected = clients.find(user => user.id === selectedUserId);
     if (selected) {
       setRecipientName(selected.fullName || '');
-      setRecipientEmail(selected.email || '');
     }
   }, [clients, selectedUserId]);
 
@@ -91,9 +90,9 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
     formData.append('file', file);
     formData.append('title', title);
     formData.append('certificateNumber', certificateNumber);
+    formData.append('issuedAt', issuedAt);
     formData.append('userId', selectedUserId);
     formData.append('recipientName', recipientName);
-    formData.append('recipientEmail', recipientEmail);
 
     try {
       const res = await fetch('/api/admin/certificates', {
@@ -166,7 +165,7 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
       title: certificate.title,
       certificateNumber: certificate.certificate_number,
       recipientName: certificate.recipient_name || '',
-      recipientEmail: certificate.recipient_email || '',
+      issuedAt: certificate.issued_at || '',
     });
   }
 
@@ -281,11 +280,11 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
           </label>
 
           <label className="space-y-1.5">
-            <span className="text-xs font-medium text-slate-500">Recipient email</span>
+            <span className="text-xs font-medium text-slate-500">Issued date</span>
             <input
-              type="email"
-              value={recipientEmail}
-              onChange={(event) => setRecipientEmail(event.target.value)}
+              type="date"
+              value={issuedAt}
+              onChange={(event) => setIssuedAt(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
             />
           </label>
@@ -442,11 +441,11 @@ export default function CertificatesTab({ data }: { data: AdminData }) {
                         </label>
 
                         <label className="space-y-1.5">
-                          <span className="text-xs font-medium text-slate-500">Recipient email</span>
+                          <span className="text-xs font-medium text-slate-500">Issued date</span>
                           <input
-                            type="email"
-                            value={editForm.recipientEmail}
-                            onChange={(event) => updateEditForm('recipientEmail', event.target.value)}
+                            type="date"
+                            value={editForm.issuedAt}
+                            onChange={(event) => updateEditForm('issuedAt', event.target.value)}
                             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
                           />
                         </label>
