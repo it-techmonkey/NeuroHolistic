@@ -554,7 +554,7 @@ export async function POST() {
     console.log('[Seed] Adding additional therapists...');
     const otherTherapists = [
       { email: 'noura@neuroholistic.com', name: 'Noura Youssef', phone: '+963991234567', country: 'Syria' },
-      { email: 'joud@neuroholistic.com', name: 'Joud Charafeddin', phone: '+961701234568', country: 'Lebanon' },
+      { email: 'joud@neuroholistic.com', name: 'Joud Charafeddine', phone: '+961701234568', country: 'Lebanon' },
     ];
 
     for (const t of otherTherapists) {

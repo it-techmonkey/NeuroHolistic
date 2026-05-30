@@ -43,7 +43,7 @@ export const THERAPISTS: Therapist[] = [
   },
   {
     id: "joud-charafeddin",
-    name: "Joud Charafeddin",
+    name: "Joud Charafeddine",
     role: "NeuroHolistic Certified Practitioner",
     description: "Grounded practitioner creating safe spaces for healing, awareness, and inner harmony.",
   },

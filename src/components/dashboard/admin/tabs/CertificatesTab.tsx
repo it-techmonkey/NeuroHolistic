@@ -1,0 +1,371 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { Award, CheckCircle2, Copy, ExternalLink, FileText, Loader2, QrCode, RefreshCw, Upload } from 'lucide-react';
+import type { AdminData } from './types';
+
+type Certificate = {
+  id: string;
+  user_id?: string | null;
+  certificate_number: string;
+  title: string;
+  recipient_name?: string | null;
+  recipient_email?: string | null;
+  issued_at?: string | null;
+  file_name: string;
+  qr_token: string;
+  status: 'active' | 'revoked';
+  created_at: string;
+  verification_url: string;
+  user?: { id: string; full_name?: string; email?: string } | null;
+};
+
+export default function CertificatesTab({ data }: { data: AdminData }) {
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [title, setTitle] = useState('Certificate of Completion');
+  const [certificateNumber, setCertificateNumber] = useState('');
+  const [issuedAt, setIssuedAt] = useState(new Date().toISOString().slice(0, 10));
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [qrPosition, setQrPosition] = useState('bottom-right');
+  const [qrSize, setQrSize] = useState('96');
+  const [file, setFile] = useState<File | null>(null);
+
+  const clients = useMemo(
+    () => data.users.filter(user => user.role === 'client'),
+    [data.users]
+  );
+
+  useEffect(() => {
+    loadCertificates();
+  }, []);
+
+  useEffect(() => {
+    const selected = clients.find(user => user.id === selectedUserId);
+    if (selected) {
+      setRecipientName(selected.fullName || '');
+      setRecipientEmail(selected.email || '');
+    }
+  }, [clients, selectedUserId]);
+
+  async function loadCertificates() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/certificates');
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to load certificates');
+      setCertificates(payload.certificates || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!file) {
+      setError('Choose a certificate PDF or image first.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    formData.append('certificateNumber', certificateNumber);
+    formData.append('issuedAt', issuedAt);
+    formData.append('userId', selectedUserId);
+    formData.append('recipientName', recipientName);
+    formData.append('recipientEmail', recipientEmail);
+    formData.append('qrPosition', qrPosition);
+    formData.append('qrSize', qrSize);
+
+    try {
+      const res = await fetch('/api/admin/certificates', {
+        method: 'POST',
+        body: formData,
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to upload certificate');
+
+      setMessage('Certificate uploaded and verification QR link generated.');
+      setCertificateNumber('');
+      setFile(null);
+      const fileInput = document.getElementById('certificate-file') as HTMLInputElement | null;
+      if (fileInput) fileInput.value = '';
+      await loadCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function updateStatus(certificateId: string, status: 'active' | 'revoked') {
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/certificates/${certificateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to update certificate');
+      await loadCertificates();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
+  async function copyLink(url: string) {
+    await navigator.clipboard.writeText(url);
+    setMessage('Verification link copied.');
+  }
+
+  const qrImage = (url: string) =>
+    `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=180&margin=1`;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-50">
+            <Award className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Certificates</h2>
+            <p className="text-sm text-slate-500">Upload certificates, stamp QR codes onto the file, and generate public verification links.</p>
+          </div>
+        </div>
+        <button
+          onClick={loadCertificates}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </button>
+      </div>
+
+      {(error || message) && (
+        <div className={`rounded-lg border p-3 text-sm ${error ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+          {error || message}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Assign to user</span>
+            <select
+              value={selectedUserId}
+              onChange={(event) => setSelectedUserId(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            >
+              <option value="">Unassigned public certificate</option>
+              {clients.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.fullName || user.email} ({user.email})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Certificate title</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+              required
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Certificate number</span>
+            <input
+              value={certificateNumber}
+              onChange={(event) => setCertificateNumber(event.target.value)}
+              placeholder="NHI-NAPM-2026-101"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+              required
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Recipient name</span>
+            <input
+              value={recipientName}
+              onChange={(event) => setRecipientName(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Recipient email</span>
+            <input
+              type="email"
+              value={recipientEmail}
+              onChange={(event) => setRecipientEmail(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">Issued date</span>
+            <input
+              type="date"
+              value={issuedAt}
+              onChange={(event) => setIssuedAt(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">QR position on certificate</span>
+            <select
+              value={qrPosition}
+              onChange={(event) => setQrPosition(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            >
+              <option value="bottom-right">Bottom right</option>
+              <option value="bottom-left">Bottom left</option>
+              <option value="top-right">Top right</option>
+              <option value="top-left">Top left</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-slate-500">QR size</span>
+            <select
+              value={qrSize}
+              onChange={(event) => setQrSize(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-400"
+            >
+              <option value="80">Small</option>
+              <option value="96">Medium</option>
+              <option value="120">Large</option>
+              <option value="150">Extra large</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+          <label className="flex-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors">
+            <input
+              id="certificate-file"
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp"
+              onChange={(event) => setFile(event.target.files?.[0] || null)}
+              className="hidden"
+            />
+            <span className="flex items-center gap-2 text-sm text-slate-600">
+              <FileText className="w-4 h-4" />
+              {file ? file.name : 'Choose certificate PDF or image'}
+            </span>
+          </label>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60"
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {submitting ? 'Uploading...' : 'Upload Certificate'}
+          </button>
+        </div>
+      </form>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Issued Certificates</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{certificates.length} total</p>
+          </div>
+          <QrCode className="w-5 h-5 text-slate-400" />
+        </div>
+
+        {loading ? (
+          <div className="py-16 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+          </div>
+        ) : certificates.length === 0 ? (
+          <div className="py-16 text-center">
+            <Award className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500">No certificates uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {certificates.map(certificate => (
+              <div key={certificate.id} className="p-5 grid gap-4 lg:grid-cols-[1fr_auto]">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="font-semibold text-slate-900">{certificate.title}</h4>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      certificate.status === 'active'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      <CheckCircle2 className="w-3 h-3" />
+                      {certificate.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {certificate.certificate_number} · {certificate.recipient_name || certificate.user?.full_name || 'Unassigned'} · {certificate.file_name}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href={certificate.verification_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      View
+                    </a>
+                    <button
+                      onClick={() => copyLink(certificate.verification_url)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy link
+                    </button>
+                    <button
+                      onClick={() => updateStatus(certificate.id, certificate.status === 'active' ? 'revoked' : 'active')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
+                    >
+                      {certificate.status === 'active' ? 'Revoke' : 'Reactivate'}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={qrImage(certificate.verification_url)}
+                    alt={`QR code for ${certificate.certificate_number}`}
+                    className="w-28 h-28 rounded-lg border border-slate-200 bg-white"
+                  />
+                  <a
+                    href={qrImage(certificate.verification_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Open QR
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

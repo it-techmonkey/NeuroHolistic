@@ -96,7 +96,7 @@ const therapists = [
   { firstName: 'Zekra', lastName: 'Khayata', role: 'therapist' as const },
   { firstName: 'Reem', lastName: 'Mobayed', role: 'therapist' as const },
   { firstName: 'Fawares', lastName: 'Azaar', role: 'therapist' as const },
-  { firstName: 'Joud', lastName: 'Charafeddin', role: 'therapist' as const },
+  { firstName: 'Joud', lastName: 'Charafeddine', role: 'therapist' as const },
 ];
 
 // Admin data

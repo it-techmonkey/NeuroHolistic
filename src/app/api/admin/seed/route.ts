@@ -17,7 +17,7 @@ const THERAPIST_SEED_DATA: SeedData[] = [
   { therapistEmail: 'zekra@neuroholistic.com', fullName: 'Zekra Khayata', role: 'therapist', phone: '+963981234567', country: 'Syria' },
   { therapistEmail: 'reem@neuroholistic.com', fullName: 'Reem Mobayed', role: 'therapist', phone: '+14151234567', country: 'Canada' },
   { therapistEmail: 'fawares@neuroholistic.com', fullName: 'Fawares Azaar', role: 'therapist', phone: '+971501234568', country: 'UAE' },
-  { therapistEmail: 'joud@neuroholistic.com', fullName: 'Joud Charafeddin', role: 'therapist', phone: '+961701234568', country: 'Lebanon' },
+  { therapistEmail: 'joud@neuroholistic.com', fullName: 'Joud Charafeddine', role: 'therapist', phone: '+961701234568', country: 'Lebanon' },
 ];
 
 const CLIENT_SEED_DATA = [

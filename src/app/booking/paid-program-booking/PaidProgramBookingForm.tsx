@@ -34,7 +34,7 @@ const THERAPIST_NAME_BY_SLUG: Record<string, string> = {
   'zekra-khayata': 'Zekra Khayata',
   'reem-mobayed': 'Reem Mobayed',
   'fawares-azaar': 'Fawares Azaar',
-  'joud-charafeddin': 'Joud Charafeddin',
+  'joud-charafeddin': 'Joud Charafeddine',
 };
 
 export default function PaidProgramBookingForm({ userEmail, userName, isAuthenticated = true }: PaidProgramBookingFormProps) {
