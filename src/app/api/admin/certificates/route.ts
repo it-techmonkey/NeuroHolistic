@@ -10,7 +10,7 @@ import getR2Client, { R2_BUCKET_NAME } from '@/lib/r2/client';
 
 type QrPosition = 'cma-logo-left' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 const DEFAULT_QR_POSITION: QrPosition = 'cma-logo-left';
-const DEFAULT_QR_SIZE = 58;
+const DEFAULT_QR_SIZE = 54;
 
 async function requireAdmin() {
   const authClient = await createClient();
@@ -57,8 +57,8 @@ function getPdfQrCoordinates(
   switch (position) {
     case 'cma-logo-left':
       return {
-        x: pageWidth - (pageWidth * 0.25) - qrSize,
-        y: pageHeight * 0.148,
+        x: pageWidth - (pageWidth * 0.235) - qrSize,
+        y: pageHeight * 0.16,
       };
     case 'bottom-left':
       return { x: left, y: bottom };
@@ -93,7 +93,7 @@ async function stampPdfCertificate(
   const qrImage = await pdf.embedPng(qrPng);
   const { width, height } = firstPage.getSize();
   const margin = Math.max(24, Math.round(qrSize * 0.35));
-  const padding = Math.round(qrSize * 0.08);
+  const padding = Math.round(qrSize * 0.045);
   const { x, y } = getPdfQrCoordinates(width, height, qrSize, margin, position);
 
   firstPage.drawRectangle({
@@ -102,8 +102,6 @@ async function stampPdfCertificate(
     width: qrSize + padding * 2,
     height: qrSize + padding * 2,
     color: rgb(1, 1, 1),
-    borderColor: rgb(0.82, 0.85, 0.9),
-    borderWidth: 0.5,
   });
   firstPage.drawImage(qrImage, {
     x,
@@ -127,7 +125,7 @@ async function stampImageCertificate(
   const height = metadata.height || Math.round(width * 0.7);
   const scale = Math.max(width / 900, 1);
   const qrPixelSize = Math.round(qrSize * scale);
-  const padding = Math.max(10, Math.round(qrPixelSize * 0.08));
+  const padding = Math.max(4, Math.round(qrPixelSize * 0.045));
   const margin = Math.max(24, Math.round(qrPixelSize * 0.35));
   const qrPng = await QRCode.toBuffer(verificationUrl, {
     type: 'png',
@@ -150,12 +148,12 @@ async function stampImageCertificate(
   const framedSize = qrPixelSize + padding * 2;
   const isCmaLogoLeft = position === 'cma-logo-left';
   const left = isCmaLogoLeft
-    ? Math.round(width - (width * 0.25) - framedSize)
+    ? Math.round(width - (width * 0.235) - framedSize)
     : position.endsWith('left')
       ? margin
       : width - framedSize - margin;
   const top = isCmaLogoLeft
-    ? Math.round(height - (height * 0.148) - framedSize)
+    ? Math.round(height - (height * 0.16) - framedSize)
     : position.startsWith('top')
       ? margin
       : height - framedSize - margin;
