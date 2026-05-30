@@ -25,6 +25,10 @@ async function requireAdmin() {
   return {};
 }
 
+function normalizeCertificateNumber(value: string) {
+  return value.trim().replace(/\s+/g, '-');
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ certificateId: string }> }
@@ -35,12 +39,59 @@ export async function PATCH(
 
     const { certificateId } = await params;
     const body = await request.json();
-    const status = body.status === 'revoked' ? 'revoked' : 'active';
-
     const supabase = getServiceSupabase();
+
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if ('status' in body) {
+      updates.status = body.status === 'revoked' ? 'revoked' : 'active';
+    }
+
+    if ('title' in body) {
+      const title = String(body.title || '').trim();
+      if (!title) {
+        return NextResponse.json({ error: 'Certificate title is required' }, { status: 400 });
+      }
+      updates.title = title;
+    }
+
+    if ('certificateNumber' in body) {
+      const certificateNumber = normalizeCertificateNumber(String(body.certificateNumber || ''));
+      if (!certificateNumber) {
+        return NextResponse.json({ error: 'Certificate number is required' }, { status: 400 });
+      }
+      updates.certificate_number = certificateNumber;
+    }
+
+    if ('userId' in body) {
+      const userId = String(body.userId || '').trim();
+      if (userId) {
+        const { data: targetUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (!targetUser) {
+          return NextResponse.json({ error: 'Selected user was not found' }, { status: 404 });
+        }
+      }
+      updates.user_id = userId || null;
+    }
+
+    if ('recipientName' in body) {
+      updates.recipient_name = String(body.recipientName || '').trim() || null;
+    }
+
+    if ('recipientEmail' in body) {
+      updates.recipient_email = String(body.recipientEmail || '').trim() || null;
+    }
+
     const { data: certificate, error } = await supabase
       .from('certificates')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', certificateId)
       .select()
       .single();
