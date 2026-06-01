@@ -1,107 +1,227 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createZiinaPayment } from '@/lib/payments/ziina';
 import { createClient } from '@/lib/auth/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
+import { createZiinaPaymentIntent } from '@/lib/payments/ziina';
+import {
+  ACADEMY_PRICING,
+  type PaymentOption,
+  type ProgramType,
+  getPrice,
+} from '@/lib/payments/pricing';
+
+type RequestedProgramType = ProgramType | 'academy';
+
+function isPaymentOption(value: unknown): value is PaymentOption {
+  return value === 'full' || value === 'per_session';
+}
+
+function isProgramType(value: unknown): value is RequestedProgramType {
+  return value === 'private' || value === 'group' || value === 'academy';
+}
+
+function cleanAppUrl(request: NextRequest) {
+  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    console.log('[Ziina Create Payment] Request started');
+  const authClient = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await authClient.auth.getUser();
 
-    // Require authentication — user_id is derived from the session, never from the request body
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    if (authError || !user) {
-      console.error('[Ziina Create Payment] Authentication failed', authError);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const body = await request.json().catch(() => null);
+  const programType = body?.programType;
+  const paymentOption = body?.paymentOption;
 
-    console.log('[Ziina Create Payment] Authenticated user:', user.id);
-
-    const body = await request.json();
-    console.log('[Ziina Create Payment] Request body:', body);
-
-    const {
-      amount,
-      currency = 'AED',
-      description,
-      bookingId,
-      customerEmail,
-      customerName,
-      sessionCount,
-      type,
-    } = body;
-
-    if (!amount || !description) {
-      console.error('[Ziina Create Payment] Missing required fields');
-      return NextResponse.json(
-        { error: 'Missing required fields: amount, description' },
-        { status: 400 }
-      );
-    }
-
-    if (amount < 1) {
-      console.error('[Ziina Create Payment] Invalid amount:', amount);
-      return NextResponse.json(
-        { error: 'Amount must be at least 1' },
-        { status: 400 }
-      );
-    }
-
-    console.log('[Ziina Create Payment] Creating payment with metadata:', {
-      amount,
-      currency,
-      type,
-      email: customerEmail,
-    });
-
-    // user_id always comes from the verified session, not from the client
-    const result = await createZiinaPayment({
-      amount,
-      currency,
-      description,
-      reference: bookingId || `booking-${Date.now()}`,
-      customerEmail,
-      customerName,
-      redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
-      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/ziina/webhook`,
-      metadata: {
-        email: customerEmail,
-        type: type || 'program',
-        user_id: user.id,
-        session_count: sessionCount ?? 10,
-      },
-    });
-
-    console.log('[Ziina Create Payment] Response from Ziina:', result);
-
-    if (!result.success) {
-      console.error('[Ziina Create Payment] Payment creation failed:', result.error);
-      return NextResponse.json(
-        { error: result.error || 'Failed to create payment session' },
-        { status: 500 }
-      );
-    }
-
-    console.log('[Ziina Create Payment] Payment created successfully:', {
-      paymentLink: result.paymentLink,
-      sessionId: result.sessionId,
-    });
-
-    return NextResponse.json({
-      success: true,
-      paymentLink: result.paymentLink,
-      sessionId: result.sessionId,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[Ziina Create Payment] Error:', errorMessage);
-    console.error('[Ziina Create Payment] Full error:', error);
+  if (!isProgramType(programType) || !isPaymentOption(paymentOption)) {
     return NextResponse.json(
-      { error: 'An error occurred while creating the payment' },
-      { status: 500 }
+      { error: 'Invalid payment request. Choose a program type and payment option.' },
+      { status: 400 }
     );
   }
+
+  const supabase = getServiceSupabase();
+
+  const { data: existingProgram, error: existingError } = await supabase
+    .from('programs')
+    .select('id, status, payment_status')
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'active'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error('[Ziina Create Payment] Existing program check failed:', existingError);
+    return NextResponse.json({ error: 'Unable to check your current program status' }, { status: 500 });
+  }
+
+  if (existingProgram) {
+    const message =
+      existingProgram.status === 'pending'
+        ? 'You already have a program pending payment confirmation.'
+        : 'You already have an active program.';
+
+    return NextResponse.json(
+      {
+        error: message,
+        programId: existingProgram.id,
+        status: existingProgram.status,
+        paymentStatus: existingProgram.payment_status,
+      },
+      { status: 409 }
+    );
+  }
+
+  let therapistId: string | null = null;
+  let therapistName: string | null = null;
+  const isAcademy = programType === 'academy';
+
+  if (!isAcademy) {
+    const { data: completedConsultation, error: consultationError } = await supabase
+      .from('bookings')
+      .select('id, therapist_user_id, therapist_name')
+      .eq('user_id', user.id)
+      .eq('type', 'free_consultation')
+      .eq('status', 'completed')
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (consultationError) {
+      console.error('[Ziina Create Payment] Consultation check failed:', consultationError);
+      return NextResponse.json({ error: 'Unable to confirm consultation eligibility' }, { status: 500 });
+    }
+
+    if (!completedConsultation) {
+      return NextResponse.json(
+        {
+          error: 'You must complete a free consultation before purchasing a paid program.',
+          requiresConsultation: true,
+        },
+        { status: 403 }
+      );
+    }
+
+    therapistId = completedConsultation.therapist_user_id;
+    therapistName = completedConsultation.therapist_name || body?.therapistName || 'Assigned Therapist';
+  }
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const clientName = userData?.full_name || user.user_metadata?.full_name || user.email || 'Client';
+  const clientEmail = userData?.email || user.email;
+
+  if (!clientEmail) {
+    return NextResponse.json({ error: 'Your account is missing an email address.' }, { status: 400 });
+  }
+
+  const amountAed = isAcademy
+    ? paymentOption === 'full'
+      ? ACADEMY_PRICING.fullProgram
+      : ACADEMY_PRICING.installment
+    : getPrice(programType, paymentOption, therapistName);
+  const amountFils = Math.round(amountAed * 100);
+  const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : 10;
+  const storedProgramType: RequestedProgramType = isAcademy ? 'academy' : programType;
+  const appUrl = cleanAppUrl(request);
+
+  const metadata = {
+    gateway: 'ziina',
+    userId: user.id,
+    programType,
+    storedProgramType,
+    paymentOption,
+    amountAed,
+    amountFils,
+    currency: 'AED',
+    totalSessions,
+    therapistId,
+    therapistName: isAcademy ? 'NeuroHolistic Academy' : therapistName,
+    clientName,
+    clientEmail,
+  };
+
+  const { data: paymentRow, error: paymentError } = await supabase
+    .from('payments')
+    .insert({
+      user_id: user.id,
+      amount: amountAed,
+      currency: 'AED',
+      type: paymentOption === 'full' ? 'full_program' : 'single_session',
+      status: 'pending',
+      metadata,
+    })
+    .select('id')
+    .single();
+
+  if (paymentError || !paymentRow) {
+    console.error('[Ziina Create Payment] Failed to create local payment:', paymentError);
+    return NextResponse.json({ error: 'Unable to initialize payment' }, { status: 500 });
+  }
+
+  const successUrl = `${appUrl}/payment/ziina/success?payment_intent_id={PAYMENT_INTENT_ID}`;
+  const cancelUrl = `${appUrl}/booking/paid-program-booking?payment=cancelled`;
+  const failureUrl = `${appUrl}/payment/ziina/failure?payment_intent_id={PAYMENT_INTENT_ID}`;
+  const message = `NeuroHolistic ${isAcademy ? 'Academy' : programType} - ${
+    paymentOption === 'full' ? 'Full payment' : 'Per-session payment'
+  }`;
+
+  const result = await createZiinaPaymentIntent({
+    amount: amountFils,
+    currency: 'AED',
+    message,
+    successUrl,
+    cancelUrl,
+    failureUrl,
+  });
+
+  if (!result.success || !result.paymentIntentId || !result.paymentLink) {
+    await supabase
+      .from('payments')
+      .update({
+        status: 'failed',
+        metadata: {
+          ...metadata,
+          ziinaError: result.error || 'Ziina payment intent creation failed',
+        },
+      })
+      .eq('id', paymentRow.id);
+
+    return NextResponse.json(
+      { error: result.error || 'Failed to create Ziina payment session' },
+      { status: 502 }
+    );
+  }
+
+  const { error: updateError } = await supabase
+    .from('payments')
+    .update({
+      payment_reference: result.paymentIntentId,
+      metadata: {
+        ...metadata,
+        paymentIntentId: result.paymentIntentId,
+      },
+    })
+    .eq('id', paymentRow.id);
+
+  if (updateError) {
+    console.error('[Ziina Create Payment] Failed to save Ziina payment reference:', updateError);
+    return NextResponse.json({ error: 'Payment was created but could not be saved locally' }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    paymentLink: result.paymentLink,
+    paymentIntentId: result.paymentIntentId,
+  });
 }
