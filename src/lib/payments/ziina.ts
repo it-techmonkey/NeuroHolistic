@@ -1,128 +1,148 @@
 /**
- * Ziina Payment Integration
- * API Docs: https://ziina.com/docs/custom-integration
+ * Ziina Payment Intent integration.
  *
- * Auth: Bearer token only (ZIINA_ACCESS_TOKEN in .env.local)
- * Endpoint: POST https://api.ziina.com/api/v1/payment_intent
+ * Current API docs:
+ * https://docs.ziina.com/api-reference/payment-intent/create
  */
 
-const ZIINA_API_BASE = 'https://api-cp.z.gg/api/v1';
-const ZIINA_ACCESS_TOKEN = process.env.ZIINA_ACCESS_TOKEN;
-// Legacy alias — accepted too so existing .env.local using ZIINA_API_KEY still works
-const TOKEN = ZIINA_ACCESS_TOKEN || process.env.ZIINA_API_KEY;
+const ZIINA_API_BASE = 'https://api-v2.ziina.com/api';
+const TOKEN = process.env.ZIINA_ACCESS_TOKEN || process.env.ZIINA_API_KEY;
 
-interface ZiinaPaymentRequest {
-  amount: number;        // in smallest currency unit (fils for AED, so 100 = 1 AED)
-  currency: string;      // 'AED'
-  description: string;
-  redirectUrl: string;
-  webhookUrl: string;
-  reference?: string;
-  customerEmail?: string;
-  customerName?: string;
-  test?: boolean;        // set true for test payments
-  metadata?: {
-    email?: string;
-    user_id?: string;
-    [key: string]: string | number | boolean | undefined;
+export interface ZiinaPaymentIntent {
+  id: string;
+  amount: number;
+  currency_code: string;
+  status: 'requires_payment_instrument' | 'requires_user_action' | 'pending' | 'completed' | 'failed' | 'canceled' | string;
+  message?: string;
+  redirect_url?: string;
+  embedded_url?: string;
+  success_url?: string;
+  cancel_url?: string;
+  latest_error?: {
+    message?: string;
+    code?: string;
   };
 }
 
-interface ZiinaPaymentResponse {
+interface CreateZiinaPaymentIntentRequest {
+  amount: number; // smallest currency unit (fils for AED)
+  currency: string;
+  message?: string;
+  successUrl: string;
+  cancelUrl: string;
+  failureUrl: string;
+  test?: boolean;
+  expiry?: string;
+}
+
+interface CreateZiinaPaymentIntentResponse {
   success: boolean;
+  paymentIntentId?: string;
   paymentLink?: string;
-  sessionId?: string;
+  intent?: ZiinaPaymentIntent;
   error?: string;
 }
 
-export async function createZiinaPayment(
-  params: ZiinaPaymentRequest
-): Promise<ZiinaPaymentResponse> {
+function getZiinaToken() {
+  if (!TOKEN) {
+    throw new Error('Ziina access token not configured. Add ZIINA_ACCESS_TOKEN to .env.local');
+  }
+
+  return TOKEN;
+}
+
+async function parseZiinaResponse(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+
   try {
-    console.log('[Ziina] Creating payment intent…');
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Ziina returned a non-JSON response: ${text.slice(0, 200)}`);
+  }
+}
 
-    if (!TOKEN) {
-      console.error('[Ziina] Missing ZIINA_ACCESS_TOKEN in environment');
-      return {
-        success: false,
-        error: 'Ziina access token not configured. Add ZIINA_ACCESS_TOKEN to .env.local',
-      };
-    }
-
-    const isTest = process.env.NODE_ENV !== 'production';
+export async function createZiinaPaymentIntent(
+  params: CreateZiinaPaymentIntentRequest
+): Promise<CreateZiinaPaymentIntentResponse> {
+  try {
+    const testMode =
+      params.test ??
+      (process.env.ZIINA_TEST_MODE
+        ? process.env.ZIINA_TEST_MODE === 'true'
+        : process.env.NODE_ENV !== 'production');
 
     const payload = {
       amount: params.amount,
       currency_code: params.currency,
-      description: params.description,
-      redirect_url: params.redirectUrl,
-      webhook_url: params.webhookUrl,
-      reference_id: params.reference || `booking-${Date.now()}`,
-      test: params.test ?? isTest,
-      ...(params.customerEmail && { customer_email: params.customerEmail }),
-      ...(params.customerName && { customer_name: params.customerName }),
-      ...(params.metadata && { message: JSON.stringify(params.metadata) }),
+      message: params.message,
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      failure_url: params.failureUrl,
+      test: testMode,
+      allow_tips: false,
+      ...(params.expiry && { expiry: params.expiry }),
     };
-
-    console.log('[Ziina] Payload:', {
-      amount: payload.amount,
-      currency_code: payload.currency_code,
-      reference_id: payload.reference_id,
-      test: payload.test,
-    });
 
     const response = await fetch(`${ZIINA_API_BASE}/payment_intent`, {
       method: 'POST',
       headers: {
+        Authorization: `Bearer ${getZiinaToken()}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${TOKEN}`,
       },
       body: JSON.stringify(payload),
     });
 
-    console.log('[Ziina] Response status:', response.status);
-
-    let data: Record<string, unknown>;
-    try {
-      data = await response.json();
-    } catch {
-      const text = await response.text().catch(() => '');
-      console.error('[Ziina] Non-JSON response:', text);
-      return { success: false, error: 'Invalid response from Ziina' };
-    }
-
-    console.log('[Ziina] Response:', data);
+    const data = (await parseZiinaResponse(response)) as Partial<ZiinaPaymentIntent> & {
+      error?: string;
+      message?: string;
+    };
 
     if (!response.ok) {
-      const errMsg = (data.message as string) || (data.error as string) || 'Payment creation failed';
-      console.error('[Ziina] Error:', errMsg, data);
-      return { success: false, error: errMsg };
+      return {
+        success: false,
+        error: data.latest_error?.message || data.error || data.message || 'Failed to create Ziina payment intent',
+      };
     }
 
-    // Ziina returns the checkout URL in different fields depending on version
-    const paymentLink =
-      (data.url as string) ||
-      (data.checkout_url as string) ||
-      (data.payment_url as string) ||
-      (data.checkoutUrl as string) ||
-      (data.paymentLink as string);
-
-    const sessionId =
-      (data.id as string) ||
-      (data.session_id as string) ||
-      (data.sessionId as string);
-
-    if (!paymentLink) {
-      console.error('[Ziina] No payment URL in response:', data);
-      return { success: false, error: 'No payment URL returned by Ziina' };
+    if (!data.id || !data.redirect_url) {
+      return {
+        success: false,
+        error: 'Ziina did not return a payment intent id or redirect URL',
+      };
     }
 
-    console.log('[Ziina] Payment intent created:', { paymentLink, sessionId });
-    return { success: true, paymentLink, sessionId };
-
+    return {
+      success: true,
+      paymentIntentId: data.id,
+      paymentLink: data.redirect_url,
+      intent: data as ZiinaPaymentIntent,
+    };
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error('[Ziina] Exception:', msg);
-    return { success: false, error: msg };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unexpected Ziina payment error',
+    };
   }
+}
+
+export async function getZiinaPaymentIntent(paymentIntentId: string): Promise<ZiinaPaymentIntent> {
+  const response = await fetch(`${ZIINA_API_BASE}/payment_intent/${paymentIntentId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${getZiinaToken()}`,
+    },
+    cache: 'no-store',
+  });
+
+  const data = (await parseZiinaResponse(response)) as ZiinaPaymentIntent & {
+    error?: string;
+    message?: string;
+  };
+
+  if (!response.ok) {
+    throw new Error(data.latest_error?.message || data.error || data.message || 'Failed to fetch Ziina payment intent');
+  }
+
+  return data;
 }

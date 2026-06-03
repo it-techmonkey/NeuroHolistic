@@ -8,12 +8,12 @@ import {
   type ProgramType,
   type PaymentOption,
   getPrice,
-  getZiinaLink,
   getPerSessionFromFull,
   DR_FAWZIA_NAME,
   DR_FAWZIA_SLUG,
   ACADEMY_PRICING,
 } from '@/lib/payments/pricing';
+import { redirectToZiinaCheckout } from '@/lib/payments/client';
 import { useLang } from '@/lib/translations/LanguageContext';
 
 interface PaidProgramBookingFormProps {
@@ -52,7 +52,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   );
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOption | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [therapist, setTherapist] = useState<TherapistInfo | null>(null);
   const [loadingTherapist, setLoadingTherapist] = useState(true);
   const [hasActiveProgram, setHasActiveProgram] = useState(false);
@@ -106,15 +105,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       }
     }
 
-    // Check if user returned from Ziina with pending payment
-    const pendingPayment = sessionStorage.getItem('pendingPayment');
-    if (pendingPayment) {
-      const payment = JSON.parse(pendingPayment);
-      setSelectedProgramType(payment.programType);
-      setSelectedPaymentOption(payment.option);
-      setShowConfirmPayment(true);
-    }
-
     fetchTherapist();
   }, [isAuthenticated]);
 
@@ -126,7 +116,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           preferredTherapistSlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
       }
     : null;
-  const effectiveTherapist = preferredTherapist || therapist;
+  const effectiveTherapist = isAuthenticated ? (therapist || preferredTherapist) : (preferredTherapist || therapist);
 
   /** Private program: no therapist in URL / account → founder tier (public default). Group unchanged. */
   const therapistForPricing = (programType: ProgramType): TherapistInfo | null => {
@@ -136,8 +126,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     return effectiveTherapist;
   };
 
-  const [showConfirmPayment, setShowConfirmPayment] = useState(false);
-  const [confirmingPayment, setConfirmingPayment] = useState(false);
   const copy = {
     pageTag: academyMode
       ? (isArabic ? 'أكاديمية نيوروهوليستك' : 'NeuroHolistic Academy')
@@ -183,105 +171,21 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     }
 
     setSelectedPaymentOption(option);
+    setProcessing(true);
 
-    // Get the Ziina link and redirect directly
-    const payCtx = therapistForPricing(selectedProgramType);
-    const ziinaLink = academyMode
-      ? (option === 'full' ? ACADEMY_PRICING.ziinaLinks.fullProgram : ACADEMY_PRICING.ziinaLinks.installment)
-      : getZiinaLink(selectedProgramType, option, payCtx?.name, payCtx?.slug);
-    
-    // Store payment context for confirmation
-    sessionStorage.setItem('pendingPayment', JSON.stringify({
-      programType: selectedProgramType,
-      option,
-      amount: getPriceForDisplay(selectedProgramType, option),
-      therapistName: payCtx?.name,
-    }));
-
-    // Open Ziina in a new tab so user stays on this page
-    window.open(ziinaLink, '_blank');
-    
-    // Show the confirm payment screen immediately
-    setShowConfirmPayment(true);
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!selectedProgramType) return;
-    
-    setConfirmingPayment(true);
-    
     try {
-      // Create the program in our system (status: pending, awaiting admin verification)
-      const res = await fetch('/api/bookings/purchase-program', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planType: academyMode
-            ? (selectedPaymentOption === 'full' ? 'academy_full' : 'academy_installment')
-            : selectedPaymentOption === 'full'
-            ? (selectedProgramType === 'private' ? 'private' : 'group_full')
-            : (selectedProgramType === 'private' ? 'session_by_session' : 'group_session'),
-          programType: academyMode ? 'academy' : selectedProgramType,
-          amount: getPriceForDisplay(selectedProgramType, selectedPaymentOption || 'full') * 100,
-        }),
+      const payCtx = therapistForPricing(selectedProgramType);
+      await redirectToZiinaCheckout({
+        programType: academyMode ? 'academy' : selectedProgramType,
+        paymentOption: option,
+        therapistName: payCtx?.name,
+        therapistSlug: payCtx?.slug,
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.requiresConsultation) {
-          setHasCompletedConsultation(false);
-          return;
-        }
-        throw new Error(data.error || (isArabic ? 'فشل إرسال الدفع' : 'Failed to submit payment'));
-      }
-
-      sessionStorage.removeItem('pendingPayment');
-      setSuccess(true);
-      
-      setTimeout(() => {
-        router.push('/dashboard/client');
-      }, 3000);
     } catch (err: any) {
-      alert(err.message || (isArabic ? 'فشل إرسال الدفع. يرجى المحاولة مرة أخرى.' : 'Failed to submit payment. Please try again.'));
-    } finally {
-      setConfirmingPayment(false);
+      alert(err.message || (isArabic ? 'فشل بدء الدفع. يرجى المحاولة مرة أخرى.' : 'Failed to start payment. Please try again.'));
+      setProcessing(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
-        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-amber-600" />
-        </div>
-        <h3 className="text-xl font-bold text-amber-900 mb-2">{isArabic ? 'تم إرسال الدفع!' : 'Payment Submitted!'}</h3>
-        <p className="text-amber-700 text-sm mb-4">
-          {isArabic
-            ? `تم إرسال دفعة ${academyMode ? 'الأكاديمية' : (selectedProgramType === 'private' ? 'البرنامج الفردي' : 'البرنامج الجماعي')} للمراجعة. سيقوم فريق الإدارة بالتحقق من الدفع وتأكيد الحجز قريبًا.`
-            : `Your ${academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program payment has been submitted for verification.
-          Our admin team will verify your payment and confirm your booking shortly.`}
-        </p>
-        <div className={`bg-amber-100/50 rounded-lg p-4 mb-6 ${isArabic ? 'text-right' : 'text-left'}`}>
-          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-2">{isArabic ? 'الخطوات التالية' : 'What happens next'}</p>
-          <ul className="space-y-1.5 text-sm text-amber-700">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</span>
-              {isArabic ? 'يقوم فريقنا بالتحقق من الدفع' : 'Our team verifies your payment'}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</span>
-              {isArabic ? 'ستصلك رسالة تأكيد عبر البريد الإلكتروني' : "You'll receive a confirmation email"}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 w-4 h-4 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</span>
-              {isArabic ? 'يمكنك جدولة جلساتك من لوحة التحكم' : 'Schedule your sessions from the dashboard'}
-            </li>
-          </ul>
-        </div>
-        <p className="text-amber-600 text-xs">{isArabic ? 'جارٍ التحويل إلى لوحة التحكم...' : 'Redirecting to your dashboard...'}</p>
-      </div>
-    );
-  }
 
   // Show active program guard
   if (hasActiveProgram && isAuthenticated) {
@@ -327,77 +231,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           className="px-8 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all"
         >
           {isArabic ? 'احجز استشارة مجانية' : 'Book Free Consultation'}
-        </button>
-      </div>
-    );
-  }
-
-  // Show payment confirmation after returning from Ziina
-  if (showConfirmPayment) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CreditCard className="w-8 h-8 text-indigo-600" />
-          </div>
-          <h3 className="text-xl font-bold text-indigo-900 mb-2">{isArabic ? 'أكمل الدفع' : 'Complete Your Payment'}</h3>
-          <p className="text-indigo-600 text-sm mb-4">
-            {isArabic
-              ? `تم تحويلك إلى Ziina لإكمال الدفع الخاص بـ ${academyMode ? 'الأكاديمية' : (selectedProgramType === 'private' ? 'البرنامج الفردي' : 'البرنامج الجماعي')}.`
-              : `You've been redirected to Ziina to complete your payment for the ${academyMode ? 'Academy' : (selectedProgramType === 'private' ? 'Private' : 'Group')} Program.`}
-          </p>
-          <p className="text-slate-600 text-sm mb-6">
-            {isArabic ? 'المبلغ:' : 'Amount:'} <strong>{getPriceForDisplay(selectedProgramType || 'private', selectedPaymentOption || 'full').toLocaleString()} AED</strong>
-          </p>
-        </div>
-
-        {effectiveTherapist && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-indigo-900">{isArabic ? 'المعالج الخاص بك' : 'Your Therapist'}</p>
-                <p className="text-lg font-semibold text-indigo-800">{effectiveTherapist.name}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={handleConfirmPayment}
-          disabled={confirmingPayment}
-          className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg transition-all flex items-center justify-center gap-2"
-        >
-          {confirmingPayment ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {isArabic ? 'جارٍ الإرسال...' : 'Submitting...'}
-            </>
-          ) : (
-            <>
-              <CheckCircle className="w-5 h-5" />
-              {isArabic ? 'لقد قمت بالدفع' : "I've Made the Payment"}
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={() => {
-            sessionStorage.removeItem('pendingPayment');
-            setShowConfirmPayment(false);
-            setSelectedProgramType(null);
-            setSelectedPaymentOption(null);
-            setStep(preselectedType === 'private' || preselectedType === 'group' ? 'payment' : 'program_type');
-            if (!isAuthenticated) {
-              setPendingPaymentOption(null);
-            }
-            router.push('/booking/paid-program-booking');
-          }}
-          className="w-full py-3 text-slate-600 hover:text-slate-800 text-sm font-medium"
-        >
-          {isArabic ? 'إلغاء والعودة' : 'Cancel and go back'}
         </button>
       </div>
     );
@@ -639,14 +472,26 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </div>
               <button
                 onClick={() => handlePayment('full')}
+                disabled={processing}
                 className={`w-full py-3.5 rounded-xl text-white font-semibold text-[15px] transition-all flex items-center justify-center gap-2 ${
-                  selectedProgramType === 'private'
+                  processing
+                    ? 'bg-slate-300 cursor-not-allowed'
+                    : selectedProgramType === 'private'
                     ? 'bg-indigo-600 hover:bg-indigo-700'
                     : 'bg-indigo-600 hover:bg-indigo-700'
                 }`}
               >
-                <CreditCard className="w-4 h-4" />
-                {selectedProgramType === 'group' && !academyMode && isArabic ? 'المتابعة إلى الدفع' : 'Proceed to Payment'}
+                {processing && selectedPaymentOption === 'full' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {isArabic ? 'جارٍ المعالجة...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    {selectedProgramType === 'group' && !academyMode && isArabic ? 'المتابعة إلى الدفع' : 'Proceed to Payment'}
+                  </>
+                )}
               </button>
             </div>
 
@@ -687,7 +532,11 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               <button
                 onClick={() => handlePayment('per_session')}
                 disabled={processing}
-                className="w-full py-3.5 rounded-xl border-2 border-indigo-600 text-indigo-600 font-semibold text-[15px] hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+                className={`w-full py-3.5 rounded-xl border-2 font-semibold text-[15px] transition-all flex items-center justify-center gap-2 ${
+                  processing
+                    ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+                    : 'border-indigo-600 text-indigo-600 hover:bg-indigo-50'
+                }`}
               >
                 {processing && selectedPaymentOption === 'per_session' ? (
                   <>
@@ -808,47 +657,37 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   });
                 }
 
-                // Check if this email has a completed free consultation
-                const consultCheckRes = await fetch('/api/client/dashboard');
-                if (consultCheckRes.ok) {
-                  const consultCheckData = await consultCheckRes.json();
-                  if (!consultCheckData.hasCompletedFreeConsult) {
+                if (!academyMode) {
+                  // Check if this email has a completed free consultation
+                  const consultCheckRes = await fetch('/api/client/dashboard');
+                  if (consultCheckRes.ok) {
+                    const consultCheckData = await consultCheckRes.json();
+                    if (!consultCheckData.hasCompletedFreeConsult) {
+                      setHasCompletedConsultation(false);
+                      setConsultationCheckDone(true);
+                      setStep('payment');
+                      setProcessing(false);
+                      return;
+                    }
+                  } else {
+                    // If dashboard check fails, block to be safe
                     setHasCompletedConsultation(false);
                     setConsultationCheckDone(true);
                     setStep('payment');
                     setProcessing(false);
                     return;
                   }
-                } else {
-                  // If dashboard check fails, block to be safe
-                  setHasCompletedConsultation(false);
-                  setConsultationCheckDone(true);
-                  setStep('payment');
-                  setProcessing(false);
-                  return;
                 }
 
-                // Has completed consultation - proceed to payment
+                // Has completed consultation - proceed to Ziina checkout
                 const payCtx = therapistForPricing(selectedProgramType!);
-                const link = getZiinaLink(
-                  selectedProgramType!,
-                  pendingPaymentOption!,
-                  payCtx?.name,
-                  payCtx?.slug
-                );
-                if (link) {
-                  sessionStorage.setItem('pendingPayment', JSON.stringify({
-                    programType: selectedProgramType,
-                    option: pendingPaymentOption,
-                    email: formData.email,
-                  }));
-                  window.open(link, '_blank');
-                  setSelectedPaymentOption(pendingPaymentOption);
-                  setShowConfirmPayment(true);
-                  setStep('payment');
-                } else {
-                  throw new Error(isArabic ? 'رابط الدفع غير متاح' : 'Payment link not available');
-                }
+                setSelectedPaymentOption(pendingPaymentOption);
+                await redirectToZiinaCheckout({
+                  programType: academyMode ? 'academy' : selectedProgramType!,
+                  paymentOption: pendingPaymentOption,
+                  therapistName: payCtx?.name,
+                  therapistSlug: payCtx?.slug,
+                });
               } catch (err: any) {
                 setFormError(err.message || (isArabic ? 'حدث خطأ ما' : 'Something went wrong'));
               } finally {

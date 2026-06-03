@@ -131,7 +131,7 @@ export type Database = {
           payment_id: string;
           therapist_user_id: string | null;
           therapist_name: string | null;
-          program_type: 'private' | 'group' | null;
+          program_type: 'private' | 'group' | 'academy' | null;
           price_paid: number | null;
           client_name: string | null;
           client_email: string | null;
@@ -152,7 +152,7 @@ export type Database = {
           payment_id: string;
           therapist_user_id?: string | null;
           therapist_name?: string | null;
-          program_type?: 'private' | 'group' | null;
+          program_type?: 'private' | 'group' | 'academy' | null;
           price_paid?: number | null;
           client_name?: string | null;
           client_email?: string | null;
@@ -173,7 +173,7 @@ export type Database = {
           payment_id?: string;
           therapist_user_id?: string | null;
           therapist_name?: string | null;
-          program_type?: 'private' | 'group' | null;
+          program_type?: 'private' | 'group' | 'academy' | null;
           price_paid?: number | null;
           client_name?: string | null;
           client_email?: string | null;
@@ -547,6 +547,7 @@ export type Database = {
           status: 'pending' | 'paid' | 'failed' | 'refunded';
           payment_reference: string | null;
           program_id: string | null;
+          metadata: Record<string, unknown>;
           created_at: string;
           updated_at: string;
         };
@@ -559,6 +560,7 @@ export type Database = {
           status?: 'pending' | 'paid' | 'failed' | 'refunded';
           payment_reference?: string | null;
           program_id?: string | null;
+          metadata?: Record<string, unknown>;
           created_at?: string;
           updated_at?: string;
         };
@@ -571,6 +573,7 @@ export type Database = {
           status?: 'pending' | 'paid' | 'failed' | 'refunded';
           payment_reference?: string | null;
           program_id?: string | null;
+          metadata?: Record<string, unknown>;
           created_at?: string;
           updated_at?: string;
         };
