@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -57,6 +58,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         <main>{children}</main>
       )}
       {isPublicPage && !isBookingFlow && <Footer />}
+      <FloatingWhatsAppButton />
     </>
   );
 }

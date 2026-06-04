@@ -1,5 +1,6 @@
 export const CONTACT_INFO = {
-  email: "info@neuroholistic.com",
+  email: "info@neuroholisticinstitute.com",
+  supportEmail: "Support@neuroholisticinstitute.com",
   whatsapp: {
     label: "+971 58 577 8090",
     href: "https://wa.me/971585778090",
