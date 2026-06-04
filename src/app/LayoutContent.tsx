@@ -15,14 +15,17 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname === '/consultation/book' ||
     pathname?.startsWith('/booking/paid-program-booking');
 
+  const isDashboardRoute =
+    pathname === '/dashboard' ||
+    pathname?.startsWith('/dashboard/') ||
+    pathname === '/admin' ||
+    pathname?.startsWith('/admin/') ||
+    pathname === '/therapist' ||
+    pathname?.startsWith('/therapist/');
+
   const isPublicPage = !(
     pathname?.startsWith('/auth/') ||
-    pathname?.startsWith('/dashboard/') ||
-    pathname === '/dashboard' ||
-    pathname?.startsWith('/admin/') ||
-    pathname === '/admin' ||
-    pathname?.startsWith('/therapist/') ||
-    pathname === '/therapist' ||
+    isDashboardRoute ||
     pathname?.startsWith('/book/') ||
     pathname === '/book' ||
     pathname?.startsWith('/booking/') ||
@@ -58,7 +61,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         <main>{children}</main>
       )}
       {isPublicPage && !isBookingFlow && <Footer />}
-      <FloatingWhatsAppButton />
+      {!isDashboardRoute && <FloatingWhatsAppButton />}
     </>
   );
 }
