@@ -35,6 +35,12 @@ export default function ContactPage() {
                 </a>
               </p>
               <p>
+                Support{" "}
+                <a className="text-indigo-600 hover:underline" href={`mailto:${CONTACT_INFO.supportEmail}`}>
+                  {CONTACT_INFO.supportEmail}
+                </a>
+              </p>
+              <p>
                 WhatsApp{" "}
                 <a className="text-indigo-600 hover:underline" href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer">
                   {CONTACT_INFO.whatsapp.label}

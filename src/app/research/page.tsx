@@ -33,7 +33,7 @@ export default function ResearchPage() {
         imageSrc="/images/pages/research-img1.webp"
         imageAlt="Neuroscience research environment"
         metaTags={[]}
-        primaryAction={{ label: rp.inquireCollaboration, href: "mailto:info@neuroholistic.com" }}
+        primaryAction={{ label: rp.inquireCollaboration, href: "mailto:info@neuroholisticinstitute.com" }}
       />
 
       {/* ── Section 01: Research Vision (Editorial Spread) ── */}
@@ -177,7 +177,7 @@ export default function ResearchPage() {
             {rp.inquireDescription}
           </p>
           <Link
-            href="mailto:info@neuroholistic.com"
+            href="mailto:info@neuroholisticinstitute.com"
             className="mt-12 inline-flex h-14 items-center justify-center bg-[#0F172A] px-10 text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1E293B]"
           >
             {rp.contactInstitute}

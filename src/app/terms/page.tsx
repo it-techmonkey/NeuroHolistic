@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CONTACT_INFO } from '@/lib/contact';
 
 export const metadata = { title: 'Terms of Service — NeuroHolistic' };
 
@@ -71,8 +72,12 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold mb-3">Contact</h2>
           <p className="text-slate-600 leading-relaxed">
             For questions regarding these terms, please contact us at{' '}
-            <a href="mailto:info@neuroholistic.com" className="text-[#2B2F55] font-medium hover:underline">
-              info@neuroholistic.com
+            <a href={`mailto:${CONTACT_INFO.email}`} className="text-[#2B2F55] font-medium hover:underline">
+              {CONTACT_INFO.email}
+            </a>
+            {' '}or{' '}
+            <a href={`mailto:${CONTACT_INFO.supportEmail}`} className="text-[#2B2F55] font-medium hover:underline">
+              {CONTACT_INFO.supportEmail}
             </a>
             .
           </p>
