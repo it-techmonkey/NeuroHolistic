@@ -118,9 +118,14 @@ export default function Footer() {
               {t.footer.contact03}
             </span>
             <div className="flex flex-col gap-6">
-              <a href={`mailto:${CONTACT_INFO.email}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
-                {CONTACT_INFO.email}
-              </a>
+              <div className="flex flex-col gap-2">
+                <a href={`mailto:${CONTACT_INFO.email}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+                  {CONTACT_INFO.email}
+                </a>
+                <a href={`mailto:${CONTACT_INFO.supportEmail}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+                  {CONTACT_INFO.supportEmail}
+                </a>
+              </div>
               <div className="flex flex-col gap-2">
                 <a href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer" className="text-[13px] text-slate-400 hover:text-white transition-colors w-fit">
                   WhatsApp: {CONTACT_INFO.whatsapp.label}

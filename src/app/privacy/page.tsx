@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CONTACT_INFO } from '@/lib/contact';
 
 export const metadata = { title: 'Privacy Policy — NeuroHolistic' };
 
@@ -62,8 +63,12 @@ export default function PrivacyPage() {
           <p className="text-slate-600 leading-relaxed">
             If you have questions about this privacy policy or wish to exercise your data rights,
             please contact us at{' '}
-            <a href="mailto:info@neuroholistic.com" className="text-[#2B2F55] font-medium hover:underline">
-              info@neuroholistic.com
+            <a href={`mailto:${CONTACT_INFO.email}`} className="text-[#2B2F55] font-medium hover:underline">
+              {CONTACT_INFO.email}
+            </a>
+            {' '}or{' '}
+            <a href={`mailto:${CONTACT_INFO.supportEmail}`} className="text-[#2B2F55] font-medium hover:underline">
+              {CONTACT_INFO.supportEmail}
             </a>
             .
           </p>
