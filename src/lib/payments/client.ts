@@ -1,14 +1,14 @@
+import type { PaymentOption, ProgramType } from './pricing';
+
 /**
  * Initiate a Ziina checkout session.
- * user_id is resolved server-side from the auth session cookie — never passed from the client.
+ * Prices and user identity are resolved server-side.
  */
 export async function redirectToZiinaCheckout(paymentData: {
-  amount: number;
-  description: string;
-  bookingId?: string;
-  customerEmail?: string;
-  customerName?: string;
-  sessionCount?: number;
+  programType: ProgramType | 'academy';
+  paymentOption: PaymentOption;
+  therapistName?: string | null;
+  therapistSlug?: string | null;
 }) {
   const response = await fetch('/api/ziina/create-payment', {
     method: 'POST',
@@ -16,15 +16,14 @@ export async function redirectToZiinaCheckout(paymentData: {
     body: JSON.stringify(paymentData),
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to create payment session');
+    throw new Error(data.error || 'Failed to create Ziina payment session');
   }
 
-  const data = await response.json();
-
   if (!data.paymentLink) {
-    throw new Error('No payment link received');
+    throw new Error('No payment link received from Ziina');
   }
 
   window.location.href = data.paymentLink;
