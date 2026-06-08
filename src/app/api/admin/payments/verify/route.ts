@@ -115,8 +115,10 @@ async function sendPaymentRejectedEmail({
 export async function POST(request: NextRequest) {
   try {
     const authClient = await createClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const { data } = await authClient.auth.getUser();
+    const user = data?.user ?? null;
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const adminId = user.id;
 
     const { data: userData } = await authClient
       .from('users').select('role').eq('id', user.id).single();
@@ -182,7 +184,6 @@ export async function POST(request: NextRequest) {
 
       // Record admin action for audit
       try {
-        const adminId = user.id;
         await supabase.from('admin_actions').insert({
           admin_id: adminId,
           action: 'approve_payment',
@@ -226,7 +227,6 @@ export async function POST(request: NextRequest) {
 
       // Record admin reject action for audit
       try {
-        const adminId = user.id;
         await supabase.from('admin_actions').insert({
           admin_id: adminId,
           action: 'reject_payment',
@@ -257,7 +257,6 @@ export async function POST(request: NextRequest) {
 
     // Record admin reject action for audit
     try {
-      const adminId = user.id;
       await supabase.from('admin_actions').insert({
         admin_id: adminId,
         action: 'reject_payment',
