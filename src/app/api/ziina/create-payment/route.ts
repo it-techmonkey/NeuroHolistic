@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const programType = body?.programType;
   const paymentOption = body?.paymentOption;
+  const preferredDate = body?.preferredDate || null;
+  const preferredTime = body?.preferredTime || null;
 
   if (!isProgramType(programType) || !isPaymentOption(paymentOption)) {
     return NextResponse.json(
@@ -158,6 +160,8 @@ export async function POST(request: NextRequest) {
     therapistName: isAcademy ? 'NeuroHolistic Academy' : therapistName,
     clientName,
     clientEmail,
+    preferredDate,
+    preferredTime,
     ...(discount
       ? {
           discountPercent: discount.discountPercent,

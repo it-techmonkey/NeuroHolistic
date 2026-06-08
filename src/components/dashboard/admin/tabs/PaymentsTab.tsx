@@ -3,8 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   CreditCard, CheckCircle, XCircle, Loader2, Clock,
-  User, Mail, DollarSign, Calendar, RefreshCw, MessageSquare,
-  Search, Filter
+  User, Mail, DollarSign, RefreshCw, MessageSquare, Search
 } from 'lucide-react';
 
 interface PendingPayment {
@@ -23,52 +22,31 @@ interface PendingPayment {
   createdAt: string;
 }
 
-interface PaymentsTabProps {
-  initialPayments?: PendingPayment[];
-}
-
-const programTypeColors: Record<string, string> = {
-  private: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
-  group: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  academy: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-};
-
 function formatDate(dateStr: string): string {
   try {
     return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
-  } catch {
-    return dateStr;
-  }
+  } catch { return dateStr; }
 }
 
 function formatRelativeTime(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
     return formatDate(dateStr);
-  } catch {
-    return dateStr;
-  }
+  } catch { return dateStr; }
 }
 
-export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) {
-  const [payments, setPayments] = useState<PendingPayment[]>(initialPayments);
-  const [loading, setLoading] = useState(false);
+export default function PaymentsTab() {
+  const [payments, setPayments] = useState<PendingPayment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
@@ -92,11 +70,7 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
     }
   }, []);
 
-  useEffect(() => {
-    if (initialPayments.length === 0) {
-      fetchPayments();
-    }
-  }, [initialPayments.length, fetchPayments]);
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   const handleAction = async (programId: string, action: 'accept' | 'reject') => {
     setActionLoading(programId);
@@ -106,7 +80,6 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ programId, action, notes: notes || undefined }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Action failed');
 
@@ -114,9 +87,7 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
       setSelectedPayment(null);
       setNotes('');
       setToast({
-        message: action === 'accept'
-          ? 'Payment verified — program activated'
-          : 'Payment rejected — client notified',
+        message: action === 'accept' ? 'Payment verified — program activated' : 'Payment rejected — client notified',
         type: 'success',
       });
       setTimeout(() => setToast(null), 4000);
@@ -131,77 +102,55 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
   const filteredPayments = payments.filter(p => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return (
-      p.clientName.toLowerCase().includes(q) ||
-      p.clientEmail.toLowerCase().includes(q) ||
-      p.therapistName.toLowerCase().includes(q)
-    );
+    return p.clientName.toLowerCase().includes(q) || p.clientEmail.toLowerCase().includes(q) || p.therapistName.toLowerCase().includes(q);
   });
 
-  const pendingCount = payments.length;
   const totalPendingAmount = payments.reduce((sum, p) => sum + p.pricePaid, 0);
-  const handleQuickApprove = async (programId: string) => {
-    const confirmed = window.confirm(
-      'Mark this payment as verified and activate the program?'
-    );
-    if (!confirmed) return;
-    await handleAction(programId, 'accept');
-  };
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-lg text-sm font-medium shadow-lg border transition-all ${
-          toast.type === 'success'
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-            : 'bg-red-500/10 border-red-500/30 text-red-400'
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-lg border ${
+          toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
         }`}>
           {toast.message}
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <CreditCard className="w-6 h-6 text-amber-400" />
-          <h2 className="text-xl font-semibold text-white">Manual Payment Approvals</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Payment Approvals</h2>
+          <p className="text-sm text-slate-500">Review and verify pending payments</p>
         </div>
-        <button
-          onClick={fetchPayments}
-          disabled={refreshing}
-          className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-          title="Refresh"
-        >
+        <button onClick={fetchPayments} disabled={refreshing}
+          className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="bg-[#111827] border border-white/5 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <span className="text-xs text-slate-400">Pending</span>
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-xs text-slate-500">Pending</span>
           </div>
-          <p className="text-2xl font-semibold text-white font-mono">{pendingCount}</p>
+          <p className="text-2xl font-bold text-slate-900">{payments.length}</p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs text-slate-400">Total Amount</span>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs text-slate-500">Total Amount</span>
           </div>
-          <p className="text-2xl font-semibold text-white font-mono">
-            AED {totalPendingAmount.toLocaleString()}
-          </p>
+          <p className="text-2xl font-bold text-slate-900">AED {totalPendingAmount.toLocaleString()}</p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-lg p-4 col-span-2 sm:col-span-1">
-          <div className="flex items-center gap-2 mb-2">
-            <User className="w-4 h-4 text-blue-400" />
-            <span className="text-xs text-slate-400">Avg. Amount</span>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="w-4 h-4 text-blue-500" />
+            <span className="text-xs text-slate-500">Avg. Amount</span>
           </div>
-          <p className="text-2xl font-semibold text-white font-mono">
-            AED {pendingCount > 0 ? Math.round(totalPendingAmount / pendingCount).toLocaleString() : '0'}
+          <p className="text-2xl font-bold text-slate-900">
+            AED {payments.length > 0 ? Math.round(totalPendingAmount / payments.length).toLocaleString() : '0'}
           </p>
         </div>
       </div>
@@ -209,26 +158,20 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search by client name, email, or therapist..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-[#111827] border border-white/5 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
-        />
+        <input type="text" placeholder="Search by client name, email, or therapist..."
+          value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400" />
       </div>
 
-      {/* Empty State */}
+      {/* Empty */}
       {filteredPayments.length === 0 && !loading && (
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-12 text-center">
-          <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
+          <CheckCircle className="w-12 h-12 text-emerald-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 mb-2">
             {searchQuery ? 'No payments match your search' : 'No pending payments'}
           </h3>
-          <p className="text-sm text-slate-400">
-            {searchQuery
-              ? 'Try a different search term'
-              : 'All payments have been verified. New submissions will appear here.'}
+          <p className="text-sm text-slate-500">
+            {searchQuery ? 'Try a different search term' : 'All payments have been verified.'}
           </p>
         </div>
       )}
@@ -237,73 +180,51 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
       {filteredPayments.length > 0 && (
         <div className="space-y-4">
           {filteredPayments.map((payment) => (
-            <div
-              key={payment.id}
-              className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-all"
-            >
-              <div className="p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  {/* Client Info */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-amber-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-semibold text-white">{payment.clientName}</h3>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                          programTypeColors[payment.programType] || 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-                        }`}>
-                          {payment.programType}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
-                          <Mail className="w-3 h-3" />
-                          {payment.clientEmail}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                        <span>Therapist: {payment.therapistName}</span>
-                        <span>{payment.totalSessions} sessions</span>
-                        <span className="text-slate-600">
-                          Submitted {formatRelativeTime(payment.paymentSubmittedAt || payment.createdAt)}
-                        </span>
-                      </div>
-                    </div>
+            <div key={payment.id} className="bg-white border border-slate-200 rounded-xl p-5 hover:border-slate-300 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-indigo-600" />
                   </div>
-
-                  {/* Amount & Actions */}
-                  <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-                    <div className="text-right">
-                      <p className="text-xl font-semibold text-white font-mono">
-                        AED {payment.pricePaid.toLocaleString()}
-                      </p>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 mt-1">
-                        <Clock className="w-3 h-3" />
-                        Awaiting Verification
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-slate-900">{payment.clientName}</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 capitalize">
+                        {payment.programType}
                       </span>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleQuickApprove(payment.id)}
-                        disabled={actionLoading === payment.id}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-                      >
-                        {actionLoading === payment.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <CheckCircle className="w-4 h-4" />
-                        )}
-                        Mark Verified
-                      </button>
-                      <button
-                        onClick={() => setSelectedPayment(payment)}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Review Details
-                      </button>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail className="w-3 h-3 text-slate-400" />
+                      <span className="text-xs text-slate-500">{payment.clientEmail}</span>
                     </div>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                      <span>Therapist: {payment.therapistName}</span>
+                      <span>{payment.totalSessions} sessions</span>
+                      <span className="text-slate-400">
+                        Submitted {formatRelativeTime(payment.paymentSubmittedAt || payment.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 sm:flex-col sm:items-end">
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-slate-900">AED {payment.pricePaid.toLocaleString()}</p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 mt-1">
+                      <Clock className="w-3 h-3" />
+                      Awaiting Verification
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleAction(payment.id, 'accept')} disabled={actionLoading === payment.id}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1.5">
+                      {actionLoading === payment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                      Verify
+                    </button>
+                    <button onClick={() => setSelectedPayment(payment)}
+                      className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-lg transition-colors">
+                      Review
+                    </button>
                   </div>
                 </div>
               </div>
@@ -314,125 +235,64 @@ export default function PaymentsTab({ initialPayments = [] }: PaymentsTabProps) 
 
       {/* Review Modal */}
       {selectedPayment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/5">
-              <h3 className="text-lg font-semibold text-white">Manual Approval</h3>
-              <p className="text-xs text-slate-400 mt-1">Approve or reject based on your internal confirmation process.</p>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-semibold text-slate-900">Review Payment</h3>
+              <p className="text-xs text-slate-500 mt-1">Approve or reject based on your internal verification.</p>
             </div>
 
-            {/* Modal Body */}
-            <div className="px-6 py-5 space-y-5">
-              {/* Client Details */}
-              <div className="bg-[#0C1222] rounded-xl p-4 space-y-3">
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Client Details</h4>
+            <div className="px-6 py-5 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Client Details</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-slate-500">Name</p>
-                    <p className="text-white font-medium">{selectedPayment.clientName}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">Email</p>
-                    <p className="text-white font-medium text-xs">{selectedPayment.clientEmail}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">Program Type</p>
-                    <p className="text-white font-medium capitalize">{selectedPayment.programType}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">Therapist</p>
-                    <p className="text-white font-medium">{selectedPayment.therapistName}</p>
-                  </div>
+                  <div><p className="text-slate-400">Name</p><p className="font-medium text-slate-900">{selectedPayment.clientName}</p></div>
+                  <div><p className="text-slate-400">Email</p><p className="font-medium text-slate-900 text-xs">{selectedPayment.clientEmail}</p></div>
+                  <div><p className="text-slate-400">Program</p><p className="font-medium text-slate-900 capitalize">{selectedPayment.programType}</p></div>
+                  <div><p className="text-slate-400">Therapist</p><p className="font-medium text-slate-900">{selectedPayment.therapistName}</p></div>
                 </div>
               </div>
 
-              {/* Payment Details */}
-              <div className="bg-[#0C1222] rounded-xl p-4 space-y-3">
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Payment Details</h4>
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Payment</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-slate-500">Amount</p>
-                    <p className="text-emerald-400 font-semibold text-lg font-mono">
-                      AED {selectedPayment.pricePaid.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">Sessions</p>
-                    <p className="text-white font-medium">{selectedPayment.totalSessions} sessions</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-slate-500">Submitted</p>
-                    <p className="text-white font-medium text-xs">
-                      {formatDate(selectedPayment.paymentSubmittedAt || selectedPayment.createdAt)}
-                    </p>
-                  </div>
+                  <div><p className="text-slate-400">Amount</p><p className="font-bold text-lg text-emerald-600">AED {selectedPayment.pricePaid.toLocaleString()}</p></div>
+                  <div><p className="text-slate-400">Sessions</p><p className="font-medium text-slate-900">{selectedPayment.totalSessions}</p></div>
+                  <div className="col-span-2"><p className="text-slate-400">Submitted</p><p className="font-medium text-slate-900 text-xs">{formatDate(selectedPayment.paymentSubmittedAt || selectedPayment.createdAt)}</p></div>
                 </div>
               </div>
 
-              {/* Admin Notes */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                   <MessageSquare className="w-3.5 h-3.5" />
                   Notes (optional)
                 </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add notes about this payment verification..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-[#0C1222] border border-white/5 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
-                />
-              </div>
-
-              {/* Manual Approval Reminder */}
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-                <p className="text-xs text-amber-400">
-                  <strong>Manual workflow:</strong> This action is admin-controlled. Approve when your team confirms payment with client/therapist.
-                </p>
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none" />
               </div>
             </div>
 
-            {/* Modal Actions */}
-            <div className="px-6 py-4 border-t border-white/5 flex gap-3">
-              <button
-                onClick={() => { setSelectedPayment(null); setNotes(''); }}
-                className="flex-1 px-4 py-2.5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 rounded-lg text-sm font-medium transition-colors"
-              >
+            <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
+              <button onClick={() => { setSelectedPayment(null); setNotes(''); }}
+                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors">
                 Cancel
               </button>
-              <button
-                onClick={() => handleAction(selectedPayment.id, 'reject')}
-                disabled={actionLoading === selectedPayment.id}
-                className="flex-1 px-4 py-2.5 bg-red-600/10 border border-red-500/30 text-red-400 hover:bg-red-600/20 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                {actionLoading === selectedPayment.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
+              <button onClick={() => handleAction(selectedPayment.id, 'reject')} disabled={actionLoading === selectedPayment.id}
+                className="flex-1 px-4 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                {actionLoading === selectedPayment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                 Reject
               </button>
-              <button
-                onClick={() => handleAction(selectedPayment.id, 'accept')}
-                disabled={actionLoading === selectedPayment.id}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                {actionLoading === selectedPayment.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <CheckCircle className="w-4 h-4" />
-                )}
-                Mark Verified & Activate
+              <button onClick={() => handleAction(selectedPayment.id, 'accept')} disabled={actionLoading === selectedPayment.id}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                {actionLoading === selectedPayment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Verify & Activate
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <p className="text-xs text-slate-500 text-center">
-        {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} pending verification
-      </p>
     </div>
   );
 }

@@ -11,6 +11,8 @@ export async function redirectToZiinaCheckout(paymentData: {
   therapistName?: string | null;
   therapistSlug?: string | null;
   discountPercent?: DiscountPercent;
+  preferredDate?: string;
+  preferredTime?: string;
 }) {
   const response = await fetch('/api/ziina/create-payment', {
     method: 'POST',
