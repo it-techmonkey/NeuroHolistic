@@ -8,7 +8,7 @@ export default function FloatingWhatsAppButton() {
       rel="noreferrer"
       aria-label={`Chat with NeuroHolistic on WhatsApp at ${CONTACT_INFO.whatsapp.label}`}
       title={`WhatsApp: ${CONTACT_INFO.whatsapp.label}`}
-      className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#0B0F2B] text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#25D366] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
+      className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#0B0F2B] text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#25D366] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:bottom-6 sm:right-6 sm:h-14 sm:w-14 pb-safe"
     >
       <svg
         aria-hidden="true"

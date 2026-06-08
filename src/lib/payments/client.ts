@@ -1,4 +1,5 @@
 import type { PaymentOption, ProgramType } from './pricing';
+import type { DiscountPercent } from './discount';
 
 /**
  * Initiate a Ziina checkout session.
@@ -9,6 +10,7 @@ export async function redirectToZiinaCheckout(paymentData: {
   paymentOption: PaymentOption;
   therapistName?: string | null;
   therapistSlug?: string | null;
+  discountPercent?: DiscountPercent;
 }) {
   const response = await fetch('/api/ziina/create-payment', {
     method: 'POST',

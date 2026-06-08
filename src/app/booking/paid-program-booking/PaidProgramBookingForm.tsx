@@ -15,6 +15,7 @@ import {
 } from '@/lib/payments/pricing';
 import { redirectToZiinaCheckout } from '@/lib/payments/client';
 import { useLang } from '@/lib/translations/LanguageContext';
+import type { DiscountPercent } from '@/lib/payments/discount';
 
 interface PaidProgramBookingFormProps {
   userEmail: string;
@@ -25,6 +26,15 @@ interface PaidProgramBookingFormProps {
 interface TherapistInfo {
   name: string;
   slug?: string;
+}
+
+interface DiscountInfo {
+  discountPercent: DiscountPercent;
+}
+
+function applyClientDiscount(originalPrice: number, discountPercent: DiscountPercent) {
+  const factor = discountPercent / 100;
+  return Math.round(originalPrice * (1 - factor));
 }
 
 const THERAPIST_NAME_BY_SLUG: Record<string, string> = {
@@ -55,8 +65,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const [therapist, setTherapist] = useState<TherapistInfo | null>(null);
   const [loadingTherapist, setLoadingTherapist] = useState(true);
   const [hasActiveProgram, setHasActiveProgram] = useState(false);
-  const [hasCompletedConsultation, setHasCompletedConsultation] = useState<boolean | null>(null);
-  const [consultationCheckDone, setConsultationCheckDone] = useState(false);
   
   // Inline signup form data (for unauthenticated users)
   const [formData, setFormData] = useState({
@@ -68,6 +76,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   });
   const [formError, setFormError] = useState('');
   const [pendingPaymentOption, setPendingPaymentOption] = useState<PaymentOption | null>(null);
+  const [userDiscount, setUserDiscount] = useState<DiscountInfo | null>(null);
 
   // Fetch assigned therapist and check active program on mount
   useEffect(() => {
@@ -87,16 +96,14 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             const progData = await progRes.json();
             setHasActiveProgram(progData.hasProgram ?? false);
           }
-          // Check if user has completed a free consultation
-          const consultRes = await fetch('/api/client/dashboard');
-          if (consultRes.ok) {
-            const consultData = await consultRes.json();
-            setHasCompletedConsultation(consultData.hasCompletedFreeConsult ?? false);
+          // Fetch client discount
+          const discountRes = await fetch('/api/client/my-discount');
+          if (discountRes.ok) {
+            const discountData = await discountRes.json();
+            if (discountData.discount) {
+              setUserDiscount(discountData.discount);
+            }
           }
-          setConsultationCheckDone(true);
-        } else {
-          // Unauthenticated users - check after signup in the details step
-          setHasCompletedConsultation(false);
         }
       } catch (err) {
         console.error('Failed to fetch therapist:', err);
@@ -160,6 +167,18 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     return getPrice(type, option, ctx?.name, ctx?.slug);
   };
 
+  const getPriceDisplay = (type: ProgramType, option: PaymentOption) => {
+    const original = getPriceForDisplay(type, option);
+    if (userDiscount) {
+      return {
+        original,
+        discounted: applyClientDiscount(original, userDiscount.discountPercent),
+        discountPercent: userDiscount.discountPercent,
+      };
+    }
+    return { original, discounted: original, discountPercent: 0 as const };
+  };
+
   const handlePayment = async (option: PaymentOption) => {
     if (!selectedProgramType) return;
 
@@ -180,6 +199,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
         paymentOption: option,
         therapistName: payCtx?.name,
         therapistSlug: payCtx?.slug,
+        discountPercent: userDiscount?.discountPercent,
       });
     } catch (err: any) {
       alert(err.message || (isArabic ? 'فشل بدء الدفع. يرجى المحاولة مرة أخرى.' : 'Failed to start payment. Please try again.'));
@@ -205,32 +225,6 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
         >
           {isArabic ? 'اذهب إلى لوحة التحكم' : 'Go to Dashboard'}
-        </button>
-      </div>
-    );
-  }
-
-  // Show consultation required guard for authenticated users who haven't completed consultation
-  // Also shows for non-authenticated users after they enter details and are found to lack a consultation
-  if (hasCompletedConsultation === false && !academyMode && (isAuthenticated || consultationCheckDone)) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
-        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-bold text-amber-900 mb-2">{isArabic ? 'الاستشارة المجانية مطلوبة' : 'Free Consultation Required'}</h3>
-        <p className="text-amber-700 text-sm mb-6 max-w-md mx-auto">
-          {isArabic
-            ? 'يلزم إكمال استشارة مجانية مع معالج قبل شراء البرنامج المدفوع. خلال الاستشارة، سيجري المعالج تقييمًا أوليًا لتحديد خط الأساس ووضع خطة علاج مخصصة.'
-            : 'A free consultation with a therapist is required before purchasing a paid program. During the consultation, your therapist will complete an initial assessment to establish your baseline and create a personalized treatment plan.'}
-        </p>
-        <button
-          onClick={() => router.push('/consultation/book')}
-          className="px-8 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all"
-        >
-          {isArabic ? 'احجز استشارة مجانية' : 'Book Free Consultation'}
         </button>
       </div>
     );
@@ -309,15 +303,31 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </p>
               <div className="border-t border-slate-100 pt-4 mt-auto">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-slate-900">
-                    {getPriceForDisplay('private', 'full').toLocaleString()}
-                  </span>
+                  {userDiscount ? (
+                    <>
+                      <span className="text-lg text-slate-400 line-through">
+                        {getPriceForDisplay('private', 'full').toLocaleString()}
+                      </span>
+                      <span className="text-2xl font-bold text-indigo-600">
+                        {applyClientDiscount(getPriceForDisplay('private', 'full'), userDiscount.discountPercent).toLocaleString()}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-slate-900">
+                      {getPriceForDisplay('private', 'full').toLocaleString()}
+                    </span>
+                  )}
                   <span className="text-slate-500 text-sm">AED</span>
+                  {userDiscount && (
+                    <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                      -{userDiscount.discountPercent}%
+                    </span>
+                  )}
                 </div>
                 <p className="text-slate-500 text-xs mt-1">
                   {isArabic
-                    ? `10 جلسات · ${getPerSessionFromFull(getPriceForDisplay('private', 'full'))} درهم/جلسة`
-                    : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay('private', 'full'))} AED/session`}
+                    ? `10 جلسات · ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay('private', 'full'), userDiscount.discountPercent) : getPriceForDisplay('private', 'full'))} درهم/جلسة`
+                    : `10 sessions · ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay('private', 'full'), userDiscount.discountPercent) : getPriceForDisplay('private', 'full'))} AED/session`}
                 </p>
               </div>
             </button>
@@ -346,15 +356,31 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </p>
               <div className="border-t border-slate-100 pt-4 mt-auto">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-slate-900">
-                    {getPriceForDisplay('group', 'full').toLocaleString()}
-                  </span>
+                  {userDiscount ? (
+                    <>
+                      <span className="text-lg text-slate-400 line-through">
+                        {getPriceForDisplay('group', 'full').toLocaleString()}
+                      </span>
+                      <span className="text-2xl font-bold text-indigo-600">
+                        {applyClientDiscount(getPriceForDisplay('group', 'full'), userDiscount.discountPercent).toLocaleString()}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-slate-900">
+                      {getPriceForDisplay('group', 'full').toLocaleString()}
+                    </span>
+                  )}
                   <span className="text-slate-500 text-sm">AED</span>
+                  {userDiscount && (
+                    <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                      -{userDiscount.discountPercent}%
+                    </span>
+                  )}
                 </div>
                 <p className="text-slate-500 text-xs mt-1">
                   {isArabic
-                    ? `10 جلسات · ${getPerSessionFromFull(getPriceForDisplay('group', 'full'))} درهم/جلسة`
-                    : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay('group', 'full'))} AED/session`}
+                    ? `10 جلسات · ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay('group', 'full'), userDiscount.discountPercent) : getPriceForDisplay('group', 'full'))} درهم/جلسة`
+                    : `10 sessions · ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay('group', 'full'), userDiscount.discountPercent) : getPriceForDisplay('group', 'full'))} AED/session`}
                 </p>
               </div>
             </button>
@@ -454,20 +480,39 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                       : 'Pay for all 10 sessions upfront and save. Commit to your complete transformation journey.')}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-slate-900">
-                  {getPriceForDisplay(selectedProgramType, 'full').toLocaleString()}
-                </span>
-                <span className="text-slate-500 text-base ml-1">
-                  {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
-                </span>
+                {userDiscount ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-lg text-slate-400 line-through">
+                      {getPriceForDisplay(selectedProgramType, 'full').toLocaleString()}
+                    </span>
+                    <span className="text-4xl font-bold text-indigo-600">
+                      {applyClientDiscount(getPriceForDisplay(selectedProgramType, 'full'), userDiscount.discountPercent).toLocaleString()}
+                    </span>
+                    <span className="text-slate-500 text-base">
+                      {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                      -{userDiscount.discountPercent}%
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold text-slate-900">
+                      {getPriceForDisplay(selectedProgramType, 'full').toLocaleString()}
+                    </span>
+                    <span className="text-slate-500 text-base ml-1">
+                      {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
+                    </span>
+                  </>
+                )}
                 <p className="text-slate-500 text-sm mt-1">
                   {academyMode
                   ? (isArabic
-                    ? `5 جلسات · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} درهم / جلسة`
-                    : `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full') / 5)} AED / session`)
+                    ? `5 جلسات · ${Math.round((userDiscount ? applyClientDiscount(getPriceForDisplay(selectedProgramType, 'full'), userDiscount.discountPercent) : getPriceForDisplay(selectedProgramType, 'full')) / 5)} درهم / جلسة`
+                    : `5 sessions · ${Math.round((userDiscount ? applyClientDiscount(getPriceForDisplay(selectedProgramType, 'full'), userDiscount.discountPercent) : getPriceForDisplay(selectedProgramType, 'full')) / 5)} AED / session`)
                     : selectedProgramType === 'group' && isArabic
-                      ? `10 جلسات – ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full')).toLocaleString()} درهم لكل جلسة`
-                      : `10 sessions · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
+                      ? `10 جلسات – ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay(selectedProgramType, 'full'), userDiscount.discountPercent) : getPriceForDisplay(selectedProgramType, 'full')).toLocaleString()} درهم لكل جلسة`
+                      : `10 sessions · ${getPerSessionFromFull(userDiscount ? applyClientDiscount(getPriceForDisplay(selectedProgramType, 'full'), userDiscount.discountPercent) : getPriceForDisplay(selectedProgramType, 'full'))} AED / session`}
                 </p>
               </div>
               <button
@@ -519,12 +564,31 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                       : 'Pay for each session individually. Flexibility to continue at your own pace without upfront commitment.')}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-slate-900">
-                  {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
-                </span>
-                <span className="text-slate-500 text-base ml-1">
-                  {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
-                </span>
+                {userDiscount ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-lg text-slate-400 line-through">
+                      {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
+                    </span>
+                    <span className="text-4xl font-bold text-indigo-600">
+                      {applyClientDiscount(getPriceForDisplay(selectedProgramType, 'per_session'), userDiscount.discountPercent).toLocaleString()}
+                    </span>
+                    <span className="text-slate-500 text-base">
+                      {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                      -{userDiscount.discountPercent}%
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold text-slate-900">
+                      {getPriceForDisplay(selectedProgramType, 'per_session').toLocaleString()}
+                    </span>
+                    <span className="text-slate-500 text-base ml-1">
+                      {selectedProgramType === 'group' && !academyMode && isArabic ? 'درهم إماراتي' : 'AED'}
+                    </span>
+                  </>
+                )}
                 <p className="text-slate-500 text-sm mt-1">
                   {selectedProgramType === 'group' && !academyMode && isArabic ? 'لكل جلسة' : 'per session'}
                 </p>
@@ -573,7 +637,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               ? 'bg-indigo-50 border-indigo-200' 
               : 'bg-indigo-50 border-indigo-200'
           }`}>
-            <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                   selectedProgramType === 'private' ? 'bg-indigo-100' : 'bg-indigo-100'
@@ -595,9 +659,22 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   </p>
                 </div>
               </div>
-              <p className="text-xl font-bold text-slate-900">
-                {getPriceForDisplay(selectedProgramType, pendingPaymentOption).toLocaleString()} AED
-              </p>
+              <div className="text-right">
+                {userDiscount ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-400 line-through">
+                      {getPriceForDisplay(selectedProgramType, pendingPaymentOption).toLocaleString()} AED
+                    </span>
+                    <span className="text-xl font-bold text-indigo-600">
+                      {applyClientDiscount(getPriceForDisplay(selectedProgramType, pendingPaymentOption), userDiscount.discountPercent).toLocaleString()} AED
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xl font-bold text-slate-900">
+                    {getPriceForDisplay(selectedProgramType, pendingPaymentOption).toLocaleString()} AED
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -657,29 +734,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   });
                 }
 
-                if (!academyMode) {
-                  // Check if this email has a completed free consultation
-                  const consultCheckRes = await fetch('/api/client/dashboard');
-                  if (consultCheckRes.ok) {
-                    const consultCheckData = await consultCheckRes.json();
-                    if (!consultCheckData.hasCompletedFreeConsult) {
-                      setHasCompletedConsultation(false);
-                      setConsultationCheckDone(true);
-                      setStep('payment');
-                      setProcessing(false);
-                      return;
-                    }
-                  } else {
-                    // If dashboard check fails, block to be safe
-                    setHasCompletedConsultation(false);
-                    setConsultationCheckDone(true);
-                    setStep('payment');
-                    setProcessing(false);
-                    return;
-                  }
-                }
-
-                // Has completed consultation - proceed to Ziina checkout
+                // Consultation is optional; proceed directly to Ziina checkout.
                 const payCtx = therapistForPricing(selectedProgramType!);
                 setSelectedPaymentOption(pendingPaymentOption);
                 await redirectToZiinaCheckout({

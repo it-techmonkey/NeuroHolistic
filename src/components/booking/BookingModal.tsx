@@ -119,7 +119,7 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={closeBookingModal}
-                className={`absolute right-4 top-4 z-10 rounded-lg p-2 transition-colors ${
+                className={`absolute right-4 top-4 z-10 rounded-lg p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors ${
                   modalView === 'consultation'
                     ? 'text-white/50 hover:bg-white/10 hover:text-white'
                     : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'

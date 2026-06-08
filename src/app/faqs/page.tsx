@@ -1,4 +1,5 @@
 import PageHero from "@/components/ui/PageHero";
+import FAQAccordion from "@/components/FAQAccordion";
 
 const FAQS = [
   {
@@ -42,13 +43,8 @@ export default function FAQsPage() {
       />
 
       <section className="py-16 md:py-24">
-        <div className="mx-auto max-w-[960px] px-6 md:px-12 space-y-4">
-          {FAQS.map((item) => (
-            <div key={item.q} className="rounded-xl border border-slate-200 p-5 md:p-6">
-              <h2 className="text-lg font-semibold text-slate-900">{item.q}</h2>
-              <p className="mt-2 text-slate-600 leading-relaxed">{item.a}</p>
-            </div>
-          ))}
+        <div className="mx-auto max-w-[960px] px-6 md:px-12">
+          <FAQAccordion items={FAQS} />
         </div>
       </section>
     </main>

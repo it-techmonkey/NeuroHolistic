@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import DiagnosticAssessmentForm from './DiagnosticAssessmentForm';
 import SessionDevelopmentForm from './SessionDevelopmentForm';
+import ClientReportCard from './ClientReportCard';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -805,7 +806,7 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
   const [devForms, setDevForms] = useState<ArchivedDevForm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [modal, setModal] = useState<'newClient' | 'editClient' | 'assessment' | 'devForm' | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development' | 'reports'>('overview');
+  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development' | 'reportCard' | 'reports'>('overview');
   const [saving, setSaving] = useState(false);
 
   const fetchClients = useCallback(async () => {
@@ -1000,11 +1001,12 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
 
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               {[
                 { id: 'overview' as const, label: 'Overview', icon: User },
                 { id: 'assessments' as const, label: 'Assessments', icon: FileText },
                 { id: 'development' as const, label: 'Development Forms', icon: TrendingUp },
+                { id: 'reportCard' as const, label: 'Report Card', icon: BarChart3 },
                 { id: 'reports' as const, label: 'Reports', icon: BarChart3 },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setDetailTab(tab.id)}
@@ -1095,6 +1097,25 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
 
             {detailTab === 'reports' && (
               <ArchivedClientReports assessments={assessments} devForms={devForms} />
+            )}
+
+            {detailTab === 'reportCard' && (
+              <ClientReportCard
+                source="archived"
+                client={{
+                  name: selectedClient.full_name,
+                  email: selectedClient.email,
+                  phone: selectedClient.phone,
+                  country: selectedClient.country,
+                  dateOfBirth: selectedClient.date_of_birth,
+                  occupation: selectedClient.occupation,
+                  relationshipStatus: selectedClient.relationship_status,
+                  notes: selectedClient.notes,
+                  status: 'Archived Client',
+                }}
+                assessments={assessments}
+                devForms={devForms}
+              />
             )}
           </div>
         </div>

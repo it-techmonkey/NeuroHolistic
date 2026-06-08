@@ -27,21 +27,34 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
-    const payments = (programs || []).map(p => ({
-      id: p.id,
-      userId: p.user_id,
-      clientName: p.client_name || 'Unknown',
-      clientEmail: p.client_email || '',
-      programType: p.program_type || 'private',
-      pricePaid: p.price_paid || 0,
-      paymentId: p.payment_id,
-      paymentStatus: p.payment_status,
-      paymentSubmittedAt: p.payment_submitted_at,
-      therapistName: p.therapist_name || 'Unassigned',
-      totalSessions: p.total_sessions,
-      status: p.status,
-      createdAt: p.created_at,
-    }));
+    // Fetch related payment records (if any) for richer admin context
+    const programIds = (programs || []).map((p: any) => p.id).filter(Boolean);
+    const { data: relatedPayments } = await supabase
+      .from('payments')
+      .select('*')
+      .in('program_id', programIds || [])
+      .then(r => r).catch(() => ({ data: [] }));
+
+    const payments = (programs || []).map((p: any) => {
+      const paymentRow = (relatedPayments || []).find((pay: any) => String(pay.program_id) === String(p.id));
+      return {
+        id: p.id,
+        userId: p.user_id,
+        clientName: p.client_name || 'Unknown',
+        clientEmail: p.client_email || '',
+        programType: p.program_type || 'private',
+        pricePaid: p.price_paid || 0,
+        paymentId: p.payment_id,
+        paymentStatus: p.payment_status,
+        paymentSubmittedAt: p.payment_submitted_at,
+        therapistName: p.therapist_name || 'Unassigned',
+        totalSessions: p.total_sessions,
+        status: p.status,
+        createdAt: p.created_at,
+        payment_reference: paymentRow?.payment_reference || paymentRow?.payment_reference || null,
+        payment_metadata: paymentRow?.metadata || null,
+      };
+    });
 
     return NextResponse.json({ payments });
   } catch (error) {
