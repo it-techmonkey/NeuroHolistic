@@ -22,7 +22,7 @@ export default function ScientificFoundation() {
   };
 
   return (
-    <section className="relative w-full bg-white py-8 md:py-10 overflow-hidden">
+    <section className="relative w-full bg-white py-6 md:py-8 overflow-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -34,7 +34,7 @@ export default function ScientificFoundation() {
           <div className={isArabic ? 'text-right' : 'text-left'}>
           <motion.h2
             variants={itemVariants}
-            className="mb-4 text-[36px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
+            className="mb-4 text-[28px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] sm:text-[36px] md:text-[42px]"
           >
             {t.scientificFoundation.heading}
           </motion.h2>
@@ -62,7 +62,7 @@ export default function ScientificFoundation() {
             </Link>
           </motion.div>
           </div>
-          <motion.div variants={itemVariants} className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200">
+            <motion.div variants={itemVariants} className="relative h-[240px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200">
             <Image
               src="/images/pages/home-img1.webp"
               alt="Scientific foundation"

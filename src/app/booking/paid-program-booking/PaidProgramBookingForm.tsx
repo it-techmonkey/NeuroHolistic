@@ -322,7 +322,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-          <button onClick={() => handleSelectProgramType('private')} className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-8 flex flex-col text-left transition-all hover:shadow-lg hover:border-indigo-300 relative overflow-hidden">
+          <button onClick={() => handleSelectProgramType('private')} className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-6 md:p-8 flex flex-col text-left transition-all hover:shadow-lg hover:border-indigo-300 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500" />
             <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-5">
               <User className="w-7 h-7 text-indigo-600" />
@@ -342,7 +342,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             </div>
           </button>
 
-          <button onClick={() => handleSelectProgramType('group')} className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-8 flex flex-col text-left transition-all hover:shadow-lg hover:border-indigo-300 relative overflow-hidden">
+          <button onClick={() => handleSelectProgramType('group')} className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-6 md:p-8 flex flex-col text-left transition-all hover:shadow-lg hover:border-indigo-300 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500" />
             <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-5">
               <Users className="w-7 h-7 text-indigo-600" />
@@ -478,7 +478,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Full Payment */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-8 flex flex-col transition-all hover:border-indigo-200">
+            <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-6 md:p-8 flex flex-col transition-all hover:border-indigo-200">
               <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider w-fit">
                 {isArabic ? 'أفضل قيمة' : 'Best Value'}
               </span>
@@ -503,7 +503,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             </div>
 
             {/* Per Session */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-8 flex flex-col transition-all hover:border-indigo-200">
+            <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-md p-6 md:p-8 flex flex-col transition-all hover:border-indigo-200">
               <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full uppercase tracking-wider w-fit">
                 {isArabic ? 'مرونة' : 'Flexible'}
               </span>
@@ -529,7 +529,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       {/* STEP: Account Prompt (unauthenticated users - first step) */}
       {step === 'account_prompt' && (
         <div className={`space-y-6 ${isArabic ? 'text-right' : ''}`}>
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center max-w-md mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 text-center max-w-md mx-auto">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-5">
               <User className="w-8 h-8 text-indigo-600" />
             </div>
@@ -571,7 +571,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             <span className="text-sm">{isArabic ? 'العودة' : 'Back'}</span>
           </button>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-md mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-md mx-auto">
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <User className="w-7 h-7 text-indigo-600" />

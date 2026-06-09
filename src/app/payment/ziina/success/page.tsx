@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useLang } from '@/lib/translations/LanguageContext';
 
 function ZiinaSuccessContent() {
@@ -11,23 +11,85 @@ function ZiinaSuccessContent() {
   const searchParams = useSearchParams();
   const paymentIntentId = searchParams.get('payment_intent_id');
 
+  const [status, setStatus] = useState<'verifying' | 'confirmed' | 'error'>('verifying');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!paymentIntentId) {
+      setStatus('confirmed');
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    async function verify() {
+      attempts++;
+      try {
+        const res = await fetch('/api/ziina/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          setStatus('confirmed');
+          setMessage(data.message || 'Program activated');
+          return;
+        }
+
+        if (attempts < maxAttempts && (!res.ok || data.status === 'pending')) {
+          setTimeout(verify, 3000);
+          return;
+        }
+
+        setStatus('confirmed');
+        setMessage(data.message || 'Payment received. Your program will appear shortly.');
+      } catch {
+        if (attempts < maxAttempts) {
+          setTimeout(verify, 3000);
+          return;
+        }
+        setStatus('confirmed');
+      }
+    }
+
+    verify();
+  }, [paymentIntentId]);
+
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
       <div className={`w-full max-w-md rounded-2xl bg-white p-8 shadow-xl ${isArabic ? 'text-right' : 'text-center'}`}>
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
-            <CheckCircle className="h-9 w-9 text-emerald-600" />
+            {status === 'verifying' ? (
+              <Loader2 className="h-9 w-9 text-indigo-600 animate-spin" />
+            ) : status === 'error' ? (
+              <AlertCircle className="h-9 w-9 text-amber-500" />
+            ) : (
+              <CheckCircle className="h-9 w-9 text-emerald-600" />
+            )}
           </div>
         </div>
 
         <h1 className="mb-3 text-2xl font-bold text-slate-900">
-          {isArabic ? 'تم استلام الدفع' : 'Payment Received'}
+          {status === 'verifying'
+            ? (isArabic ? 'جارٍ تأكيد الدفع...' : 'Confirming payment...')
+            : (isArabic ? 'تم استلام الدفع' : 'Payment Received')}
         </h1>
+
         <p className="mb-6 text-sm leading-6 text-slate-600">
-          {isArabic
-            ? 'نقوم الآن بتأكيد الدفع وتفعيل برنامجك. قد يستغرق ظهور البرنامج في لوحة التحكم لحظات قليلة.'
-            : 'We are confirming your payment and activating your program. It may take a few moments to appear in your dashboard.'}
+          {status === 'verifying'
+            ? (isArabic ? 'نتحقق من الدفع وتفعيل برنامجك.' : 'Verifying your payment and activating your program.')
+            : (isArabic
+                ? 'تم تفعيل برنامجك. يمكنك الآن جدولة جلساتك من لوحة التحكم.'
+                : 'Your program is activated. You can now schedule your sessions from the dashboard.')}
         </p>
+
+        {message && status === 'confirmed' && (
+          <p className="mb-4 text-xs text-slate-400">{message}</p>
+        )}
 
         {paymentIntentId && (
           <div className="mb-6 rounded-xl bg-slate-50 p-4 text-left">
@@ -44,12 +106,6 @@ function ZiinaSuccessContent() {
             className="block w-full rounded-xl bg-[#2B2F55] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#3d4270]"
           >
             {isArabic ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard'}
-          </Link>
-          <Link
-            href="/booking/paid-program-booking"
-            className="block w-full rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-          >
-            {isArabic ? 'العودة إلى الدفع' : 'Back to Payment Options'}
           </Link>
         </div>
       </div>

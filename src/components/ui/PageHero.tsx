@@ -41,7 +41,7 @@ export default function PageHero({
   const { isArabic } = useLang();
   
   return (
-    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-12 sm:min-h-[85vh] sm:pt-32 sm:pb-14 md:min-h-[90vh] md:pt-40 md:pb-16">
+    <section className="relative flex min-h-[70vh] w-full items-center overflow-hidden pt-24 pb-8 sm:min-h-[80vh] sm:pt-28 sm:pb-10 md:min-h-[85vh] md:pt-36 md:pb-14 lg:min-h-[90vh] lg:pt-40 lg:pb-16">
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">
@@ -66,7 +66,7 @@ export default function PageHero({
           className="max-w-[900px]"
         >
           {/* Headline */}
-          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.4] tracking-tight text-white not-italic [&_em]:not-italic [&_span]:not-italic md:mb-6 lg:text-[clamp(48px,6vw,84px)]">
+          <h1 className="mb-5 text-[clamp(30px,9vw,72px)] font-light leading-[1.4] tracking-tight text-white not-italic [&_em]:not-italic [&_span]:not-italic md:mb-6 lg:text-[clamp(48px,8vw,84px)]">
             {title}
           </h1>
 

@@ -22,7 +22,7 @@ export default function Research() {
   };
 
   return (
-    <section className="w-full bg-white py-6 md:py-8 lg:py-6">
+    <section className="w-full bg-white py-5 md:py-8 lg:py-8">
       <div className="mx-auto max-w-[1200px] px-6 md:px-12">
         <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 items-center ${isArabic ? "rtl-grid-reverse" : ""}`}>
           <motion.div 
@@ -39,7 +39,7 @@ export default function Research() {
 
             <motion.h2
               variants={itemVariants}
-              className="mb-4 text-[36px] font-light leading-[1.15] tracking-tight text-[#0F172A] md:text-[44px]"
+              className="mb-4 text-[28px] font-light leading-[1.15] tracking-tight text-[#0F172A] sm:text-[36px] md:text-[44px]"
             >
               {t.research.heading}
             </motion.h2>

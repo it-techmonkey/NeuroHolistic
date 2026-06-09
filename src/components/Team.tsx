@@ -14,7 +14,7 @@ export default function Team() {
   const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
 
   return (
-    <section className="bg-[#FCFCFD] py-8 md:py-10">
+    <section className="bg-[#FCFCFD] py-6 md:py-8">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* ── Header: Editorial Style ── */}
@@ -32,7 +32,7 @@ export default function Team() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
+            className="text-[32px] sm:text-[40px] md:text-[56px] font-light text-slate-900 leading-[1.1] tracking-tight"
           >
             {/* Practitioners of the <br/> */}
             <span className="font-semibold text-[#2B2F55]">{t.team.heading}</span>

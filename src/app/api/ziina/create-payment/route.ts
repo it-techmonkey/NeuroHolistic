@@ -22,7 +22,8 @@ function isProgramType(value: unknown): value is RequestedProgramType {
 }
 
 function cleanAppUrl(request: NextRequest) {
-  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+  // Always prefer request origin (correct for local/dev/prod) over env variable
+  return request.nextUrl.origin.replace(/\/$/, '');
 }
 
 export async function POST(request: NextRequest) {
@@ -42,6 +43,8 @@ export async function POST(request: NextRequest) {
   const preferredDate = body?.preferredDate || null;
   const preferredTime = body?.preferredTime || null;
 
+  console.log('[Create Payment] Request received:', { programType, paymentOption, preferredDate, preferredTime, therapistSlug: body?.therapistSlug });
+
   if (!isProgramType(programType) || !isPaymentOption(paymentOption)) {
     return NextResponse.json(
       { error: 'Invalid payment request. Choose a program type and payment option.' },
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingProgram, error: existingError } = await supabase
     .from('programs')
-    .select('id, status, payment_status')
+    .select('id, status, payment_status, total_sessions, used_sessions')
     .eq('user_id', user.id)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
@@ -65,7 +68,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unable to check your current program status' }, { status: 500 });
   }
 
-  if (existingProgram) {
+  // For per_session payments, allow purchase if existing program has no remaining sessions
+  if (existingProgram && paymentOption === 'per_session') {
+    const remaining = (existingProgram.total_sessions || 0) - (existingProgram.used_sessions || 0);
+    if (remaining > 0) {
+      return NextResponse.json(
+        {
+          error: 'You still have sessions remaining in your current program. Please use them before purchasing more.',
+          programId: existingProgram.id,
+          status: existingProgram.status,
+          paymentStatus: existingProgram.payment_status,
+          sessionsRemaining: remaining,
+        },
+        { status: 409 }
+      );
+    }
+    // No remaining sessions — fall through to create a new program
+  } else if (existingProgram && paymentOption === 'full') {
     const message =
       existingProgram.status === 'pending'
         ? 'You already have a program pending payment confirmation.'
@@ -141,7 +160,7 @@ export async function POST(request: NextRequest) {
 
   const amountAed = discount ? discount.discountedPrice : baseAmountAed;
   const amountFils = Math.round(amountAed * 100);
-  const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : 10;
+  const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : paymentOption === 'per_session' ? 1 : 10;
   const storedProgramType: RequestedProgramType = isAcademy ? 'academy' : programType;
   const appUrl = cleanAppUrl(request);
 

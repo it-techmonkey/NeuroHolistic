@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
-import { rescheduleBooking } from '@/lib/services/booking.service';
+import { BookingService } from '@/lib/services/booking.service';
 
 export async function POST(
   request: NextRequest,
@@ -22,13 +22,13 @@ export async function POST(
       return NextResponse.json({ error: 'date and time are required' }, { status: 400 });
     }
 
-    const result = await rescheduleBooking(id, user.id, date, time);
+    const service = new BookingService();
+    const result = await service.rescheduleBooking(id, user.id, date, time);
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: result.statusCode ?? (result.success ? 200 : 500) });
   } catch (error) {
-    console.error(`[POST /api/bookings/${(error as Error)?.message ?? 'unknown'}/reschedule]`, error);
+    console.error('[POST /api/bookings/reschedule]', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    const status = error instanceof Error && 'status' in error ? (error as Error & { status: number }).status : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -21,13 +21,13 @@ export default function Philosophy() {
 
   return (
     // Outer section provides padding so the inner rounded container can "float"
-    <section className="px-4 py-6 md:px-6 md:py-8">
+    <section className="px-5 py-4 sm:px-5 sm:py-6 md:px-6 md:py-8">
       {/* The Rounded Floating Rectangle */}
       <motion.div
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[32px] border border-[#E2E8F0]/60 bg-[#FAFBFF] py-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] md:rounded-[40px] md:py-10"
+        className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[24px] border border-[#E2E8F0]/60 bg-[#FAFBFF] py-6 shadow-[0_8px_40px_rgba(0,0,0,0.02)] sm:rounded-[32px] sm:py-8 md:rounded-[40px] md:py-10"
       >
         {/* Soft Inner Gradients (Replaced the harsh straight lines) */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(240,244,255,0.6)_100%)]" />

@@ -5,7 +5,7 @@ import LandingBookingCTA from "@/components/booking/LandingBookingCTA";
 
 export default function FinalCTA() {
   return (
-    <section className="w-full bg-white px-4 py-8 md:px-6 md:py-10">
+    <section className="w-full bg-white px-4 py-6 md:px-6 md:py-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
