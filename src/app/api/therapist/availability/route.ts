@@ -87,6 +87,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, data });
     }
 
+    // ── set_full_schedule: Replace ALL recurring availability in one call ──
+    // Expected body:
+    //   action: 'set_full_schedule'
+    //   schedule: Array<{ day_of_week: number, start_time: string, end_time: string }>
+    //     - Each entry defines one availability window for that day
+    //     - Multiple entries for the same day = multiple windows (e.g. morning + afternoon)
+    //     - Empty array = clear all recurring availability (therapist off every day)
+    if (action === 'set_full_schedule' && Array.isArray(body.schedule)) {
+      const schedule: Array<{ day_of_week: number; start_time: string; end_time: string }> = body.schedule;
+
+      // Delete ALL existing recurring (non-blocked, non-exception) rows
+      const { error: deleteError } = await supabase
+        .from('therapist_availability')
+        .delete()
+        .eq('therapist_id', therapistId)
+        .is('exception_date', null)
+        .eq('is_blocked', false);
+
+      if (deleteError) {
+        return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      }
+
+      // Insert new schedule (if any)
+      if (schedule.length > 0) {
+        const records = schedule.map((entry) => ({
+          therapist_id: therapistId,
+          day_of_week: entry.day_of_week,
+          start_time: String(entry.start_time).slice(0, 5),
+          end_time: String(entry.end_time).slice(0, 5),
+          is_blocked: false,
+          exception_date: null,
+        }));
+
+        const { data, error: insertError } = await supabase
+          .from('therapist_availability')
+          .insert(records)
+          .select();
+
+        if (insertError) {
+          return NextResponse.json({ error: insertError.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, data });
+      }
+
+      return NextResponse.json({ success: true, data: [] });
+    }
+
     if (action === 'block_full_day') {
       // Block entire day without relying on ON CONFLICT.
       // Some environments don't have a matching unique index for this tuple.

@@ -86,6 +86,8 @@ type DashboardData = {
   materials: any[];
   completedSessionIds?: string[];
   user?: any;
+  sessionsRemaining?: number;
+  canPurchasePerSession?: boolean;
   pendingProgram?: {
     id: string;
     programType: string;
@@ -446,7 +448,8 @@ export default function ClientDashboardPage() {
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
                   >
                     <Calendar className="w-4 h-4" />
-                    {data?.programStatus === 'pending_verification' ? 'Schedule Sessions' : 'Book Next Session'}
+                    {data?.programStatus === 'pending_verification' ? 'Schedule Sessions' :
+                     (data?.sessionsRemaining ?? 0) <= 0 ? 'Purchase More Sessions' : 'Book Next Session'}
                   </a>
                 )}
                 {(data?.programStatus === 'pending_verification' || data?.programStatus === 'active') && (

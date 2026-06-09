@@ -143,6 +143,16 @@ export async function GET(request: NextRequest) {
       })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    // Calculate remaining sessions for active program
+    const activeSessionsRemaining = program
+      ? (program.total_sessions || 0) - (program.used_sessions || 0)
+      : 0;
+    const pendingSessionsRemaining = pendingProgram
+      ? (pendingProgram.total_sessions || 0) - (pendingProgram.used_sessions || 0)
+      : 0;
+    const sessionsRemaining = activeSessionsRemaining || pendingSessionsRemaining;
+    const canPurchasePerSession = !program && !pendingProgram || sessionsRemaining <= 0;
+
     // Determine program status
     const { data: allBookings } = await supabase
       .from('bookings')
@@ -196,6 +206,8 @@ export async function GET(request: NextRequest) {
       bookedFreeConsult: bookedFreeConsult ? { ...bookedFreeConsult } : null,
       hasCompletedAllSessions,
       completedSessionIds,
+      sessionsRemaining,
+      canPurchasePerSession,
     });
   } catch (error) {
     console.error('[Client Dashboard]', error);

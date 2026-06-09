@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
 
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20">
-        <div className="w-full max-w-sm space-y-10">
+        <div className="w-full max-w-sm space-y-8 md:space-y-10">
           <Link href="/auth/login" className="group flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-8 hover:text-slate-900 transition-colors">
             <ChevronLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
             Back to Login

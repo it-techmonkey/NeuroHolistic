@@ -66,6 +66,7 @@ export type PurchaseProgramInput = {
   preferredDate?: string | null;
   preferredTime?: string | null;
   paymentStatus?: string;
+  paymentOption?: 'full' | 'per_session';
 };
 
 // ---------------------------------------------------------------------------
@@ -585,14 +586,26 @@ export class BookingService {
     // Check for existing active program
     const { data: existing } = await this.supabase
       .from('programs')
-      .select('id, status')
+      .select('id, status, total_sessions, used_sessions')
       .eq('user_id', input.userId)
       .in('status', ['pending', 'active'])
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (existing) {
-      console.error('[BookingService] Existing program found:', existing);
-      return { success: false, error: 'You already have an active program' };
+      // For per-session: allow if existing program has no remaining sessions
+      if (input.paymentOption === 'per_session') {
+        const remaining = (existing.total_sessions || 0) - (existing.used_sessions || 0);
+        if (remaining > 0) {
+          console.error('[BookingService] Existing program has remaining sessions:', existing);
+          return { success: false, error: 'You still have sessions remaining in your current program' };
+        }
+        console.log('[BookingService] Existing program depleted, creating new per-session program');
+      } else {
+        console.error('[BookingService] Existing program found:', existing);
+        return { success: false, error: 'You already have an active program' };
+      }
     }
 
     // Resolve therapist

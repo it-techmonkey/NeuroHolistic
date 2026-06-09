@@ -42,7 +42,7 @@ export default function FAQsPage() {
         metaTags={["Support", "Clarity", "Guidance"]}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-16">
         <div className="mx-auto max-w-[960px] px-6 md:px-12">
           <FAQAccordion items={FAQS} />
         </div>

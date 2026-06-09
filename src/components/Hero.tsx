@@ -10,7 +10,7 @@ export default function Hero() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex min-h-dvh w-full items-center overflow-hidden bg-[#050608]"
+      className="relative flex min-h-[100dvh] w-full items-center overflow-hidden bg-[#050608]"
     >
       <div className="absolute inset-0">
         <Image
@@ -22,38 +22,38 @@ export default function Hero() {
           className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,3,10,0.96)_0%,rgba(0,3,10,0.92)_31%,rgba(0,3,10,0.54)_55%,rgba(0,3,10,0.16)_76%,rgba(0,3,10,0.28)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#050608] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#050608] to-transparent sm:h-36" />
       </div>
 
-      <div className="relative z-10 w-full px-6 pb-14 pt-28 sm:px-10 sm:pb-16 sm:pt-32 md:px-[92px] lg:pt-36">
-        <div className="flex min-h-[calc(100dvh-10rem)] w-full items-center">
+      <div className="relative z-10 w-full px-5 pb-10 pt-24 sm:px-8 sm:pb-14 sm:pt-28 md:px-12 lg:px-[92px] lg:pt-36">
+        <div className="flex min-h-[calc(100dvh-8rem)] w-full items-center sm:min-h-[calc(100dvh-10rem)]">
           <div
             className="flex max-w-[650px] flex-col items-start text-left"
             style={{ fontFamily: "var(--font-hero-copy), 'Montserrat', system-ui, sans-serif" }}
           >
-            <p className="text-[19px] font-normal uppercase tracking-[5] leading-[1.55] text-[#D3AB79] sm:text-[23px] md:text-[27px]">
+            <p className="text-[16px] font-normal uppercase tracking-[4px] leading-[1.55] text-[#D3AB79] sm:text-[23px] md:text-[27px]">
               There is
               <br />
               another way
             </p>
             <h1
-              className="mt-8 text-[50px] uppercase text-[#D3AB79] sm:mt-9 sm:text-[70px] md:text-[86px] lg:text-[90px]"
+              className="mt-6 text-[42px] uppercase text-[#D3AB79] sm:mt-9 sm:text-[70px] md:text-[86px] lg:text-[90px]"
               style={{
                 fontFamily: "var(--font-hero-display), 'Playfair Display', serif",
                 fontWeight: 300,
-                letterSpacing: 10,
+                letterSpacing: "0.05em",
                 lineHeight: 0.92,
               }}
             >
               To Exist.
             </h1>
-            <div className="mt-10 h-px w-[72px] bg-[#D3AB79] sm:mt-11" />
-            <p className="mt-7 text-[18px] font-normal uppercase leading-[1.6] tracking-[5] !text-[#D3AB79] sm:text-[21px] md:text-[23px]">
+            <div className="mt-8 h-px w-[60px] bg-[#D3AB79] sm:mt-10 sm:w-[72px]" />
+            <p className="mt-5 text-[16px] font-normal uppercase leading-[1.6] tracking-[4px] !text-[#D3AB79] sm:text-[21px] md:text-[23px]">
               NeuroHolistic
               <br />
               <span className="text-white">Institute™</span>
             </p>
-            <div className="mt-5">
+            <div className="mt-4 sm:mt-5">
               <HeroBookingForm />
             </div>
           </div>

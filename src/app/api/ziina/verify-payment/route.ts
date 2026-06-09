@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
   // Check if user has an active program (created by another webhook call)
   const { data: activeProgram } = await supabase
     .from('programs')
-    .select('id, therapist_user_id, therapist_name')
+    .select('id, therapist_user_id, therapist_name, total_sessions, used_sessions')
     .eq('user_id', userId)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
@@ -209,34 +209,43 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (activeProgram) {
-    // Ensure first session booking exists
-    if (preferredDate && preferredTime) {
-      const { data: existingBooking } = await supabase
-        .from('bookings')
-        .select('id')
-        .eq('program_id', activeProgram.id)
-        .eq('session_number', 1)
-        .eq('user_id', userId)
-        .maybeSingle();
+    const remainingSessions = (activeProgram.total_sessions || 0) - (activeProgram.used_sessions || 0);
+    const isPerSession = metadata.paymentOption === 'per_session';
 
-      if (!existingBooking) {
-        console.log('[Verify Payment] Active program exists but no booking for session 1, creating...');
-        await createBookingForSession1(
-          supabase,
-          activeProgram.id,
-          userId,
-          metadata,
-          preferredDate,
-          preferredTime,
-        );
+    // For per-session: only reuse existing program if it has remaining sessions
+    if (isPerSession && remainingSessions <= 0) {
+      console.log('[Verify Payment] Per-session payment but existing program depleted, creating new program');
+      // Fall through to create new program via BookingService
+    } else if (!isPerSession || remainingSessions > 0) {
+      // Ensure first session booking exists
+      if (preferredDate && preferredTime) {
+        const { data: existingBooking } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('program_id', activeProgram.id)
+          .eq('session_number', 1)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!existingBooking) {
+          console.log('[Verify Payment] Active program exists but no booking for session 1, creating...');
+          await createBookingForSession1(
+            supabase,
+            activeProgram.id,
+            userId,
+            metadata,
+            preferredDate,
+            preferredTime,
+          );
+        }
       }
-    }
 
-    await supabase
-      .from('payments')
-      .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: 'completed', fallbackProcessed: true } })
-      .eq('id', payment.id);
-    return NextResponse.json({ success: true, programId: activeProgram.id, message: 'Linked to existing program' });
+      await supabase
+        .from('payments')
+        .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: 'completed', fallbackProcessed: true } })
+        .eq('id', payment.id);
+      return NextResponse.json({ success: true, programId: activeProgram.id, message: 'Linked to existing program' });
+    }
   }
 
   const totalSessions = Number(metadata.totalSessions) || 10;
@@ -268,6 +277,7 @@ export async function POST(request: NextRequest) {
     preferredDate: metadata.preferredDate || null,
     preferredTime: metadata.preferredTime || null,
     paymentStatus: 'verified',
+    paymentOption: metadata.paymentOption || 'full',
   });
 
   if (!result.success || !result.programId) {

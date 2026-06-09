@@ -2202,9 +2202,127 @@ function AvailabilityModal({
   onClose: () => void;
   onSave: () => void;
 }) {
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
+  // ── State ──
+  const [tab, setTab] = useState<'schedule' | 'exceptions'>('schedule');
+  const [loading, setLoading] = useState(false);
+
+  // Weekly schedule state: per-day windows
+  type DayWindow = { start: string; end: string; breakStart: string; breakEnd: string; hasBreak: boolean };
+  const emptyDay = (): DayWindow => ({ start: '09:00', end: '17:00', breakStart: '12:00', breakEnd: '13:00', hasBreak: false });
+
+  // Derive initial schedule from availability prop (deterministic, no timing issues)
+  const buildScheduleFromAvailability = (avail: Availability[]): Record<number, DayWindow> => {
+    const recurring = avail.filter(a => a.day_of_week !== null && !a.is_blocked && !a.exception_date);
+    if (recurring.length === 0) return {};
+    const grouped: Record<number, { start: string; end: string }[]> = {};
+    recurring.forEach(a => {
+      const dow = a.day_of_week!;
+      if (!grouped[dow]) grouped[dow] = [];
+      grouped[dow].push({ start: a.start_time?.slice(0, 5) || '09:00', end: a.end_time?.slice(0, 5) || '17:00' });
+    });
+    const schedule: Record<number, DayWindow> = {};
+    Object.entries(grouped).forEach(([dayStr, windows]) => {
+      const day = Number(dayStr);
+      if (windows.length === 1) {
+        schedule[day] = { start: windows[0].start, end: windows[0].end, breakStart: '12:00', breakEnd: '13:00', hasBreak: false };
+      } else if (windows.length >= 2) {
+        windows.sort((a, b) => a.start.localeCompare(b.start));
+        schedule[day] = {
+          start: windows[0].start,
+          end: windows[windows.length - 1].end,
+          breakStart: windows[0].end,
+          breakEnd: windows[1].start,
+          hasBreak: true,
+        };
+      }
+    });
+    return schedule;
+  };
+
+  const [weekSchedule, setWeekSchedule] = useState<Record<number, DayWindow>>({});
+  const initRef = useRef(false);
+
+  // One-time sync: populate weekSchedule from availability on first render that has data
+  useEffect(() => {
+    if (initRef.current) return;
+    const schedule = buildScheduleFromAvailability(availability);
+    if (Object.keys(schedule).length > 0) {
+      setWeekSchedule(schedule);
+      initRef.current = true;
+    }
+  }, [availability]);
+
+  const setDayWindow = (day: number, field: keyof DayWindow, value: any) => {
+    setWeekSchedule(prev => ({
+      ...prev,
+      [day]: { ...(prev[day] || emptyDay()), [field]: value },
+    }));
+  };
+
+  const toggleDayActive = (day: number) => {
+    setWeekSchedule(prev => {
+      const next = { ...prev };
+      if (next[day]) {
+        delete next[day];
+      } else {
+        next[day] = emptyDay();
+      }
+      return next;
+    });
+  };
+
+  const daysOfWeek = [
+    { id: 1, short: 'Mon', label: 'Monday' },
+    { id: 2, short: 'Tue', label: 'Tuesday' },
+    { id: 3, short: 'Wed', label: 'Wednesday' },
+    { id: 4, short: 'Thu', label: 'Thursday' },
+    { id: 5, short: 'Fri', label: 'Friday' },
+    { id: 6, short: 'Sat', label: 'Saturday' },
+    { id: 0, short: 'Sun', label: 'Sunday' },
+  ];
+
+  // ── Save schedule ──
+  const handleSaveSchedule = async () => {
+    setLoading(true);
+    try {
+      const schedule: Array<{ day_of_week: number; start_time: string; end_time: string }> = [];
+      Object.entries(weekSchedule).forEach(([dayStr, window]) => {
+        const day = Number(dayStr);
+        if (window.hasBreak && window.breakStart && window.breakEnd && window.breakStart < window.breakEnd) {
+          // Two windows: [start, breakStart] and [breakEnd, end]
+          if (window.start < window.breakStart) {
+            schedule.push({ day_of_week: day, start_time: window.start, end_time: window.breakStart });
+          }
+          if (window.breakEnd < window.end) {
+            schedule.push({ day_of_week: day, start_time: window.breakEnd, end_time: window.end });
+          }
+        } else {
+          // Single window
+          if (window.start < window.end) {
+            schedule.push({ day_of_week: day, start_time: window.start, end_time: window.end });
+          }
+        }
+      });
+
+      const res = await fetch('/api/therapist/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_full_schedule', schedule }),
+      });
+      if (res.ok) {
+        onSave();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to save schedule.');
+      }
+    } catch (error) {
+      console.error('Failed to save schedule:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Exceptions / Blocks ──
   const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
   const [blockCalendarDate, setBlockCalendarDate] = useState(new Date());
   const [blockScope, setBlockScope] = useState<'full' | 'range'>('full');
@@ -2215,8 +2333,6 @@ function AvailabilityModal({
   const [editStart, setEditStart] = useState('09:00');
   const [editEnd, setEditEnd] = useState('10:00');
   const [editFullDay, setEditFullDay] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'recurring' | 'block'>('recurring');
 
   const blockedRows = useMemo(
     () =>
@@ -2238,18 +2354,6 @@ function AvailabilityModal({
     });
     return m;
   }, [blockedRows]);
-
-  const daysOfWeek = [
-    { id: 0, label: 'Sunday' }, { id: 1, label: 'Monday' }, { id: 2, label: 'Tuesday' },
-    { id: 3, label: 'Wednesday' }, { id: 4, label: 'Thursday' }, { id: 5, label: 'Friday' },
-    { id: 6, label: 'Saturday' },
-  ];
-
-  const toggleDay = (day: number) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
-  };
 
   const formatDateKey = (date: Date) => {
     const year = date.getFullYear();
@@ -2275,23 +2379,6 @@ function AvailabilityModal({
     );
   };
 
-  const handleSaveRecurring = async () => {
-    if (selectedDays.length === 0) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/therapist/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_recurring', recurring_days: selectedDays, start_time: startTime, end_time: endTime }),
-      });
-      if (res.ok) onSave();
-    } catch (error) {
-      console.error('Failed to save availability:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleApplyBlocks = async () => {
     if (selectedBlockDates.length === 0) return;
     if (blockScope === 'range' && blockRangeStart >= blockRangeEnd) {
@@ -2300,33 +2387,26 @@ function AvailabilityModal({
     }
     setLoading(true);
     try {
-      const responses = await Promise.all(
-        selectedBlockDates.map((date) =>
-          blockScope === 'full'
-            ? fetch('/api/therapist/availability', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'block_full_day', date }),
-              })
-            : fetch('/api/therapist/availability', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  action: 'block_time_slot',
-                  date,
-                  start_time: blockRangeStart,
-                  end_time: blockRangeEnd,
-                }),
-              }),
-        ),
-      );
-      if (responses.every((r) => r.ok)) {
-        setSelectedBlockDates([]);
-        onSave();
-      } else {
-        const failed = await responses.find((r) => !r.ok)?.json().catch(() => ({}));
-        alert((failed as { error?: string })?.error || 'Could not save blocks.');
+      for (const dateKey of selectedBlockDates) {
+        const action = blockScope === 'full' ? 'block_full_day' : 'block_time_slot';
+        const body: Record<string, string> = { action, date: dateKey };
+        if (blockScope === 'range') {
+          body.start_time = blockRangeStart;
+          body.end_time = blockRangeEnd;
+        }
+        const res = await fetch('/api/therapist/availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert((data as { error?: string })?.error || `Failed to block ${dateKey}`);
+          return;
+        }
       }
+      setSelectedBlockDates([]);
+      onSave();
     } catch (error) {
       console.error('Failed to block:', error);
     } finally {
@@ -2389,85 +2469,178 @@ function AvailabilityModal({
     }
   };
 
+  const formatBlockLabel = (row: Availability) => {
+    if (isFullDayBlockRow(row)) return 'All day';
+    return `${row.start_time?.slice(0, 5)} – ${row.end_time?.slice(0, 5)}`;
+  };
+
+  const activeDayCount = Object.keys(weekSchedule).length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="p-6 border-b border-slate-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-slate-900">Manage Availability</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-              <X className="w-6 h-6" />
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">Manage Availability</h2>
+              <p className="text-sm text-slate-500 mt-0.5">Set your weekly working hours</p>
+            </div>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         <div className="p-6">
+          {/* Tabs */}
           <div className="flex gap-2 mb-6">
             <button
-              onClick={() => setTab('recurring')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                tab === 'recurring' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+              onClick={() => setTab('schedule')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                tab === 'schedule' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               Weekly Schedule
             </button>
             <button
-              onClick={() => setTab('block')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                tab === 'block' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+              onClick={() => setTab('exceptions')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors relative ${
+                tab === 'exceptions' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Block time off
+              Time Off
+              {blockedRows.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-red-100 text-red-600 rounded-full">
+                  {blockedRows.length}
+                </span>
+              )}
             </button>
           </div>
 
-          {tab === 'recurring' && (
+          {/* ── TAB: Weekly Schedule ── */}
+          {tab === 'schedule' && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Select Available Days</label>
-                <div className="flex flex-wrap gap-2">
-                  {daysOfWeek.map(day => (
-                    <button
+              <p className="text-sm text-slate-500">
+                Toggle the days you&apos;re available and set your working hours. Click &ldquo;Add Lunch Break&rdquo; to split a day into morning + afternoon sessions.
+              </p>
+
+              <div className="space-y-2">
+                {daysOfWeek.map(day => {
+                  const isActive = !!weekSchedule[day.id];
+                  const window = weekSchedule[day.id];
+
+                  return (
+                    <div
                       key={day.id}
-                      onClick={() => toggleDay(day.id)}
-                      className={`px-3 py-2 text-sm rounded-lg ${
-                        selectedDays.includes(day.id)
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      className={`rounded-xl border transition-all ${
+                        isActive
+                          ? 'border-indigo-200 bg-indigo-50/50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
-                      {day.label}
-                    </button>
-                  ))}
-                </div>
+                      {/* Day row */}
+                      <div className="flex items-center gap-3 p-3">
+                        <button
+                          onClick={() => toggleDayActive(day.id)}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          {day.short}
+                        </button>
+
+                        {isActive && window ? (
+                          <div className="flex-1 flex items-center gap-2 flex-wrap">
+                            <input
+                              type="time"
+                              value={window.start}
+                              onChange={(e) => setDayWindow(day.id, 'start', e.target.value)}
+                              className="px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                            />
+                            <span className="text-slate-400 text-sm">to</span>
+                            <input
+                              type="time"
+                              value={window.end}
+                              onChange={(e) => setDayWindow(day.id, 'end', e.target.value)}
+                              className="px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                            />
+                            <button
+                              onClick={() => setDayWindow(day.id, 'hasBreak', !window.hasBreak)}
+                              className={`ml-1 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                window.hasBreak
+                                  ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                              }`}
+                            >
+                              {window.hasBreak ? 'Lunch Break ✓' : '+ Lunch Break'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">Not available</span>
+                        )}
+                      </div>
+
+                      {/* Break row */}
+                      {isActive && window?.hasBreak && (
+                        <div className="px-3 pb-3 pt-0">
+                          <div className="flex items-center gap-2 ml-[52px]">
+                            <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                            <span className="text-xs text-slate-500 shrink-0">Break:</span>
+                            <input
+                              type="time"
+                              value={window.breakStart}
+                              onChange={(e) => setDayWindow(day.id, 'breakStart', e.target.value)}
+                              className="px-2 py-1 border border-amber-200 rounded-lg text-xs bg-amber-50/50 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none"
+                            />
+                            <span className="text-slate-400 text-xs">to</span>
+                            <input
+                              type="time"
+                              value={window.breakEnd}
+                              onChange={(e) => setDayWindow(day.id, 'breakEnd', e.target.value)}
+                              className="px-2 py-1 border border-amber-200 rounded-lg text-xs bg-amber-50/50 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Time</label>
-                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full p-2 border border-slate-300 rounded-lg" />
+
+              {/* Summary */}
+              {activeDayCount > 0 && (
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-600">
+                  <span className="font-medium">{activeDayCount}</span> day{activeDayCount !== 1 ? 's' : ''} active
+                  {Object.values(weekSchedule).some(d => d.hasBreak) && (
+                    <span className="text-amber-600 ml-2">· with lunch breaks</span>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">End Time</label>
-                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full p-2 border border-slate-300 rounded-lg" />
-                </div>
-              </div>
+              )}
+
               <button
-                onClick={handleSaveRecurring}
-                disabled={loading || selectedDays.length === 0}
-                className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                onClick={handleSaveSchedule}
+                disabled={loading}
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {loading ? 'Saving...' : 'Save Availability'}
+                {loading ? 'Saving...' : 'Save Weekly Schedule'}
               </button>
             </div>
           )}
 
-          {tab === 'block' && (
+          {/* ── TAB: Exceptions / Time Off ── */}
+          {tab === 'exceptions' && (
             <div className="space-y-5">
+              <p className="text-sm text-slate-500">
+                Block specific dates for holidays, sick days, or any time you need off. This overrides your weekly schedule.
+              </p>
+
+              {/* Calendar */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-slate-700">Select dates</label>
+                  <label className="text-sm font-medium text-slate-700">Select dates</label>
                   <div className="flex items-center gap-2 text-sm">
                     <button
                       type="button"
@@ -2488,9 +2661,6 @@ function AvailabilityModal({
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mb-2">
-                  Same date can have multiple blocks (e.g. morning + afternoon). Dot = existing block(s).
-                </p>
                 <div className="grid grid-cols-7 gap-1 text-xs text-center text-slate-500 mb-2">
                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
                     <div key={`${d}-${idx}`} className="py-1">{d}</div>
@@ -2498,16 +2668,12 @@ function AvailabilityModal({
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {blockCalendarDays.map((day, idx) => {
-                    if (day === null) {
-                      return <div key={`empty-${idx}`} className="h-9" />;
-                    }
-
+                    if (day === null) return <div key={`empty-${idx}`} className="h-9" />;
                     const date = new Date(currentBlockYear, currentBlockMonth, day);
                     const dateKey = formatDateKey(date);
                     const isPast = clearTime(date) < today;
                     const isSelected = selectedBlockDates.includes(dateKey);
                     const nBlocks = blockCountByDate.get(dateKey) ?? 0;
-
                     return (
                       <button
                         key={dateKey}
@@ -2539,27 +2705,16 @@ function AvailabilityModal({
                 )}
               </div>
 
+              {/* Block type */}
               <div className="rounded-lg border border-slate-200 p-4 space-y-3 bg-slate-50/80">
                 <p className="text-sm font-medium text-slate-800">Block type for selected dates</p>
                 <div className="flex flex-wrap gap-3">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      name="blockScope"
-                      checked={blockScope === 'full'}
-                      onChange={() => setBlockScope('full')}
-                      className="rounded-full border-slate-300"
-                    />
+                    <input type="radio" name="blockScope" checked={blockScope === 'full'} onChange={() => setBlockScope('full')} className="rounded-full border-slate-300" />
                     Entire day
                   </label>
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      name="blockScope"
-                      checked={blockScope === 'range'}
-                      onChange={() => setBlockScope('range')}
-                      className="rounded-full border-slate-300"
-                    />
+                    <input type="radio" name="blockScope" checked={blockScope === 'range'} onChange={() => setBlockScope('range')} className="rounded-full border-slate-300" />
                     Specific hours
                   </label>
                 </div>
@@ -2567,21 +2722,11 @@ function AvailabilityModal({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-slate-600">From</label>
-                      <input
-                        type="time"
-                        value={blockRangeStart}
-                        onChange={(e) => setBlockRangeStart(e.target.value)}
-                        className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
-                      />
+                      <input type="time" value={blockRangeStart} onChange={(e) => setBlockRangeStart(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-slate-600">To</label>
-                      <input
-                        type="time"
-                        value={blockRangeEnd}
-                        onChange={(e) => setBlockRangeEnd(e.target.value)}
-                        className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
-                      />
+                      <input type="time" value={blockRangeEnd} onChange={(e) => setBlockRangeEnd(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" />
                     </div>
                   </div>
                 )}
@@ -2591,113 +2736,69 @@ function AvailabilityModal({
                   disabled={loading || selectedBlockDates.length === 0}
                   className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
                 >
-                  {loading ? 'Saving…' : `Apply to ${selectedBlockDates.length} selected date(s)`}
+                  {loading ? 'Saving…' : `Block ${selectedBlockDates.length} selected date(s)`}
                 </button>
               </div>
 
+              {/* Existing blocks list */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Your blocks</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Your time off</label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {blockedRows.map((row) => (
-                    <div
-                      key={row.id}
-                      className="flex items-center justify-between gap-2 p-3 bg-red-50 rounded-lg border border-red-100"
-                    >
+                    <div key={row.id} className="flex items-center justify-between gap-2 p-3 bg-red-50 rounded-lg border border-red-100">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-red-900 truncate">
                           {row.exception_date
-                            ? new Date(row.exception_date + 'T12:00:00').toLocaleDateString(undefined, {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })
+                            ? new Date(row.exception_date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
                             : '—'}
                         </p>
-                        <p className="text-xs text-red-700/90">{blockRangeLabel(row)}</p>
+                        <p className="text-xs text-red-700/90">{formatBlockLabel(row)}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => openEditBlock(row)}
-                          className="p-2 rounded-lg text-red-700 hover:bg-red-100"
-                          aria-label="Edit block"
-                        >
+                        <button type="button" onClick={() => openEditBlock(row)} className="p-2 rounded-lg text-red-700 hover:bg-red-100" aria-label="Edit block">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteBlock(row.id)}
-                          className="p-2 rounded-lg text-red-600 hover:bg-red-100"
-                          aria-label="Remove block"
-                        >
+                        <button type="button" onClick={() => handleDeleteBlock(row.id)} className="p-2 rounded-lg text-red-600 hover:bg-red-100" aria-label="Remove block">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   ))}
                   {blockedRows.length === 0 && (
-                    <p className="text-sm text-slate-500 text-center py-4">No blocks yet</p>
+                    <p className="text-sm text-slate-500 text-center py-4">No time off scheduled</p>
                   )}
                 </div>
               </div>
 
+              {/* Edit block form */}
               {editingBlock && (
                 <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-3">
                   <p className="text-sm font-semibold text-slate-900">Edit block</p>
                   <div>
                     <label className="text-xs font-medium text-slate-600">Date</label>
-                    <input
-                      type="date"
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                      className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
-                    />
+                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" />
                   </div>
                   <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={editFullDay}
-                      onChange={(e) => setEditFullDay(e.target.checked)}
-                      className="rounded border-slate-300"
-                    />
+                    <input type="checkbox" checked={editFullDay} onChange={(e) => setEditFullDay(e.target.checked)} className="rounded border-slate-300" />
                     Entire day
                   </label>
                   {!editFullDay && (
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-medium text-slate-600">From</label>
-                        <input
-                          type="time"
-                          value={editStart}
-                          onChange={(e) => setEditStart(e.target.value)}
-                          className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
-                        />
+                        <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" />
                       </div>
                       <div>
                         <label className="text-xs font-medium text-slate-600">To</label>
-                        <input
-                          type="time"
-                          value={editEnd}
-                          onChange={(e) => setEditEnd(e.target.value)}
-                          className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm"
-                        />
+                        <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" />
                       </div>
                     </div>
                   )}
                   <div className="flex gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleSaveEditBlock}
-                      disabled={loading}
-                      className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-                    >
+                    <button type="button" onClick={handleSaveEditBlock} disabled={loading} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
                       Save changes
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingBlock(null)}
-                      className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-white"
-                    >
+                    <button type="button" onClick={() => setEditingBlock(null)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-white">
                       Cancel
                     </button>
                   </div>

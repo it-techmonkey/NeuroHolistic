@@ -87,7 +87,7 @@ function SignUpForm() {
 
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto">
-        <div className="w-full max-w-sm space-y-10 my-auto">
+        <div className="w-full max-w-sm space-y-8 md:space-y-10 my-auto">
           <AuthGoBackButton />
 
           {/* Program intent banner */}
@@ -225,7 +225,7 @@ function SignUpForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -260,7 +260,7 @@ function SignUpForm() {
                   <button
                     type="button"
                     onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                     tabIndex={-1}
                   >
                     {showPasswordConfirm ? (

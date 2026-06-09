@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
 
   const { data: activeProgram } = await supabase
     .from('programs')
-    .select('id, therapist_user_id, therapist_name')
+    .select('id, therapist_user_id, therapist_name, total_sessions, used_sessions')
     .eq('user_id', userId)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
@@ -324,105 +324,114 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (activeProgram) {
-    // Ensure first session booking exists
-    const preferredDate = metadata.preferredDate || null;
-    const preferredTime = metadata.preferredTime || null;
+    const remainingSessions = (activeProgram.total_sessions || 0) - (activeProgram.used_sessions || 0);
+    const isPerSession = metadata.paymentOption === 'per_session';
 
-    if (preferredDate && preferredTime) {
-      const { data: existingBooking } = await supabase
-        .from('bookings')
-        .select('id')
-        .eq('program_id', activeProgram.id)
-        .eq('session_number', 1)
-        .eq('user_id', userId)
-        .maybeSingle();
+    // For per-session: only reuse existing program if it has remaining sessions
+    if (isPerSession && remainingSessions <= 0) {
+      console.log('[Ziina Webhook] Per-session payment but existing program depleted, creating new program');
+      // Fall through to create new program below
+    } else if (!isPerSession || remainingSessions > 0) {
+      // Ensure first session booking exists
+      const preferredDate = metadata.preferredDate || null;
+      const preferredTime = metadata.preferredTime || null;
 
-      if (!existingBooking) {
-        console.log('[Ziina Webhook] Active program exists but no booking for session 1, creating...');
-        const { data: clientUser } = await supabase
-          .from('users')
-          .select('full_name, email')
-          .eq('id', userId)
-          .maybeSingle();
-
-        let meetLink = '';
-        let calendarEventId = '';
-
-        if (activeProgram.therapist_user_id) {
-          try {
-            const startDateTime = `${preferredDate}T${preferredTime}:00`;
-            const [hours, minutes] = preferredTime.split(':').map(Number);
-            const endHours = Math.min(hours + 1, 23);
-            const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-            const endDateTime = `${preferredDate}T${endTime}:00`;
-
-            const meetResult = await createMeetEvent({
-              summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
-              description: 'Program session via NeuroHolistic platform',
-              startDateTime,
-              endDateTime,
-              attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
-              therapistId: activeProgram.therapist_user_id,
-            });
-            meetLink = meetResult.meetLink;
-            calendarEventId = meetResult.calendarEventId ?? '';
-          } catch (meetErr) {
-            console.error('[Ziina Webhook] Meet creation failed:', meetErr);
-          }
-        }
-
-        await supabase.from('bookings').insert({
-          user_id: userId,
-          name: clientUser?.full_name || metadata.clientName || 'Client',
-          email: clientUser?.email || metadata.clientEmail || '',
-          phone: '',
-          country: '',
-          therapist_id: activeProgram.therapist_user_id || 'unknown',
-          therapist_user_id: activeProgram.therapist_user_id,
-          therapist_name: activeProgram.therapist_name || 'Assigned Therapist',
-          date: preferredDate,
-          time: preferredTime,
-          type: 'program',
-          status: 'scheduled',
-          program_id: activeProgram.id,
-          session_number: 1,
-          meeting_link: meetLink || null,
-          google_calendar_event_id: calendarEventId || null,
-        });
-
-        const { data: newBooking } = await supabase
+      if (preferredDate && preferredTime) {
+        const { data: existingBooking } = await supabase
           .from('bookings')
           .select('id')
           .eq('program_id', activeProgram.id)
           .eq('session_number', 1)
           .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
           .maybeSingle();
 
-        if (newBooking) {
-          await supabase
-            .from('sessions')
-            .update({
-              booking_id: newBooking.id,
-              date: preferredDate,
-              time: preferredTime,
-              date_time: `${preferredDate}T${preferredTime}:00+04:00`,
-              status: 'scheduled',
-              meet_link: meetLink || null,
-            })
+        if (!existingBooking) {
+          console.log('[Ziina Webhook] Active program exists but no booking for session 1, creating...');
+          const { data: clientUser } = await supabase
+            .from('users')
+            .select('full_name, email')
+            .eq('id', userId)
+            .maybeSingle();
+
+          let meetLink = '';
+          let calendarEventId = '';
+
+          if (activeProgram.therapist_user_id) {
+            try {
+              const startDateTime = `${preferredDate}T${preferredTime}:00`;
+              const [hours, minutes] = preferredTime.split(':').map(Number);
+              const endHours = Math.min(hours + 1, 23);
+              const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+              const endDateTime = `${preferredDate}T${endTime}:00`;
+
+              const meetResult = await createMeetEvent({
+                summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+                description: 'Program session via NeuroHolistic platform',
+                startDateTime,
+                endDateTime,
+                attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+                therapistId: activeProgram.therapist_user_id,
+              });
+              meetLink = meetResult.meetLink;
+              calendarEventId = meetResult.calendarEventId ?? '';
+            } catch (meetErr) {
+              console.error('[Ziina Webhook] Meet creation failed:', meetErr);
+            }
+          }
+
+          await supabase.from('bookings').insert({
+            user_id: userId,
+            name: clientUser?.full_name || metadata.clientName || 'Client',
+            email: clientUser?.email || metadata.clientEmail || '',
+            phone: '',
+            country: '',
+            therapist_id: activeProgram.therapist_user_id || 'unknown',
+            therapist_user_id: activeProgram.therapist_user_id,
+            therapist_name: activeProgram.therapist_name || 'Assigned Therapist',
+            date: preferredDate,
+            time: preferredTime,
+            type: 'program',
+            status: 'scheduled',
+            program_id: activeProgram.id,
+            session_number: 1,
+            meeting_link: meetLink || null,
+            google_calendar_event_id: calendarEventId || null,
+          });
+
+          const { data: newBooking } = await supabase
+            .from('bookings')
+            .select('id')
             .eq('program_id', activeProgram.id)
-            .eq('session_number', 1);
+            .eq('session_number', 1)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (newBooking) {
+            await supabase
+              .from('sessions')
+              .update({
+                booking_id: newBooking.id,
+                date: preferredDate,
+                time: preferredTime,
+                date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+                status: 'scheduled',
+                meet_link: meetLink || null,
+              })
+              .eq('program_id', activeProgram.id)
+              .eq('session_number', 1);
+          }
         }
       }
+
+      await supabase
+        .from('payments')
+        .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: status, duplicateProgramPayment: true } })
+        .eq('id', payment.id);
+
+      return NextResponse.json({ success: true, message: 'User already has a pending or active program', programId: activeProgram.id });
     }
-
-    await supabase
-      .from('payments')
-      .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: status, duplicateProgramPayment: true } })
-      .eq('id', payment.id);
-
-    return NextResponse.json({ success: true, message: 'User already has a pending or active program', programId: activeProgram.id });
   }
 
   // Create program via BookingService
@@ -461,6 +470,7 @@ export async function POST(request: NextRequest) {
     clientEmail: clientEmailAddress,
     preferredDate: metadata.preferredDate || null,
     preferredTime: metadata.preferredTime || null,
+    paymentOption: metadata.paymentOption || 'full',
   });
 
   console.log('[Ziina Webhook] purchaseProgram result:', result);
