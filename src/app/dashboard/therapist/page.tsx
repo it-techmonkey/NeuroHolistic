@@ -44,6 +44,7 @@ import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
 import ArchiveTab from '@/components/dashboard/therapist/Archive';
 import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
+import { isUpcomingSession, isPastSession, getDubaiToday } from '@/lib/booking/session-flow';
 
 // Types
 type Session = {
@@ -351,35 +352,25 @@ export default function TherapistDashboardPage() {
         };
       });
 
-      const now = new Date();
-      // Get today's date in local timezone (DST format)
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      console.log('[Therapist Dashboard] Today date:', today);
-      console.log('[Therapist Dashboard] Current time:', now.toISOString());
-      console.log('[Therapist Dashboard] All sessions with dates:', allSessions.map(s => ({ id: s.id, type: s.type, status: s.status, date: s.date, time: s.time })));
+      const today = getDubaiToday();
+      console.log('[Therapist Dashboard] Today date (Dubai):', today);
 
       const todayList = allSessions.filter(s => {
         if (s.date !== today) return false;
         if (['completed', 'cancelled', 'no_show'].includes(s.status)) return false;
         return true;
       }).sort((a, b) => a.time.localeCompare(b.time));
-      console.log('[Therapist Dashboard] Today list:', todayList.length);
-      console.log('[Therapist Dashboard] Today list sessions:', JSON.stringify(todayList.map(s => ({ id: s.id, type: s.type, date: s.date, time: s.time })), null, 2));
 
       const upcomingList = allSessions.filter(s => {
-        const sessionDate = new Date(s.date + 'T00:00:00');
-        if (sessionDate < now) return false;
+        if (!isUpcomingSession({ date: s.date, time: s.time })) return false;
         if (['completed', 'cancelled', 'no_show'].includes(s.status)) return false;
         if (s.date === today) return false;
         return true;
       }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      console.log('[Therapist Dashboard] Upcoming list:', upcomingList.length);
-      console.log('[Therapist Dashboard] Upcoming list sessions:', JSON.stringify(upcomingList.map(s => ({ id: s.id, type: s.type, date: s.date, time: s.time })), null, 2));
 
       const pastList = allSessions.filter(s => {
-        if (s.type === 'free_consultation') return false; // Exclude free consultations from completed sessions
-        const sessionDate = new Date(s.date + 'T23:59:59');
-        return s.status === 'completed' || sessionDate < now;
+        if (s.type === 'free_consultation') return false;
+        return s.status === 'completed' || isPastSession({ date: s.date, time: s.time });
       }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       const completedSessions = allSessions.filter(s => s.status === 'completed' && s.type !== 'free_consultation').length;

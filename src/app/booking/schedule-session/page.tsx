@@ -118,19 +118,8 @@ function ScheduleSessionContent() {
         }
       }
 
-      const dashRes = await fetch('/api/client/dashboard');
-      let completedFreeConsult = false;
-      if (dashRes.ok) {
-        const dash = await dashRes.json();
-        completedFreeConsult = !!dash.hasCompletedFreeConsult;
-      }
-
-      if (loadedProgram && !completedFreeConsult) {
-        setNeedsConsultFirst(true);
-      } else {
-        setProgram(loadedProgram);
-        setSession(loadedSession);
-      }
+      setProgram(loadedProgram);
+      setSession(loadedSession);
 
       // Load therapists and assigned therapist in parallel
       let therapistList: Therapist[] = [];

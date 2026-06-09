@@ -14,7 +14,7 @@ import {
   notifySessionCompleted,
   type NotificationBooking,
 } from '@/lib/services/notification.service';
-import { toDubaiDateTime, isUpcomingSession } from '@/lib/booking/session-flow';
+import { toDubaiDateTime, isUpcomingSession, isPastSession } from '@/lib/booking/session-flow';
 import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
 import { generateSlug, therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
 import { generateHourlySlotStarts, defaultHourlyBookingSlots } from '@/lib/bookings/therapist-scope';
@@ -757,12 +757,18 @@ export class BookingService {
 
     const { data: bookings } = await bookingsQuery;
 
-    // 2. Fetch sessions
-    const { data: sessions } = await this.supabase
+    // 2. Fetch sessions — match by UUID or by therapist name/slug
+    let sessionsQuery = this.supabase
       .from('sessions')
       .select('*')
-      .eq('therapist_id', therapistUserId)
       .order('date', { ascending: true });
+
+    const sessionFilters = [`therapist_id.eq.${therapistUserId}`];
+    if (therapistFullName) {
+      sessionFilters.push(`therapist_id.eq.${therapistFullName}`);
+      sessionFilters.push(`therapist_id.eq.${generateSlug(therapistFullName)}`);
+    }
+    const { data: sessions } = await sessionsQuery.or(sessionFilters.join(','));
 
     // 3. Fetch client details
     const allClientIds = new Set<string>();
@@ -887,8 +893,6 @@ export class BookingService {
   // getClientSessions — upcoming+past+pending for client dashboard
   // -----------------------------------------------------------------------
   async getClientSessions(clientId: string) {
-    const now = new Date();
-
     // Fetch all bookings
     let { data: bookings } = await this.supabase
       .from('bookings')
@@ -909,18 +913,16 @@ export class BookingService {
       }
     }
 
-    // Upcoming: confirmed/scheduled and in the future
+    // Upcoming: confirmed/scheduled and in the future (Dubai timezone)
     const upcoming = (bookings ?? []).filter((b) => {
       if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
-      const dt = new Date(`${b.date}T${b.time}`);
-      return dt >= now;
+      return isUpcomingSession({ date: b.date, time: b.time });
     });
 
-    // Past: completed, cancelled, or in the past
+    // Past: completed, cancelled, or in the past (Dubai timezone)
     const past = (bookings ?? []).filter((b) => {
       if (b.status === 'completed' || b.status === 'cancelled') return true;
-      const dt = new Date(`${b.date}T${b.time}`);
-      return dt < now;
+      return isPastSession({ date: b.date, time: b.time });
     });
 
     // Pending sessions

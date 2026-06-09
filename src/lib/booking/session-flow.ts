@@ -38,6 +38,12 @@ export function isUpcomingSession(session: Pick<SessionLike, 'date' | 'time'>, r
   return compareSessionDateTime(session, now) >= 0;
 }
 
+export function isPastSession(session: Pick<SessionLike, 'date' | 'time'>, reference = new Date()) {
+  const now = getDubaiNowParts(reference);
+
+  return compareSessionDateTime(session, now) < 0;
+}
+
 export function sortSessionsAsc<T extends Pick<SessionLike, 'date' | 'time'>>(sessions: T[]) {
   return [...sessions].sort(compareSessionDateTime);
 }
@@ -54,4 +60,8 @@ export function getNextConfirmedSession<T extends SessionLike>(sessions: T[]) {
 
 export function toDubaiDateTime(date: string, time: string) {
   return `${date}T${time}:00+04:00`;
+}
+
+export function getDubaiToday(reference = new Date()) {
+  return getDubaiNowParts(reference).date;
 }

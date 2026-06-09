@@ -89,25 +89,6 @@ export async function POST(request: NextRequest) {
       isNewUser = userResult.isNew;
     }
 
-    // Validate program sessions require completed consultation
-    if (bookingType === 'program' && userId) {
-      const { data: completedConsult } = await supabase
-        .from('bookings')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('type', 'free_consultation')
-        .eq('status', 'completed')
-        .limit(1)
-        .maybeSingle();
-
-      if (!completedConsult) {
-        return NextResponse.json(
-          { error: 'Please complete your free consultation before scheduling program sessions.' },
-          { status: 403 }
-        );
-      }
-    }
-
     // Check for existing free consultation
     if (bookingType === 'free_consultation') {
       if (userId) {
