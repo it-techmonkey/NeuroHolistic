@@ -20,6 +20,14 @@ export async function GET(request: NextRequest) {
     const { upcomingSessions, pastSessions, pendingSessions, completedSessionIds } =
       await service.getClientSessions(clientId);
 
+    console.log('[Client Dashboard] Session data:', {
+      clientId,
+      upcomingCount: upcomingSessions.length,
+      pastCount: pastSessions.length,
+      pendingCount: pendingSessions.length,
+      upcomingSessions: upcomingSessions.map(s => ({ id: s.id, date: s.date, time: s.time, status: s.status })),
+    });
+
     // Fetch diagnostic assessments
     const { data: assessments } = await supabase
       .from('diagnostic_assessments')

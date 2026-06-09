@@ -574,15 +574,24 @@ export class BookingService {
   // purchaseProgram — creates program + sessions (first scheduled if preferredDate)
   // -----------------------------------------------------------------------
   async purchaseProgram(input: PurchaseProgramInput): Promise<{ success: boolean; programId?: string; error?: string }> {
+    console.log('[BookingService] purchaseProgram called:', {
+      userId: input.userId,
+      programType: input.programType,
+      preferredDate: input.preferredDate,
+      preferredTime: input.preferredTime,
+      therapistId: input.therapistId,
+    });
+
     // Check for existing active program
     const { data: existing } = await this.supabase
       .from('programs')
-      .select('id')
+      .select('id, status')
       .eq('user_id', input.userId)
       .in('status', ['pending', 'active'])
       .maybeSingle();
 
     if (existing) {
+      console.error('[BookingService] Existing program found:', existing);
       return { success: false, error: 'You already have an active program' };
     }
 
@@ -646,10 +655,20 @@ export class BookingService {
     const { error: sessionsError } = await this.supabase.from('sessions').insert(sessions);
     if (sessionsError) {
       console.error('[BookingService] Sessions creation failed:', sessionsError);
+    } else {
+      console.log('[BookingService] Sessions created:', sessions.length, 'sessions');
+      console.log('[BookingService] First session:', sessions[0]);
     }
 
     // Create initial booking for first session if preferred date provided
     if (input.preferredDate && input.preferredTime) {
+      console.log('[BookingService] Creating initial booking for first session:', {
+        preferredDate: input.preferredDate,
+        preferredTime: input.preferredTime,
+        programId: program.id,
+        userId: input.userId,
+        resolvedTherapistId,
+      });
       let meetLink = '';
       let calendarEventId = '';
 
@@ -685,7 +704,7 @@ export class BookingService {
       }
 
       // Create booking record with session_number
-      await this.supabase.from('bookings').insert({
+      const { data: newBooking, error: bookingError } = await this.supabase.from('bookings').insert({
         user_id: input.userId,
         name: input.clientName,
         email: input.clientEmail,
@@ -702,7 +721,13 @@ export class BookingService {
         session_number: 1,
         meeting_link: meetLink || null,
         google_calendar_event_id: calendarEventId || null,
-      });
+      }).select('id').single();
+
+      if (bookingError) {
+        console.error('[BookingService] Booking creation failed:', bookingError);
+      } else {
+        console.log('[BookingService] Booking created successfully:', newBooking?.id);
+      }
 
       // Link session to booking
       const { data: createdBooking } = await this.supabase
@@ -918,6 +943,13 @@ export class BookingService {
       if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
       if (!b.date || !b.time) return false;
       return isUpcomingSession({ date: b.date, time: b.time });
+    });
+
+    console.log('[BookingService] getClientSessions:', {
+      clientId,
+      totalBookings: bookings?.length ?? 0,
+      upcomingCount: upcoming.length,
+      upcomingBookings: upcoming.map(b => ({ id: b.id, date: b.date, time: b.time, status: b.status, type: b.type })),
     });
 
     // Past: completed, cancelled, or in the past (Dubai timezone)

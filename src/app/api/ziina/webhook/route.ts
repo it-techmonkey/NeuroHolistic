@@ -114,11 +114,15 @@ async function sendProgramConfirmationEmail(email: string, sessionCount: number)
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
+  console.log('[Ziina Webhook] Received webhook request');
+
   if (!isAllowedZiinaIp(request)) {
+    console.error('[Ziina Webhook] IP not allowed');
     return NextResponse.json({ error: 'Webhook source IP is not allowed' }, { status: 403 });
   }
 
   if (!verifyWebhookSignature(rawBody, request)) {
+    console.error('[Ziina Webhook] Invalid signature');
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
   }
 
@@ -248,6 +252,15 @@ export async function POST(request: NextRequest) {
   const clientEmailAddress = finalClientUser?.email || clientEmail;
 
   const service = new BookingService();
+  console.log('[Ziina Webhook] Calling purchaseProgram with:', {
+    userId,
+    programType,
+    therapistId: metadata.therapistId || null,
+    therapistName: metadata.therapistName,
+    preferredDate: metadata.preferredDate || null,
+    preferredTime: metadata.preferredTime || null,
+    totalSessions,
+  });
   const result = await service.purchaseProgram({
     userId,
     programType: programType as 'private' | 'group' | 'academy',
@@ -261,6 +274,8 @@ export async function POST(request: NextRequest) {
     preferredDate: metadata.preferredDate || null,
     preferredTime: metadata.preferredTime || null,
   });
+
+  console.log('[Ziina Webhook] purchaseProgram result:', result);
 
   if (!result.success || !result.programId) {
     console.error('[Ziina Webhook] Program creation failed:', result.error);
