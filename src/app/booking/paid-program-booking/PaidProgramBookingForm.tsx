@@ -733,6 +733,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             }
             setProcessing(true);
             try {
+              // Sign out any existing user (e.g. admin/therapist) before signing up new client
+              await supabase.auth.signOut();
+
               const signupRes = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
