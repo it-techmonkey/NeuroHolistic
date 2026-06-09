@@ -858,13 +858,32 @@ export class BookingService {
 
     // 6. Merge sessions with bookings
     (sessions ?? []).forEach((session) => {
-      const existingIndex = combined.findIndex((s) => s.id === session.booking_id);
+      // First try direct booking_id link
+      let existingIndex = combined.findIndex((s) => s.id === session.booking_id);
+
+      // If no direct link, try matching by program_id + session_number (for unlinked sessions)
+      if (existingIndex < 0 && session.program_id && session.session_number) {
+        existingIndex = combined.findIndex(
+          (s) => s.program_id === session.program_id && s.session_number === session.session_number
+        );
+        if (existingIndex >= 0) {
+          // Auto-link: update session's booking_id in DB for future queries
+          this.supabase
+            .from('sessions')
+            .update({ booking_id: combined[existingIndex].id })
+            .eq('id', session.id)
+            .then(() => {});
+        }
+      }
+
       if (existingIndex >= 0) {
         combined[existingIndex] = {
           ...combined[existingIndex],
           development_form_submitted: session.development_form_submitted ?? false,
           is_complete: session.is_complete ?? false,
           session_status: session.status,
+          meet_link: combined[existingIndex].meet_link || session.meet_link,
+          meeting_link: combined[existingIndex].meeting_link || session.meet_link,
         };
       } else if (session.status !== 'pending') {
         combined.push({
@@ -909,9 +928,19 @@ export class BookingService {
       return keepFreeIds.has(s.id);
     });
 
-    deduped.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
+    // 9. Dedup program sessions (keep booking source over session source)
+    const sessionSeen = new Map<string, boolean>();
+    const dedupedFinal = deduped.filter((s) => {
+      const key = `${s.program_id || ''}-${s.session_number || ''}`;
+      if (!key || s.type === 'free_consultation') return true;
+      if (sessionSeen.has(key)) return false;
+      sessionSeen.set(key, true);
+      return true;
+    });
 
-    return deduped;
+    dedupedFinal.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
+
+    return dedupedFinal;
   }
 
   // -----------------------------------------------------------------------

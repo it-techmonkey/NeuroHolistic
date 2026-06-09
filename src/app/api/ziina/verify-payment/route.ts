@@ -3,6 +3,105 @@ import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
 import { getZiinaPaymentIntent } from '@/lib/payments/ziina';
 import { BookingService } from '@/lib/services/booking.service';
+import { createMeetEvent } from '@/lib/meeting/google-meet';
+
+async function createBookingForSession1(
+  supabase: ReturnType<typeof getServiceSupabase>,
+  programId: string,
+  userId: string,
+  metadata: Record<string, any>,
+  preferredDate: string,
+  preferredTime: string,
+) {
+  const { data: clientUser } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const { data: program } = await supabase
+    .from('programs')
+    .select('therapist_user_id, therapist_name')
+    .eq('id', programId)
+    .maybeSingle();
+
+  let meetLink = '';
+  let calendarEventId = '';
+
+  if (program?.therapist_user_id) {
+    try {
+      const startDateTime = `${preferredDate}T${preferredTime}:00`;
+      const [hours, minutes] = preferredTime.split(':').map(Number);
+      const endHours = Math.min(hours + 1, 23);
+      const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      const endDateTime = `${preferredDate}T${endTime}:00`;
+
+      const result = await createMeetEvent({
+        summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+        description: 'Program session via NeuroHolistic platform',
+        startDateTime,
+        endDateTime,
+        attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+        therapistId: program.therapist_user_id,
+      });
+      meetLink = result.meetLink;
+      calendarEventId = result.calendarEventId ?? '';
+    } catch (err) {
+      console.error('[Verify Payment] Meet creation failed:', err);
+    }
+  }
+
+  const { error: bookingError } = await supabase.from('bookings').insert({
+    user_id: userId,
+    name: clientUser?.full_name || metadata.clientName || 'Client',
+    email: clientUser?.email || metadata.clientEmail || '',
+    phone: '',
+    country: '',
+    therapist_id: program?.therapist_user_id || 'unknown',
+    therapist_user_id: program?.therapist_user_id,
+    therapist_name: program?.therapist_name || 'Assigned Therapist',
+    date: preferredDate,
+    time: preferredTime,
+    type: 'program',
+    status: 'scheduled',
+    program_id: programId,
+    session_number: 1,
+    meeting_link: meetLink || null,
+    google_calendar_event_id: calendarEventId || null,
+  });
+
+  if (bookingError) {
+    console.error('[Verify Payment] Failed to create booking:', bookingError);
+    return;
+  }
+  console.log('[Verify Payment] Created booking for session 1 with meet link:', meetLink || '(none)');
+
+  // Link the existing session record to the new booking and update its date/time
+  const { data: newBooking } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('program_id', programId)
+    .eq('session_number', 1)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (newBooking) {
+    await supabase
+      .from('sessions')
+      .update({
+        booking_id: newBooking.id,
+        date: preferredDate,
+        time: preferredTime,
+        date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+        status: 'scheduled',
+        meet_link: meetLink || null,
+      })
+      .eq('program_id', programId)
+      .eq('session_number', 1);
+  }
+}
 
 /**
  * Fallback endpoint: verify a payment intent was completed and ensure
@@ -61,42 +160,14 @@ export async function POST(request: NextRequest) {
 
     if (!existingBooking) {
       console.log('[Verify Payment] Program exists but no booking for session 1, creating...');
-      const { data: clientUser } = await supabase
-        .from('users')
-        .select('full_name, email')
-        .eq('id', existingProgram.user_id || payment.user_id)
-        .maybeSingle();
-
-      const { error: bookingError } = await supabase.from('bookings').insert({
-        user_id: existingProgram.user_id || payment.user_id,
-        name: clientUser?.full_name || metadata.clientName || 'Client',
-        email: clientUser?.email || metadata.clientEmail || '',
-        phone: '',
-        country: '',
-        therapist_id: existingProgram.therapist_user_id || 'unknown',
-        therapist_user_id: existingProgram.therapist_user_id,
-        therapist_name: existingProgram.therapist_name || 'Assigned Therapist',
-        date: preferredDate,
-        time: preferredTime,
-        type: 'program',
-        status: 'scheduled',
-        program_id: existingProgram.id,
-        session_number: 1,
-        meeting_link: null,
-        google_calendar_event_id: null,
-      });
-
-      if (bookingError) {
-        console.error('[Verify Payment] Failed to create missing booking:', bookingError);
-      } else {
-        console.log('[Verify Payment] Created missing booking for session 1');
-        // Also update the session record
-        await supabase
-          .from('sessions')
-          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
-          .eq('program_id', existingProgram.id)
-          .eq('session_number', 1);
-      }
+      await createBookingForSession1(
+        supabase,
+        existingProgram.id,
+        existingProgram.user_id || payment.user_id,
+        metadata,
+        preferredDate,
+        preferredTime,
+      );
     }
 
     return NextResponse.json({ success: true, programId: existingProgram.id, message: 'Program already exists' });
@@ -150,36 +221,14 @@ export async function POST(request: NextRequest) {
 
       if (!existingBooking) {
         console.log('[Verify Payment] Active program exists but no booking for session 1, creating...');
-        const { data: clientUser } = await supabase
-          .from('users')
-          .select('full_name, email')
-          .eq('id', userId)
-          .maybeSingle();
-
-        await supabase.from('bookings').insert({
-          user_id: userId,
-          name: clientUser?.full_name || metadata.clientName || 'Client',
-          email: clientUser?.email || metadata.clientEmail || '',
-          phone: '',
-          country: '',
-          therapist_id: activeProgram.therapist_user_id || 'unknown',
-          therapist_user_id: activeProgram.therapist_user_id,
-          therapist_name: activeProgram.therapist_name || 'Assigned Therapist',
-          date: preferredDate,
-          time: preferredTime,
-          type: 'program',
-          status: 'scheduled',
-          program_id: activeProgram.id,
-          session_number: 1,
-          meeting_link: null,
-          google_calendar_event_id: null,
-        });
-
-        await supabase
-          .from('sessions')
-          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
-          .eq('program_id', activeProgram.id)
-          .eq('session_number', 1);
+        await createBookingForSession1(
+          supabase,
+          activeProgram.id,
+          userId,
+          metadata,
+          preferredDate,
+          preferredTime,
+        );
       }
     }
 

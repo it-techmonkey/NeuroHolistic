@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { BookingService } from '@/lib/services/booking.service';
+import { createMeetEvent } from '@/lib/meeting/google-meet';
 import type { Database } from '@/lib/supabase/database.types';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -227,6 +228,32 @@ export async function POST(request: NextRequest) {
           .eq('id', existingProgram.user_id || userId)
           .maybeSingle();
 
+        let meetLink = '';
+        let calendarEventId = '';
+
+        if (existingProgram.therapist_user_id) {
+          try {
+            const startDateTime = `${preferredDate}T${preferredTime}:00`;
+            const [hours, minutes] = preferredTime.split(':').map(Number);
+            const endHours = Math.min(hours + 1, 23);
+            const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            const endDateTime = `${preferredDate}T${endTime}:00`;
+
+            const meetResult = await createMeetEvent({
+              summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+              description: 'Program session via NeuroHolistic platform',
+              startDateTime,
+              endDateTime,
+              attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+              therapistId: existingProgram.therapist_user_id,
+            });
+            meetLink = meetResult.meetLink;
+            calendarEventId = meetResult.calendarEventId ?? '';
+          } catch (meetErr) {
+            console.error('[Ziina Webhook] Meet creation failed:', meetErr);
+          }
+        }
+
         await supabase.from('bookings').insert({
           user_id: existingProgram.user_id || userId,
           name: clientUser?.full_name || metadata.clientName || 'Client',
@@ -242,15 +269,35 @@ export async function POST(request: NextRequest) {
           status: 'scheduled',
           program_id: existingProgram.id,
           session_number: 1,
-          meeting_link: null,
-          google_calendar_event_id: null,
+          meeting_link: meetLink || null,
+          google_calendar_event_id: calendarEventId || null,
         });
 
-        await supabase
-          .from('sessions')
-          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
+        // Link session to booking
+        const { data: newBooking } = await supabase
+          .from('bookings')
+          .select('id')
           .eq('program_id', existingProgram.id)
-          .eq('session_number', 1);
+          .eq('session_number', 1)
+          .eq('user_id', existingProgram.user_id || userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (newBooking) {
+          await supabase
+            .from('sessions')
+            .update({
+              booking_id: newBooking.id,
+              date: preferredDate,
+              time: preferredTime,
+              date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+              status: 'scheduled',
+              meet_link: meetLink || null,
+            })
+            .eq('program_id', existingProgram.id)
+            .eq('session_number', 1);
+        }
       }
     }
 
@@ -298,6 +345,32 @@ export async function POST(request: NextRequest) {
           .eq('id', userId)
           .maybeSingle();
 
+        let meetLink = '';
+        let calendarEventId = '';
+
+        if (activeProgram.therapist_user_id) {
+          try {
+            const startDateTime = `${preferredDate}T${preferredTime}:00`;
+            const [hours, minutes] = preferredTime.split(':').map(Number);
+            const endHours = Math.min(hours + 1, 23);
+            const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            const endDateTime = `${preferredDate}T${endTime}:00`;
+
+            const meetResult = await createMeetEvent({
+              summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+              description: 'Program session via NeuroHolistic platform',
+              startDateTime,
+              endDateTime,
+              attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+              therapistId: activeProgram.therapist_user_id,
+            });
+            meetLink = meetResult.meetLink;
+            calendarEventId = meetResult.calendarEventId ?? '';
+          } catch (meetErr) {
+            console.error('[Ziina Webhook] Meet creation failed:', meetErr);
+          }
+        }
+
         await supabase.from('bookings').insert({
           user_id: userId,
           name: clientUser?.full_name || metadata.clientName || 'Client',
@@ -313,15 +386,34 @@ export async function POST(request: NextRequest) {
           status: 'scheduled',
           program_id: activeProgram.id,
           session_number: 1,
-          meeting_link: null,
-          google_calendar_event_id: null,
+          meeting_link: meetLink || null,
+          google_calendar_event_id: calendarEventId || null,
         });
 
-        await supabase
-          .from('sessions')
-          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
+        const { data: newBooking } = await supabase
+          .from('bookings')
+          .select('id')
           .eq('program_id', activeProgram.id)
-          .eq('session_number', 1);
+          .eq('session_number', 1)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (newBooking) {
+          await supabase
+            .from('sessions')
+            .update({
+              booking_id: newBooking.id,
+              date: preferredDate,
+              time: preferredTime,
+              date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+              status: 'scheduled',
+              meet_link: meetLink || null,
+            })
+            .eq('program_id', activeProgram.id)
+            .eq('session_number', 1);
+        }
       }
     }
 
