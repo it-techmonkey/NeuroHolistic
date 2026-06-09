@@ -73,7 +73,7 @@ export default function Programs() {
   };
 
   return (
-    <section className="relative w-full bg-[#070913] py-6 overflow-hidden md:py-10">
+    <section className="relative w-full bg-[#070913] py-10 overflow-hidden md:py-14">
       {/* Deep Background Illumination */}
       <div className="pointer-events-none absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(61,90,255,0.05)_0%,transparent_70%)] blur-3xl" />
@@ -89,7 +89,7 @@ export default function Programs() {
         <div className="mb-8 flex flex-col items-center text-center md:mb-10">
           <motion.h2
             variants={itemVariants}
-            className="text-[28px] font-medium leading-[1.4] tracking-tight text-white sm:text-[36px] md:text-[46px]"
+            className="text-[36px] font-medium leading-[1.4] tracking-tight text-white md:text-[46px]"
           >
             {t.programs.heading}
           </motion.h2>

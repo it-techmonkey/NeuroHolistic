@@ -41,8 +41,8 @@ export default function Footer() {
   }, [t, lang, toggleLang]);
 
   return (
-    <footer className="bg-[#0B0F2B] border-t border-white/5 pt-10 pb-6 sm:pt-12">
-      <div className="max-w-[1280px] mx-auto px-5 sm:px-6 md:px-12">
+    <footer className="bg-[#0B0F2B] border-t border-white/5 pt-12 pb-6">
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
         
         {/* ── Main Registry Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-6 border-b border-white/5 pb-8">

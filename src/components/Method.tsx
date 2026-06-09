@@ -11,25 +11,25 @@ export default function MethodHero() {
   const phases = useMemo(() => t.method.phases, [t]);
 
   return (
-    <section className="relative w-full bg-[#FAFBFF] py-6 md:py-8 lg:py-10">
+    <section className="relative w-full bg-[#FAFBFF] py-8 md:py-10">
       {/* Subtle Background Elements */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(240,244,255,0.6)_100%)]" />
       <div className="pointer-events-none absolute top-0 right-[-10%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.05)_0%,transparent_70%)] blur-3xl" />
 
-      <div className="relative z-10 mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
+      <div className="relative z-10 mx-auto max-w-[1280px] px-6 md:px-12">
         
         {/* Header Section */}
-        <div className="text-center mb-5 md:mb-6">
+        <div className="text-center mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
           >
-            <h1 className="mb-2 text-[28px] md:text-[36px] lg:text-[48px] xl:text-[52px] font-medium leading-[1.4] tracking-tight text-[#0B1028]">
+            <h1 className="mb-2 text-[36px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[48px] lg:text-[52px]">
               {t.method.heading}
             </h1>
-            <p className={`mb-4 text-[13px] md:text-[14px] lg:text-[15px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#64748B]`}>
+            <p className={`mb-4 text-[14px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#64748B] md:text-[15px]`}>
               {t.method.subtitle}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">

@@ -8,7 +8,7 @@ export default function AcademyCTA() {
   const { t, isUrdu } = useLang();
 
   return (
-    <section className="w-full bg-[#FAFBFF] px-4 py-5 md:px-6 md:py-8">
+    <section className="w-full bg-[#FAFBFF] px-4 py-6 md:px-6 md:py-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -36,7 +36,7 @@ export default function AcademyCTA() {
             
             {/* Left Column: The Hook (Spans 7 Cols) */}
             <div className="lg:col-span-7 flex flex-col justify-center">
-              <h2 className="text-[26px] font-medium leading-[1.4] tracking-tight text-white sm:text-[32px] md:text-[48px] lg:text-[48px]">
+              <h2 className="text-[32px] font-medium leading-[1.4] tracking-tight text-white md:text-[48px] lg:text-[48px]">
                 {t.academyCTA.heading}
               </h2>
             </div>

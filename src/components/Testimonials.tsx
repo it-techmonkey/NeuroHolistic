@@ -132,7 +132,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="w-full bg-white pt-3 pb-6 md:pt-6 md:pb-8">
+    <section className="w-full bg-white pt-4 pb-8 md:pt-6 md:pb-10">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -148,7 +148,7 @@ export default function Testimonials() {
 
           <motion.h2 
             variants={itemVariants} 
-            className="mb-4 max-w-[700px] text-[26px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] sm:text-[32px] md:text-[42px]"
+            className="mb-4 max-w-[700px] text-[32px] font-semibold leading-[1.4] tracking-tight text-[#0F172A] md:text-[42px]"
           >
             {t.testimonials.heading}
           </motion.h2>
