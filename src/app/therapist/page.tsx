@@ -504,7 +504,7 @@ export default function TherapistDashboard() {
                         <button type="button" onClick={saveOverviewNotes} disabled={savingOverviewNote} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white hover:bg-slate-800 disabled:opacity-50">
                           <Save size={13} /> {savingOverviewNote ? 'Saving' : 'Save Note'}
                         </button>
-                        <button type="button" onClick={() => setShowReportModal(true)} disabled={!clientDetail} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                        <button type="button" onClick={() => setShowReportModal(true)} disabled={!selectedClient} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 disabled:opacity-50">
                           <FileText size={13} /> Report Card
                         </button>
                       </div>
@@ -781,7 +781,7 @@ export default function TherapistDashboard() {
           </div>
         </div>
       )}
-      {showReportModal && clientDetail && (
+      {showReportModal && selectedClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl">
             <div className="flex items-center justify-between px-4 py-3 border-b">
@@ -794,18 +794,18 @@ export default function TherapistDashboard() {
               <ClientReportCard
                 source="active"
                 client={{
-                  name: clientDetail.clientProfile?.full_name || selectedClient?.fullName,
-                  email: clientDetail.clientProfile?.email || selectedClient?.email,
-                  phone: clientDetail.clientProfile?.phone || selectedClient?.phone,
-                  country: clientDetail.clientProfile?.country,
+                  name: selectedClient?.fullName || 'Client',
+                  email: selectedClient?.email || null,
+                  phone: undefined,
+                  country: undefined,
                   status: selectedClient?.program?.status === 'active' ? 'Active Program' : selectedClient?.program?.status === 'completed' ? 'Program Completed' : 'Free Consultation',
                   program: selectedClient?.program,
                 }}
-                sessions={clientDetail.sessions || []}
-                bookings={clientDetail.bookings || []}
-                assessments={clientDetail.assessments || []}
-                devForms={clientDetail.devForms || []}
-                materials={clientDetail.materials || []}
+                sessions={selectedClient?.sessions || []}
+                bookings={[]}
+                assessments={selectedClient?.latestAssessment ? [selectedClient.latestAssessment] : []}
+                devForms={[]}
+                materials={[]}
               />
             </div>
           </div>

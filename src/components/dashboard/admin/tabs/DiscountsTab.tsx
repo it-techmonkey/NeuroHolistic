@@ -27,9 +27,9 @@ interface ClientOption {
 }
 
 const discountColors: Record<number, string> = {
-  10: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-  15: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-  20: 'bg-rose-500/15 text-rose-400 border-rose-500/20',
+  10: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  15: 'bg-amber-50 text-amber-700 border border-amber-200',
+  20: 'bg-rose-50 text-rose-700 border border-rose-200',
 };
 
 function formatDate(dateStr: string): string {

@@ -29,11 +29,20 @@ export async function GET() {
 
     // Fetch related payment records (if any) for richer admin context
     const programIds = (programs || []).map((p: any) => p.id).filter(Boolean);
-    const { data: relatedPayments } = await supabase
-      .from('payments')
-      .select('*')
-      .in('program_id', programIds || [])
-      .then(r => r).catch(() => ({ data: [] }));
+    let relatedPayments: any[] = [];
+    if (programIds.length > 0) {
+      const { data: rpData, error: rpError } = await supabase
+        .from('payments')
+        .select('*')
+        .in('program_id', programIds);
+
+      if (rpError) {
+        console.error('[Admin Payments] related payments fetch error', rpError);
+        relatedPayments = [];
+      } else {
+        relatedPayments = rpData || [];
+      }
+    }
 
     const payments = (programs || []).map((p: any) => {
       const paymentRow = (relatedPayments || []).find((pay: any) => String(pay.program_id) === String(p.id));

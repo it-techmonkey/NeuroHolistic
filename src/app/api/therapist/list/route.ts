@@ -2,32 +2,34 @@ import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { TEAM_PROFILES } from '@/components/team/team-profiles';
 
-// Simple in-memory cache for therapist list
 let cachedTherapists: any[] = [];
 let cacheTimestamp: number = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 60 * 1000;
 
-/**
- * Normalize a name for deduplication comparison
- * Handles variations like "Dr. Fawzia Yassmina" vs "Fawzia Yassmina"
- */
-function normalizeName(name: string): string {
+const FOUNDER_SLUG = 'fawzia-yassmina';
+
+function normalizeForDedup(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/^(dr|doctor)\s+/i, '')
     .replace(/\./g, '')
+    .replace(/^(dr|doctor)\s+/i, '')
+    .replace(/[^a-z\s]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim();
+    .trim()
+    .split(' ')
+    .filter(w => w.length > 0)
+    .map(w => {
+      let s = w.replace(/[aeiou]/g, '');
+      s = s.replace(/(.)\1+/g, '$1');
+      return s;
+    })
+    .sort()
+    .join(' ');
 }
-
-// Founder slug constant
-const FOUNDER_SLUG = 'fawzia-yassmina';
 
 export async function GET() {
   try {
-    // Return cached data if still valid
     const now = Date.now();
     if (cachedTherapists.length > 0 && now - cacheTimestamp < CACHE_TTL) {
       return NextResponse.json({ therapists: cachedTherapists });
@@ -35,68 +37,57 @@ export async function GET() {
 
     const supabase = getServiceSupabase();
 
-    // Get therapists from database (exclude admin)
     const { data: dbTherapists, error } = await supabase
       .from('users')
       .select('id,full_name,email,role')
       .eq('role', 'therapist')
       .order('full_name', { ascending: true });
 
-    let therapists: any[] = [];
-    const seenNormalizedNames = new Set<string>();
-    const seenEmails = new Set<string>();
+    const therapists: any[] = [];
+    const seen = new Set<string>();
 
     if (!error && dbTherapists && dbTherapists.length > 0) {
-      // Add database therapists first
       dbTherapists.forEach((user) => {
         const name = user.full_name || user.email;
-        const normalizedKey = normalizeName(name);
-        const emailKey = user.email?.toLowerCase().trim();
+        const key = normalizeForDedup(name);
 
-        if (!seenNormalizedNames.has(normalizedKey) && !(emailKey && seenEmails.has(emailKey))) {
-          seenNormalizedNames.add(normalizedKey);
-          if (emailKey) seenEmails.add(emailKey);
+        if (seen.has(key)) return;
+        seen.add(key);
 
-          // Check if this is the founder (Fawzia Yassmina)
-          const isFounder = normalizedKey.includes('fawzia') && normalizedKey.includes('yassmina');
+        const isFounder = key.includes('fzw') && key.includes('ysmn');
 
-          therapists.push({
-            id: user.id,
-            slug: isFounder ? FOUNDER_SLUG : name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-            name: isFounder ? 'Dr. Fawzia Yassmina' : name,
-            role: isFounder ? 'Founder & Lead Practitioner' : (user.role === 'admin' ? 'Founder & Lead Practitioner' : 'Certified Practitioner'),
-          });
-        }
+        therapists.push({
+          id: user.id,
+          slug: isFounder ? FOUNDER_SLUG : name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+          name: isFounder ? 'Dr. Fawzia Yassmina' : name,
+          role: isFounder ? 'Founder & Lead Practitioner' : 'Certified Practitioner',
+        });
       });
     }
 
-    // Add any missing team profiles (avoiding duplicates)
     TEAM_PROFILES.forEach(profile => {
-      const normalizedKey = normalizeName(profile.name.en);
+      const key = normalizeForDedup(profile.name.en);
 
-      if (!seenNormalizedNames.has(normalizedKey)) {
-        seenNormalizedNames.add(normalizedKey);
+      if (seen.has(key)) return;
+      seen.add(key);
 
-        therapists.push({
-          id: profile.slug,
-          slug: profile.slug,
-          name: profile.name.en,
-          role: profile.slug === FOUNDER_SLUG ? 'Founder & Lead Practitioner' : 'Certified Practitioner',
-        });
-      }
+      therapists.push({
+        id: profile.slug,
+        slug: profile.slug,
+        name: profile.name.en,
+        role: profile.slug === FOUNDER_SLUG ? 'Founder & Lead Practitioner' : 'Certified Practitioner',
+      });
     });
 
-    // Update cache
     cachedTherapists = therapists;
     cacheTimestamp = now;
 
     return NextResponse.json({ therapists });
   } catch (error) {
-    // Final fallback - return team profiles with deduplication
     const seen = new Set<string>();
     const therapists = TEAM_PROFILES
       .filter(profile => {
-        const key = normalizeName(profile.name.en);
+        const key = normalizeForDedup(profile.name.en);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;

@@ -41,6 +41,8 @@ interface PaymentMetadata {
   therapistName?: string | null;
   clientName?: string;
   clientEmail?: string;
+  preferredDate?: string | null;
+  preferredTime?: string | null;
 }
 
 function verifyWebhookSignature(rawBody: string, request: NextRequest) {
@@ -441,6 +443,51 @@ export async function POST(request: NextRequest) {
       },
     })
     .eq('id', payment.id);
+
+  // Create a booking record so the therapist dashboard can see this client
+  const { data: clientUser } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (clientUser) {
+    const slug = (therapistName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    // Use user-selected date/time if provided, otherwise default to 7 days from now
+    let bookingDate: string;
+    let bookingTime: string;
+
+    if (metadata.preferredDate && metadata.preferredTime) {
+      bookingDate = metadata.preferredDate;
+      bookingTime = metadata.preferredTime;
+    } else {
+      const sessionDate = new Date();
+      sessionDate.setDate(sessionDate.getDate() + 7);
+      bookingDate = sessionDate.toISOString().split('T')[0];
+      bookingTime = '10:00';
+    }
+
+    await supabase.from('bookings').insert({
+      user_id: userId,
+      name: clientUser.full_name || clientUser.email || 'Client',
+      email: clientUser.email || clientEmail,
+      phone: '',
+      country: '',
+      therapist_id: therapistId || slug || 'unknown',
+      therapist_name: therapistName || 'Assigned Therapist',
+      therapist_user_id: therapistId || null,
+      date: bookingDate,
+      time: bookingTime,
+      type: 'program',
+      status: 'confirmed',
+      program_id: program.id,
+    }).then(({ error: bookingError }) => {
+      if (bookingError) {
+        console.error('[Ziina Webhook] Failed to create booking:', bookingError.message);
+      }
+    });
+  }
 
   if (clientEmail) {
     sendProgramConfirmationEmail({
