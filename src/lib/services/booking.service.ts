@@ -14,7 +14,7 @@ import {
   notifySessionCompleted,
   type NotificationBooking,
 } from '@/lib/services/notification.service';
-import { toDubaiDateTime, isUpcomingSession, isPastSession } from '@/lib/booking/session-flow';
+import { toDubaiDateTime, isUpcomingSession, isPastSession, getDubaiToday } from '@/lib/booking/session-flow';
 import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
 import { generateSlug, therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
 import { generateHourlySlotStarts, defaultHourlyBookingSlots } from '@/lib/bookings/therapist-scope';
@@ -916,12 +916,14 @@ export class BookingService {
     // Upcoming: confirmed/scheduled and in the future (Dubai timezone)
     const upcoming = (bookings ?? []).filter((b) => {
       if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
+      if (!b.date || !b.time) return false;
       return isUpcomingSession({ date: b.date, time: b.time });
     });
 
     // Past: completed, cancelled, or in the past (Dubai timezone)
     const past = (bookings ?? []).filter((b) => {
       if (b.status === 'completed' || b.status === 'cancelled') return true;
+      if (!b.date || !b.time) return true;
       return isPastSession({ date: b.date, time: b.time });
     });
 
@@ -969,7 +971,7 @@ export class BookingService {
   ): Promise<{ time: string; display: string }[]> {
     const resolved = await resolveTherapistUserRow(this.supabase, rawTherapistId);
 
-    // Check for full-day block
+    // Check for full-day block (any block spanning >= 12 hours)
     if (resolved) {
       const { data: blockRows } = await this.supabase
         .from('therapist_availability')
@@ -981,7 +983,9 @@ export class BookingService {
       for (const b of blockRows ?? []) {
         const bs = b.start_time ?? '00:00';
         const be = b.end_time ?? '23:59';
-        if (bs === '00:00' && (be === '23:59' || be === '24:00')) {
+        const startMin = parseTimeToMinutes(bs);
+        const endMin = parseTimeToMinutes(be);
+        if (endMin - startMin >= 720) {
           return [];
         }
       }
@@ -1075,10 +1079,19 @@ export class BookingService {
 
     let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
 
-    // Remove past slots for today
-    const today = new Date().toISOString().split('T')[0];
-    if (date === today) {
-      const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    // Remove past slots for today (Dubai timezone)
+    const dubaiToday = getDubaiToday();
+    if (date === dubaiToday) {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Dubai',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      });
+      const parts = formatter.formatToParts(new Date());
+      const currentHour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10);
+      const currentMinute = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0', 10);
+      const currentMinutes = currentHour * 60 + currentMinute;
       availableSlots = availableSlots.filter((slot) => parseTimeToMinutes(slot) >= currentMinutes + 60);
     }
 
