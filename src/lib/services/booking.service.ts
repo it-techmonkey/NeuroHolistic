@@ -268,7 +268,7 @@ export class BookingService {
       return { success: false, error: 'Not authorized', statusCode: 403 };
     }
 
-    if (booking.status !== 'confirmed') {
+    if (booking.status !== 'confirmed' && booking.status !== 'scheduled') {
       return { success: false, error: `Cannot reschedule a booking with status "${booking.status}"`, statusCode: 409 };
     }
 
@@ -382,7 +382,7 @@ export class BookingService {
       return { success: false, error: 'Not authorized', statusCode: 403 };
     }
 
-    if (booking.status !== 'confirmed') {
+    if (booking.status !== 'confirmed' && booking.status !== 'scheduled') {
       return { success: false, error: `Cannot cancel a booking with status "${booking.status}"`, statusCode: 409 };
     }
 
@@ -697,7 +697,7 @@ export class BookingService {
         date: input.preferredDate,
         time: input.preferredTime,
         type: 'program',
-        status: 'confirmed',
+        status: 'scheduled',
         program_id: program.id,
         session_number: 1,
         meeting_link: meetLink || null,
