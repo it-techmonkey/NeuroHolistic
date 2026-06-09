@@ -197,14 +197,63 @@ export async function POST(request: NextRequest) {
   }
 
   const paymentId = `ziina:${paymentIntentId}`;
+  const userId = metadata.userId || payment.user_id;
 
   const { data: existingProgram } = await supabase
     .from('programs')
-    .select('id')
+    .select('id, user_id, therapist_user_id, therapist_name')
     .eq('payment_id', paymentId)
     .maybeSingle();
 
   if (existingProgram) {
+    const preferredDate = metadata.preferredDate || null;
+    const preferredTime = metadata.preferredTime || null;
+
+    // Ensure first session booking exists even if created by old code
+    if (preferredDate && preferredTime) {
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('program_id', existingProgram.id)
+        .eq('session_number', 1)
+        .eq('user_id', existingProgram.user_id || userId)
+        .maybeSingle();
+
+      if (!existingBooking) {
+        console.log('[Ziina Webhook] Program exists but no booking for session 1, creating...');
+        const { data: clientUser } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', existingProgram.user_id || userId)
+          .maybeSingle();
+
+        await supabase.from('bookings').insert({
+          user_id: existingProgram.user_id || userId,
+          name: clientUser?.full_name || metadata.clientName || 'Client',
+          email: clientUser?.email || metadata.clientEmail || '',
+          phone: '',
+          country: '',
+          therapist_id: existingProgram.therapist_user_id || 'unknown',
+          therapist_user_id: existingProgram.therapist_user_id,
+          therapist_name: existingProgram.therapist_name || 'Assigned Therapist',
+          date: preferredDate,
+          time: preferredTime,
+          type: 'program',
+          status: 'scheduled',
+          program_id: existingProgram.id,
+          session_number: 1,
+          meeting_link: null,
+          google_calendar_event_id: null,
+        });
+
+        await supabase
+          .from('sessions')
+          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
+          .eq('program_id', existingProgram.id)
+          .eq('session_number', 1);
+      }
+    }
+
     // Update payment to link to existing program
     await supabase
       .from('payments')
@@ -214,14 +263,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: 'Payment already processed', programId: existingProgram.id });
   }
 
-  const userId = metadata.userId || payment.user_id;
   if (!userId) {
     return NextResponse.json({ error: 'Payment is missing user id' }, { status: 400 });
   }
 
   const { data: activeProgram } = await supabase
     .from('programs')
-    .select('id')
+    .select('id, therapist_user_id, therapist_name')
     .eq('user_id', userId)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
@@ -229,6 +277,54 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (activeProgram) {
+    // Ensure first session booking exists
+    const preferredDate = metadata.preferredDate || null;
+    const preferredTime = metadata.preferredTime || null;
+
+    if (preferredDate && preferredTime) {
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('program_id', activeProgram.id)
+        .eq('session_number', 1)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!existingBooking) {
+        console.log('[Ziina Webhook] Active program exists but no booking for session 1, creating...');
+        const { data: clientUser } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', userId)
+          .maybeSingle();
+
+        await supabase.from('bookings').insert({
+          user_id: userId,
+          name: clientUser?.full_name || metadata.clientName || 'Client',
+          email: clientUser?.email || metadata.clientEmail || '',
+          phone: '',
+          country: '',
+          therapist_id: activeProgram.therapist_user_id || 'unknown',
+          therapist_user_id: activeProgram.therapist_user_id,
+          therapist_name: activeProgram.therapist_name || 'Assigned Therapist',
+          date: preferredDate,
+          time: preferredTime,
+          type: 'program',
+          status: 'scheduled',
+          program_id: activeProgram.id,
+          session_number: 1,
+          meeting_link: null,
+          google_calendar_event_id: null,
+        });
+
+        await supabase
+          .from('sessions')
+          .update({ date: preferredDate, time: preferredTime, status: 'scheduled' })
+          .eq('program_id', activeProgram.id)
+          .eq('session_number', 1);
+      }
+    }
+
     await supabase
       .from('payments')
       .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: status, duplicateProgramPayment: true } })

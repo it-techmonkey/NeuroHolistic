@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
   const preferredDate = body?.preferredDate || null;
   const preferredTime = body?.preferredTime || null;
 
+  console.log('[Create Payment] Request received:', { programType, paymentOption, preferredDate, preferredTime, therapistSlug: body?.therapistSlug });
+
   if (!isProgramType(programType) || !isPaymentOption(paymentOption)) {
     return NextResponse.json(
       { error: 'Invalid payment request. Choose a program type and payment option.' },
