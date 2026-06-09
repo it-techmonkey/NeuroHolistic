@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
-import { cancelBooking } from '@/lib/services/booking.service';
+import { BookingService } from '@/lib/services/booking.service';
 
 export async function POST(
   _request: NextRequest,
@@ -15,13 +15,13 @@ export async function POST(
     }
 
     const { id } = await params;
-    const result = await cancelBooking(id, user.id);
+    const service = new BookingService();
+    const result = await service.cancelBooking(id, user.id);
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: result.statusCode ?? (result.success ? 200 : 500) });
   } catch (error) {
-    console.error(`[POST /api/bookings/${(error as Error)?.message ?? 'unknown'}/cancel]`, error);
+    console.error('[POST /api/bookings/cancel]', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    const status = error instanceof Error && 'status' in error ? (error as Error & { status: number }).status : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

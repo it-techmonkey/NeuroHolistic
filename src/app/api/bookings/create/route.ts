@@ -1,76 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
-import { createMeetEvent } from '@/lib/meeting/google-meet';
-import { sendAllNotifications } from '@/lib/notifications/service';
+import { BookingService } from '@/lib/services/booking.service';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 
 async function getOrCreateUser(email: string, name: string, phone: string, country: string, supabase: any) {
-  // Check if user already exists in auth
   const supabaseAdmin = createSupabaseAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Try to get user by email
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
   const existingUser = existingUsers?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
   if (existingUser) {
-    // User exists - return existing user
-    // Also ensure profile exists
     const { data: profile } = await supabase.from('users').select('id').eq('id', existingUser.id).maybeSingle();
     if (!profile) {
       await supabase.from('users').insert({
-        id: existingUser.id,
-        email,
-        role: 'client',
-        full_name: name,
-        phone: phone || null,
-        country: country || null,
+        id: existingUser.id, email, role: 'client', full_name: name,
+        phone: phone || null, country: country || null,
       });
     }
     return { userId: existingUser.id, isNew: false, needsLogin: true };
   }
 
-  // Create new user with temp password
   const tempPassword = `Temp${Date.now()}!${Math.random().toString(36).slice(2)}`;
   const firstName = name.split(' ')[0] || name;
   const lastName = name.split(' ').slice(1).join(' ') || '';
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password: tempPassword,
-    email_confirm: true,
-    user_metadata: {
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      country,
-    },
+    email, password: tempPassword, email_confirm: true,
+    user_metadata: { first_name: firstName, last_name: lastName, phone, country },
   });
 
   if (authError) {
-    // If user already exists (race condition), fetch and return
     if (authError.message?.includes('already been registered')) {
       const { data: users } = await supabaseAdmin.auth.admin.listUsers();
       const user = users?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-      if (user) {
-        return { userId: user.id, isNew: false, needsLogin: true };
-      }
+      if (user) return { userId: user.id, isNew: false, needsLogin: true };
     }
-    // Continue without user ID - allow guest booking
-    console.error('[CreateBooking] User creation failed:', authError);
     return { userId: null, isNew: false, needsLogin: false };
   }
 
-  // Create user profile
   await supabase.from('users').insert({
-    id: authData.user!.id,
-    email,
-    role: 'client',
-    full_name: name,
-    phone: phone || null,
-    country: country || null,
+    id: authData.user!.id, email, role: 'client', full_name: name,
+    phone: phone || null, country: country || null,
   });
 
   return { userId: authData.user!.id, isNew: true, tempPassword, needsLogin: true };
@@ -80,22 +53,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      userId: clientUserId,
-      name,
-      email,
-      phone,
-      country,
-      therapistId,
-      therapistName,
-      date,
-      time,
-      type,
-      programId,
-      sessionId,
-      sessionNumber,
+      userId: clientUserId, name, email, phone, country,
+      therapistId, therapistName, date, time, type,
+      programId, sessionId, sessionNumber,
     } = body;
 
-    // Validation
     if (!name || !email || !therapistId || !date || !time || !type) {
       return NextResponse.json(
         { error: 'Missing required fields: name, email, therapistId, date, time, type' },
@@ -110,29 +72,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If a program/session context exists, always treat booking as a program session.
-    // This prevents accidental free consultation records during paid-session scheduling.
     const bookingType: 'free_consultation' | 'program' =
       type === 'program' || !!programId || !!sessionId ? 'program' : 'free_consultation';
 
     const supabase = getServiceSupabase();
-
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    /** Therapist OAuth / DB user id (UUID). Required for Google Calendar & Meet. */
-    let therapistUserId: string | null = null;
-    if (uuidRegex.test(therapistId)) {
-      therapistUserId = therapistId;
-    } else {
-      const nameFromSlug = therapistId.replace(/-/g, ' ');
-      const { data: therapistUser } = await supabase
-        .from('users')
-        .select('id')
-        .ilike('full_name', `%${nameFromSlug}%`)
-        .eq('role', 'therapist')
-        .maybeSingle();
-      therapistUserId = therapistUser?.id ?? null;
-    }
 
     // Get or create user account
     let userId = clientUserId;
@@ -146,7 +89,7 @@ export async function POST(request: NextRequest) {
       isNewUser = userResult.isNew;
     }
 
-    // Program sessions require a completed free consultation first (after userId is known)
+    // Validate program sessions require completed consultation
     if (bookingType === 'program' && userId) {
       const { data: completedConsult } = await supabase
         .from('bookings')
@@ -165,9 +108,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check for existing free consultation if creating one
+    // Check for existing free consultation
     if (bookingType === 'free_consultation') {
-      // Check by user_id if provided
       if (userId) {
         const { data: existingBooking } = await supabase
           .from('bookings')
@@ -185,7 +127,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Also check by email
       const { data: existingByEmail } = await supabase
         .from('bookings')
         .select('id, status')
@@ -202,7 +143,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check therapist availability for conflicts
+    // Check therapist availability
     const { data: conflict } = await supabase
       .from('bookings')
       .select('id')
@@ -219,9 +160,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For program sessions: Validate client is only scheduling the immediate next session
+    // Validate session order for program sessions
     if (bookingType === 'program' && programId && sessionNumber) {
-      // Get all sessions for this program to determine which one can be scheduled
       const { data: allSessions } = await supabase
         .from('sessions')
         .select('session_number, status, date')
@@ -229,17 +169,11 @@ export async function POST(request: NextRequest) {
         .eq('client_id', userId)
         .order('session_number', { ascending: true });
 
-      // Find the next session that needs to be scheduled (pending with no date)
-      const pendingSessions = (allSessions ?? []).filter(s => s.status === 'pending' && !s.date);
-      const scheduledSessions = (allSessions ?? []).filter(s => s.status === 'scheduled');
       const completedSessions = (allSessions ?? []).filter(s => s.status === 'completed');
+      const expectedNextSession = completedSessions.length > 0
+        ? completedSessions[completedSessions.length - 1].session_number + 1
+        : 1;
 
-      // The next session to schedule is the first pending one, or if all pending have dates, the first scheduled
-      const nextPendingSession = pendingSessions[0];
-      const lastCompleted = completedSessions[completedSessions.length - 1];
-      const expectedNextSession = lastCompleted ? lastCompleted.session_number + 1 : 1;
-
-      // Client can only schedule the next session in order
       if (sessionNumber !== expectedNextSession) {
         return NextResponse.json(
           { error: `You can only schedule Session ${expectedNextSession}. Please schedule sessions in order.` },
@@ -247,7 +181,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check if this session is already scheduled with a date
       const { data: existingScheduled } = await supabase
         .from('sessions')
         .select('id, status, date')
@@ -264,148 +197,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate Google Meet link
-    let meetLink = '';
-    let calendarEventId = '';
-    try {
-      const startDateTime = `${date}T${time}:00`;
-      const [hours, minutes] = time.split(':').map(Number);
-      const endHours = Math.min(hours + 1, 23);
-      const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-      const endDateTime = `${date}T${endTime}:00`;
+    // Create booking via central service
+    const service = new BookingService();
+    const result = await service.createBooking({
+      userId,
+      name,
+      email,
+      phone,
+      country,
+      therapistId,
+      therapistName,
+      date,
+      time,
+      type: bookingType,
+      programId,
+      sessionId,
+      sessionNumber,
+    });
 
-      const oauthTherapistId = therapistUserId;
-      if (!oauthTherapistId) {
-        throw new Error('Could not resolve therapist user id for Google Meet (slug/UUID lookup failed)');
-      }
-
-      console.log('[CreateBooking] Creating Meet event:', { startDateTime, endDateTime, oauthTherapistId });
-
-      const result = await createMeetEvent({
-        summary: `NeuroHolistic ${bookingType === 'free_consultation' ? 'Free Consultation' : 'Session'}${sessionNumber ? ` #${sessionNumber}` : ''} - ${name}`,
-        description: `${bookingType === 'free_consultation' ? 'Free consultation' : 'Program session'} via NeuroHolistic platform`,
-        startDateTime,
-        endDateTime,
-        attendeeEmails: [email],
-        therapistId: oauthTherapistId,
-      });
-      
-      console.log('[CreateBooking] Meet result:', result);
-      meetLink = result.meetLink;
-      calendarEventId = result.calendarEventId ?? '';
-    } catch (meetError) {
-      console.error('[CreateBooking] Google Meet error:', meetError);
-      
-      // Generate a unique Google Meet-style fallback link
-      // This works for demo/testing - in production, use proper Google Calendar API credentials
-      const meetingCode = Math.random().toString(36).substring(2, 10).replace(/(.{3})/g, '$1-').slice(0, -1);
-      meetLink = `https://meet.google.com/${meetingCode}`;
-      console.log('[CreateBooking] Using generated meet link:', meetLink);
-    }
-
-    // Create booking record
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        user_id: userId || null,
-        name,
-        email,
-        phone: phone || '',
-        country: country || '',
-        therapist_id: therapistId,
-        therapist_user_id: therapistUserId,
-        therapist_name: therapistName,
-        date,
-        time,
-        type: bookingType,
-        program_id: programId || null,
-        session_number: sessionNumber || null,
-        meeting_link: meetLink || null,
-        google_calendar_event_id: calendarEventId || null,
-        status: 'confirmed',
-      })
-      .select()
-      .single();
-
-    if (bookingError) {
-      return NextResponse.json({ error: bookingError.message }, { status: 500 });
-    }
-
-    // If this is a program session, update the session record
-    if (sessionId) {
-      await supabase
-        .from('sessions')
-        .update({
-          booking_id: booking.id,
-          date,
-          time,
-          date_time: `${date}T${time}:00`,
-          meet_link: meetLink || null,
-          status: 'scheduled',
-        })
-        .eq('id', sessionId);
-    }
-
-    // Create therapist_clients assignment if not exists (for logged-in users)
-    if (userId && therapistId) {
-      const { data: existingAssignment } = await supabase
-        .from('therapist_clients')
-        .select('id')
-        .eq('therapist_id', therapistId)
-        .eq('client_id', userId)
-        .maybeSingle();
-
-      if (!existingAssignment) {
-        await supabase.from('therapist_clients').insert({
-          therapist_id: therapistId,
-          client_id: userId,
-        });
-      }
-    }
-
-    // Send notifications
-    try {
-      const formattedDate = new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      const hr = parseInt(time.split(':')[0], 10);
-      const min = time.split(':')[1];
-      const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
-
-      await sendAllNotifications({
-        bookingId: booking.id,
-        userId: userId || undefined,
-        recipientEmail: email,
-        recipientPhone: phone,
-        recipientName: name,
-        therapistName: therapistName || 'Your Therapist',
-        sessionDate: formattedDate,
-        sessionTime: formattedTime,
-        meetLink: meetLink || 'Link will be provided shortly',
-        triggerType: 'booking_confirmed',
-      });
-    } catch (notifError) {
-      console.error('[CreateBooking] Notification error:', notifError);
-      // Non-fatal
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: result.statusCode ?? 500 });
     }
 
     return NextResponse.json({
       success: true,
       booking: {
-        id: booking.id,
-        meetLink: booking.meeting_link,
-        date: booking.date,
-        time: booking.time,
-        therapistName: booking.therapist_name,
+        id: result.bookingId,
+        meetLink: result.meetLink,
+        date,
+        time,
+        therapistName,
       },
       user: userId ? {
         id: userId,
         email,
         isNewUser,
-        tempPassword: tempPassword,
+        tempPassword: tempPassword ?? null,
       } : null,
     });
   } catch (error) {

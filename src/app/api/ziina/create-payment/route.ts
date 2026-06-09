@@ -22,7 +22,8 @@ function isProgramType(value: unknown): value is RequestedProgramType {
 }
 
 function cleanAppUrl(request: NextRequest) {
-  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+  // Always prefer request origin (correct for local/dev/prod) over env variable
+  return request.nextUrl.origin.replace(/\/$/, '');
 }
 
 export async function POST(request: NextRequest) {

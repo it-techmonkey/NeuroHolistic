@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { createMeetEvent } from '@/lib/meeting/google-meet';
-import { sendBookingNotifications } from '@/lib/notifications/booking';
+import { notifyBookingConfirmed } from '@/lib/services/notification.service';
 
 const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,15 +82,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create booking. Please try again.' }, { status: 500 });
     }
 
-    await sendBookingNotifications({
-      name,
-      email,
-      phone,
-      therapistName: therapist_name,
-      date,
-      time,
+    await notifyBookingConfirmed({
+      id: booking.id,
+      clientName: name,
+      clientEmail: email,
+      clientPhone: phone,
+      therapistName: therapist_name || 'Your Therapist',
+      sessionDate: date,
+      sessionTime: time,
       meetingLink,
-      context: 'consultation',
+      type: 'free_consultation',
     });
 
     return NextResponse.json({
