@@ -145,6 +145,12 @@ html[lang="ar"] dt {
   font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif;
 }
 
+/* Override inline font-family on Hero for Arabic */
+html[lang="ar"] [style*="font-hero-copy"],
+html[lang="ar"] [style*="font-hero-display"] {
+  font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif !important;
+}
+
 p {
   line-height: 1.7;
 }
@@ -340,48 +346,5 @@ button:disabled {
   textarea,
   select {
     font-size: 16px !important;
-  }
-}
-
-/* ── Responsive Typography Scale ── */
-/* Fluid heading sizes that scale smoothly between breakpoints */
-@media (max-width: 640px) {
-  h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); }
-  h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
-  h3 { font-size: clamp(1.25rem, 3.5vw, 1.5rem); }
-}
-
-/* ── Mobile-First Section Spacing ── */
-/* Consistent section padding that reduces on mobile */
-@media (max-width: 640px) {
-  .section-shell {
-    padding-inline: 16px;
-  }
-}
-
-/* ── Touch-Friendly Interactive Elements ── */
-/* Ensure all interactive elements meet minimum touch target size */
-a, button, [role="button"] {
-  touch-action: manipulation;
-}
-
-/* ── Smooth Image Loading ── */
-img {
-  transition: opacity 0.2s ease-in-out;
-}
-
-/* ── Mobile Grid Utilities ── */
-/* Prevent horizontal overflow on mobile grids */
-@media (max-width: 640px) {
-  .grid {
-    overflow-wrap: break-word;
-  }
-}
-
-/* ── Responsive Container Padding ── */
-/* Ensure consistent side padding across all screen sizes */
-@media (max-width: 480px) {
-  .section-shell {
-    padding-inline: 12px;
   }
 }

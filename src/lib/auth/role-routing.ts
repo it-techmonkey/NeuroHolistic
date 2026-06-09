@@ -69,7 +69,6 @@ export function canAccessPath(role: UserRole, pathname: string): boolean {
   if (pathname.startsWith('/dashboard/client')) return role === 'client' || role === 'admin';
   
   // Legacy paths
-  if (pathname.startsWith('/admin')) return role === 'admin';
   if (pathname.startsWith('/therapist')) return role === 'therapist' || role === 'admin';
 
   return true;

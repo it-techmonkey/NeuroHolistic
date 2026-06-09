@@ -62,13 +62,10 @@ export const ar = {
 
   // ── Hero ──
   hero: {
-    resetFromWithin: "استعد توازنك، أطلِق طاقاتك، ودَع الحياة تفيض فيك.",
-    transformYourLife: "لنتائج تدوم",
-    designedForResults: "تحوّل جذري ومستدام",
+    eyebrow: "هناك\nطريق آخر",
+    title: "أن تُوجود.",
+    tagline: "نيوروهوليستك\nالمعهد™",
     bookConsultation: "احجز استشارة",
-    status: "الحالة",
-    systemRestored: "تمت استعادة المنظومة",
-    neuralBalance: "توازن عصبي",
   },
 
   // ── Philosophy ──

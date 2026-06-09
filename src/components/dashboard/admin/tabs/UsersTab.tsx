@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Users, Search, Filter, UserCheck, Shield, Calendar, Loader2, UserCog } from 'lucide-react';
+import { Users, Search, Filter, UserCheck, Shield, GraduationCap } from 'lucide-react';
 import type { AdminData } from './types';
 
 type RoleFilter = 'all' | 'client' | 'therapist' | 'admin';
@@ -15,8 +15,6 @@ const roleBadgeClasses: Record<string, string> = {
 export default function UsersTab({ data }: { data: AdminData }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
-  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const filteredUsers = useMemo(() => {
     return data.users.filter((user) => {
@@ -33,27 +31,6 @@ export default function UsersTab({ data }: { data: AdminData }) {
     return counts;
   }, [data.users]);
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    setUpdatingRole(userId);
-    try {
-      const res = await fetch('/api/admin/users/role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role: newRole }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update role');
-      setToast({ message: `Role updated to ${newRole}`, type: 'success' });
-      setTimeout(() => setToast(null), 3000);
-      window.location.reload();
-    } catch (err: any) {
-      setToast({ message: err.message || 'Failed to update role', type: 'error' });
-      setTimeout(() => setToast(null), 3000);
-    } finally {
-      setUpdatingRole(null);
-    }
-  };
-
   const filters: { label: string; value: RoleFilter; count?: number }[] = [
     { label: 'All', value: 'all', count: data.users.length },
     { label: 'Clients', value: 'client', count: stats.client },
@@ -63,17 +40,9 @@ export default function UsersTab({ data }: { data: AdminData }) {
 
   return (
     <div className="space-y-6">
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-lg border ${
-          toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
-        }`}>
-          {toast.message}
-        </div>
-      )}
-
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Users</h2>
-        <p className="text-sm text-slate-500">Manage platform users and their roles</p>
+        <p className="text-sm text-slate-500">View and manage platform users</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -126,8 +95,8 @@ export default function UsersTab({ data }: { data: AdminData }) {
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Country</th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Bookings</th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Programs</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -153,26 +122,25 @@ export default function UsersTab({ data }: { data: AdminData }) {
                     <td className="px-4 py-3 text-slate-500">{user.country || '—'}</td>
                     <td className="px-4 py-3 text-center text-slate-500">{user.bookingsCount ?? 0}</td>
                     <td className="px-4 py-3 text-center text-slate-500">{user.programsCount ?? 0}</td>
+                    <td className="px-4 py-3">
+                      {user.programTypes === 'academy' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                          <GraduationCap className="w-3 h-3" />Academy
+                        </span>
+                      )}
+                      {user.programTypes === 'therapy' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          Therapy
+                        </span>
+                      )}
+                      {user.programTypes === 'both' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Both
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-slate-500">
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      {user.role !== 'admin' && (
-                        <div className="flex items-center gap-1">
-                          {user.role === 'client' && (
-                            <button onClick={() => handleRoleChange(user.id, 'therapist')} disabled={updatingRole === user.id}
-                              className="text-[11px] text-violet-600 hover:text-violet-700 font-medium disabled:opacity-50">
-                              {updatingRole === user.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Make Therapist'}
-                            </button>
-                          )}
-                          {user.role === 'therapist' && (
-                            <button onClick={() => handleRoleChange(user.id, 'client')} disabled={updatingRole === user.id}
-                              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50">
-                              {updatingRole === user.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Make Client'}
-                            </button>
-                          )}
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))

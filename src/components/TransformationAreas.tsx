@@ -42,7 +42,7 @@ export default function TransformationAreas() {
     Icon: AREAS_ICONS[i],
   }));
   return (
-    <section className="w-full bg-white pt-6 pb-4 md:pt-8 md:pb-6">
+    <section className="w-full bg-white pt-8 pb-4 md:pt-10 md:pb-6">
       <div className="mx-auto max-w-[1200px] px-6">
         
         {/* Header: Compact & Centered */}
@@ -51,7 +51,7 @@ export default function TransformationAreas() {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-[28px] font-semibold tracking-tight text-slate-900 sm:text-[36px] md:text-[48px]"
+            className="text-[36px] font-semibold tracking-tight text-slate-900 md:text-[48px]"
           >
             {t.transformationAreas.heading}
           </motion.h2>
