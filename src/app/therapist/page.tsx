@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import DomainScoreBar from '@/components/dashboard/shared/DomainScoreBar';
 import StatusBadge from '@/components/dashboard/shared/StatusBadge';
+import ClientReportCard from '@/components/dashboard/therapist/ClientReportCard';
 import { isUpcomingSession } from '@/lib/booking/session-flow';
 import {
   Activity,
@@ -16,6 +17,7 @@ import {
   UserSquare2,
   Video,
   Zap,
+  X,
 } from 'lucide-react';
 
 /* ────────────────────────────── Types ────────────────────────────── */
@@ -169,6 +171,7 @@ export default function TherapistDashboard() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [overviewNote, setOverviewNote] = useState('');
   const [savingOverviewNote, setSavingOverviewNote] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -497,9 +500,14 @@ export default function TherapistDashboard() {
                   <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                     <div className="flex items-center justify-between mb-5">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Therapist Overview Note</p>
-                      <button type="button" onClick={saveOverviewNotes} disabled={savingOverviewNote} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white hover:bg-slate-800 disabled:opacity-50">
-                        <Save size={13} /> {savingOverviewNote ? 'Saving' : 'Save Note'}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={saveOverviewNotes} disabled={savingOverviewNote} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white hover:bg-slate-800 disabled:opacity-50">
+                          <Save size={13} /> {savingOverviewNote ? 'Saving' : 'Save Note'}
+                        </button>
+                        <button type="button" onClick={() => setShowReportModal(true)} disabled={!selectedClient} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                          <FileText size={13} /> Report Card
+                        </button>
+                      </div>
                     </div>
                     <textarea value={overviewNote} onChange={(e) => setOverviewNote(e.target.value)} rows={8} placeholder="Ongoing therapist overview for this client." className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10" />
                   </div>
@@ -770,6 +778,36 @@ export default function TherapistDashboard() {
             {allUpcomingSessions.length === 0 && (
               <p className="py-16 text-center text-slate-400">No future confirmed sessions are currently assigned.</p>
             )}
+          </div>
+        </div>
+      )}
+      {showReportModal && selectedClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="text-lg font-semibold">Client Report Card</h3>
+              <button onClick={() => setShowReportModal(false)} className="p-2 rounded hover:bg-slate-100">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4">
+              <ClientReportCard
+                source="active"
+                client={{
+                  name: selectedClient?.fullName || 'Client',
+                  email: selectedClient?.email || null,
+                  phone: undefined,
+                  country: undefined,
+                  status: selectedClient?.program?.status === 'active' ? 'Active Program' : selectedClient?.program?.status === 'completed' ? 'Program Completed' : 'Free Consultation',
+                  program: selectedClient?.program,
+                }}
+                sessions={selectedClient?.sessions || []}
+                bookings={[]}
+                assessments={selectedClient?.latestAssessment ? [selectedClient.latestAssessment] : []}
+                devForms={[]}
+                materials={[]}
+              />
+            </div>
           </div>
         </div>
       )}

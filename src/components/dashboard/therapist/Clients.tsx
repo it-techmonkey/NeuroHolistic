@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, User, Mail, Calendar, TrendingUp, X, FileText, Clock, ChevronRight } from 'lucide-react';
+import ClientReportCard from './ClientReportCard';
 
 export default function Clients({ therapistId }: { therapistId: string }) {
   const [clients, setClients] = useState<any[]>([]);
@@ -10,6 +11,7 @@ export default function Clients({ therapistId }: { therapistId: string }) {
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [clientDetail, setClientDetail] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState<'overview' | 'reportCard'>('overview');
 
   useEffect(() => {
     async function fetchClients() {
@@ -30,6 +32,7 @@ export default function Clients({ therapistId }: { therapistId: string }) {
 
   const fetchClientDetail = async (client: any) => {
     setSelectedClient(client);
+    setActiveDetailTab('overview');
     setDetailLoading(true);
     try {
       const res = await fetch(`/api/therapist/client-detail?clientId=${client.userId}`);
@@ -102,7 +105,48 @@ export default function Clients({ therapistId }: { therapistId: string }) {
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
           </div>
         ) : clientDetail ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <nav className="flex border-b border-slate-200">
+              {[
+                { id: 'overview' as const, label: 'Overview', icon: User },
+                { id: 'reportCard' as const, label: 'Report Card', icon: FileText },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveDetailTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeDetailTab === tab.id
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {activeDetailTab === 'reportCard' ? (
+            <ClientReportCard
+              source="active"
+              client={{
+                name: clientDetail.clientProfile?.full_name || selectedClient.fullName,
+                email: clientDetail.clientProfile?.email || selectedClient.email,
+                phone: clientDetail.clientProfile?.phone || selectedClient.phone,
+                country: clientDetail.clientProfile?.country,
+                status: selectedClient.program?.status === 'active' ? 'Active Program' : selectedClient.program?.status === 'completed' ? 'Program Completed' : 'Free Consultation',
+                program: selectedClient.program,
+              }}
+              sessions={clientDetail.sessions || []}
+              bookings={clientDetail.bookings || []}
+              assessments={clientDetail.assessments || []}
+              devForms={clientDetail.devForms || []}
+              materials={clientDetail.materials || []}
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sessions */}
             <div className="bg-white rounded-lg border border-slate-200 p-6">
               <h3 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
@@ -220,6 +264,8 @@ export default function Clients({ therapistId }: { therapistId: string }) {
               )}
             </div>
           </div>
+          )}
+          </>
         ) : (
           <p className="text-slate-500">Could not load client details</p>
         )}

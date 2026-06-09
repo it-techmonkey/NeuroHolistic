@@ -178,8 +178,8 @@ export async function login(formData: {
 
   const role = resolveUserRole(userData?.role as string | null | undefined, user);
   
-  // Redirect directly to role home to avoid stale/mismatched client-side routing.
-  const redirectUrl = getHomeRouteForRole(role);
+  // If a specific redirect was requested (e.g. from booking flow), use it
+  const redirectUrl = formData.next || getHomeRouteForRole(role);
   
   console.log('[Login] User:', user.email, 'DB Role:', userData?.role, 'Normalized:', role, 'Redirect:', redirectUrl);
 

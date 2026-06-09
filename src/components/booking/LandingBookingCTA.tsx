@@ -125,35 +125,34 @@ export default function LandingBookingCTA({
     );
   }
 
-  // 2. Has completed free consultation, no active program -> Book Paid Program
-  if (eligibility?.consultationStatus === 'completed' && !eligibility?.hasActiveProgram) {
+  // 2. No active program -> Book Paid Program directly; consultation remains optional.
+  if (isAuthenticated && eligibility && !eligibility.hasActiveProgram) {
     return (
       <div className={containerClassName}>
         <a href="/booking/paid-program-booking" className={`${primaryClassName} group`}>
           Book Paid Program
         </a>
+        {eligibility.canBookConsultation && secondaryClassName && (
+          <a href="/consultation/book" className={`${secondaryClassName} group`}>
+            Book Free Consultation
+          </a>
+        )}
       </div>
     );
   }
 
-  // 3. Has scheduled/confirmed consultation -> Go to Dashboard
-  if (['scheduled', 'confirmed', 'pending'].includes(eligibility?.consultationStatus as string)) {
+  // 3. Guests can create an account during paid-program checkout.
+  if (!isAuthenticated) {
     return (
       <div className={containerClassName}>
-        <a href="/dashboard/client" className={`${primaryClassName} group`}>
-          {dashboardLabel}
+        <a href="/booking/paid-program-booking" className={`${primaryClassName} group`}>
+          Book Paid Program
         </a>
-      </div>
-    );
-  }
-
-  // 4. No consultation yet -> Book Free Consultation
-  if (eligibility?.canBookConsultation) {
-    return (
-      <div className={containerClassName}>
-        <a href="/consultation/book" className={`${primaryClassName} group`}>
-          Book Free Consultation
-        </a>
+        {secondaryClassName && (
+          <a href="/consultation/book" className={`${secondaryClassName} group`}>
+            Book Free Consultation
+          </a>
+        )}
       </div>
     );
   }

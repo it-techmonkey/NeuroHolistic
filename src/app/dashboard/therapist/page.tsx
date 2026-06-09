@@ -38,6 +38,7 @@ import DiagnosticAssessmentForm from '@/components/dashboard/therapist/Diagnosti
 import SessionDevelopmentForm from '@/components/dashboard/therapist/SessionDevelopmentForm';
 import MarkComplete from '@/components/dashboard/therapist/MarkComplete';
 import UploadMaterial from '@/components/dashboard/therapist/UploadMaterial';
+import ClientReportCard from '@/components/dashboard/therapist/ClientReportCard';
 import { SessionsTab, ReportsTab } from '@/components/dashboard/therapist/TherapistTabs';
 import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
@@ -2152,12 +2153,37 @@ function ClientDetailView({
               )}
 
               {activeTab === 'reports' && (
-                <ReportsTab
-                  clientId={client.userId}
-                  assessments={detail?.assessments || []}
-                  devForms={detail?.devForms || []}
-                  sessions={(detail?.sessions || []) as Session[]}
-                />
+                <div className="space-y-8">
+                  <ReportsTab
+                    clientId={client.userId}
+                    assessments={detail?.assessments || []}
+                    devForms={detail?.devForms || []}
+                    sessions={(detail?.sessions || []) as Session[]}
+                  />
+
+                  <div className="border-t border-slate-200 pt-8">
+                    <ClientReportCard
+                      source="active"
+                      client={{
+                        name: detail?.clientProfile?.full_name || client.fullName,
+                        email: detail?.clientProfile?.email || client.email,
+                        phone: detail?.clientProfile?.phone || client.phone,
+                        country: detail?.clientProfile?.country,
+                        dateOfBirth: detail?.clientProfile?.date_of_birth || null,
+                        occupation: detail?.clientProfile?.occupation || null,
+                        relationshipStatus: detail?.clientProfile?.relationship_status || null,
+                        notes: (client as any).therapistOverviewNotes || null,
+                        status: client.program?.status === 'active' ? 'Active Program' : client.program?.status === 'completed' ? 'Program Completed' : 'Free Consultation',
+                        program: client.program,
+                      }}
+                      sessions={detail?.sessions || []}
+                      bookings={detail?.bookings || []}
+                      assessments={detail?.assessments || []}
+                      devForms={detail?.devForms || []}
+                      materials={detail?.materials || []}
+                    />
+                  </div>
+                </div>
               )}
             </>
           )}

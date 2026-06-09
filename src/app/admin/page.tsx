@@ -271,6 +271,12 @@ export default function SuperAdminDashboard() {
                       <p className="text-xs text-slate-500 mt-1">
                         {payment.programType} program • Therapist: {payment.therapistName} • {payment.clientEmail}
                       </p>
+                      {payment.payment_reference && (
+                        <p className="text-xs text-slate-400 mt-1">Reference: {payment.payment_reference}</p>
+                      )}
+                      {payment.payment_metadata && (
+                        <p className="text-xs text-slate-400 mt-1">Meta: {typeof payment.payment_metadata === 'string' ? payment.payment_metadata : JSON.stringify(payment.payment_metadata)}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <button

@@ -372,6 +372,8 @@ export default function FreeConsultationForm({
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               className={inputClass}
+              autoComplete="name"
+              enterKeyHint="next"
               required
             />
           </div>
@@ -383,6 +385,8 @@ export default function FreeConsultationForm({
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               className={inputClass}
+              autoComplete="email"
+              enterKeyHint="next"
               required
             />
           </div>
@@ -395,6 +399,9 @@ export default function FreeConsultationForm({
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 className={inputClass}
+                autoComplete="tel"
+                inputMode="tel"
+                enterKeyHint="next"
                 required
               />
             </div>
@@ -405,6 +412,8 @@ export default function FreeConsultationForm({
                 value={formData.country}
                 onChange={e => setFormData({ ...formData, country: e.target.value })}
                 className={inputClass}
+                autoComplete="country-name"
+                enterKeyHint="next"
               />
             </div>
           </div>

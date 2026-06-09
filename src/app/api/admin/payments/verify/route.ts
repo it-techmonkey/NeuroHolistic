@@ -115,8 +115,10 @@ async function sendPaymentRejectedEmail({
 export async function POST(request: NextRequest) {
   try {
     const authClient = await createClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const { data } = await authClient.auth.getUser();
+    const user = data?.user ?? null;
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const adminId = user.id;
 
     const { data: userData } = await authClient
       .from('users').select('role').eq('id', user.id).single();
@@ -180,6 +182,19 @@ export async function POST(request: NextRequest) {
         }, { onConflict: 'therapist_id,client_id' });
       }
 
+      // Record admin action for audit
+      try {
+        await supabase.from('admin_actions').insert({
+          admin_id: adminId,
+          action: 'approve_payment',
+          target_type: 'program',
+          target_id: programId,
+          notes: notes || null,
+        });
+      } catch (err) {
+        console.warn('[Payment Verify] Failed to write admin action audit:', err);
+      }
+
       // Send verification email
       if (program.client_email) {
         sendPaymentVerifiedEmail({
@@ -210,6 +225,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to reject payment' }, { status: 500 });
       }
 
+      // Record admin reject action for audit
+      try {
+        await supabase.from('admin_actions').insert({
+          admin_id: adminId,
+          action: 'reject_payment',
+          target_type: 'program',
+          target_id: programId,
+          notes: notes || null,
+        });
+      } catch (err) {
+        console.warn('[Payment Verify] Failed to write admin action audit:', err);
+      }
+
       // Send rejection email
       if (program.client_email) {
         sendPaymentRejectedEmail({
@@ -225,6 +253,19 @@ export async function POST(request: NextRequest) {
         message: 'Payment rejected',
         program: { id: programId, status: 'cancelled', paymentStatus: 'rejected' },
       });
+    }
+
+    // Record admin reject action for audit
+    try {
+      await supabase.from('admin_actions').insert({
+        admin_id: adminId,
+        action: 'reject_payment',
+        target_type: 'program',
+        target_id: programId,
+        notes: notes || null,
+      });
+    } catch (err) {
+      console.warn('[Payment Verify] Failed to write admin action audit:', err);
     }
   } catch (error) {
     console.error('[Payment Verify]', error);

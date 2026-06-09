@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
+import { DR_FAWZIA_NAME, DR_FAWZIA_SLUG } from '@/lib/payments/pricing';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { planType, programType, amount } = body;
+    const { planType, programType, amount, therapistSlug, therapistName } = body;
 
     if (!planType || !amount) {
       return NextResponse.json({ error: 'Missing planType or amount' }, { status: 400 });
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Require completed free consultation before purchasing a paid program
+    // Prefer a completed consultation therapist when one exists, but direct paid purchase is allowed.
     const { data: completedConsultation } = await supabase
       .from('bookings')
       .select('id, therapist_user_id, therapist_name')
@@ -55,15 +57,29 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    if (!completedConsultation) {
-      return NextResponse.json({
-        error: 'You must complete a free consultation before purchasing a paid program. Please book a free consultation first.',
-        requiresConsultation: true,
-      }, { status: 403 });
+    let therapistId = completedConsultation?.therapist_user_id ?? null;
+    let resolvedTherapistName = completedConsultation?.therapist_name || null;
+
+    const requestedTherapistSlug =
+      typeof therapistSlug === 'string' && therapistSlug.trim()
+        ? therapistSlug.trim()
+        : normalizedProgramType === 'private'
+          ? DR_FAWZIA_SLUG
+          : '';
+
+    if (!therapistId && requestedTherapistSlug) {
+      const resolvedTherapist = await resolveTherapistUserRow(supabase, requestedTherapistSlug);
+      therapistId = resolvedTherapist?.id ?? null;
+      resolvedTherapistName = resolvedTherapist?.full_name || resolvedTherapistName;
     }
 
-    const therapistId = completedConsultation.therapist_user_id;
-    const resolvedTherapistName = completedConsultation.therapist_name || 'Assigned Therapist';
+    if (!resolvedTherapistName && typeof therapistName === 'string' && therapistName.trim()) {
+      resolvedTherapistName = therapistName.trim();
+    }
+
+    if (!resolvedTherapistName && normalizedProgramType === 'private') {
+      resolvedTherapistName = DR_FAWZIA_NAME;
+    }
 
     // Get user details
     const { data: userData } = await supabase
