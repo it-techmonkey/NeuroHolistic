@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { createClient } from '@/lib/auth/server';
 
 export async function GET() {
   try {
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: userData } = await authClient
+      .from('users').select('role').eq('id', user.id).single();
+    if (userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const supabase = getServiceSupabase();
-    
+
     const { data: bookings, error } = await supabase
       .from('bookings')
       .select('*')

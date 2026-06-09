@@ -24,7 +24,7 @@ const PUBLIC_PREFIXES = [
 ];
 
 const AUTH_PREFIXES = ['/auth'];
-const AUTH_REQUIRED_PREFIXES = ['/dashboard', '/therapist', '/admin', '/booking'];
+const AUTH_REQUIRED_PREFIXES = ['/dashboard', '/therapist', '/booking'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -145,6 +145,12 @@ html[lang="ar"] dt {
   font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif;
 }
 
+/* Override inline font-family on Hero for Arabic */
+html[lang="ar"] [style*="font-hero-copy"],
+html[lang="ar"] [style*="font-hero-display"] {
+  font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif !important;
+}
+
 p {
   line-height: 1.7;
 }

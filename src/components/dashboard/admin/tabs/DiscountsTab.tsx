@@ -94,10 +94,18 @@ export default function DiscountsTab() {
     }
     setSearchingClients(true);
     try {
-      const res = await fetch(`/api/admin/list-users?q=${encodeURIComponent(query)}&role=client`);
+      const res = await fetch(`/api/admin/users`);
       if (res.ok) {
         const data = await res.json();
-        setClientOptions(data.users ?? []);
+        const users = Array.isArray(data) ? data : (data.users ?? []);
+        const q = query.toLowerCase();
+        const filtered = users.filter((u: any) =>
+          u.role === 'client' && (
+            u.full_name?.toLowerCase().includes(q) ||
+            u.email?.toLowerCase().includes(q)
+          )
+        );
+        setClientOptions(filtered);
       }
     } catch {
       // ignore

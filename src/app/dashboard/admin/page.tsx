@@ -6,14 +6,14 @@ import { supabase } from '@/lib/supabase/client';
 import { AdminData } from '@/components/dashboard/admin/tabs/types';
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, Activity,
-  BarChart3, Loader2, RefreshCw, LogOut, CreditCard, Award, Percent
+  Loader2, RefreshCw, LogOut, CreditCard, Award, Percent
 } from 'lucide-react';
 import OverviewTab from '@/components/dashboard/admin/tabs/OverviewTab';
 import UsersTab from '@/components/dashboard/admin/tabs/UsersTab';
+import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
 import TherapistsTab from '@/components/dashboard/admin/tabs/TherapistsTab';
 import BookingsTab from '@/components/dashboard/admin/tabs/BookingsTab';
 import SessionsTab from '@/components/dashboard/admin/tabs/SessionsTab';
-import AnalyticsTab from '@/components/dashboard/admin/tabs/AnalyticsTab';
 import PaymentsTab from '@/components/dashboard/admin/tabs/PaymentsTab';
 import CertificatesTab from '@/components/dashboard/admin/tabs/CertificatesTab';
 import DiscountsTab from '@/components/dashboard/admin/tabs/DiscountsTab';
@@ -24,7 +24,6 @@ const tabs = [
   { id: 'therapists', label: 'Therapists', icon: UserCheck },
   { id: 'bookings', label: 'Bookings', icon: CalendarDays },
   { id: 'sessions', label: 'Sessions', icon: Activity },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'discounts', label: 'Discounts', icon: Percent },
   { id: 'certificates', label: 'Certificates', icon: Award },
@@ -94,9 +93,7 @@ export default function AdminDashboardPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#2B2F55] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">N</span>
-              </div>
+              <DashboardHomeLogo />
               <div>
                 <h1 className="text-sm font-semibold text-slate-900">Admin Dashboard</h1>
                 <p className="text-[11px] text-slate-400">NeuroHolistic Institute</p>
@@ -177,7 +174,6 @@ export default function AdminDashboardPage() {
         {activeTab === 'therapists' && <TherapistsTab data={data} />}
         {activeTab === 'bookings' && <BookingsTab data={data} />}
         {activeTab === 'sessions' && <SessionsTab data={data} />}
-        {activeTab === 'analytics' && <AnalyticsTab data={data} />}
         {activeTab === 'payments' && <PaymentsTab />}
         {activeTab === 'discounts' && <DiscountsTab />}
         {activeTab === 'certificates' && <CertificatesTab data={data} />}

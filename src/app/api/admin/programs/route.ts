@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { createClient } from '@/lib/auth/server';
 
 export async function GET() {
   try {
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: userData } = await authClient
+      .from('users').select('role').eq('id', user.id).single();
+    if (userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const supabase = getServiceSupabase();
-    
-    // Fetch all programs with user details (if joinable) or fetch users separately
-    // Since FK is not explicit to public.users? Let's check if we can join users on user_id
-    // If not, we fetch raw.
-    // 'users' table has id matching program.user_id if authenticated successfully.
-    
+
     const { data: programs, error } = await supabase
       .from('programs')
       .select('*')

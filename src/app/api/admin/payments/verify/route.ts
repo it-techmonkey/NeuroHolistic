@@ -254,19 +254,6 @@ export async function POST(request: NextRequest) {
         program: { id: programId, status: 'cancelled', paymentStatus: 'rejected' },
       });
     }
-
-    // Record admin reject action for audit
-    try {
-      await supabase.from('admin_actions').insert({
-        admin_id: adminId,
-        action: 'reject_payment',
-        target_type: 'program',
-        target_id: programId,
-        notes: notes || null,
-      });
-    } catch (err) {
-      console.warn('[Payment Verify] Failed to write admin action audit:', err);
-    }
   } catch (error) {
     console.error('[Payment Verify]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
