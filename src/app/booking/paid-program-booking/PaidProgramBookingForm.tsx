@@ -77,6 +77,8 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const [formError, setFormError] = useState('');
   const [pendingPaymentOption, setPendingPaymentOption] = useState<PaymentOption | null>(null);
   const [userDiscount, setUserDiscount] = useState<DiscountInfo | null>(null);
+  const [locallyAuthenticated, setLocallyAuthenticated] = useState(false);
+  const effectivelyAuthenticated = isAuthenticated || locallyAuthenticated;
 
   useEffect(() => {
     async function loadData() {
@@ -160,7 +162,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   const handlePayment = async (option: PaymentOption) => {
     if (!selectedProgramType) return;
 
-    if (!isAuthenticated) {
+    if (!effectivelyAuthenticated) {
       setPendingPaymentOption(option);
       setStep('details');
       return;
@@ -622,6 +624,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                     refresh_token: signupData.session.refresh_token || '',
                   });
                 }
+                setLocallyAuthenticated(true);
                 setStep('program_type');
               } catch (err: any) {
                 setFormError(err.message || 'Something went wrong');
