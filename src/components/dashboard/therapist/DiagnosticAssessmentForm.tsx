@@ -1220,7 +1220,7 @@ export default function DiagnosticAssessmentForm({
     maxSelect?: number;
     onSelectNew?: () => void;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => {
         const selectedArr = form[field as keyof typeof form] as string[];
         const selected = selectedArr.includes(option);
@@ -1263,7 +1263,7 @@ export default function DiagnosticAssessmentForm({
     disabled?: boolean;
     onSelectNew?: () => void;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option.value}
@@ -1298,7 +1298,7 @@ export default function DiagnosticAssessmentForm({
     field: string;
     disabled?: boolean;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option}
@@ -1386,7 +1386,7 @@ export default function DiagnosticAssessmentForm({
           {activeSection === 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-slate-900 mb-4">Basic Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
                   <input
@@ -1969,7 +1969,7 @@ export default function DiagnosticAssessmentForm({
               {/* Baseline Score Summary */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
                     <span>Nervous System:</span>
                     <span className="font-medium">{form.nervous_system_score}/10</span>
@@ -2501,7 +2501,7 @@ export default function DiagnosticAssessmentForm({
               {/* Baseline Score */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
                     <span>Nervous System:</span>
                     <span className="font-medium">{form.nervous_system_score}/10</span>

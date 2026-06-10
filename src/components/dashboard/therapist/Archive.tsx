@@ -195,7 +195,7 @@ const ClientFormModal = memo(function ClientFormModal({
             placeholder="Client's full name"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
             <input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="email@example.com" />
@@ -205,7 +205,7 @@ const ClientFormModal = memo(function ClientFormModal({
             <input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="+1 234 567 890" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Country</label>
             <input type="text" value={form.country} onChange={e => updateField('country', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Country" />
@@ -215,7 +215,7 @@ const ClientFormModal = memo(function ClientFormModal({
             <input type="date" value={form.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
             <input type="text" value={form.occupation} onChange={e => updateField('occupation', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Occupation" />
@@ -280,7 +280,7 @@ const AssessmentFormModal = memo(function AssessmentFormModal({
   return (
     <Modal onClose={onClose} title="Add Diagnostic Assessment">
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Session Number</label>
             <input type="number" min={1} value={form.session_number} onChange={e => updateField('session_number', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. 1" />
@@ -631,7 +631,7 @@ function ArchivedClientReports({ assessments, devForms }: { assessments: Archive
               {currentComparison && (
                 <div className="bg-white border border-slate-200 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-slate-900 mb-6">{currentComparison.label} Comparison</h3>
-                  <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                     <div className="text-center p-6 border border-slate-200 rounded-lg bg-slate-50">
                       <p className="text-sm text-slate-500 uppercase tracking-wider mb-2">Before</p>
                       <p className="text-xl font-medium text-slate-700 mb-1">{currentComparison.from.label}</p>
