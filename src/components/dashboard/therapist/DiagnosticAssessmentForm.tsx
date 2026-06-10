@@ -22,33 +22,6 @@ interface DiagnosticAssessmentFormProps {
   previewMode?: boolean;
 }
 
-const NERVOUS_SYSTEM_PATTERNS = [
-  { value: 'regulated', label: 'Regulated' },
-  { value: 'hyper', label: 'Hyper (anxious / tense)' },
-  { value: 'hypo', label: 'Hypo (shutdown / low energy)' },
-  { value: 'mixed', label: 'Mixed' },
-];
-
-const CURRENT_SYMPTOM_OPTIONS = [
-  'Anxiety',
-  'Panic attacks',
-  'Emotional overwhelm',
-  'Emotional numbness',
-  'Sadness / low mood',
-  'Irritability',
-  'Anger outbursts',
-  'Fearfulness',
-  'Excessive worry',
-  'Feeling stuck',
-  'Relationship difficulty',
-  'Physical symptoms',
-  'Sleep difficulty',
-  'Fatigue',
-  'Stress overload',
-  'Lack of direction',
-  'Other',
-];
-
 const EMOTIONAL_PATTERNS = [
   'Anxiety',
   'Panic attacks',
@@ -57,6 +30,7 @@ const EMOTIONAL_PATTERNS = [
   'Sadness / low mood',
   'Irritability',
   'Anger outbursts',
+  'Emotional instability',
   'Fearfulness',
   'Excessive worry',
   'Feeling emotionally disconnected',
@@ -186,35 +160,6 @@ const LIFE_AREAS = [
   'Sense of purpose',
   'Daily functioning',
   'Spiritual connection',
-  'Other',
-];
-
-const LIFE_FUNCTIONING = [
-  'Relationships',
-  'Work / career',
-  'Daily functioning',
-  'Decision-making',
-  'Self-worth',
-  'Financial wellbeing',
-  'Social life',
-  'Physical health',
-  'Motivation',
-  'Productivity',
-  'Sense of purpose',
-  'Spiritual connection',
-  'Other',
-];
-
-const TRIED_PREVIOUSLY = [
-  'Therapy',
-  'Medication',
-  'Coaching',
-  'Self-help',
-  'Meditation',
-  'Holistic treatments',
-  'Lifestyle changes',
-  'Spiritual practices',
-  'Nothing yet',
   'Other',
 ];
 
@@ -623,58 +568,12 @@ const THERAPEUTIC_PRIORITIES = [
 
 const SESSION_FREQUENCY_OPTIONS = ['1x Weekly', '2x Weekly', 'Intensive Program', 'Flexible As Needed'];
 
-const PATTERN_TIMELINE_OPTIONS = [
-  { value: 'recent_activation', label: 'Recent activation' },
-  { value: 'long_standing', label: 'Long-standing pattern' },
-  { value: 'lifelong', label: 'Lifelong / early imprint expression' },
-  { value: 'unclear', label: 'Unclear' },
-];
-
 const PARENTAL_INFLUENCE_OPTIONS = [
   { value: 'mother', label: 'Mother' },
   { value: 'father', label: 'Father' },
   { value: 'both', label: 'Both' },
   { value: 'none', label: 'None / no clear influence' },
   { value: 'other', label: 'Other (specify)' },
-];
-
-const CORE_PATTERN_OPTIONS = [
-  'Abandonment',
-  'Rejection / Not enough',
-  'Control / Safety',
-  'Suppression / Expression',
-  'Other',
-];
-
-const CONTRIBUTING_FACTOR_OPTIONS = [
-  'Emotional inconsistency',
-  'Lack of safety',
-  'High pressure / responsibility',
-  'Trauma / shock event',
-  'Emotional neglect',
-  'Other',
-];
-
-const COUNTRIES = [
-  'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia',
-  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belarus', 'Belgium',
-  'Bolivia', 'Bosnia and Herzegovina', 'Brazil', 'Bulgaria', 'Cambodia',
-  'Canada', 'Chile', 'China', 'Colombia', 'Costa Rica', 'Croatia', 'Cuba',
-  'Cyprus', 'Czech Republic', 'Denmark', 'Dominican Republic', 'Ecuador',
-  'Egypt', 'El Salvador', 'Estonia', 'Ethiopia', 'Finland', 'France',
-  'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Honduras', 'Hong Kong',
-  'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
-  'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya',
-  'Kuwait', 'Latvia', 'Lebanon', 'Libya', 'Lithuania', 'Luxembourg', 'Malaysia',
-  'Mexico', 'Moldova', 'Morocco', 'Myanmar', 'Nepal', 'Netherlands',
-  'New Zealand', 'Nicaragua', 'Nigeria', 'North Korea', 'Norway', 'Oman',
-  'Pakistan', 'Panama', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
-  'Puerto Rico', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia', 'Serbia',
-  'Singapore', 'Slovakia', 'Slovenia', 'South Africa', 'South Korea', 'Spain',
-  'Sri Lanka', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
-  'Tanzania', 'Thailand', 'Tunisia', 'Turkey', 'Uganda', 'Ukraine',
-  'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay',
-  'Uzbekistan', 'Venezuela', 'Vietnam', 'Yemen', 'Zimbabwe',
 ];
 
 const SCORE_LABELS: Record<number, string> = {
@@ -951,7 +850,7 @@ export default function DiagnosticAssessmentForm({
 
   const goalReadinessScore = form.nervous_system_score + form.emotional_state_score +
     form.cognitive_patterns_score + form.body_symptoms_score +
-    form.behavioral_patterns_score + form.life_functioning_score;
+    form.behavioral_patterns_score;
 
   const handleSave = async () => {
     if (!form.main_complaint) {
@@ -964,18 +863,6 @@ export default function DiagnosticAssessmentForm({
     }
     if (!form.date_of_birth) {
       setError('Date of birth is required');
-      return;
-    }
-    if (!form.client_email) {
-      setError('Email is required');
-      return;
-    }
-    if (!form.client_phone) {
-      setError('Phone is required');
-      return;
-    }
-    if (form.current_symptoms.length === 0) {
-      setError('At least one current symptom is required');
       return;
     }
     if (submitMode === 'archive' && !archivedClientId) {
@@ -1351,7 +1238,7 @@ export default function DiagnosticAssessmentForm({
             </div>
             <div className="text-right">
               <p className="text-sm text-slate-500">Goal Distance</p>
-              <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
+              <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/50</p>
             </div>
           </div>
 
@@ -1406,40 +1293,6 @@ export default function DiagnosticAssessmentForm({
                     disabled={isReadOnly}
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={form.client_email}
-                    onChange={(e) => updateField('client_email', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
-                  <input
-                    type="tel"
-                    value={form.client_phone}
-                    onChange={(e) => updateField('client_phone', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Country</label>
-                  <select
-                    value={form.client_country}
-                    onChange={(e) => updateField('client_country', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  >
-                    <option value="">Select country...</option>
-                    {COUNTRIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
@@ -1574,79 +1427,6 @@ export default function DiagnosticAssessmentForm({
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Current Symptoms * (select all that apply)</label>
-                <PatternCheckbox options={CURRENT_SYMPTOM_OPTIONS} field="current_symptoms" disabled={isReadOnly} />
-                {form.current_symptoms.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.current_symptoms_other}
-                      onChange={(e) => updateField('current_symptoms_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other symptoms..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">What have you tried previously to address these symptoms?</label>
-                <PatternCheckbox options={TRIED_PREVIOUSLY} field="tried_previously" disabled={isReadOnly} />
-                {form.tried_previously.includes('Other') && (
-                  <input
-                    type="text"
-                    value={form.tried_previously_other}
-                    onChange={(e) => updateField('tried_previously_other', e.target.value)}
-                    disabled={isReadOnly}
-                    placeholder="Please specify..."
-                    className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Briefly describe your current experience in your own words</label>
-                <textarea
-                  value={form.current_experience_words}
-                  onChange={(e) => updateField('current_experience_words', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                />
-              </div>
-              <div className="border-t border-slate-200 pt-6">
-                <h4 className="font-medium text-slate-900 mb-3">Previous Therapy</h4>
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => !isReadOnly && updateField('previous_therapy', !form.previous_therapy)}
-                    disabled={isReadOnly}
-                    className={`w-12 h-6 rounded-full transition-colors ${
-                      form.previous_therapy ? 'bg-indigo-600' : 'bg-slate-200'
-                    } ${isReadOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <span
-                      className={`block w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                        form.previous_therapy ? 'translate-x-6' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                  <span className="text-sm text-slate-700">Has previous therapy experience</span>
-                </div>
-                {form.previous_therapy && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Previous Therapy Details</label>
-                    <textarea
-                      value={form.previous_therapy_details}
-                      onChange={(e) => updateField('previous_therapy_details', e.target.value)}
-                      rows={4}
-                      disabled={isReadOnly}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                      placeholder="Describe previous therapy experience, types, duration, outcomes..."
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -1657,24 +1437,11 @@ export default function DiagnosticAssessmentForm({
 
               {/* 1. Nervous System */}
               <div className={`border rounded-lg overflow-hidden transition-colors ${
-                form.nervous_system_pattern || form.nervous_system_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+                form.nervous_system_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
               }`}>
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern</label>
-                  <SingleSelect
-                    options={NERVOUS_SYSTEM_PATTERNS}
-                    field="nervous_system_pattern"
-                    disabled={isReadOnly}
-                    onSelectNew={() =>
-                      openScorePrompt(
-                        'nervous_system_score',
-                        'Nervous System Score',
-                        'You selected a nervous system pattern. Set the severity now.'
-                      )
-                    }
-                  />
-                  <div className="mt-4">
+                  <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Nervous System Symptoms</label>
                     <PatternCheckbox
                       options={NERVOUS_SYSTEM_SYMPTOMS}
@@ -1924,48 +1691,6 @@ export default function DiagnosticAssessmentForm({
                 )}
               </div>
 
-              {/* 7. Life Functioning */}
-              <div className={`border rounded-lg overflow-hidden transition-colors ${
-                form.life_functioning_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
-              }`}>
-                <div className="p-4">
-                  <h4 className="font-medium text-slate-800 mb-3">7. Life Functioning</h4>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas</label>
-                  <PatternCheckbox
-                    options={LIFE_FUNCTIONING}
-                    field="life_functioning_patterns"
-                    disabled={isReadOnly}
-                    onSelectNew={() =>
-                      openScorePrompt(
-                        'life_functioning_score',
-                        'Life Functioning Score',
-                        'You selected a life-impact pattern. Set the severity now.'
-                      )
-                    }
-                  />
-                  {form.life_functioning_patterns.includes('Other') && (
-                    <input
-                      type="text"
-                      value={form.life_functioning_patterns_other}
-                      onChange={(e) => updateField('life_functioning_patterns_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify..."
-                      className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  )}
-                </div>
-                {form.life_functioning_patterns.length > 0 && (
-                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
-                    <ScoreSlider
-                      label="Severity — How much is the client's life impacted overall?"
-                      field="life_functioning_score"
-                      value={form.life_functioning_score}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                )}
-              </div>
-
               {/* Baseline Score Summary */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
@@ -1990,14 +1715,10 @@ export default function DiagnosticAssessmentForm({
                     <span>Behavioral:</span>
                     <span className="font-medium">{form.behavioral_patterns_score}/10</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Life Functioning:</span>
-                    <span className="font-medium">{form.life_functioning_score}/10</span>
-                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
                   <span>Goal Distance:</span>
-                  <span className="text-indigo-600">{goalReadinessScore}/60</span>
+                  <span className="text-indigo-600">{goalReadinessScore}/50</span>
                 </div>
               </div>
             </div>
@@ -2272,68 +1993,6 @@ export default function DiagnosticAssessmentForm({
                   </div>
                 </div>
               </div>
-
-              {/* 1. Pattern Expression Timeline */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  1. Pattern Expression Timeline — "How long have you been aware of this pattern or experiencing its effects?"
-                </label>
-                <SingleSelect options={PATTERN_TIMELINE_OPTIONS} field="root_cause_pattern_timeline" disabled={isReadOnly} />
-              </div>
-
-              {/* 2. Dominant Parental Influence */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">2. Dominant Parental Influence</label>
-                <SingleSelect options={PARENTAL_INFLUENCE_OPTIONS} field="root_cause_parental_influence" disabled={isReadOnly} />
-                {form.root_cause_parental_influence === 'other' && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_parental_influence_other}
-                      onChange={(e) => updateField('root_cause_parental_influence_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* 3. Core Pattern */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">3. Core Pattern (select top 1-2)</label>
-                <PatternCheckbox options={CORE_PATTERN_OPTIONS} field="root_cause_core_patterns" disabled={isReadOnly} maxSelect={2} />
-                {form.root_cause_core_patterns.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_core_patterns_other}
-                      onChange={(e) => updateField('root_cause_core_patterns_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other core pattern..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Key Contributing Factors */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">4. Key Contributing Factors</label>
-                <PatternCheckbox options={CONTRIBUTING_FACTOR_OPTIONS} field="root_cause_contributing_factors" disabled={isReadOnly} />
-                {form.root_cause_contributing_factors.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_contributing_factors_other}
-                      onChange={(e) => updateField('root_cause_contributing_factors_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other contributing factors..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -2529,7 +2188,7 @@ export default function DiagnosticAssessmentForm({
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
                   <span>Goal Distance:</span>
-                  <span className="text-indigo-600">{goalReadinessScore}/60</span>
+                  <span className="text-indigo-600">{goalReadinessScore}/50</span>
                 </div>
               </div>
             </div>
