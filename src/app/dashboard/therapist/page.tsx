@@ -713,6 +713,7 @@ export default function TherapistDashboardPage() {
             { id: 'overview' as ViewMode, label: 'Overview' },
             { id: 'clients' as ViewMode, label: 'Clients' },
             { id: 'sessions' as ViewMode, label: 'Sessions' },
+            { id: 'archive' as ViewMode, label: 'Archive' },
           ].map(tab => (
             <button
               key={tab.id}
