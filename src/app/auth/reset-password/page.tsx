@@ -24,10 +24,6 @@ export default function ResetPasswordPage() {
 
       if (!session) {
         setSessionError(true);
-
-
-
-        
       }
     };
 
