@@ -122,7 +122,7 @@ export default function Reports({ therapistId }: ReportsProps) {
           </div>
 
           {/* Client Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-slate-500 uppercase">Client</p>
               <p className="font-medium text-slate-900">{report.client?.fullName}</p>
@@ -146,7 +146,7 @@ export default function Reports({ therapistId }: ReportsProps) {
           {(report.baselineScores || report.latestScores) && (
             <div>
               <h4 className="font-medium text-slate-900 mb-3">Score Comparison (Baseline vs Latest)</h4>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Baseline */}
                 <div className="bg-slate-50 rounded-lg p-4">
                   <p className="text-xs text-slate-500 uppercase mb-3">Baseline Scores</p>
@@ -186,7 +186,7 @@ export default function Reports({ therapistId }: ReportsProps) {
               {report.scoreImprovement && (
                 <div className="mt-4 bg-green-50 rounded-lg p-4">
                   <p className="text-xs text-green-700 uppercase mb-3">Score Changes</p>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {Object.entries(report.scoreImprovement).map(([key, value]) => (
                       <div key={key} className="text-center">
                         <p className="text-xs text-slate-600 capitalize">{key.replace(/_/g, ' ')}</p>
