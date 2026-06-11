@@ -1691,6 +1691,40 @@ export default function DiagnosticAssessmentForm({
                 )}
               </div>
 
+              {/* 7. Previous Attempts & Current Experience */}
+              <div className="border border-slate-200 rounded-lg p-4 space-y-5">
+                <h4 className="font-medium text-slate-800 mb-3">7. Previous Attempts & Current Experience</h4>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">What have you tried previously to address these symptoms? (Select all that apply)</label>
+                  <PatternCheckbox
+                    options={['Therapy', 'Medication', 'Coaching', 'Self-help', 'Meditation', 'Holistic treatments', 'Lifestyle changes', 'Spiritual practices', 'Nothing yet', 'Other']}
+                    field="tried_previously"
+                    disabled={isReadOnly}
+                  />
+                  {form.tried_previously.includes('Other') && (
+                    <input
+                      type="text"
+                      value={form.tried_previously_other}
+                      onChange={(e) => updateField('tried_previously_other', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Please specify..."
+                      className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Briefly describe your current experience in your own words:</label>
+                  <textarea
+                    value={form.current_experience_words}
+                    onChange={(e) => updateField('current_experience_words', e.target.value)}
+                    rows={4}
+                    disabled={isReadOnly}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                    placeholder="Describe your current experience..."
+                  />
+                </div>
+              </div>
+
               {/* Baseline Score Summary */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
@@ -1772,22 +1806,20 @@ export default function DiagnosticAssessmentForm({
                     disabled={isReadOnly}
                   />
                 </div>
-                {form.has_children === 'Yes' && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">How would you describe your relationship with your children?</label>
-                    <PatternCheckbox options={CHILDREN_RELATIONSHIP} field="children_relationship" disabled={isReadOnly} />
-                    {form.children_relationship.includes('Other') && (
-                      <input
-                        type="text"
-                        value={form.children_relationship_other}
-                        onChange={(e) => updateField('children_relationship_other', e.target.value)}
-                        disabled={isReadOnly}
-                        placeholder="Please specify..."
-                        className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                      />
-                    )}
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">How would you describe your relationship with your children?</label>
+                  <PatternCheckbox options={CHILDREN_RELATIONSHIP} field="children_relationship" disabled={isReadOnly} />
+                  {form.children_relationship.includes('Other') && (
+                    <input
+                      type="text"
+                      value={form.children_relationship_other}
+                      onChange={(e) => updateField('children_relationship_other', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Please specify..."
+                      className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                  )}
+                </div>
 
                 <h4 className="font-medium text-slate-900 border-t border-slate-100 pt-4">Work & Fulfillment</h4>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -2122,39 +2154,6 @@ export default function DiagnosticAssessmentForm({
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Condition Brief</label>
-                <textarea
-                  value={form.clinical_condition_brief}
-                  onChange={(e) => updateField('clinical_condition_brief', e.target.value)}
-                  rows={4}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Brief clinical summary of the client's condition..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Therapist Main Focus</label>
-                <textarea
-                  value={form.therapist_focus}
-                  onChange={(e) => updateField('therapist_focus', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Areas the therapist will focus on..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Therapy Goal</label>
-                <textarea
-                  value={form.therapy_goal}
-                  onChange={(e) => updateField('therapy_goal', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Goals for therapy outcomes..."
-                />
               </div>
 
               {/* Baseline Score */}
