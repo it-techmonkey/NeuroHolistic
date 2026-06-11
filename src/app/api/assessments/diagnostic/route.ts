@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       therapist_id: therapistId,
       session_id: validSessionId,
       is_baseline: !!existingBaseline, // Preserve baseline status on update
-      
+
       // Client demographic information
       client_name: data.client_name || null,
       date_of_birth: data.date_of_birth || null,
@@ -142,15 +142,15 @@ export async function POST(request: NextRequest) {
       client_country: data.client_country || null,
       client_occupation: data.client_occupation || null,
       relationship_status: data.relationship_status || null,
-      
+
       // Main concerns
       main_complaint: data.main_complaint,
       current_symptoms: data.current_symptoms || [],
-      
+
       // Previous therapy
       previous_therapy: data.previous_therapy || false,
       previous_therapy_details: data.previous_therapy_details || null,
-      
+
       // Core assessment - patterns
       nervous_system_pattern: data.nervous_system_pattern || null,
       emotional_patterns: data.emotional_patterns || [],
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       body_symptoms: data.body_symptoms || [],
       behavioral_patterns: data.behavioral_patterns || [],
       life_functioning_patterns: data.life_functioning_patterns || [],
-      
+
       // Core assessment - scores (0-10)
       nervous_system_score: nervousSystemScore,
       emotional_state_score: emotionalStateScore,
@@ -166,21 +166,95 @@ export async function POST(request: NextRequest) {
       body_symptoms_score: bodySymptomsScore,
       behavioral_patterns_score: behavioralPatternsScore,
       life_functioning_score: lifeFunctioningScore,
-      
+
       // Root cause analysis
       root_cause_pattern_timeline: data.root_cause_pattern_timeline || null,
       root_cause_parental_influence: data.root_cause_parental_influence || null,
       root_cause_core_patterns: data.root_cause_core_patterns || null,
       root_cause_contributing_factors: data.root_cause_contributing_factors || null,
-      
+
       // Clinical summary
       clinical_condition_brief: data.clinical_condition_brief || null,
       therapist_focus: data.therapist_focus || null,
       therapy_goal: data.therapy_goal || null,
-      
+
+      // Structured columns for Report Card
+      gender: data.gender || null,
+      nationality: data.nationality || null,
+      affected_life_areas: data.affected_life_areas || null,
+      affected_life_areas_other: data.affected_life_areas_other || null,
+      symptom_duration: data.symptom_duration || null,
+      life_impact: data.life_impact || null,
+      current_experience_words: data.current_experience_words || null,
+      biggest_goal: data.biggest_goal || null,
+      transformation_vision: data.transformation_vision || null,
+      nervous_system_symptoms: data.nervous_system_symptoms || null,
+      nervous_system_symptoms_other: data.nervous_system_symptoms_other || null,
+      sleep_symptoms: data.sleep_symptoms || null,
+      sleep_symptoms_other: data.sleep_symptoms_other || null,
+      sleep_symptoms_score: data.sleep_symptoms_score || null,
+      tried_previously: data.tried_previously || null,
+      tried_previously_other: data.tried_previously_other || null,
+      relationship_quality: data.relationship_quality || null,
+      relationship_emotional_safety: data.relationship_emotional_safety || null,
+      relationship_challenges: data.relationship_challenges || null,
+      relationship_fulfillment_score: data.relationship_fulfillment_score || null,
+      has_children: data.has_children || null,
+      children_relationship: data.children_relationship || null,
+      children_relationship_other: data.children_relationship_other || null,
+      parenting_fulfillment_score: data.parenting_fulfillment_score || null,
+      employment_status: data.employment_status || null,
+      work_fulfillment_score: data.work_fulfillment_score || null,
+      work_state: data.work_state || null,
+      work_state_other: data.work_state_other || null,
+      social_life: data.social_life || null,
+      social_life_other: data.social_life_other || null,
+      feel_understood: data.feel_understood || null,
+      sleep_description: data.sleep_description || null,
+      sleep_description_other: data.sleep_description_other || null,
+      average_sleep_hours: data.average_sleep_hours || null,
+      mother_emotional_presence: data.mother_emotional_presence || null,
+      mother_physical_presence: data.mother_physical_presence || null,
+      mother_emotional_state: data.mother_emotional_state || null,
+      mother_characteristics: data.mother_characteristics || null,
+      mother_relationship: data.mother_relationship || null,
+      mother_emotional_safety: data.mother_emotional_safety || null,
+      mother_longing: data.mother_longing || null,
+      father_emotional_presence: data.father_emotional_presence || null,
+      father_physical_presence: data.father_physical_presence || null,
+      father_emotional_state: data.father_emotional_state || null,
+      father_characteristics: data.father_characteristics || null,
+      father_relationship: data.father_relationship || null,
+      father_emotional_safety: data.father_emotional_safety || null,
+      father_longing: data.father_longing || null,
+      parents_relationship: data.parents_relationship || null,
+      parents_relationship_impact: data.parents_relationship_impact || null,
+      birth_order: data.birth_order || null,
+      number_of_siblings: data.number_of_siblings || null,
+      sibling_age_gap: data.sibling_age_gap || null,
+      sibling_relationship: data.sibling_relationship || null,
+      family_role: data.family_role || null,
+      predominant_nervous_system_state: data.predominant_nervous_system_state || null,
+      predominant_emotional_state: data.predominant_emotional_state || null,
+      subconscious_patterns: data.subconscious_patterns || null,
+      attachment_style_indicators: data.attachment_style_indicators || null,
+      possible_root_mechanisms: data.possible_root_mechanisms || null,
+      defense_mechanisms: data.defense_mechanisms || null,
+      general_presentation_notes: data.general_presentation_notes || null,
+      emotional_congruence: data.emotional_congruence || null,
+      body_language: data.body_language || null,
+      body_language_notes: data.body_language_notes || null,
+      resistance_patterns: data.resistance_patterns || null,
+      resistance_notes: data.resistance_notes || null,
+      key_themes: data.key_themes || null,
+      clinical_insights: data.clinical_insights || null,
+      therapeutic_priority: data.therapeutic_priority || null,
+      recommended_session_frequency: data.recommended_session_frequency || null,
+      additional_recommendations: data.additional_recommendations || null,
+
       // NOTE: goal_readiness_score is NOT included - it's a GENERATED ALWAYS column
       // PostgreSQL automatically calculates it from the sum of domain scores
-      
+
       status: 'submitted',
       assessed_at: new Date().toISOString(),
     };
