@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, Video, Clock, X, FileText, CheckCircle, AlertCircle, User, Stethoscope, Activity, TrendingUp, Award } from 'lucide-react';
+import { Calendar, Video, Clock, X, FileText, CheckCircle, AlertCircle, User, Stethoscope, Activity, TrendingUp, Award, CreditCard } from 'lucide-react';
 
 type Slot = {
   time: string;
@@ -161,13 +161,20 @@ export default function Sessions({
       case 'none':
       default:
         return (
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/consultation/book"
               className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all"
             >
               <Calendar className="w-4 h-4 mr-2" />
               Book Free Consultation
+            </Link>
+            <Link
+              href="/booking/paid-program-booking"
+              className="inline-flex items-center px-5 py-2.5 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-all"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Buy a Paid Program
             </Link>
           </div>
         );
