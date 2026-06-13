@@ -37,12 +37,12 @@ export default function Philosophy() {
           
           {/* Header Area */}
           <div className="mx-auto max-w-[840px] text-center">
-            <motion.h2
+            {/* <motion.h2
               variants={itemVariants}
               className="mb-3 text-[16px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[23px] lg:text-[26px]"
             >
               {t.philosophy.heading}
-            </motion.h2>
+            </motion.h2> */}
 
             <motion.p
               variants={itemVariants}

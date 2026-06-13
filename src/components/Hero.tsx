@@ -3,8 +3,16 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Hero() {
+  const { isArabic } = useLang();
+
+  // Use a dedicated Arabic hero image only for the Arabic version of the homepage.
+  const heroImageSrc = isArabic
+    ? "/images/pages/arabic version home page img.jpg"
+    : "/images/pages/hero-img-main.webp";
+
   return (
     <motion.section
       initial={{ opacity: 0 }}
@@ -14,7 +22,7 @@ export default function Hero() {
     >
       <div className="absolute inset-0">
         <Image
-          src="/images/pages/hero-img-main.webp"
+          src={heroImageSrc}
           alt="A figure walking toward sunrise through a coastal cave"
           fill
           priority
