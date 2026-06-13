@@ -6,12 +6,6 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import { useLang } from '@/lib/translations/LanguageContext';
 
-type Therapist = {
-  id: string;
-  name: string;
-  role?: string;
-};
-
 type Slot = {
   time: string;
   display: string;
@@ -20,7 +14,6 @@ type Slot = {
 function ScheduleSessionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('sessionId');
   const { isArabic } = useLang();
 
   const [loading, setLoading] = useState(true);
@@ -28,17 +21,17 @@ function ScheduleSessionContent() {
   const [program, setProgram] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
 
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [selectedTherapist, setSelectedTherapist] = useState<string>('');
+  const [therapistId, setTherapistId] = useState<string>('');
+  const [therapistName, setTherapistName] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
 
   const [schedulingError, setSchedulingError] = useState('');
   const [schedulingSuccess, setSchedulingSuccess] = useState(false);
-  const [needsConsultFirst, setNeedsConsultFirst] = useState(false);
 
   const weekdayLabels = isArabic
     ? ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
@@ -54,35 +47,45 @@ function ScheduleSessionContent() {
     return `${year}-${month}-${day}`;
   };
 
+  const getTodayValue = () => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Dubai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(new Date());
+  };
+
+  const todayValue = getTodayValue();
+
   const buildCalendarDays = (month: Date) => {
     const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
     const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
     const startOffset = firstDay.getDay();
-    const totalCells = 42; // 6 weeks
+    const totalCells = 42;
     const cells: Array<Date | null> = [];
 
     for (let i = 0; i < startOffset; i++) {
       cells.push(null);
     }
-
     for (let day = 1; day <= daysInMonth; day++) {
       cells.push(new Date(month.getFullYear(), month.getMonth(), day));
     }
-
     while (cells.length < totalCells) {
       cells.push(null);
     }
-
     return cells;
   };
 
-  const todayValue = toDateValue(new Date());
   const calendarDays = buildCalendarDays(calendarMonth);
 
   const handleSelectCalendarDay = (date: Date) => {
     const value = toDateValue(date);
     if (value < todayValue) return;
+    if (blockedDates.has(value)) return;
     setSelectedDate(value);
+    setSelectedSlot('');
   };
 
   const goToPreviousMonth = () => {
@@ -96,7 +99,7 @@ function ScheduleSessionContent() {
     setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
   };
 
-  // 1. Check Auth & Load Program/Session
+  // 1. Check Auth & Load Program/Session + Auto-select Therapist
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -106,7 +109,6 @@ function ScheduleSessionContent() {
       }
       setUser(user);
 
-      // Load user's program
       const programRes = await fetch('/api/users/check-program');
       let loadedProgram: any = null;
       let loadedSession: any = null;
@@ -118,51 +120,29 @@ function ScheduleSessionContent() {
         }
       }
 
-      const dashRes = await fetch('/api/client/dashboard');
-      let completedFreeConsult = false;
-      if (dashRes.ok) {
-        const dash = await dashRes.json();
-        completedFreeConsult = !!dash.hasCompletedFreeConsult;
-      }
+      setProgram(loadedProgram);
+      setSession(loadedSession);
 
-      if (loadedProgram && !completedFreeConsult) {
-        setNeedsConsultFirst(true);
-      } else {
-        setProgram(loadedProgram);
-        setSession(loadedSession);
-      }
+      // Auto-select therapist from program or assigned therapist
+      let resolvedTherapistId = loadedProgram?.therapist_user_id || null;
+      let resolvedTherapistName = loadedProgram?.therapist_name || '';
 
-      // Load therapists and assigned therapist in parallel
-      let therapistList: Therapist[] = [];
-      let assignedTherapistId: string | null = null;
-
-      try {
-        const [therapistsRes, assignedTherapistRes] = await Promise.all([
-          fetch('/api/therapist/list'),
-          fetch('/api/client/assigned-therapist'),
-        ]);
-
-        if (therapistsRes.ok) {
-          const data = await therapistsRes.json();
-          therapistList = data.therapists || [];
-          setTherapists(therapistList);
-        }
-
-        if (assignedTherapistRes.ok) {
-          const therapistData = await assignedTherapistRes.json();
-          if (therapistData.therapist) {
-            assignedTherapistId = therapistData.therapist.slug || therapistData.therapist.id;
+      if (!resolvedTherapistId) {
+        try {
+          const assignedRes = await fetch('/api/client/assigned-therapist');
+          if (assignedRes.ok) {
+            const assignedData = await assignedRes.json();
+            if (assignedData.therapist) {
+              resolvedTherapistId = assignedData.therapist.id || assignedData.therapist.slug;
+              resolvedTherapistName = assignedData.therapist.name || resolvedTherapistName;
+            }
           }
-        }
-      } catch (err) {
-        console.error('Failed to load therapists:', err);
+        } catch {}
       }
 
-      // Set the selected therapist using the fetched list directly
-      if (assignedTherapistId) {
-        setSelectedTherapist(assignedTherapistId);
-      } else if (therapistList.length > 0) {
-        setSelectedTherapist(therapistList[0].id);
+      if (resolvedTherapistId) {
+        setTherapistId(resolvedTherapistId);
+        setTherapistName(resolvedTherapistName);
       }
 
       setLoading(false);
@@ -170,9 +150,25 @@ function ScheduleSessionContent() {
     init();
   }, [router]);
 
-  // 2. Load Availability when therapist or date changes
+  // 2. Fetch blocked dates when therapist is known
   useEffect(() => {
-    if (!selectedTherapist || !selectedDate) {
+    if (!therapistId) return;
+
+    async function fetchBlockedDates() {
+      try {
+        const res = await fetch(`/api/bookings/blocked-dates?therapistId=${therapistId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBlockedDates(new Set(data.blockedDates || []));
+        }
+      } catch {}
+    }
+    fetchBlockedDates();
+  }, [therapistId]);
+
+  // 3. Load Availability when date changes
+  useEffect(() => {
+    if (!therapistId || !selectedDate) {
       setSlots([]);
       return;
     }
@@ -181,12 +177,11 @@ function ScheduleSessionContent() {
       setSlotsLoading(true);
       setSchedulingError('');
       try {
-        const res = await fetch(`/api/bookings/availability?therapistId=${selectedTherapist}&date=${selectedDate}`);
+        const res = await fetch(`/api/bookings/availability?therapistId=${therapistId}&date=${selectedDate}`);
         if (!res.ok) throw new Error(isArabic ? 'فشل تحميل المواعيد' : 'Failed to load slots');
         const data = await res.json();
         setSlots(data.slots || []);
       } catch (err) {
-        console.error(err);
         setSchedulingError(isArabic ? 'تعذر تحميل الأوقات المتاحة.' : 'Could not load availability.');
       } finally {
         setSlotsLoading(false);
@@ -194,10 +189,10 @@ function ScheduleSessionContent() {
     }
 
     fetchAvailability();
-  }, [selectedTherapist, selectedDate]);
+  }, [therapistId, selectedDate]);
 
   const handleSchedule = async () => {
-    if (!user || !selectedTherapist || !selectedDate || !selectedSlot) return;
+    if (!user || !therapistId || !selectedDate || !selectedSlot) return;
 
     setLoading(true);
     setSchedulingError('');
@@ -212,8 +207,8 @@ function ScheduleSessionContent() {
           email: user.email,
           phone: user.phone || user.user_metadata?.phone || '',
           country: user.user_metadata?.country || '',
-          therapistId: selectedTherapist,
-          therapistName: therapists.find(t => t.id === selectedTherapist)?.name,
+          therapistId: therapistId,
+          therapistName: therapistName,
           date: selectedDate,
           time: selectedSlot,
           type: 'program',
@@ -238,28 +233,26 @@ function ScheduleSessionContent() {
     return <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-white flex items-center justify-center">{isArabic ? 'جارٍ التحميل...' : 'Loading...'}</div>;
   }
 
-  if (needsConsultFirst) {
+  if (!program) {
     return (
       <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-slate-50 pt-28 sm:pt-32 md:pt-40 px-4 sm:px-6 lg:px-8 pb-16 flex flex-col items-center justify-center">
         <div className={`max-w-lg mx-auto space-y-4 ${isArabic ? 'text-right' : 'text-center'}`}>
-          <h1 className="text-2xl font-light text-slate-900">{isArabic ? 'أكمل الاستشارة المجانية أولاً' : 'Complete your free consultation first'}</h1>
+          <h1 className="text-2xl font-light text-slate-900">{isArabic ? 'لا يوجد برنامج نشط' : 'No Active Program'}</h1>
           <p className="text-slate-600 leading-relaxed">
-            {isArabic
-              ? 'تُفتح جلسات البرنامج بعد إكمال الاستشارة المجانية. احجز أو أكمل الاستشارة ثم عُد هنا للجدولة.'
-              : 'Program sessions unlock after your free consultation is completed. Book or finish your consultation, then return here to schedule.'}
+            {isArabic ? 'يجب شراء برنامج أولاً قبل جدولة الجلسات.' : 'You need to purchase a program before scheduling sessions.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <Link
-              href="/consultation/book"
+              href="/booking/paid-program-booking"
               className="inline-flex justify-center px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
             >
-              {isArabic ? 'احجز استشارة مجانية' : 'Book free consultation'}
+              {isArabic ? 'شراء برنامج' : 'Purchase Program'}
             </Link>
             <Link
               href="/dashboard/client"
               className="inline-flex justify-center px-6 py-3 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
             >
-              {isArabic ? 'العودة إلى لوحة التحكم' : 'Back to dashboard'}
+              {isArabic ? 'العودة إلى لوحة التحكم' : 'Back to Dashboard'}
             </Link>
           </div>
         </div>
@@ -310,33 +303,22 @@ function ScheduleSessionContent() {
             </div>
           )}
 
-          {/* Therapist Selection */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">{isArabic ? 'اختر المعالج' : 'Select Therapist'}</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {therapists.map(therapist => (
-                <button
-                  key={therapist.id}
-                  onClick={() => setSelectedTherapist(therapist.id)}
-                  className={`p-4 border rounded-lg transition-all relative ${isArabic ? 'text-right' : 'text-left'} ${
-                    selectedTherapist === therapist.id
-                      ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
-                      : 'border-slate-200 hover:border-indigo-300'
-                  }`}
-                >
-                  {therapist.role === 'Founder & Lead Practitioner' && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-medium rounded-full">
-                      {isArabic ? 'المؤسسة' : 'Founder'}
-                    </span>
-                  )}
-                  <div className="font-medium text-slate-900">{therapist.name}</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {therapist.role || (isArabic ? 'أخصائي NeuroHolistic' : 'NeuroHolistic Specialist')}
-                  </div>
-                </button>
-              ))}
+          {/* Therapist Info — read-only, auto-selected from program */}
+          {therapistName && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm text-indigo-600 font-medium">{isArabic ? 'معالجك' : 'Your Therapist'}</p>
+                  <p className="text-slate-900 font-semibold">{therapistName}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Date Selection */}
           <div>
@@ -380,23 +362,29 @@ function ScheduleSessionContent() {
 
                   const value = toDateValue(date);
                   const isPast = value < todayValue;
+                  const isBlocked = blockedDates.has(value);
                   const isSelected = selectedDate === value;
+                  const isDisabled = isPast || isBlocked;
 
                   return (
                     <button
                       key={value}
                       type="button"
                       onClick={() => handleSelectCalendarDay(date)}
-                      disabled={isPast}
-                      className={`h-10 rounded-md text-sm border transition-colors ${
+                      disabled={isDisabled}
+                      title={isBlocked ? (isArabic ? 'هذا التاريخ محجوز' : 'This date is blocked') : undefined}
+                      className={`h-10 rounded-md text-sm border transition-colors relative ${
                         isSelected
                           ? 'bg-indigo-600 text-white border-indigo-600'
-                          : isPast
+                          : isDisabled
                           ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
                           : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
                       }`}
                     >
                       {date.getDate()}
+                      {isBlocked && !isPast && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full" />
+                      )}
                     </button>
                   );
                 })}
@@ -405,7 +393,7 @@ function ScheduleSessionContent() {
           </div>
 
           {/* Time Slots */}
-          {(selectedDate && selectedTherapist) && (
+          {selectedDate && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">{isArabic ? 'اختر الوقت' : 'Select Time'}</label>
               {slotsLoading ? (

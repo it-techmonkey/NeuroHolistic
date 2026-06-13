@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { BookingService } from '@/lib/services/booking.service';
+import { createMeetEvent } from '@/lib/meeting/google-meet';
 import type { Database } from '@/lib/supabase/database.types';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ZIINA_WEBHOOK_IPS = new Set(['3.29.184.186', '3.29.190.95', '20.233.47.127']);
 
 type PaymentRow = Database['public']['Tables']['payments']['Row'];
-type ProgramType = 'private' | 'group' | 'academy';
 
 interface ZiinaWebhookEvent {
   event?: string;
@@ -21,17 +22,14 @@ interface ZiinaPaymentIntent {
   status?: string;
   amount?: number;
   currency_code?: string;
-  latest_error?: {
-    message?: string;
-    code?: string;
-  };
+  latest_error?: { message?: string; code?: string };
 }
 
 interface PaymentMetadata {
   gateway?: string;
   userId?: string;
-  storedProgramType?: ProgramType;
-  programType?: ProgramType;
+  storedProgramType?: string;
+  programType?: string;
   paymentOption?: 'full' | 'per_session';
   amountAed?: number;
   amountFils?: number;
@@ -41,13 +39,13 @@ interface PaymentMetadata {
   therapistName?: string | null;
   clientName?: string;
   clientEmail?: string;
+  preferredDate?: string | null;
+  preferredTime?: string | null;
 }
 
 function verifyWebhookSignature(rawBody: string, request: NextRequest) {
   const secret = process.env.ZIINA_WEBHOOK_SECRET;
-  if (!secret) {
-    return process.env.NODE_ENV !== 'production';
-  }
+  if (!secret) return process.env.NODE_ENV !== 'production';
 
   const signature = request.headers.get('x-hmac-signature');
   if (!signature) return false;
@@ -56,7 +54,6 @@ function verifyWebhookSignature(rawBody: string, request: NextRequest) {
   const received = signature.trim();
 
   if (expected.length !== received.length) return false;
-
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received));
 }
 
@@ -73,78 +70,17 @@ function isAllowedZiinaIp(request: NextRequest) {
 
 function extractIntent(payload: ZiinaWebhookEvent): ZiinaPaymentIntent {
   const data = payload.data;
-  if (data && typeof data === 'object' && 'object' in data && data.object) {
-    return data.object;
-  }
-
-  if (data && typeof data === 'object') {
-    return data as ZiinaPaymentIntent;
-  }
-
+  if (data && typeof data === 'object' && 'object' in data && data.object) return data.object;
+  if (data && typeof data === 'object') return data as ZiinaPaymentIntent;
   return payload as ZiinaPaymentIntent;
 }
 
 function normalizeMetadata(payment: PaymentRow): PaymentMetadata {
-  if (!payment.metadata || typeof payment.metadata !== 'object' || Array.isArray(payment.metadata)) {
-    return {};
-  }
-
+  if (!payment.metadata || typeof payment.metadata !== 'object' || Array.isArray(payment.metadata)) return {};
   return payment.metadata as PaymentMetadata;
 }
 
-async function ensurePendingSessions({
-  supabase,
-  programId,
-  userId,
-  therapistId,
-  totalSessions,
-}: {
-  supabase: ReturnType<typeof getServiceSupabase>;
-  programId: string;
-  userId: string;
-  therapistId: string | null;
-  totalSessions: number;
-}) {
-  const { data: existingSessions, error: existingSessionsError } = await supabase
-    .from('sessions')
-    .select('session_number')
-    .eq('program_id', programId);
-
-  if (existingSessionsError) {
-    return existingSessionsError;
-  }
-
-  const existingNumbers = new Set((existingSessions || []).map((session) => session.session_number));
-  const missingSessions = Array.from({ length: totalSessions }, (_, index) => index + 1)
-    .filter((sessionNumber) => !existingNumbers.has(sessionNumber))
-    .map((sessionNumber) => ({
-      program_id: programId,
-      client_id: userId,
-      therapist_id: therapistId,
-      session_number: sessionNumber,
-      date: null,
-      time: null,
-      status: 'pending' as const,
-      is_complete: false,
-      development_form_submitted: false,
-      meet_link: null,
-    }));
-
-  if (missingSessions.length === 0) {
-    return null;
-  }
-
-  const { error } = await supabase.from('sessions').insert(missingSessions);
-  return error;
-}
-
-async function sendProgramConfirmationEmail({
-  email,
-  sessionCount,
-}: {
-  email: string;
-  sessionCount: number;
-}) {
+async function sendProgramConfirmationEmail(email: string, sessionCount: number) {
   if (!process.env.RESEND_API_KEY) return;
 
   await resend.emails.send({
@@ -179,11 +115,15 @@ async function sendProgramConfirmationEmail({
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
+  console.log('[Ziina Webhook] Received webhook request');
+
   if (!isAllowedZiinaIp(request)) {
+    console.error('[Ziina Webhook] IP not allowed');
     return NextResponse.json({ error: 'Webhook source IP is not allowed' }, { status: 403 });
   }
 
   if (!verifyWebhookSignature(rawBody, request)) {
+    console.error('[Ziina Webhook] Invalid signature');
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
   }
 
@@ -220,7 +160,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (!payment) {
-    // Returning non-2xx asks Ziina to retry; this protects the tiny race between intent creation and local save.
     return NextResponse.json({ error: 'Payment record not found yet' }, { status: 409 });
   }
 
@@ -233,225 +172,326 @@ export async function POST(request: NextRequest) {
   }
 
   if (metadata.amountFils && intent.amount && metadata.amountFils !== intent.amount) {
-    console.error('[Ziina Webhook] Amount mismatch:', {
-      paymentIntentId,
-      expected: metadata.amountFils,
-      received: intent.amount,
-    });
+    console.error('[Ziina Webhook] Amount mismatch:', { paymentIntentId, expected: metadata.amountFils, received: intent.amount });
     return NextResponse.json({ error: 'Payment amount mismatch' }, { status: 400 });
   }
 
   if (metadata.currency && intent.currency_code && metadata.currency !== intent.currency_code) {
-    console.error('[Ziina Webhook] Currency mismatch:', {
-      paymentIntentId,
-      expected: metadata.currency,
-      received: intent.currency_code,
-    });
+    console.error('[Ziina Webhook] Currency mismatch:', { paymentIntentId, expected: metadata.currency, received: intent.currency_code });
     return NextResponse.json({ error: 'Payment currency mismatch' }, { status: 400 });
   }
 
   if (failedStatuses.has(status)) {
     await supabase
       .from('payments')
-      .update({
-        status: 'failed',
-        metadata: {
-          ...metadata,
-          ziinaStatus: status,
-          ziinaError: intent.latest_error?.message,
-        },
-      })
+      .update({ status: 'failed', metadata: { ...metadata, ziinaStatus: status, ziinaError: intent.latest_error?.message } })
       .eq('id', payment.id);
-
     return NextResponse.json({ success: true, message: `Payment marked ${status}` });
   }
 
   if (!successStatuses.has(status)) {
     await supabase
       .from('payments')
-      .update({
-        metadata: {
-          ...metadata,
-          ziinaStatus: status,
-        },
-      })
+      .update({ metadata: { ...metadata, ziinaStatus: status } })
       .eq('id', payment.id);
-
     return NextResponse.json({ success: true, message: `Payment status ${status} ignored` });
   }
 
   const paymentId = `ziina:${paymentIntentId}`;
+  const userId = metadata.userId || payment.user_id;
 
-  const { data: existingProgram, error: existingProgramError } = await supabase
+  const { data: existingProgram } = await supabase
     .from('programs')
-    .select('id')
+    .select('id, user_id, therapist_user_id, therapist_name')
     .eq('payment_id', paymentId)
     .maybeSingle();
 
-  if (existingProgramError) {
-    console.error('[Ziina Webhook] Existing program check failed:', existingProgramError);
-    return NextResponse.json({ error: 'Program lookup failed' }, { status: 500 });
-  }
-
   if (existingProgram) {
-    const userId = metadata.userId || payment.user_id;
-    if (userId) {
-      const sessionsError = await ensurePendingSessions({
-        supabase,
-        programId: existingProgram.id,
-        userId,
-        therapistId: metadata.therapistId || null,
-        totalSessions: Number(metadata.totalSessions) || 10,
-      });
+    const preferredDate = metadata.preferredDate || null;
+    const preferredTime = metadata.preferredTime || null;
 
-      if (sessionsError) {
-        console.error('[Ziina Webhook] Failed to repair sessions for existing program:', sessionsError);
-        return NextResponse.json({ error: 'Failed to repair program sessions' }, { status: 500 });
+    // Ensure first session booking exists even if created by old code
+    if (preferredDate && preferredTime) {
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('program_id', existingProgram.id)
+        .eq('session_number', 1)
+        .eq('user_id', existingProgram.user_id || userId)
+        .maybeSingle();
+
+      if (!existingBooking) {
+        console.log('[Ziina Webhook] Program exists but no booking for session 1, creating...');
+        const { data: clientUser } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', existingProgram.user_id || userId)
+          .maybeSingle();
+
+        let meetLink = '';
+        let calendarEventId = '';
+
+        if (existingProgram.therapist_user_id) {
+          try {
+            const startDateTime = `${preferredDate}T${preferredTime}:00`;
+            const [hours, minutes] = preferredTime.split(':').map(Number);
+            const endHours = Math.min(hours + 1, 23);
+            const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            const endDateTime = `${preferredDate}T${endTime}:00`;
+
+            const meetResult = await createMeetEvent({
+              summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+              description: 'Program session via NeuroHolistic platform',
+              startDateTime,
+              endDateTime,
+              attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+              therapistId: existingProgram.therapist_user_id,
+            });
+            meetLink = meetResult.meetLink;
+            calendarEventId = meetResult.calendarEventId ?? '';
+          } catch (meetErr) {
+            console.error('[Ziina Webhook] Meet creation failed:', meetErr);
+          }
+        }
+
+        await supabase.from('bookings').insert({
+          user_id: existingProgram.user_id || userId,
+          name: clientUser?.full_name || metadata.clientName || 'Client',
+          email: clientUser?.email || metadata.clientEmail || '',
+          phone: '',
+          country: '',
+          therapist_id: existingProgram.therapist_user_id || 'unknown',
+          therapist_user_id: existingProgram.therapist_user_id,
+          therapist_name: existingProgram.therapist_name || 'Assigned Therapist',
+          date: preferredDate,
+          time: preferredTime,
+          type: 'program',
+          status: 'scheduled',
+          program_id: existingProgram.id,
+          session_number: 1,
+          meeting_link: meetLink || null,
+          google_calendar_event_id: calendarEventId || null,
+        });
+
+        // Link session to booking
+        const { data: newBooking } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('program_id', existingProgram.id)
+          .eq('session_number', 1)
+          .eq('user_id', existingProgram.user_id || userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (newBooking) {
+          await supabase
+            .from('sessions')
+            .update({
+              booking_id: newBooking.id,
+              date: preferredDate,
+              time: preferredTime,
+              date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+              status: 'scheduled',
+              meet_link: meetLink || null,
+            })
+            .eq('program_id', existingProgram.id)
+            .eq('session_number', 1);
+        }
       }
     }
 
+    // Update payment to link to existing program
     await supabase
       .from('payments')
-      .update({
-        status: 'paid',
-        program_id: existingProgram.id,
-        metadata: {
-          ...metadata,
-          ziinaStatus: status,
-        },
-      })
+      .update({ status: 'paid', program_id: existingProgram.id, metadata: { ...metadata, ziinaStatus: status } })
       .eq('id', payment.id);
 
-    return NextResponse.json({
-      success: true,
-      message: 'Payment already processed',
-      programId: existingProgram.id,
-    });
+    return NextResponse.json({ success: true, message: 'Payment already processed', programId: existingProgram.id });
   }
 
-  const userId = metadata.userId || payment.user_id;
   if (!userId) {
     return NextResponse.json({ error: 'Payment is missing user id' }, { status: 400 });
   }
 
-  const { data: activeProgram, error: activeProgramError } = await supabase
+  const { data: activeProgram } = await supabase
     .from('programs')
-    .select('id')
+    .select('id, therapist_user_id, therapist_name, total_sessions, used_sessions')
     .eq('user_id', userId)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (activeProgramError) {
-    console.error('[Ziina Webhook] Active program check failed:', activeProgramError);
-    return NextResponse.json({ error: 'Active program lookup failed' }, { status: 500 });
-  }
-
   if (activeProgram) {
-    await supabase
-      .from('payments')
-      .update({
-        status: 'paid',
-        program_id: activeProgram.id,
-        metadata: {
-          ...metadata,
-          ziinaStatus: status,
-          duplicateProgramPayment: true,
-        },
-      })
-      .eq('id', payment.id);
+    const remainingSessions = (activeProgram.total_sessions || 0) - (activeProgram.used_sessions || 0);
+    const isPerSession = metadata.paymentOption === 'per_session';
 
-    return NextResponse.json({
-      success: true,
-      message: 'User already has a pending or active program',
-      programId: activeProgram.id,
-    });
-  }
+    // For per-session: only reuse existing program if it has remaining sessions
+    if (isPerSession && remainingSessions <= 0) {
+      console.log('[Ziina Webhook] Per-session payment but existing program depleted, creating new program');
+      // Fall through to create new program below
+    } else if (!isPerSession || remainingSessions > 0) {
+      // Ensure first session booking exists
+      const preferredDate = metadata.preferredDate || null;
+      const preferredTime = metadata.preferredTime || null;
 
-  const totalSessions = Number(metadata.totalSessions) || 10;
-  const programType = metadata.storedProgramType || metadata.programType || 'private';
-  const therapistId = metadata.therapistId || null;
-  const therapistName = metadata.therapistName || (programType === 'academy' ? 'NeuroHolistic Academy' : 'Assigned Therapist');
-  const clientEmail = metadata.clientEmail || '';
+      if (preferredDate && preferredTime) {
+        const { data: existingBooking } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('program_id', activeProgram.id)
+          .eq('session_number', 1)
+          .eq('user_id', userId)
+          .maybeSingle();
 
-  const { data: program, error: programError } = await supabase
-    .from('programs')
-    .insert({
-      user_id: userId,
-      therapist_user_id: therapistId,
-      therapist_name: therapistName,
-      total_sessions: totalSessions,
-      used_sessions: 0,
-      sessions_completed: 0,
-      status: 'active',
-      payment_id: paymentId,
-      program_type: programType,
-      price_paid: metadata.amountAed || payment.amount,
-      client_name: metadata.clientName || 'Client',
-      client_email: clientEmail,
-      payment_status: 'verified',
-      payment_submitted_at: new Date().toISOString(),
-      payment_verified_at: new Date().toISOString(),
-      admin_notes: `Automatically verified by Ziina payment intent ${paymentIntentId}`,
-    })
-    .select('id')
-    .single();
+        if (!existingBooking) {
+          console.log('[Ziina Webhook] Active program exists but no booking for session 1, creating...');
+          const { data: clientUser } = await supabase
+            .from('users')
+            .select('full_name, email')
+            .eq('id', userId)
+            .maybeSingle();
 
-  if (programError || !program) {
-    console.error('[Ziina Webhook] Program creation failed:', programError);
-    return NextResponse.json({ error: 'Failed to create program' }, { status: 500 });
-  }
+          let meetLink = '';
+          let calendarEventId = '';
 
-  const sessionsError = await ensurePendingSessions({
-    supabase,
-    programId: program.id,
-    userId,
-    therapistId,
-    totalSessions,
-  });
+          if (activeProgram.therapist_user_id) {
+            try {
+              const startDateTime = `${preferredDate}T${preferredTime}:00`;
+              const [hours, minutes] = preferredTime.split(':').map(Number);
+              const endHours = Math.min(hours + 1, 23);
+              const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+              const endDateTime = `${preferredDate}T${endTime}:00`;
 
-  if (sessionsError) {
-    console.error('[Ziina Webhook] Failed to create sessions:', sessionsError);
-    return NextResponse.json({ error: 'Failed to create program sessions' }, { status: 500 });
-  }
+              const meetResult = await createMeetEvent({
+                summary: `NeuroHolistic Session #1 - ${clientUser?.full_name || metadata.clientName || 'Client'}`,
+                description: 'Program session via NeuroHolistic platform',
+                startDateTime,
+                endDateTime,
+                attendeeEmails: [clientUser?.email || metadata.clientEmail || ''],
+                therapistId: activeProgram.therapist_user_id,
+              });
+              meetLink = meetResult.meetLink;
+              calendarEventId = meetResult.calendarEventId ?? '';
+            } catch (meetErr) {
+              console.error('[Ziina Webhook] Meet creation failed:', meetErr);
+            }
+          }
 
-  if (therapistId) {
-    const { error: relationshipError } = await supabase.from('therapist_clients').upsert(
-      {
-        therapist_id: therapistId,
-        client_id: userId,
-      },
-      { onConflict: 'therapist_id,client_id' }
-    );
+          await supabase.from('bookings').insert({
+            user_id: userId,
+            name: clientUser?.full_name || metadata.clientName || 'Client',
+            email: clientUser?.email || metadata.clientEmail || '',
+            phone: '',
+            country: '',
+            therapist_id: activeProgram.therapist_user_id || 'unknown',
+            therapist_user_id: activeProgram.therapist_user_id,
+            therapist_name: activeProgram.therapist_name || 'Assigned Therapist',
+            date: preferredDate,
+            time: preferredTime,
+            type: 'program',
+            status: 'scheduled',
+            program_id: activeProgram.id,
+            session_number: 1,
+            meeting_link: meetLink || null,
+            google_calendar_event_id: calendarEventId || null,
+          });
 
-    if (relationshipError) {
-      console.error('[Ziina Webhook] Failed to upsert therapist-client relationship:', relationshipError);
+          const { data: newBooking } = await supabase
+            .from('bookings')
+            .select('id')
+            .eq('program_id', activeProgram.id)
+            .eq('session_number', 1)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (newBooking) {
+            await supabase
+              .from('sessions')
+              .update({
+                booking_id: newBooking.id,
+                date: preferredDate,
+                time: preferredTime,
+                date_time: `${preferredDate}T${preferredTime}:00+04:00`,
+                status: 'scheduled',
+                meet_link: meetLink || null,
+              })
+              .eq('program_id', activeProgram.id)
+              .eq('session_number', 1);
+          }
+        }
+      }
+
+      await supabase
+        .from('payments')
+        .update({ status: 'paid', program_id: activeProgram.id, metadata: { ...metadata, ziinaStatus: status, duplicateProgramPayment: true } })
+        .eq('id', payment.id);
+
+      return NextResponse.json({ success: true, message: 'User already has a pending or active program', programId: activeProgram.id });
     }
   }
 
-  await supabase
-    .from('payments')
-    .update({
-      status: 'paid',
-      program_id: program.id,
-      metadata: {
-        ...metadata,
-        ziinaStatus: status,
-      },
-    })
-    .eq('id', payment.id);
+  // Create program via BookingService
+  const totalSessions = Number(metadata.totalSessions) || 10;
+  const programType = metadata.storedProgramType || metadata.programType || 'private';
+  const clientEmail = metadata.clientEmail || '';
 
-  if (clientEmail) {
-    sendProgramConfirmationEmail({
-      email: clientEmail,
-      sessionCount: totalSessions,
-    }).catch((error) => console.error('[Ziina Webhook] Failed to send confirmation email:', error));
+  const { data: finalClientUser } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const clientFullName = finalClientUser?.full_name || metadata.clientName || 'Client';
+  const clientEmailAddress = finalClientUser?.email || clientEmail;
+
+  const service = new BookingService();
+  console.log('[Ziina Webhook] Calling purchaseProgram with:', {
+    userId,
+    programType,
+    therapistId: metadata.therapistId || null,
+    therapistName: metadata.therapistName,
+    preferredDate: metadata.preferredDate || null,
+    preferredTime: metadata.preferredTime || null,
+    totalSessions,
+  });
+  const result = await service.purchaseProgram({
+    userId,
+    programType: programType as 'private' | 'group' | 'academy',
+    therapistId: metadata.therapistId || null,
+    therapistName: metadata.therapistName || (programType === 'academy' ? 'NeuroHolistic Academy' : null),
+    totalSessions,
+    amountAed: metadata.amountAed || payment.amount,
+    paymentId,
+    clientName: clientFullName,
+    clientEmail: clientEmailAddress,
+    preferredDate: metadata.preferredDate || null,
+    preferredTime: metadata.preferredTime || null,
+    paymentOption: metadata.paymentOption || 'full',
+  });
+
+  console.log('[Ziina Webhook] purchaseProgram result:', result);
+
+  if (!result.success || !result.programId) {
+    console.error('[Ziina Webhook] Program creation failed:', result.error);
+    return NextResponse.json({ error: 'Failed to create program' }, { status: 500 });
   }
 
-  return NextResponse.json({
-    success: true,
-    message: 'Payment processed and program activated',
-    programId: program.id,
-  });
+  // Update payment
+  await supabase
+    .from('payments')
+    .update({ status: 'paid', program_id: result.programId, metadata: { ...metadata, ziinaStatus: status } })
+    .eq('id', payment.id);
+
+  // Send confirmation email
+  if (clientEmail) {
+    sendProgramConfirmationEmail(clientEmail, totalSessions).catch((error) =>
+      console.error('[Ziina Webhook] Failed to send confirmation email:', error)
+    );
+  }
+
+  return NextResponse.json({ success: true, message: 'Payment processed and program activated', programId: result.programId });
 }

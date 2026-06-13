@@ -3,8 +3,15 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
+import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Hero() {
+  const { t } = useLang();
+  const h = t.hero;
+
+  const eyebrowLines = h.eyebrow.split("\n");
+  const taglineLines = h.tagline.split("\n");
+
   return (
     <motion.section
       initial={{ opacity: 0 }}
@@ -32,9 +39,9 @@ export default function Hero() {
             style={{ fontFamily: "var(--font-hero-copy), 'Montserrat', system-ui, sans-serif" }}
           >
             <p className="text-[19px] font-normal uppercase tracking-[5] leading-[1.55] text-[#D3AB79] sm:text-[23px] md:text-[27px]">
-              There is
+              {eyebrowLines[0]}
               <br />
-              another way
+              {eyebrowLines[1]}
             </p>
             <h1
               className="mt-8 text-[50px] uppercase text-[#D3AB79] sm:mt-9 sm:text-[70px] md:text-[86px] lg:text-[90px]"
@@ -45,13 +52,13 @@ export default function Hero() {
                 lineHeight: 0.92,
               }}
             >
-              To Exist.
+              {h.title}
             </h1>
             <div className="mt-10 h-px w-[72px] bg-[#D3AB79] sm:mt-11" />
             <p className="mt-7 text-[18px] font-normal uppercase leading-[1.6] tracking-[5] !text-[#D3AB79] sm:text-[21px] md:text-[23px]">
-              NeuroHolistic
+              {taglineLines[0]}
               <br />
-              <span className="text-white">Institute™</span>
+              <span className="text-white">{taglineLines[1]}</span>
             </p>
             <div className="mt-5">
               <HeroBookingForm />

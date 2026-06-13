@@ -129,7 +129,7 @@ export function SessionsTab({
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
 
       {/* Session Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
           <p className="text-sm text-indigo-600 font-medium">Total Sessions</p>
           <p className="text-2xl font-bold text-indigo-700 mt-1">{visibleSessions.length}</p>

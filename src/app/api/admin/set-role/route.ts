@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { createClient } from '@/lib/auth/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: userData } = await authClient
+      .from('users').select('role').eq('id', user.id).single();
+    if (userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { email, role } = body;
 
@@ -16,7 +27,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
-    // Find user by email
     const { data: users } = await supabase
       .from('users')
       .select('id, email, role')
@@ -27,13 +37,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found in database' }, { status: 404 });
     }
 
-    const user = users[0];
+    const targetUser = users[0];
 
-    // Update role
     const { error: updateError } = await supabase
       .from('users')
       .update({ role })
-      .eq('id', user.id);
+      .eq('id', targetUser.id);
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
@@ -42,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Role updated to ${role} for ${email}`,
-      user: { id: user.id, email: user.email, role }
+      user: { id: targetUser.id, email: targetUser.email, role }
     });
   } catch (error) {
     return NextResponse.json(

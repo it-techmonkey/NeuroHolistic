@@ -163,12 +163,12 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Sessions</h2>
           <p className="text-sm text-slate-500">Manage your sessions and join meetings</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {/* Google Calendar Status */}
           <div className="flex items-center gap-2">
             {googleConnected === true ? (
@@ -193,10 +193,10 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
           </div>
 
           {/* View Toggle */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setView('list')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 view === 'list' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
               }`}
             >
@@ -204,7 +204,7 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
             </button>
             <button
               onClick={() => setView('calendar')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 view === 'calendar' ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-600 border border-slate-300'
               }`}
             >
@@ -212,7 +212,7 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
             </button>
             <button
               onClick={() => setView('free_consultations')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 view === 'free_consultations' ? 'bg-purple-100 text-purple-700' : 'bg-white text-slate-600 border border-slate-300'
               }`}
             >
@@ -343,7 +343,7 @@ export default function Sessions({ therapistId }: { therapistId: string }) {
       {view === 'list' && (
         <>
           {/* Filter Tabs */}
-          <div className="flex space-x-2 border-b border-slate-200">
+          <div className="flex space-x-2 border-b border-slate-200 overflow-x-auto pb-1">
             {[
               { id: 'upcoming', label: 'Upcoming', count: upcomingSessions.length },
               { id: 'completed', label: 'Completed', count: completedSessions.length },

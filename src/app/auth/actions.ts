@@ -178,8 +178,8 @@ export async function login(formData: {
 
   const role = resolveUserRole(userData?.role as string | null | undefined, user);
   
-  // Redirect directly to role home to avoid stale/mismatched client-side routing.
-  const redirectUrl = getHomeRouteForRole(role);
+  // If a specific redirect was requested (e.g. from booking flow), use it
+  const redirectUrl = formData.next || getHomeRouteForRole(role);
   
   console.log('[Login] User:', user.email, 'DB Role:', userData?.role, 'Normalized:', role, 'Redirect:', redirectUrl);
 
@@ -190,6 +190,58 @@ export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return { redirectTo: '/' };
+}
+
+function generateTempPassword(length = 16): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let password = '';
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < length; i++) {
+    password += chars[array[i] % chars.length];
+  }
+  return password;
+}
+
+/**
+ * Self-service password reset for logged-in users.
+ * Generates a new temporary password without requiring the current one.
+ * Uses the service-role client to bypass current password verification.
+ */
+export async function resetMyPassword() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Not authenticated' };
+  }
+
+  const serviceSupabase = getServiceSupabase();
+  const tempPassword = generateTempPassword();
+
+  const { error: updateError } = await serviceSupabase.auth.admin.updateUserById(
+    user.id,
+    {
+      password: tempPassword,
+      email_confirm: true,
+    }
+  );
+
+  if (updateError) {
+    console.error('[ResetMyPassword] Failed:', updateError);
+    return { error: 'Failed to reset password. Please try again.' };
+  }
+
+  // Log the action
+  await serviceSupabase.from('admin_actions').insert({
+    admin_id: user.id,
+    action: 'self_reset_password',
+    target_type: 'user',
+    target_id: user.id,
+    notes: `Self-service password reset by ${user.email}`,
+  });
+
+  return { success: true, tempPassword };
 }
 
 /**

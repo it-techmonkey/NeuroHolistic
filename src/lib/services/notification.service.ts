@@ -196,7 +196,7 @@ function buildEmailContent(triggerType: TriggerType, booking: NotificationBookin
           <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
           <p style="margin:0 0 16px;color:#334155;">Your session with ${booking.therapistName} on ${formatDate(booking.sessionDate)} is now marked as complete. Your therapist's notes and resources are available on your dashboard.</p>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://neuroholistic.com'}/dashboard" style="display:inline-block;padding:12px 28px;background:${BRAND_COLOR};color:#fff;border-radius:8px;text-decoration:none;font-weight:500;">View Dashboard</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard/client" style="display:inline-block;padding:12px 28px;background:${BRAND_COLOR};color:#fff;border-radius:8px;text-decoration:none;font-weight:500;">View Dashboard</a>
           </div>`),
       };
 

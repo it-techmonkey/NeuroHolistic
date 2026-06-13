@@ -6,6 +6,7 @@ import type { EventItem } from "@/components/events/types";
 import { useContentLocale } from "@/components/retreats/locale";
 import { useLang } from "@/lib/translations/LanguageContext";
 import { ar } from "@/lib/translations/ar";
+import MobileBackButton from "@/components/MobileBackButton";
 
 interface Props {
   event: EventItem;
@@ -16,13 +17,20 @@ export default function EventDetailClient({ event }: Props) {
   const { t, isArabic } = useLang();
   const E = isArabic ? ar.eventsListing : t.eventsListing;
   const copy = event.locales[locale];
+  const backLabel = isArabic ? "العودة للفعاليات" : E.backToEvents;
 
   return (
     <section className="bg-white pb-24 pt-36 md:pb-28 md:pt-44">
       <div className="mx-auto max-w-[1000px] px-6 md:px-10">
-        <Link href="/events" className="text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5]">
+        {/* Desktop back link */}
+        <Link href="/events" className="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5]">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
           {E.backToEvents}
         </Link>
+        {/* Mobile back button */}
+        <MobileBackButton href="/events" label={backLabel} />
 
         <div className="mt-6 overflow-hidden rounded-[18px] border border-[#E2E8F0]">
           <div className="relative h-[280px] w-full md:h-[420px]">

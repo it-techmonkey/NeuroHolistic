@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { resetMyPassword } from '@/app/auth/actions';
 import {
   UserCircle,
   Mail,
@@ -14,6 +15,9 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Key,
+  Copy,
+  X,
 } from 'lucide-react';
 
 export default function Account({ user }: { user: any }) {
@@ -37,6 +41,12 @@ export default function Account({ user }: { user: any }) {
     newPassword: '',
     confirmPassword: '',
   });
+
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetResult, setResetResult] = useState<string | null>(null);
+  const [resetError, setResetError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const updateField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -137,6 +147,40 @@ export default function Account({ user }: { user: any }) {
     } finally {
       setPasswordSaving(false);
     }
+  };
+
+  const handleSelfReset = async () => {
+    setResetLoading(true);
+    setResetError('');
+    setResetResult(null);
+
+    try {
+      const result = await resetMyPassword();
+      if (result.error) {
+        setResetError(result.error);
+      } else {
+        setResetResult(result.tempPassword!);
+      }
+    } catch (err: any) {
+      setResetError('An error occurred. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const copyPassword = () => {
+    if (resetResult) {
+      navigator.clipboard.writeText(resetResult);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const openResetModal = () => {
+    setShowResetModal(true);
+    setResetResult(null);
+    setResetError('');
+    setCopied(false);
   };
 
   return (
@@ -298,6 +342,13 @@ export default function Account({ user }: { user: any }) {
                 )}
               </button>
             </div>
+            <button
+              type="button"
+              onClick={openResetModal}
+              className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+            >
+              Forgot current password?
+            </button>
           </div>
 
           <div>
@@ -396,6 +447,100 @@ export default function Account({ user }: { user: any }) {
           </div>
         </div>
       </div>
+
+      {/* Self-Reset Password Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !resetLoading && setShowResetModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Reset Your Password</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Generate a new password without entering your current one</p>
+              </div>
+              <button
+                onClick={() => setShowResetModal(false)}
+                disabled={resetLoading}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {!resetResult ? (
+                <>
+                  <p className="text-sm text-slate-600">
+                    This will generate a new temporary password for your account. You'll be logged out and need to sign in again with the new password.
+                  </p>
+
+                  {resetError && (
+                    <div className="text-xs text-red-600 bg-red-50 p-3 border-l-2 border-red-500">
+                      {resetError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setShowResetModal(false)}
+                      disabled={resetLoading}
+                      className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSelfReset}
+                      disabled={resetLoading}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                    >
+                      {resetLoading ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Key className="w-4 h-4" />
+                      )}
+                      {resetLoading ? 'Generating...' : 'Generate New Password'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-medium text-emerald-800">
+                      New password generated
+                    </p>
+                    <div className="flex items-center gap-2 bg-white rounded-lg border border-emerald-200 px-3 py-2.5">
+                      <code className="flex-1 text-sm font-mono text-slate-900 break-all select-all">
+                        {resetResult}
+                      </code>
+                      <button
+                        onClick={copyPassword}
+                        className="shrink-0 p-1.5 text-slate-400 hover:text-emerald-600 rounded-md transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        {copied ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-emerald-700">
+                      Copy this password, then sign in again. You can change it to something memorable from your profile.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setShowResetModal(false);
+                      supabase.auth.signOut();
+                      window.location.href = '/auth/login';
+                    }}
+                    className="w-full px-4 py-2.5 text-sm font-medium text-white bg-[#2B2F55] rounded-xl hover:bg-[#1E2140] transition-colors"
+                  >
+                    Sign Out &amp; Go to Login
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

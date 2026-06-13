@@ -309,7 +309,7 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
           <p className="text-2xl font-bold text-blue-600">{upcomingSessions.length}</p>
           <p className="text-xs text-blue-500 font-medium">Upcoming</p>
@@ -449,7 +449,7 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
                         )}
                       </div>
                     </div>
-                    <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform duration-200 hidden sm:block ${
+                    <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${
                       isExpanded ? 'rotate-90' : ''
                     }`} />
                   </div>
@@ -597,7 +597,7 @@ export default function FreeConsultationView({ therapistId, onRefresh }: FreeCon
                     {/* Session Info */}
                     <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                       <h4 className="text-sm font-semibold text-slate-700 mb-3">Session Details</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-slate-500">Client</p>
                           <p className="font-medium text-slate-900">

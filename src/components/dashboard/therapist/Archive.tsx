@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import DiagnosticAssessmentForm from './DiagnosticAssessmentForm';
 import SessionDevelopmentForm from './SessionDevelopmentForm';
+import ClientReportCard from './ClientReportCard';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -87,12 +88,6 @@ type ArchivedDevForm = {
 };
 
 // Constants
-const CURRENT_SYMPTOM_OPTIONS = [
-  'Anxiety', 'Emotional distress', 'Low mood', 'Numbness', 'Overthinking',
-  'Panic', 'Sleep difficulty', 'Relationship difficulty', 'Physical symptoms',
-  'Lack of direction', 'Fatigue', 'Stress overload',
-];
-
 const TECHNIQUE_OPTIONS = [
   'Timeline', 'Control Room', 'Hypnoses Womb', 'Hypnoses Birth',
   'Hypnoses 1', 'Hypnoses 2', 'Hypnoses 3', 'Hypnoses 4', 'Hypnoses 5',
@@ -194,7 +189,7 @@ const ClientFormModal = memo(function ClientFormModal({
             placeholder="Client's full name"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
             <input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="email@example.com" />
@@ -204,7 +199,7 @@ const ClientFormModal = memo(function ClientFormModal({
             <input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="+1 234 567 890" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Country</label>
             <input type="text" value={form.country} onChange={e => updateField('country', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Country" />
@@ -214,7 +209,7 @@ const ClientFormModal = memo(function ClientFormModal({
             <input type="date" value={form.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
             <input type="text" value={form.occupation} onChange={e => updateField('occupation', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Occupation" />
@@ -232,105 +227,6 @@ const ClientFormModal = memo(function ClientFormModal({
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
           <button onClick={() => onSave(form as any)} disabled={saving || !form.full_name.trim()} className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : title.includes('Add') ? 'Add Client' : 'Update'}
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-});
-
-// Assessment Form Modal
-const AssessmentFormModal = memo(function AssessmentFormModal({
-  onClose, onSave, saving,
-}: {
-  onClose: () => void;
-  onSave: (data: any) => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState({
-    session_number: '',
-    assessment_date: '',
-    main_complaint: '',
-    current_symptoms: [] as string[],
-    nervous_system_pattern: '',
-    nervous_system_score: 0,
-    emotional_state_score: 0,
-    cognitive_patterns_score: 0,
-    body_symptoms_score: 0,
-    behavioral_patterns_score: 0,
-    life_functioning_score: 0,
-  });
-
-  const updateField = useCallback((field: string, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  const toggleSymptom = useCallback((symptom: string) => {
-    setForm(prev => ({
-      ...prev,
-      current_symptoms: prev.current_symptoms.includes(symptom)
-        ? prev.current_symptoms.filter(s => s !== symptom)
-        : [...prev.current_symptoms, symptom],
-    }));
-  }, []);
-
-  const totalScore = form.nervous_system_score + form.emotional_state_score + form.cognitive_patterns_score + form.body_symptoms_score + form.behavioral_patterns_score + form.life_functioning_score;
-
-  return (
-    <Modal onClose={onClose} title="Add Diagnostic Assessment">
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Session Number</label>
-            <input type="number" min={1} value={form.session_number} onChange={e => updateField('session_number', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. 1" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Assessment Date</label>
-            <input type="date" value={form.assessment_date} onChange={e => updateField('assessment_date', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Main Complaint *</label>
-          <textarea value={form.main_complaint} onChange={e => updateField('main_complaint', e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe the main concerns..." />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Current Symptoms</label>
-          <div className="flex flex-wrap gap-2">
-            {CURRENT_SYMPTOM_OPTIONS.map(symptom => (
-              <button key={symptom} type="button" onClick={() => toggleSymptom(symptom)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  form.current_symptoms.includes(symptom)
-                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'
-                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
-                }`}
-              >{symptom}</button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nervous System Pattern</label>
-          <select value={form.nervous_system_pattern} onChange={e => updateField('nervous_system_pattern', e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            <option value="">Select...</option>
-            {NERVOUS_SYSTEM_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-          </select>
-        </div>
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium text-slate-700">Domain Scores</h4>
-          <ScoreInput label="Nervous System" value={form.nervous_system_score} onChange={v => updateField('nervous_system_score', v)} />
-          <ScoreInput label="Emotional State" value={form.emotional_state_score} onChange={v => updateField('emotional_state_score', v)} />
-          <ScoreInput label="Cognitive Patterns" value={form.cognitive_patterns_score} onChange={v => updateField('cognitive_patterns_score', v)} />
-          <ScoreInput label="Body Symptoms" value={form.body_symptoms_score} onChange={v => updateField('body_symptoms_score', v)} />
-          <ScoreInput label="Behavioral Patterns" value={form.behavioral_patterns_score} onChange={v => updateField('behavioral_patterns_score', v)} />
-          <ScoreInput label="Life Functioning" value={form.life_functioning_score} onChange={v => updateField('life_functioning_score', v)} />
-          <div className="bg-indigo-50 rounded-lg p-3 text-center">
-            <span className="text-xs text-indigo-600">Total Dysregulation Score</span>
-            <p className="text-xl font-bold text-indigo-700">{totalScore}/60</p>
-          </div>
-        </div>
-        <div className="flex gap-3 pt-4 border-t border-slate-200">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-          <button onClick={() => onSave(form)} disabled={saving || !form.main_complaint.trim()} className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Save Assessment'}
           </button>
         </div>
       </div>
@@ -630,7 +526,7 @@ function ArchivedClientReports({ assessments, devForms }: { assessments: Archive
               {currentComparison && (
                 <div className="bg-white border border-slate-200 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-slate-900 mb-6">{currentComparison.label} Comparison</h3>
-                  <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                     <div className="text-center p-6 border border-slate-200 rounded-lg bg-slate-50">
                       <p className="text-sm text-slate-500 uppercase tracking-wider mb-2">Before</p>
                       <p className="text-xl font-medium text-slate-700 mb-1">{currentComparison.from.label}</p>
@@ -805,7 +701,7 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
   const [devForms, setDevForms] = useState<ArchivedDevForm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [modal, setModal] = useState<'newClient' | 'editClient' | 'assessment' | 'devForm' | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development' | 'reports'>('overview');
+  const [detailTab, setDetailTab] = useState<'overview' | 'assessments' | 'development' | 'reportCard' | 'reports'>('overview');
   const [saving, setSaving] = useState(false);
 
   const fetchClients = useCallback(async () => {
@@ -1000,11 +896,12 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
 
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="border-b border-slate-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               {[
                 { id: 'overview' as const, label: 'Overview', icon: User },
                 { id: 'assessments' as const, label: 'Assessments', icon: FileText },
                 { id: 'development' as const, label: 'Development Forms', icon: TrendingUp },
+                { id: 'reportCard' as const, label: 'Report Card', icon: BarChart3 },
                 { id: 'reports' as const, label: 'Reports', icon: BarChart3 },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setDetailTab(tab.id)}
@@ -1095,6 +992,25 @@ export default function ArchiveTab({ therapistId }: { therapistId: string }) {
 
             {detailTab === 'reports' && (
               <ArchivedClientReports assessments={assessments} devForms={devForms} />
+            )}
+
+            {detailTab === 'reportCard' && (
+              <ClientReportCard
+                source="archived"
+                client={{
+                  name: selectedClient.full_name,
+                  email: selectedClient.email,
+                  phone: selectedClient.phone,
+                  country: selectedClient.country,
+                  dateOfBirth: selectedClient.date_of_birth,
+                  occupation: selectedClient.occupation,
+                  relationshipStatus: selectedClient.relationship_status,
+                  notes: selectedClient.notes,
+                  status: 'Archived Client',
+                }}
+                assessments={assessments}
+                devForms={devForms}
+              />
             )}
           </div>
         </div>

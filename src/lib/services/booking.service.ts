@@ -1,474 +1,1332 @@
+/**
+ * Central BookingService — single source of truth for all booking/session operations.
+ *
+ * Every API route and dashboard calls this service instead of duplicating logic.
+ * Handles: create, reschedule, cancel, complete, purchaseProgram, queries, availability.
+ */
+
 import { getServiceSupabase } from '@/lib/supabase/service';
-import { isValidSlot, BOOKING_TIME_SLOTS } from '@/lib/booking/slots';
-import { getNextConfirmedSession, toDubaiDateTime } from '@/lib/booking/session-flow';
 import { createMeetEvent, updateMeetEvent } from '@/lib/meeting/google-meet';
-import { checkEligibility } from '@/lib/services/eligibility.service';
+import {
+  notifyBookingConfirmed,
+  notifyRescheduled,
+  notifyCancelled,
+  notifySessionCompleted,
+  type NotificationBooking,
+} from '@/lib/services/notification.service';
+import { toDubaiDateTime, isUpcomingSession, isPastSession, getDubaiToday, getDubaiDayOfWeek } from '@/lib/booking/session-flow';
+import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
+import { generateSlug, therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
+import { generateHourlySlotStarts, defaultHourlyBookingSlots } from '@/lib/bookings/therapist-scope';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_RESCHEDULES = 2;
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export type CreateBookingInput = {
+  userId?: string | null;
   name: string;
   email: string;
   phone?: string;
   country?: string;
-  type: 'consultation' | 'program';
-  therapistSlug: string;
-  therapistName: string;
-  therapistUserId?: string | null;
+  therapistId: string;
+  therapistName?: string;
   date: string;
   time: string;
-  userId?: string | null;
+  type: 'free_consultation' | 'program';
   programId?: string | null;
+  sessionId?: string | null;
+  sessionNumber?: number | null;
 };
 
 export type BookingResult = {
   success: boolean;
   bookingId?: string;
-  meetingLink?: string;
+  meetLink?: string;
   sessionNumber?: number;
   remainingSessions?: number;
   error?: string;
+  statusCode?: number;
 };
 
-const MAX_RESCHEDULES = 2;
-const MIN_ADVANCE_HOURS = 24;
-
-type TherapistAssignment = {
-  therapistSlug: string;
-  therapistName: string;
-  therapistUserId: string | null;
+export type PurchaseProgramInput = {
+  userId: string;
+  programType: 'private' | 'group' | 'academy';
+  therapistId?: string | null;
+  therapistName?: string | null;
+  totalSessions: number;
+  amountAed: number;
+  paymentId: string;
+  clientName: string;
+  clientEmail: string;
+  preferredDate?: string | null;
+  preferredTime?: string | null;
+  paymentStatus?: string;
+  paymentOption?: 'full' | 'per_session';
 };
 
-function isDubaiWithin24Hours(date: string, time: string): boolean {
-  const sessionDate = new Date(toDubaiDateTime(date, time));
-  const now = new Date();
-  const hoursUntil = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-  return hoursUntil < MIN_ADVANCE_HOURS;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseTimeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
 }
 
-export async function createBooking(input: CreateBookingInput): Promise<BookingResult> {
-  const supabase = getServiceSupabase();
+function hourSlotBlocked(slotStartMin: number, blockStart: number, blockEnd: number): boolean {
+  return slotStartMin < blockEnd && slotStartMin + 60 > blockStart;
+}
 
-  if (!isValidSlot(input.time)) {
-    return { success: false, error: `Invalid time slot: ${input.time}` };
+function formatBookingDateTime(date: string, time: string): string {
+  return `${date}T${time}:00`;
+}
+
+function makeFallbackMeetLink(): string {
+  const code = Math.random().toString(36).substring(2, 10).replace(/(.{3})/g, '$1-').slice(0, -1);
+  return `https://meet.google.com/${code}`;
+}
+
+// ---------------------------------------------------------------------------
+// BookingService
+// ---------------------------------------------------------------------------
+
+export class BookingService {
+  private supabase = getServiceSupabase();
+
+  // -----------------------------------------------------------------------
+  // normalizeTherapistId — always resolve to UUID
+  // -----------------------------------------------------------------------
+  async normalizeTherapistId(rawId: string): Promise<{ id: string; fullName: string | null } | null> {
+    const resolved = await resolveTherapistUserRow(this.supabase, rawId);
+    return resolved ? { id: resolved.id, fullName: resolved.full_name } : null;
   }
 
-  if (input.type === 'consultation') {
-    const eligibility = await checkEligibility(input.email);
-    if (!eligibility.canBookConsultation) {
-      return { success: false, error: 'A consultation has already been booked for this email' };
-    }
-  }
+  // -----------------------------------------------------------------------
+  // createBooking — single implementation for all booking creation
+  // -----------------------------------------------------------------------
+  async createBooking(input: CreateBookingInput): Promise<BookingResult> {
+    // 1. Resolve therapist to UUID
+    const therapist = await this.normalizeTherapistId(input.therapistId);
+    const therapistUserId = therapist?.id ?? null;
+    const therapistName = input.therapistName || therapist?.fullName || 'Assigned Therapist';
 
-  let sessionNumber: number | undefined;
-  let remainingSessions: number | undefined;
-  let programId = input.programId;
-  let effectiveTherapist: TherapistAssignment = {
-    therapistSlug: input.therapistSlug,
-    therapistName: input.therapistName,
-    therapistUserId: input.therapistUserId ?? null,
-  };
+    // 2. Create Google Meet link
+    let meetLink = '';
+    let calendarEventId = '';
+    try {
+      const startDateTime = `${input.date}T${input.time}:00`;
+      const [hours, minutes] = input.time.split(':').map(Number);
+      const endHours = Math.min(hours + 1, 23);
+      const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      const endDateTime = `${input.date}T${endTime}:00`;
 
-  if (input.type === 'program') {
-    if (!programId) {
-      const eligibility = await checkEligibility(input.email);
-      if (!eligibility.hasActiveProgram || !eligibility.programId || !eligibility.canBookProgramSessions) {
-        return { success: false, error: 'No active program found' };
+      if (therapistUserId) {
+        const result = await createMeetEvent({
+          summary: `NeuroHolistic ${input.type === 'free_consultation' ? 'Free Consultation' : 'Session'}${input.sessionNumber ? ` #${input.sessionNumber}` : ''} - ${input.name}`,
+          description: `${input.type === 'free_consultation' ? 'Free consultation' : 'Program session'} via NeuroHolistic platform`,
+          startDateTime,
+          endDateTime,
+          attendeeEmails: [input.email],
+          therapistId: therapistUserId,
+        });
+        meetLink = result.meetLink;
+        calendarEventId = result.calendarEventId ?? '';
       }
-      programId = eligibility.programId;
+    } catch (err) {
+      console.error('[BookingService] Meet creation failed, using fallback:', err);
+      meetLink = makeFallbackMeetLink();
     }
 
-    const { data: program, error: programError } = await supabase
-      .from('programs')
-      .select('id, total_sessions, used_sessions, user_id, therapist_user_id, therapist_name')
-      .eq('id', programId)
-      .eq('status', 'active')
-      .maybeSingle();
+    // 3. Create booking record
+    const { data: booking, error: bookingError } = await this.supabase
+      .from('bookings')
+      .insert({
+        user_id: input.userId || null,
+        name: input.name,
+        email: input.email,
+        phone: input.phone || '',
+        country: input.country || '',
+        therapist_id: therapistUserId || input.therapistId,
+        therapist_user_id: therapistUserId,
+        therapist_name: therapistName,
+        date: input.date,
+        time: input.time,
+        type: input.type,
+        program_id: input.programId || null,
+        session_number: input.sessionNumber || null,
+        meeting_link: meetLink || null,
+        google_calendar_event_id: calendarEventId || null,
+        status: 'confirmed',
+      })
+      .select('id')
+      .single();
 
-    if (programError || !program) {
-      return { success: false, error: 'Program not found or inactive' };
+    if (bookingError || !booking) {
+      console.error('[BookingService] Booking insert failed:', bookingError);
+      return { success: false, error: 'Failed to create booking', statusCode: 500 };
     }
 
-    if (program.used_sessions >= program.total_sessions) {
-      return { success: false, error: 'All program sessions have been used' };
+    // 4. Update or create session record
+    if (input.sessionId) {
+      // Update existing session (from purchase-program)
+      await this.supabase
+        .from('sessions')
+        .update({
+          booking_id: booking.id,
+          date: input.date,
+          time: input.time,
+          date_time: toDubaiDateTime(input.date, input.time),
+          meet_link: meetLink || null,
+          therapist_id: therapistUserId,
+          status: 'scheduled',
+        })
+        .eq('id', input.sessionId);
+    } else if (input.type === 'program' && input.programId) {
+      // Create new session record (from booking.service.ts path)
+      const { error: sessionErr } = await this.supabase
+        .from('sessions')
+        .insert({
+          program_id: input.programId,
+          booking_id: booking.id,
+          client_id: input.userId ?? null,
+          therapist_id: therapistUserId,
+          session_number: input.sessionNumber ?? null,
+          date: input.date,
+          time: input.time,
+          date_time: toDubaiDateTime(input.date, input.time),
+          meet_link: meetLink || null,
+          status: 'scheduled',
+        });
+
+      if (sessionErr) {
+        console.error('[BookingService] Session insert failed:', sessionErr);
+      }
+
+      // Update program used_sessions
+      if (input.sessionNumber) {
+        await this.supabase
+          .from('programs')
+          .update({ used_sessions: input.sessionNumber, updated_at: new Date().toISOString() })
+          .eq('id', input.programId);
+      }
     }
 
-    let assignedTherapist: TherapistAssignment | null = program.therapist_name
-      ? {
-          therapistSlug:
-            input.therapistSlug ||
-            program.therapist_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-          therapistName: program.therapist_name,
-          therapistUserId: program.therapist_user_id,
-        }
-      : null;
-
-    if (!assignedTherapist && program.user_id) {
-      const { data: firstBooking } = await supabase
-        .from('bookings')
-        .select('therapist_id, therapist_name, therapist_user_id')
-        .eq('user_id', program.user_id)
-        .in('status', ['confirmed', 'completed', 'scheduled'])
-        .order('created_at', { ascending: true })
-        .limit(1)
+    // 5. Create therapist_clients assignment
+    if (input.userId && therapistUserId) {
+      const { data: existing } = await this.supabase
+        .from('therapist_clients')
+        .select('id')
+        .eq('therapist_id', therapistUserId)
+        .eq('client_id', input.userId)
         .maybeSingle();
 
-      if (firstBooking?.therapist_name) {
-        assignedTherapist = {
-          therapistSlug: firstBooking.therapist_id,
-          therapistName: firstBooking.therapist_name,
-          therapistUserId: firstBooking.therapist_user_id,
+      if (!existing) {
+        await this.supabase.from('therapist_clients').insert({
+          therapist_id: therapistUserId,
+          client_id: input.userId,
+        });
+      }
+    }
+
+    // 6. Send notifications (client + therapist + admin)
+    this.sendBookingNotifications(booking.id, input, therapistName, meetLink).catch((err) =>
+      console.error('[BookingService] Notification error:', err)
+    );
+
+    return {
+      success: true,
+      bookingId: booking.id,
+      meetLink,
+      sessionNumber: input.sessionNumber ?? undefined,
+    };
+  }
+
+  // -----------------------------------------------------------------------
+  // rescheduleBooking — updates booking + session + calendar + notifications
+  // -----------------------------------------------------------------------
+  async rescheduleBooking(
+    bookingId: string,
+    userId: string,
+    newDate: string,
+    newTime: string
+  ): Promise<BookingResult> {
+    const { data: booking, error: fetchErr } = await this.supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .maybeSingle();
+
+    if (fetchErr || !booking) {
+      return { success: false, error: 'Booking not found', statusCode: 404 };
+    }
+
+    if (booking.user_id !== userId) {
+      return { success: false, error: 'Not authorized', statusCode: 403 };
+    }
+
+    if (booking.status !== 'confirmed' && booking.status !== 'scheduled') {
+      return { success: false, error: `Cannot reschedule a booking with status "${booking.status}"`, statusCode: 409 };
+    }
+
+    if ((booking.reschedule_count ?? 0) >= MAX_RESCHEDULES) {
+      return { success: false, error: `Maximum reschedule limit (${MAX_RESCHEDULES}) reached`, statusCode: 409 };
+    }
+
+    // Check conflict
+    const { data: conflict } = await this.supabase
+      .from('bookings')
+      .select('id')
+      .eq('therapist_id', booking.therapist_id)
+      .eq('date', newDate)
+      .eq('time', newTime)
+      .neq('status', 'cancelled')
+      .neq('id', bookingId)
+      .maybeSingle();
+
+    if (conflict) {
+      return { success: false, error: 'This time slot is no longer available', statusCode: 409 };
+    }
+
+    // Update Google Calendar
+    let meetLink = booking.meeting_link;
+    let calendarEventId = booking.google_calendar_event_id;
+
+    if (calendarEventId && booking.therapist_user_id) {
+      try {
+        const result = await updateMeetEvent(calendarEventId, {
+          startDateTime: `${newDate}T${newTime}:00`,
+          endDateTime: `${newDate}T${String(Math.min(parseInt(newTime.split(':')[0], 10) + 1, 23)).padStart(2, '0')}:${newTime.split(':')[1]}:00`,
+          therapistId: booking.therapist_user_id,
+        });
+        meetLink = result.meetLink;
+      } catch (err) {
+        console.error('[BookingService] Calendar update failed:', err);
+        // Try creating new event
+        try {
+          const result = await createMeetEvent({
+            summary: `NeuroHolistic — ${booking.type === 'free_consultation' ? 'Free Consultation' : 'Session'} (Rescheduled)`,
+            description: `Session with ${booking.therapist_name}`,
+            startDateTime: `${newDate}T${newTime}:00`,
+            endDateTime: `${newDate}T${String(Math.min(parseInt(newTime.split(':')[0], 10) + 1, 23)).padStart(2, '0')}:${newTime.split(':')[1]}:00`,
+            attendeeEmails: [booking.email],
+            therapistId: booking.therapist_user_id,
+          });
+          meetLink = result.meetLink;
+          calendarEventId = result.calendarEventId ?? calendarEventId;
+        } catch (createErr) {
+          console.error('[BookingService] Create new Meet event failed:', createErr);
+        }
+      }
+    }
+
+    // Update booking
+    const { error: updateErr } = await this.supabase
+      .from('bookings')
+      .update({
+        date: newDate,
+        time: newTime,
+        meeting_link: meetLink,
+        google_calendar_event_id: calendarEventId,
+        reschedule_count: (booking.reschedule_count ?? 0) + 1,
+        rescheduled_from_date: booking.date,
+        rescheduled_from_time: booking.time,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+
+    if (updateErr) {
+      return { success: false, error: 'Failed to update booking', statusCode: 500 };
+    }
+
+    // Update linked session
+    if (booking.program_id) {
+      await this.supabase
+        .from('sessions')
+        .update({
+          date: newDate,
+          time: newTime,
+          date_time: toDubaiDateTime(newDate, newTime),
+          meet_link: meetLink,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('booking_id', bookingId);
+    }
+
+    // Send reschedule notifications
+    this.sendRescheduleNotifications(booking, newDate, newTime, meetLink).catch((err) =>
+      console.error('[BookingService] Reschedule notification error:', err)
+    );
+
+    return { success: true, bookingId, meetLink: meetLink ?? undefined };
+  }
+
+  // -----------------------------------------------------------------------
+  // cancelBooking — cancels booking + session + program count + notifications
+  // -----------------------------------------------------------------------
+  async cancelBooking(bookingId: string, userId: string): Promise<BookingResult> {
+    const { data: booking, error: fetchErr } = await this.supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .maybeSingle();
+
+    if (fetchErr || !booking) {
+      return { success: false, error: 'Booking not found', statusCode: 404 };
+    }
+
+    if (booking.user_id !== userId) {
+      return { success: false, error: 'Not authorized', statusCode: 403 };
+    }
+
+    if (booking.status !== 'confirmed' && booking.status !== 'scheduled') {
+      return { success: false, error: `Cannot cancel a booking with status "${booking.status}"`, statusCode: 409 };
+    }
+
+    // Cancel booking
+    const { error: updateErr } = await this.supabase
+      .from('bookings')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+
+    if (updateErr) {
+      return { success: false, error: 'Failed to cancel booking', statusCode: 500 };
+    }
+
+    // Cancel linked session + decrement program
+    if (booking.program_id) {
+      await this.supabase
+        .from('sessions')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('booking_id', bookingId);
+
+      const { data: program } = await this.supabase
+        .from('programs')
+        .select('used_sessions')
+        .eq('id', booking.program_id)
+        .maybeSingle();
+
+      if (program && program.used_sessions > 0) {
+        await this.supabase
+          .from('programs')
+          .update({ used_sessions: program.used_sessions - 1, updated_at: new Date().toISOString() })
+          .eq('id', booking.program_id);
+      }
+    }
+
+    // Send cancellation notifications
+    this.sendCancelNotifications(booking).catch((err) =>
+      console.error('[BookingService] Cancel notification error:', err)
+    );
+
+    return { success: true, bookingId };
+  }
+
+  // -----------------------------------------------------------------------
+  // completeSession — marks session complete + booking complete + program count + notifications
+  // -----------------------------------------------------------------------
+  async completeSession(sessionId: string): Promise<BookingResult> {
+    // Find session (try by id or booking_id)
+    const { data: session } = await this.supabase
+      .from('sessions')
+      .select('*, programs!inner(user_id, therapist_user_id, therapist_name)')
+      .or(`id.eq.${sessionId},booking_id.eq.${sessionId}`)
+      .maybeSingle();
+
+    // Also check if this is a free consultation booking
+    const { data: booking } = await this.supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', sessionId)
+      .maybeSingle();
+
+    const isFreeConsultation = booking?.type === 'free_consultation';
+    const isProgramSession = !!session?.program_id;
+
+    // Validate required forms
+    if (isFreeConsultation) {
+      const clientId = booking?.user_id;
+      const clientName = booking?.name;
+      let assessment = null;
+
+      if (clientId) {
+        const { data } = await this.supabase
+          .from('diagnostic_assessments')
+          .select('id')
+          .eq('client_id', clientId)
+          .eq('status', 'submitted')
+          .limit(1)
+          .maybeSingle();
+        assessment = data;
+      }
+
+      if (!assessment && clientName) {
+        const { data } = await this.supabase
+          .from('diagnostic_assessments')
+          .select('id')
+          .eq('client_name', clientName)
+          .eq('status', 'submitted')
+          .limit(1)
+          .maybeSingle();
+        assessment = data;
+      }
+
+      if (!assessment) {
+        return {
+          success: false,
+          error: 'Diagnostic assessment required before completing free consultation',
+          statusCode: 400,
         };
       }
     }
 
-    if (assignedTherapist) {
-      const therapistMismatch =
-        (effectiveTherapist.therapistUserId &&
-          assignedTherapist.therapistUserId &&
-          effectiveTherapist.therapistUserId !== assignedTherapist.therapistUserId) ||
-        (effectiveTherapist.therapistSlug &&
-          effectiveTherapist.therapistSlug !== assignedTherapist.therapistSlug);
-
-      if (therapistMismatch) {
-        return { success: false, error: 'Program sessions must stay with your assigned therapist' };
-      }
-
-      effectiveTherapist = assignedTherapist;
+    if (session && isProgramSession && !session.development_form_submitted) {
+      return {
+        success: false,
+        error: 'Development form required before completing program session',
+        statusCode: 400,
+      };
     }
 
-    const { data: existingBookings } = await supabase
-      .from('bookings')
-      .select('id, date, time, status')
-      .eq('program_id', programId)
-      .eq('status', 'confirmed');
+    // Handle free consultation without session record
+    if (!session && booking && isFreeConsultation) {
+      const { error } = await this.supabase
+        .from('bookings')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', sessionId);
 
-    if (existingBookings && existingBookings.length > 0) {
-      const nextConfirmed = getNextConfirmedSession(existingBookings);
-      if (nextConfirmed) {
-        return { success: false, error: 'You already have an upcoming confirmed session. Please complete or cancel it before booking another.' };
+      if (error) {
+        return { success: false, error: error.message, statusCode: 500 };
       }
+
+      // Send completion notification
+      this.sendSessionCompletedNotifications(booking).catch((err) =>
+        console.error('[BookingService] Session completed notification error:', err)
+      );
+
+      return { success: true, bookingId: sessionId };
     }
 
-    sessionNumber = program.used_sessions + 1;
-    remainingSessions = program.total_sessions - program.used_sessions - 1;
+    if (!session) {
+      return { success: false, error: 'Session not found', statusCode: 404 };
+    }
 
-    if (!program.therapist_name && effectiveTherapist.therapistName) {
-      const { error: therapistUpdateError } = await supabase
+    if (session.status === 'completed') {
+      return { success: true, bookingId: sessionId };
+    }
+
+    // Update session
+    const { error: sessionUpdateErr } = await this.supabase
+      .from('sessions')
+      .update({ status: 'completed', is_complete: true, updated_at: new Date().toISOString() })
+      .eq('id', session.id);
+
+    if (sessionUpdateErr) {
+      return { success: false, error: sessionUpdateErr.message, statusCode: 500 };
+    }
+
+    // Update linked booking
+    if (session.booking_id) {
+      await this.supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', session.booking_id);
+    }
+
+    // Update program counts
+    if (session.program_id) {
+      const { data: completedSessions } = await this.supabase
+        .from('sessions')
+        .select('id')
+        .eq('program_id', session.program_id)
+        .eq('status', 'completed');
+
+      const sessionsCompleted = (completedSessions ?? []).length;
+
+      await this.supabase
         .from('programs')
         .update({
-          therapist_name: effectiveTherapist.therapistName,
-          therapist_user_id: effectiveTherapist.therapistUserId,
+          sessions_completed: sessionsCompleted,
+          used_sessions: sessionsCompleted,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', program.id);
-
-      if (therapistUpdateError) {
-        console.error('[BookingService] Failed to persist assigned therapist:', therapistUpdateError);
-      }
-    }
-  }
-
-  const { data: duplicateSlot } = await supabase
-    .from('bookings')
-    .select('id')
-    .eq('therapist_id', effectiveTherapist.therapistSlug)
-    .eq('date', input.date)
-    .eq('time', input.time)
-    .eq('status', 'confirmed')
-    .maybeSingle();
-
-  if (duplicateSlot) {
-    return { success: false, error: 'This time slot is already booked' };
-  }
-
-  const meetResult = await createMeetEvent({
-    summary: `${input.type === 'consultation' ? 'Consultation' : `Session ${sessionNumber ?? ''}`} — ${input.name} × ${effectiveTherapist.therapistName}`,
-    description: `Booking for ${input.name} (${input.email}) with ${effectiveTherapist.therapistName}`,
-    startDateTime: `${input.date}T${input.time}:00`,
-    endDateTime: `${input.date}T${input.time.split(':')[0] + 1}:00:00`,
-    attendeeEmails: [input.email],
-    therapistId: effectiveTherapist.therapistUserId ?? undefined,
-  });
-
-  const bookingType = input.type === 'consultation' ? 'free_consultation' : 'program';
-
-  const { data: booking, error: insertError } = await supabase
-    .from('bookings')
-    .insert({
-      user_id: input.userId ?? null,
-      name: input.name,
-      email: input.email,
-      phone: input.phone ?? '',
-      country: input.country ?? '',
-      therapist_id: effectiveTherapist.therapistSlug,
-      therapist_name: effectiveTherapist.therapistName,
-      therapist_user_id: effectiveTherapist.therapistUserId,
-      date: input.date,
-      time: input.time,
-      type: bookingType,
-      program_id: programId ?? null,
-      meeting_link: meetResult.meetLink,
-      status: 'confirmed',
-      session_number: sessionNumber ?? null,
-      google_calendar_event_id: meetResult.calendarEventId,
-    })
-    .select('id')
-    .single();
-
-  if (insertError || !booking) {
-    console.error('[BookingService] Insert failed:', insertError);
-    return { success: false, error: 'Failed to create booking' };
-  }
-
-  if (input.type === 'program' && programId) {
-    const { error: updateErr } = await supabase
-      .from('programs')
-      .update({
-        used_sessions: sessionNumber!,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', programId);
-
-    if (updateErr) {
-      console.error('[BookingService] Failed to update program used_sessions:', updateErr);
+        .eq('id', session.program_id);
     }
 
-    const { error: sessionErr } = await supabase
-      .from('sessions')
-      .insert({
-        program_id: programId,
-        booking_id: booking.id,
-        client_id: input.userId ?? null,
-        therapist_id: effectiveTherapist.therapistUserId,
-        session_number: sessionNumber!,
-        date: input.date,
-        time: input.time,
-        date_time: toDubaiDateTime(input.date, input.time),
-        meet_link: meetResult.meetLink,
-        status: 'scheduled',
-      });
-
-    if (sessionErr) {
-      console.error('[BookingService] Failed to insert session record:', sessionErr);
+    // Send completion notification
+    if (booking) {
+      this.sendSessionCompletedNotifications(booking).catch((err) =>
+        console.error('[BookingService] Session completed notification error:', err)
+      );
     }
+
+    return { success: true, bookingId: sessionId };
   }
 
-  if (input.type === 'consultation') {
-    const { error: leadErr } = await supabase
-      .from('leads')
-      .insert({
-        name: input.name,
-        email: input.email,
-        mobile: input.phone ?? '',
-        country: input.country ?? '',
-        source: 'consultation_booking',
-      });
-
-    if (leadErr) {
-      console.error('[BookingService] Failed to create lead:', leadErr);
-    }
-  }
-
-  return {
-    success: true,
-    bookingId: booking.id,
-    meetingLink: meetResult.meetLink,
-    sessionNumber,
-    remainingSessions,
-  };
-}
-
-export async function rescheduleBooking(
-  bookingId: string,
-  userId: string,
-  newDate: string,
-  newTime: string
-): Promise<BookingResult> {
-  const supabase = getServiceSupabase();
-
-  if (!isValidSlot(newTime)) {
-    return { success: false, error: `Invalid time slot: ${newTime}` };
-  }
-
-  const { data: booking, error: fetchErr } = await supabase
-    .from('bookings')
-    .select('*')
-    .eq('id', bookingId)
-    .maybeSingle();
-
-  if (fetchErr || !booking) {
-    return { success: false, error: 'Booking not found' };
-  }
-
-  if (booking.user_id !== userId) {
-    return { success: false, error: 'You are not authorized to reschedule this booking' };
-  }
-
-  if (booking.status !== 'confirmed') {
-    return { success: false, error: `Cannot reschedule a booking with status "${booking.status}"` };
-  }
-
-  if (booking.reschedule_count >= MAX_RESCHEDULES) {
-    return { success: false, error: `Maximum reschedule limit (${MAX_RESCHEDULES}) reached` };
-  }
-
-  if (isDubaiWithin24Hours(booking.date, booking.time)) {
-    return { success: false, error: 'Cannot reschedule within 24 hours of the session' };
-  }
-
-  const { data: duplicateSlot } = await supabase
-    .from('bookings')
-    .select('id')
-    .eq('therapist_id', booking.therapist_id)
-    .eq('date', newDate)
-    .eq('time', newTime)
-    .eq('status', 'confirmed')
-    .neq('id', bookingId)
-    .maybeSingle();
-
-  if (duplicateSlot) {
-    return { success: false, error: 'This time slot is already booked' };
-  }
-
-  if (booking.google_calendar_event_id) {
-    await updateMeetEvent(booking.google_calendar_event_id, {
-      startDateTime: `${newDate}T${newTime}:00`,
-      endDateTime: `${newDate}T${newTime.split(':')[0] + 1}:00:00`,
+  // -----------------------------------------------------------------------
+  // purchaseProgram — creates program + sessions (first scheduled if preferredDate)
+  // -----------------------------------------------------------------------
+  async purchaseProgram(input: PurchaseProgramInput): Promise<{ success: boolean; programId?: string; error?: string }> {
+    console.log('[BookingService] purchaseProgram called:', {
+      userId: input.userId,
+      programType: input.programType,
+      preferredDate: input.preferredDate,
+      preferredTime: input.preferredTime,
+      therapistId: input.therapistId,
     });
-  }
 
-  const { error: updateErr } = await supabase
-    .from('bookings')
-    .update({
-      date: newDate,
-      time: newTime,
-      rescheduled_from_date: booking.date,
-      rescheduled_from_time: booking.time,
-      reschedule_count: booking.reschedule_count + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', bookingId);
-
-  if (updateErr) {
-    console.error('[BookingService] Reschedule update failed:', updateErr);
-    return { success: false, error: 'Failed to update booking' };
-  }
-
-  if (booking.program_id) {
-    await supabase
-      .from('sessions')
-      .update({
-        date: newDate,
-        time: newTime,
-        date_time: toDubaiDateTime(newDate, newTime),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('booking_id', bookingId);
-  }
-
-  return {
-    success: true,
-    bookingId,
-    meetingLink: booking.meeting_link ?? undefined,
-  };
-}
-
-export async function cancelBooking(
-  bookingId: string,
-  userId: string
-): Promise<BookingResult> {
-  const supabase = getServiceSupabase();
-
-  const { data: booking, error: fetchErr } = await supabase
-    .from('bookings')
-    .select('*')
-    .eq('id', bookingId)
-    .maybeSingle();
-
-  if (fetchErr || !booking) {
-    return { success: false, error: 'Booking not found' };
-  }
-
-  if (booking.user_id !== userId) {
-    return { success: false, error: 'You are not authorized to cancel this booking' };
-  }
-
-  if (booking.status !== 'confirmed') {
-    return { success: false, error: `Cannot cancel a booking with status "${booking.status}"` };
-  }
-
-  if (isDubaiWithin24Hours(booking.date, booking.time)) {
-    return { success: false, error: 'Cannot cancel within 24 hours of the session' };
-  }
-
-  const { error: updateErr } = await supabase
-    .from('bookings')
-    .update({
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', bookingId);
-
-  if (updateErr) {
-    console.error('[BookingService] Cancel failed:', updateErr);
-    return { success: false, error: 'Failed to cancel booking' };
-  }
-
-  if (booking.program_id) {
-    await supabase
-      .from('sessions')
-      .update({
-        status: 'cancelled',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('booking_id', bookingId);
-
-    const { data: program } = await supabase
+    // Check for existing active program
+    const { data: existing } = await this.supabase
       .from('programs')
-      .select('used_sessions')
-      .eq('id', booking.program_id)
+      .select('id, status, total_sessions, used_sessions')
+      .eq('user_id', input.userId)
+      .in('status', ['pending', 'active'])
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (program && program.used_sessions > 0) {
-      await supabase
-        .from('programs')
-        .update({
-          used_sessions: program.used_sessions - 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', booking.program_id);
+    if (existing) {
+      // For per-session: allow if existing program has no remaining sessions
+      if (input.paymentOption === 'per_session') {
+        const remaining = (existing.total_sessions || 0) - (existing.used_sessions || 0);
+        if (remaining > 0) {
+          console.error('[BookingService] Existing program has remaining sessions:', existing);
+          return { success: false, error: 'You still have sessions remaining in your current program' };
+        }
+        console.log('[BookingService] Existing program depleted, creating new per-session program');
+      } else {
+        console.error('[BookingService] Existing program found:', existing);
+        return { success: false, error: 'You already have an active program' };
+      }
     }
+
+    // Resolve therapist
+    let resolvedTherapistId = input.therapistId ?? null;
+    let resolvedTherapistName = input.therapistName ?? null;
+
+    if (!resolvedTherapistId && resolvedTherapistName) {
+      const resolved = await this.normalizeTherapistId(
+        resolvedTherapistName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      );
+      resolvedTherapistId = resolved?.id ?? null;
+      resolvedTherapistName = resolved?.fullName || resolvedTherapistName;
+    }
+
+    // Create program
+    const { data: program, error: programError } = await this.supabase
+      .from('programs')
+      .insert({
+        user_id: input.userId,
+        therapist_user_id: resolvedTherapistId,
+        therapist_name: resolvedTherapistName || 'Assigned Therapist',
+        total_sessions: input.totalSessions,
+        used_sessions: 0,
+        sessions_completed: 0,
+        status: 'active',
+        payment_id: input.paymentId,
+        program_type: input.programType,
+        price_paid: input.amountAed,
+        client_name: input.clientName,
+        client_email: input.clientEmail,
+        payment_status: input.paymentStatus || 'verified',
+        payment_submitted_at: new Date().toISOString(),
+        payment_verified_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (programError || !program) {
+      console.error('[BookingService] Program creation failed:', programError);
+      return { success: false, error: 'Failed to create program' };
+    }
+
+    // Create sessions — first one scheduled if preferredDate provided
+    const sessions = Array.from({ length: input.totalSessions }, (_, i) => ({
+      program_id: program.id,
+      session_number: i + 1,
+      client_id: input.userId,
+      therapist_id: resolvedTherapistId,
+      date: i === 0 && input.preferredDate ? input.preferredDate : null,
+      time: i === 0 && input.preferredTime ? input.preferredTime : null,
+      date_time: i === 0 && input.preferredDate && input.preferredTime
+        ? toDubaiDateTime(input.preferredDate, input.preferredTime)
+        : null,
+      status: i === 0 && input.preferredDate && input.preferredTime ? 'scheduled' as const : 'pending' as const,
+      is_complete: false,
+      development_form_submitted: false,
+      meet_link: null,
+    }));
+
+    const { error: sessionsError } = await this.supabase.from('sessions').insert(sessions);
+    if (sessionsError) {
+      console.error('[BookingService] Sessions creation failed:', sessionsError);
+    } else {
+      console.log('[BookingService] Sessions created:', sessions.length, 'sessions');
+      console.log('[BookingService] First session:', sessions[0]);
+    }
+
+    // Create initial booking for first session if preferred date provided
+    if (input.preferredDate && input.preferredTime) {
+      console.log('[BookingService] Creating initial booking for first session:', {
+        preferredDate: input.preferredDate,
+        preferredTime: input.preferredTime,
+        programId: program.id,
+        userId: input.userId,
+        resolvedTherapistId,
+      });
+      let meetLink = '';
+      let calendarEventId = '';
+
+      try {
+        const startDateTime = `${input.preferredDate}T${input.preferredTime}:00`;
+        const [hours, minutes] = input.preferredTime.split(':').map(Number);
+        const endHours = Math.min(hours + 1, 23);
+        const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        const endDateTime = `${input.preferredDate}T${endTime}:00`;
+
+        if (resolvedTherapistId) {
+          const result = await createMeetEvent({
+            summary: `NeuroHolistic Session #1 - ${input.clientName}`,
+            description: 'Program session via NeuroHolistic platform',
+            startDateTime,
+            endDateTime,
+            attendeeEmails: [input.clientEmail],
+            therapistId: resolvedTherapistId,
+          });
+          meetLink = result.meetLink;
+          calendarEventId = result.calendarEventId ?? '';
+
+          // Update session with meet link
+          await this.supabase
+            .from('sessions')
+            .update({ meet_link: meetLink, booking_id: null })
+            .eq('program_id', program.id)
+            .eq('session_number', 1);
+        }
+      } catch (err) {
+        console.error('[BookingService] Meet creation for initial booking failed:', err);
+        meetLink = makeFallbackMeetLink();
+      }
+
+      // Create booking record with session_number
+      const { data: newBooking, error: bookingError } = await this.supabase.from('bookings').insert({
+        user_id: input.userId,
+        name: input.clientName,
+        email: input.clientEmail,
+        phone: '',
+        country: '',
+        therapist_id: resolvedTherapistId || 'unknown',
+        therapist_user_id: resolvedTherapistId,
+        therapist_name: resolvedTherapistName || 'Assigned Therapist',
+        date: input.preferredDate,
+        time: input.preferredTime,
+        type: 'program',
+        status: 'scheduled',
+        program_id: program.id,
+        session_number: 1,
+        meeting_link: meetLink || null,
+        google_calendar_event_id: calendarEventId || null,
+      }).select('id').single();
+
+      if (bookingError) {
+        console.error('[BookingService] Booking creation failed:', bookingError);
+      } else {
+        console.log('[BookingService] Booking created successfully:', newBooking?.id);
+      }
+
+      // Link session to booking
+      const { data: createdBooking } = await this.supabase
+        .from('bookings')
+        .select('id')
+        .eq('program_id', program.id)
+        .eq('session_number', 1)
+        .eq('user_id', input.userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (createdBooking) {
+        await this.supabase
+          .from('sessions')
+          .update({ booking_id: createdBooking.id })
+          .eq('program_id', program.id)
+          .eq('session_number', 1);
+      }
+
+      // Create therapist_clients assignment
+      if (resolvedTherapistId) {
+        await this.supabase.from('therapist_clients').upsert(
+          { therapist_id: resolvedTherapistId, client_id: input.userId, status: 'active' },
+          { onConflict: 'therapist_id,client_id' }
+        );
+      }
+    }
+
+    // Assign therapist-client relationship
+    if (resolvedTherapistId) {
+      await this.supabase.from('therapist_clients').upsert(
+        { therapist_id: resolvedTherapistId, client_id: input.userId, status: 'active' },
+        { onConflict: 'therapist_id,client_id' }
+      );
+    }
+
+    return { success: true, programId: program.id };
   }
 
-  return { success: true, bookingId };
+  // -----------------------------------------------------------------------
+  // getTherapistSessions — merged bookings+sessions for therapist dashboard
+  // -----------------------------------------------------------------------
+  async getTherapistSessions(therapistUserId: string, therapistFullName: string | null) {
+    // 1. Fetch bookings
+    let bookingsQuery = this.supabase
+      .from('bookings')
+      .select('*')
+      .order('date', { ascending: true });
+
+    bookingsQuery = bookingsQuery.or(therapistBookingsOrFilter(therapistUserId, therapistFullName));
+
+    const { data: bookings } = await bookingsQuery;
+
+    // 2. Fetch sessions — match by UUID or by therapist name/slug
+    let sessionsQuery = this.supabase
+      .from('sessions')
+      .select('*')
+      .order('date', { ascending: true });
+
+    const sessionFilters = [`therapist_id.eq.${therapistUserId}`];
+    if (therapistFullName) {
+      sessionFilters.push(`therapist_id.eq.${therapistFullName}`);
+      sessionFilters.push(`therapist_id.eq.${generateSlug(therapistFullName)}`);
+    }
+    const { data: sessions } = await sessionsQuery.or(sessionFilters.join(','));
+
+    // 3. Fetch client details
+    const allClientIds = new Set<string>();
+    (bookings ?? []).forEach((b) => { if (b.user_id) allClientIds.add(b.user_id); });
+    (sessions ?? []).forEach((s) => { if (s.client_id) allClientIds.add(s.client_id); });
+
+    let clientMap: Record<string, any> = {};
+    if (allClientIds.size > 0) {
+      const { data: clients } = await this.supabase
+        .from('users')
+        .select('id, full_name, email, phone, country')
+        .in('id', Array.from(allClientIds));
+      clientMap = Object.fromEntries((clients ?? []).map((c) => [c.id, c]));
+    }
+
+    // 4. Fetch assessments
+    const { data: assessments } = await this.supabase
+      .from('diagnostic_assessments')
+      .select('client_id, client_name, status')
+      .eq('therapist_id', therapistUserId)
+      .in('status', ['submitted', 'completed']);
+
+    const assessedClientIds = new Set<string>();
+    const assessedClientNames = new Set<string>();
+    (assessments ?? []).forEach((a: any) => {
+      if (a.client_id) assessedClientIds.add(a.client_id.toLowerCase().trim());
+      if (a.client_name) assessedClientNames.add(a.client_name.toLowerCase().trim());
+    });
+
+    // 5. Combine bookings
+    const combined: any[] = [];
+
+    (bookings ?? []).forEach((booking) => {
+      let hasAssessment = false;
+      if (booking.user_id) hasAssessment = assessedClientIds.has(booking.user_id.toLowerCase().trim());
+      if (!hasAssessment && booking.name) hasAssessment = assessedClientNames.has(booking.name.toLowerCase().trim());
+      if (!hasAssessment && booking.user_id && clientMap[booking.user_id]?.full_name) {
+        hasAssessment = assessedClientNames.has(clientMap[booking.user_id].full_name.toLowerCase().trim());
+      }
+
+      combined.push({
+        id: booking.id,
+        source: 'booking',
+        client_id: booking.user_id,
+        client_name: booking.name,
+        clients: booking.user_id ? clientMap[booking.user_id] : null,
+        date: booking.date,
+        time: booking.time,
+        type: booking.type,
+        status: booking.status,
+        session_number: booking.session_number,
+        meet_link: booking.meeting_link || booking.meet_link,
+        meeting_link: booking.meeting_link || booking.meet_link,
+        program_id: booking.program_id,
+        development_form_submitted: false,
+        assessment_submitted: hasAssessment,
+        is_complete: booking.status === 'completed',
+        reschedule_count: booking.reschedule_count ?? 0,
+        created_at: booking.created_at,
+      });
+    });
+
+    // 6. Merge sessions with bookings
+    (sessions ?? []).forEach((session) => {
+      // First try direct booking_id link
+      let existingIndex = combined.findIndex((s) => s.id === session.booking_id);
+
+      // If no direct link, try matching by program_id + session_number (for unlinked sessions)
+      if (existingIndex < 0 && session.program_id && session.session_number) {
+        existingIndex = combined.findIndex(
+          (s) => s.program_id === session.program_id && s.session_number === session.session_number
+        );
+        if (existingIndex >= 0) {
+          // Auto-link: update session's booking_id in DB for future queries
+          this.supabase
+            .from('sessions')
+            .update({ booking_id: combined[existingIndex].id })
+            .eq('id', session.id)
+            .then(() => {});
+        }
+      }
+
+      if (existingIndex >= 0) {
+        combined[existingIndex] = {
+          ...combined[existingIndex],
+          development_form_submitted: session.development_form_submitted ?? false,
+          is_complete: session.is_complete ?? false,
+          session_status: session.status,
+          meet_link: combined[existingIndex].meet_link || session.meet_link,
+          meeting_link: combined[existingIndex].meeting_link || session.meet_link,
+        };
+      } else if (session.status !== 'pending') {
+        combined.push({
+          id: session.id,
+          source: 'session',
+          client_id: session.client_id,
+          client_name: clientMap[session.client_id]?.full_name || 'Client',
+          clients: session.client_id ? clientMap[session.client_id] : null,
+          date: session.date,
+          time: session.time,
+          type: 'program_session',
+          status: session.status,
+          session_number: session.session_number,
+          meet_link: session.meet_link,
+          meeting_link: session.meet_link,
+          program_id: session.program_id,
+          development_form_submitted: session.development_form_submitted ?? false,
+          is_complete: session.is_complete ?? false,
+          reschedule_count: 0,
+          created_at: session.created_at,
+        });
+      }
+    });
+
+    // 7. Filter to scheduled only (has date+time)
+    const scheduled = combined.filter((s) => s.date && s.time);
+
+    // 8. Dedup free consultations (keep latest per client)
+    const freeBestByKey = new Map<string, any>();
+    for (const s of scheduled) {
+      if (s.type !== 'free_consultation') continue;
+      const key = s.client_id || s.id;
+      const prev = freeBestByKey.get(key);
+      const t = new Date(`${s.date}T${s.time || '00:00'}`).getTime();
+      const pt = prev ? new Date(`${prev.date}T${prev.time || '00:00'}`).getTime() : -1;
+      if (!prev || t >= pt) freeBestByKey.set(key, s);
+    }
+    const keepFreeIds = new Set([...freeBestByKey.values()].map((s) => s.id));
+
+    const deduped = scheduled.filter((s) => {
+      if (s.type !== 'free_consultation') return true;
+      return keepFreeIds.has(s.id);
+    });
+
+    // 9. Dedup program sessions (keep booking source over session source)
+    const sessionSeen = new Map<string, boolean>();
+    const dedupedFinal = deduped.filter((s) => {
+      const key = `${s.program_id || ''}-${s.session_number || ''}`;
+      if (!key || s.type === 'free_consultation') return true;
+      if (sessionSeen.has(key)) return false;
+      sessionSeen.set(key, true);
+      return true;
+    });
+
+    dedupedFinal.sort((a, b) => new Date(a.date || '9999-12-31').getTime() - new Date(b.date || '9999-12-31').getTime());
+
+    return dedupedFinal;
+  }
+
+  // -----------------------------------------------------------------------
+  // getClientSessions — upcoming+past+pending for client dashboard
+  // -----------------------------------------------------------------------
+  async getClientSessions(clientId: string) {
+    // Fetch all bookings
+    let { data: bookings } = await this.supabase
+      .from('bookings')
+      .select('*')
+      .eq('user_id', clientId)
+      .order('date', { ascending: false });
+
+    // Fallback by email
+    if ((!bookings || bookings.length === 0)) {
+      const { data: user } = await this.supabase.from('users').select('email').eq('id', clientId).maybeSingle();
+      if (user?.email) {
+        const { data: emailBookings } = await this.supabase
+          .from('bookings')
+          .select('*')
+          .eq('email', user.email.toLowerCase())
+          .order('date', { ascending: false });
+        bookings = emailBookings;
+      }
+    }
+
+    // Upcoming: confirmed/scheduled and in the future (Dubai timezone)
+    const upcoming = (bookings ?? []).filter((b) => {
+      if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
+      if (!b.date || !b.time) return false;
+      return isUpcomingSession({ date: b.date, time: b.time });
+    });
+
+    console.log('[BookingService] getClientSessions:', {
+      clientId,
+      totalBookings: bookings?.length ?? 0,
+      upcomingCount: upcoming.length,
+      upcomingBookings: upcoming.map(b => ({ id: b.id, date: b.date, time: b.time, status: b.status, type: b.type })),
+    });
+
+    // Past: completed, cancelled, or in the past (Dubai timezone)
+    const past = (bookings ?? []).filter((b) => {
+      if (b.status === 'completed' || b.status === 'cancelled') return true;
+      if (!b.date || !b.time) return true;
+      return isPastSession({ date: b.date, time: b.time });
+    });
+
+    // Pending sessions
+    const { data: pendingSessions } = await this.supabase
+      .from('sessions')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('status', 'pending')
+      .order('session_number', { ascending: true });
+
+    // Build booking->session mapping
+    const { data: allSessions } = await this.supabase
+      .from('sessions')
+      .select('id, booking_id, session_number, status')
+      .eq('client_id', clientId);
+
+    const bookingToSessionMap = new Map<string, string>();
+    const completedSessionIds = new Set<string>();
+
+    (allSessions ?? []).forEach((s: any) => {
+      if (s.booking_id && s.id) bookingToSessionMap.set(s.booking_id, s.id);
+      if (s.status === 'completed' && s.id) completedSessionIds.add(s.id);
+    });
+
+    const addSessionId = (booking: any) => ({
+      ...booking,
+      session_id: bookingToSessionMap.get(booking.id) || null,
+    });
+
+    return {
+      upcomingSessions: upcoming.map(addSessionId),
+      pastSessions: past.map(addSessionId),
+      pendingSessions: pendingSessions ?? [],
+      completedSessionIds: Array.from(completedSessionIds),
+    };
+  }
+
+  // -----------------------------------------------------------------------
+  // getAvailableSlots — single slot generation
+  // -----------------------------------------------------------------------
+  async getAvailableSlots(
+    rawTherapistId: string,
+    date: string
+  ): Promise<{ time: string; display: string }[]> {
+    const resolved = await resolveTherapistUserRow(this.supabase, rawTherapistId);
+
+    // Check for full-day block (any block spanning >= 12 hours)
+    if (resolved) {
+      const { data: blockRows } = await this.supabase
+        .from('therapist_availability')
+        .select('start_time, end_time')
+        .eq('therapist_id', resolved.id)
+        .eq('exception_date', date)
+        .eq('is_blocked', true);
+
+      for (const b of blockRows ?? []) {
+        const bs = b.start_time ?? '00:00';
+        const be = b.end_time ?? '23:59';
+        const startMin = parseTimeToMinutes(bs);
+        const endMin = parseTimeToMinutes(be);
+        if (endMin - startMin >= 720) {
+          return [];
+        }
+      }
+    }
+
+    // Generate base slots from availability
+    const dayOfWeek = getDubaiDayOfWeek(date);
+    const allSlotsSet = new Set<string>();
+
+    if (resolved) {
+      const { data: availRows } = await this.supabase
+        .from('therapist_availability')
+        .select('start_time, end_time, day_of_week, exception_date')
+        .eq('therapist_id', resolved.id)
+        .eq('is_blocked', false)
+        .or(`day_of_week.eq.${dayOfWeek},exception_date.eq.${date}`);
+
+      const windows = (availRows ?? []).filter((row) => {
+        if (row.exception_date === date) return true;
+        if (row.day_of_week === dayOfWeek && !row.exception_date) return true;
+        return false;
+      });
+
+      for (const w of windows) {
+        generateHourlySlotStarts(w.start_time ?? '09:00', w.end_time ?? '17:00').forEach((t) => allSlotsSet.add(t));
+      }
+    }
+
+    let allSlots = Array.from(allSlotsSet).sort((a, b) => a.localeCompare(b));
+
+    // Remove slots overlapping partial-day blocks
+    if (resolved) {
+      const { data: partialBlocks } = await this.supabase
+        .from('therapist_availability')
+        .select('start_time, end_time')
+        .eq('therapist_id', resolved.id)
+        .eq('exception_date', date)
+        .eq('is_blocked', true);
+
+      for (const b of partialBlocks ?? []) {
+        const bs = parseTimeToMinutes(b.start_time ?? '00:00');
+        const be = parseTimeToMinutes(b.end_time ?? '23:59');
+        allSlots = allSlots.filter((slot) => !hourSlotBlocked(parseTimeToMinutes(slot), bs, be));
+      }
+    }
+
+    // Remove booked slots
+    const bookedTimes = new Set<string>();
+
+    if (resolved) {
+      const orBook = therapistBookingsOrFilter(resolved.id, resolved.full_name, rawTherapistId);
+
+      const { data: bookingRows } = await this.supabase
+        .from('bookings')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .or(orBook);
+
+      const { data: sessionRows } = await this.supabase
+        .from('sessions')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .eq('therapist_id', resolved.id);
+
+      for (const b of bookingRows ?? []) {
+        if (b.time) bookedTimes.add(b.time.slice(0, 5));
+      }
+      for (const s of sessionRows ?? []) {
+        if (s.time) bookedTimes.add(s.time.slice(0, 5));
+      }
+    } else {
+      const { data: bookingRows } = await this.supabase
+        .from('bookings')
+        .select('time')
+        .eq('date', date)
+        .neq('status', 'cancelled')
+        .eq('therapist_id', rawTherapistId);
+
+      for (const b of bookingRows ?? []) {
+        if (b.time) bookedTimes.add(b.time.slice(0, 5));
+      }
+    }
+
+    let availableSlots = allSlots.filter((slot) => !bookedTimes.has(slot));
+
+    // Remove past slots for today (Dubai timezone)
+    const dubaiToday = getDubaiToday();
+    if (date === dubaiToday) {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Dubai',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      });
+      const parts = formatter.formatToParts(new Date());
+      const currentHour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10);
+      const currentMinute = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0', 10);
+      const currentMinutes = currentHour * 60 + currentMinute;
+      availableSlots = availableSlots.filter((slot) => parseTimeToMinutes(slot) >= currentMinutes + 60);
+    }
+
+    return availableSlots.map((time) => ({
+      time,
+      display: formatTimeDisplay(time),
+    }));
+  }
+
+  // -----------------------------------------------------------------------
+  // Private notification helpers
+  // -----------------------------------------------------------------------
+
+  private async sendBookingNotifications(
+    bookingId: string,
+    input: CreateBookingInput,
+    therapistName: string,
+    meetLink: string
+  ) {
+    const formattedDate = new Date(`${input.date}T00:00:00`).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    });
+    const hr = parseInt(input.time.split(':')[0], 10);
+    const min = input.time.split(':')[1];
+    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+
+    // Get therapist email
+    let therapistEmail: string | null = null;
+    if (input.therapistId && UUID_REGEX.test(input.therapistId)) {
+      const { data: tUser } = await this.supabase
+        .from('users')
+        .select('email')
+        .eq('id', input.therapistId)
+        .maybeSingle();
+      therapistEmail = tUser?.email ?? null;
+    }
+
+    const booking: NotificationBooking = {
+      id: bookingId,
+      clientName: input.name,
+      clientEmail: input.email,
+      clientPhone: input.phone,
+      therapistName,
+      therapistEmail,
+      sessionDate: formattedDate,
+      sessionTime: formattedTime,
+      meetingLink: meetLink || null,
+      sessionNumber: input.sessionNumber ?? undefined,
+      type: input.type,
+    };
+
+    await notifyBookingConfirmed(booking);
+  }
+
+  private async sendRescheduleNotifications(
+    booking: any,
+    newDate: string,
+    newTime: string,
+    meetLink: string | null
+  ) {
+    const formattedDate = new Date(`${newDate}T00:00:00`).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    });
+    const hr = parseInt(newTime.split(':')[0], 10);
+    const min = newTime.split(':')[1];
+    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+
+    let therapistEmail: string | null = null;
+    if (booking.therapist_user_id) {
+      const { data: tUser } = await this.supabase
+        .from('users')
+        .select('email')
+        .eq('id', booking.therapist_user_id)
+        .maybeSingle();
+      therapistEmail = tUser?.email ?? null;
+    }
+
+    const notifBooking: NotificationBooking = {
+      id: booking.id,
+      clientName: booking.name,
+      clientEmail: booking.email,
+      clientPhone: booking.phone,
+      therapistName: booking.therapist_name,
+      therapistEmail,
+      sessionDate: formattedDate,
+      sessionTime: formattedTime,
+      meetingLink: meetLink,
+      sessionNumber: booking.session_number,
+      type: booking.type,
+    };
+
+    await notifyRescheduled(notifBooking);
+  }
+
+  private async sendCancelNotifications(booking: any) {
+    const formattedDate = new Date(`${booking.date}T00:00:00`).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    });
+    const hr = parseInt(booking.time.split(':')[0], 10);
+    const min = booking.time.split(':')[1];
+    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+
+    let therapistEmail: string | null = null;
+    if (booking.therapist_user_id) {
+      const { data: tUser } = await this.supabase
+        .from('users')
+        .select('email')
+        .eq('id', booking.therapist_user_id)
+        .maybeSingle();
+      therapistEmail = tUser?.email ?? null;
+    }
+
+    const notifBooking: NotificationBooking = {
+      id: booking.id,
+      clientName: booking.name,
+      clientEmail: booking.email,
+      clientPhone: booking.phone,
+      therapistName: booking.therapist_name,
+      therapistEmail,
+      sessionDate: formattedDate,
+      sessionTime: formattedTime,
+      meetingLink: booking.meeting_link,
+      sessionNumber: booking.session_number,
+      type: booking.type,
+    };
+
+    await notifyCancelled(notifBooking);
+  }
+
+  private async sendSessionCompletedNotifications(booking: any) {
+    const formattedDate = new Date(`${booking.date}T00:00:00`).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    });
+    const hr = parseInt(booking.time.split(':')[0], 10);
+    const min = booking.time.split(':')[1];
+    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
+
+    let therapistEmail: string | null = null;
+    if (booking.therapist_user_id) {
+      const { data: tUser } = await this.supabase
+        .from('users')
+        .select('email')
+        .eq('id', booking.therapist_user_id)
+        .maybeSingle();
+      therapistEmail = tUser?.email ?? null;
+    }
+
+    const notifBooking: NotificationBooking = {
+      id: booking.id,
+      clientName: booking.name,
+      clientEmail: booking.email,
+      clientPhone: booking.phone,
+      therapistName: booking.therapist_name || 'Your Therapist',
+      therapistEmail,
+      sessionDate: formattedDate,
+      sessionTime: formattedTime,
+      meetingLink: booking.meeting_link,
+      sessionNumber: booking.session_number,
+      type: booking.type,
+    };
+
+    await notifySessionCompleted(notifBooking);
+  }
 }
 
-export async function getAvailableSlots(
-  therapistId: string | null,
-  therapistUserId: string | null,
-  date: string,
-  excludeBookingId?: string
-): Promise<string[]> {
-  const supabase = getServiceSupabase();
-
-  let query = supabase
-    .from('bookings')
-    .select('time')
-    .eq('date', date)
-    .eq('status', 'confirmed');
-
-  if (therapistId) {
-    query = query.eq('therapist_id', therapistId);
-  } else if (therapistUserId) {
-    query = query.eq('therapist_user_id', therapistUserId);
-  }
-
-  if (excludeBookingId) {
-    query = query.neq('id', excludeBookingId);
-  }
-
-  const { data: bookedSlots } = await query;
-  const takenTimes = new Set((bookedSlots ?? []).map((b) => b.time));
-
-  return BOOKING_TIME_SLOTS.filter((slot) => !takenTimes.has(slot));
+function formatTimeDisplay(time: string): string {
+  const [h, m] = time.split(':');
+  const hr = parseInt(h, 10);
+  return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
 }

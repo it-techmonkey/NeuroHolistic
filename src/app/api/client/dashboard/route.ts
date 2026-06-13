@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
+import { BookingService } from '@/lib/services/booking.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,114 +15,58 @@ export async function GET(request: NextRequest) {
     const supabase = getServiceSupabase();
     const clientId = user.id;
 
-    // Get user email for fallback lookup
-    const userEmail = user.email?.toLowerCase();
+    // Get sessions from BookingService
+    const service = new BookingService();
+    const { upcomingSessions, pastSessions, pendingSessions, completedSessionIds } =
+      await service.getClientSessions(clientId);
 
-    // 1. Fetch all bookings for this client (by user_id or email fallback)
-    let { data: bookings } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('user_id', clientId)
-      .order('date', { ascending: false });
-
-    // If no bookings found by user_id, try by email (for bookings made before user_id was set)
-    if ((!bookings || bookings.length === 0) && userEmail) {
-      const { data: emailBookings } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('email', userEmail)
-        .order('date', { ascending: false });
-      bookings = emailBookings;
-    }
-
-    const now = new Date();
-    
-    // Upcoming: confirmed or scheduled and in the future (or today with future time)
-    const upcomingBookings = (bookings ?? []).filter(b => {
-      if (b.status !== 'confirmed' && b.status !== 'scheduled') return false;
-      const bookingDateTime = new Date(`${b.date}T${b.time}`);
-      return bookingDateTime >= now;
-    });
-    
-    // Past: completed, cancelled, or in the past
-    const pastBookings = (bookings ?? []).filter(b => {
-      if (b.status === 'completed' || b.status === 'cancelled') return true;
-      const bookingDateTime = new Date(`${b.date}T${b.time}`);
-      return bookingDateTime < now;
-    });
-    
-    // 1.1 Fetch pending sessions for active programs
-    const { data: pendingSessions } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('client_id', clientId)
-      .eq('status', 'pending')
-      .order('session_number', { ascending: true });
-
-    // 1.2 Fetch all sessions to build mappings
-    const { data: allClientSessionsFull } = await supabase
-      .from('sessions')
-      .select('id, booking_id, session_number, status')
-      .eq('client_id', clientId);
-
-    // Build booking_id -> session_id mapping
-    const bookingToSessionMap = new Map<string, string>();
-    // Build set of completed session IDs for filtering
-    const completedSessionIds = new Set<string>();
-    
-    (allClientSessionsFull ?? []).forEach((s: any) => {
-      if (s.booking_id && s.id) {
-        bookingToSessionMap.set(s.booking_id, s.id);
-      }
-      if (s.status === 'completed' && s.id) {
-        completedSessionIds.add(s.id);
-      }
+    console.log('[Client Dashboard] Session data:', {
+      clientId,
+      upcomingCount: upcomingSessions.length,
+      pastCount: pastSessions.length,
+      pendingCount: pendingSessions.length,
+      upcomingSessions: upcomingSessions.map(s => ({ id: s.id, date: s.date, time: s.time, status: s.status })),
     });
 
-    // Add session_id to bookings for document filtering
-    const addSessionId = (booking: any) => ({
-      ...booking,
-      session_id: bookingToSessionMap.get(booking.id) || null,
-    });
-
-    // 2. Fetch diagnostic assessments
+    // Fetch diagnostic assessments
     const { data: assessments } = await supabase
       .from('diagnostic_assessments')
       .select('*')
       .eq('client_id', clientId)
       .order('assessed_at', { ascending: true });
 
-    // 2. Build session_number lookup map from already fetched sessions
+    // Fetch all sessions for session_number mapping
+    const { data: allClientSessionsFull } = await supabase
+      .from('sessions')
+      .select('id, booking_id, session_number, status')
+      .eq('client_id', clientId);
+
     const sessionNumberMap = new Map<string, number>();
     (allClientSessionsFull ?? []).forEach((s: any) => {
-      if (s.id && s.session_number) {
-        sessionNumberMap.set(s.id, s.session_number);
-      }
+      if (s.id && s.session_number) sessionNumberMap.set(s.id, s.session_number);
     });
 
-    // 3. Fetch session development forms (strip therapist_internal_notes)
+    // Fetch session development forms
     const { data: devFormsRaw } = await supabase
       .from('session_development_forms')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: true });
 
-    // Filter dev forms to only include those from completed sessions
-    // Strip therapist_internal_notes and add session_number from map
     const devForms = (devFormsRaw ?? [])
-      .filter((form: any) => completedSessionIds.has(form.session_id))
+      .filter((form: any) => completedSessionIds.includes(form.session_id))
       .map(({ therapist_internal_notes, ...rest }: any) => ({
         ...rest,
         session_number: sessionNumberMap.get(rest.session_id) ?? null,
       }));
 
-    // 5. Fetch session materials - get all session IDs for this client
+    // Fetch session materials
     const { data: clientSessions } = await supabase
       .from('sessions')
       .select('id')
       .eq('client_id', clientId)
       .eq('status', 'completed');
-    
+
     const sessionIds = (clientSessions ?? []).map((s: any) => s.id);
     let materials: any[] = [];
     if (sessionIds.length > 0) {
@@ -133,7 +78,7 @@ export async function GET(request: NextRequest) {
       materials = materialsData ?? [];
     }
 
-    // 5. Fetch therapist info
+    // Fetch therapist info
     const { data: therapistAssignment } = await supabase
       .from('therapist_clients')
       .select('therapist_id')
@@ -152,7 +97,7 @@ export async function GET(request: NextRequest) {
       therapistInfo = therapist;
     }
 
-    // 6. Fetch active program
+    // Fetch active program
     const { data: program } = await supabase
       .from('programs')
       .select('*')
@@ -162,7 +107,7 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // 6.0 Fetch pending program (payment awaiting admin verification)
+    // Fetch pending program
     const { data: pendingProgram } = await supabase
       .from('programs')
       .select('*')
@@ -173,7 +118,7 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // 6.1 Fetch completed programs for users who finished all sessions
+    // Fetch completed programs
     const { data: completedPrograms } = await supabase
       .from('programs')
       .select('*')
@@ -181,7 +126,7 @@ export async function GET(request: NextRequest) {
       .eq('status', 'completed')
       .order('created_at', { ascending: false });
 
-    // 7. Build progress data - only from assessments (dev forms use different schema)
+    // Build progress data
     const progressData = [
       ...(assessments ?? []).map(a => ({
         date: a.assessed_at ?? a.created_at,
@@ -198,16 +143,29 @@ export async function GET(request: NextRequest) {
       })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // 6.2 Determine user's program status for UI
-    const hasCompletedFreeConsult = (bookings ?? []).some(b =>
+    // Calculate remaining sessions for active program
+    const activeSessionsRemaining = program
+      ? (program.total_sessions || 0) - (program.used_sessions || 0)
+      : 0;
+    const pendingSessionsRemaining = pendingProgram
+      ? (pendingProgram.total_sessions || 0) - (pendingProgram.used_sessions || 0)
+      : 0;
+    const sessionsRemaining = activeSessionsRemaining || pendingSessionsRemaining;
+    const canPurchasePerSession = !program && !pendingProgram || sessionsRemaining <= 0;
+
+    // Determine program status
+    const { data: allBookings } = await supabase
+      .from('bookings')
+      .select('type, status')
+      .eq('user_id', clientId);
+
+    const hasCompletedFreeConsult = (allBookings ?? []).some(b =>
       b.type === 'free_consultation' && b.status === 'completed'
     );
 
-    // Check if there's a booked free consultation that's not completed yet
-    const bookedFreeConsult = (bookings ?? []).find(b =>
+    const bookedFreeConsult = (allBookings ?? []).find(b =>
       b.type === 'free_consultation' && (b.status === 'confirmed' || b.status === 'scheduled')
     );
-    const hasBookedFreeConsult = !!bookedFreeConsult;
 
     const hasActiveProgram = !!program;
     const hasPendingProgram = !!pendingProgram;
@@ -215,29 +173,16 @@ export async function GET(request: NextRequest) {
       p.used_sessions >= p.total_sessions
     );
 
-    // Determine what action user should see
     let programStatus = 'none';
-    if (hasActiveProgram) {
-      programStatus = 'active';
-    } else if (hasPendingProgram) {
-      programStatus = 'pending_verification';
-    } else if (hasCompletedAllSessions) {
-      programStatus = 'completed';
-    } else if (hasCompletedFreeConsult) {
-      programStatus = 'consultation_done';
-    }
-
-    // Debug info - remove in production
-    const allPrograms = await supabase
-      .from('programs')
-      .select('id, status, used_sessions, total_sessions, created_at')
-      .eq('user_id', clientId)
-      .order('created_at', { ascending: false });
+    if (hasActiveProgram) programStatus = 'active';
+    else if (hasPendingProgram) programStatus = 'pending_verification';
+    else if (hasCompletedAllSessions) programStatus = 'completed';
+    else if (hasCompletedFreeConsult) programStatus = 'consultation_done';
 
     return NextResponse.json({
-      upcomingSessions: upcomingBookings.map(addSessionId),
-      pastSessions: pastBookings.map(addSessionId),
-      pendingSessions: pendingSessions ?? [],
+      upcomingSessions,
+      pastSessions,
+      pendingSessions,
       materials,
       progress: progressData,
       assessments: assessments ?? [],
@@ -255,18 +200,14 @@ export async function GET(request: NextRequest) {
         createdAt: pendingProgram.created_at,
       } : null,
       completedPrograms: completedPrograms ?? [],
-      programStatus, // 'active', 'pending_verification', 'completed', 'consultation_done', or 'none'
+      programStatus,
       hasCompletedFreeConsult,
-      hasBookedFreeConsult,
-      bookedFreeConsult: bookedFreeConsult ? addSessionId(bookedFreeConsult) : null, // The booking details for the upcoming consultation
+      hasBookedFreeConsult: !!bookedFreeConsult,
+      bookedFreeConsult: bookedFreeConsult ? { ...bookedFreeConsult } : null,
       hasCompletedAllSessions,
-      completedSessionIds: Array.from(completedSessionIds), // For filtering documents on client side
-      debug: {
-        allPrograms: allPrograms.data || [],
-        activeProgram: program || null,
-        pendingProgram: pendingProgram || null,
-        completedProgramsCount: (completedPrograms ?? []).length,
-      },
+      completedSessionIds,
+      sessionsRemaining,
+      canPurchasePerSession,
     });
   } catch (error) {
     console.error('[Client Dashboard]', error);

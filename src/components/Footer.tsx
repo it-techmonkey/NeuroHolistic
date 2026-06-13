@@ -75,10 +75,10 @@ export default function Footer() {
             <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
               {t.footer.index01}
             </span>
-            <ul className="space-y-4">
+            <ul className="space-y-1">
               {NAV_INDEX.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                  <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                     {link.label}
                   </Link>
                 </li>
@@ -91,19 +91,19 @@ export default function Footer() {
             <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
               {t.footer.registry02}
             </span>
-            <ul className="space-y-4">
+            <ul className="space-y-1">
               {PROGRAM_INDEX.map((link) => (
                 <li key={link.label}>
                   {"onClick" in link && link.onClick ? (
                     <button
                       type="button"
                       onClick={link.onClick}
-                      className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 text-left"
+                      className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 text-left py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5"
                     >
                       {link.label}
                     </button>
                   ) : (
-                    <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300">
+                    <Link href={link.href} className="text-[14px] text-slate-400 hover:text-white transition-colors duration-300 py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                       {link.label}
                     </Link>
                   )}
@@ -117,21 +117,21 @@ export default function Footer() {
             <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8 block">
               {t.footer.contact03}
             </span>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-2">
-                <a href={`mailto:${CONTACT_INFO.email}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <a href={`mailto:${CONTACT_INFO.email}`} className="text-[14px] text-slate-400 hover:text-white transition-colors py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                   {CONTACT_INFO.email}
                 </a>
-                <a href={`mailto:${CONTACT_INFO.supportEmail}`} className="text-[14px] text-slate-400 hover:text-white transition-colors border-b border-white/10 pb-1 w-fit">
+                <a href={`mailto:${CONTACT_INFO.supportEmail}`} className="text-[14px] text-slate-400 hover:text-white transition-colors py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                   {CONTACT_INFO.supportEmail}
                 </a>
               </div>
-              <div className="flex flex-col gap-2">
-                <a href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer" className="text-[13px] text-slate-400 hover:text-white transition-colors w-fit">
+              <div className="flex flex-col gap-1">
+                <a href={CONTACT_INFO.whatsapp.href} target="_blank" rel="noreferrer" className="text-[13px] text-slate-400 hover:text-white transition-colors py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                   WhatsApp: {CONTACT_INFO.whatsapp.label}
                 </a>
                 {CONTACT_INFO.mobiles.map((mobile, index) => (
-                  <a key={mobile.href} href={mobile.href} className="text-[13px] text-slate-400 hover:text-white transition-colors w-fit">
+                  <a key={mobile.href} href={mobile.href} className="text-[13px] text-slate-400 hover:text-white transition-colors py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
                     Mobile {index + 1}: {mobile.label}
                   </a>
                 ))}
@@ -155,11 +155,11 @@ export default function Footer() {
             </span>
           </div>
 
-          <div className="flex gap-10">
-            <Link href="/privacy" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
+          <div className="flex gap-2">
+            <Link href="/privacy" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors py-2 px-3 min-h-[44px] inline-flex items-center rounded-lg hover:bg-white/5">
               {t.footer.privacyProtocol}
             </Link>
-            <Link href="/terms" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
+            <Link href="/terms" className="font-mono text-[10px] uppercase tracking-widest text-slate-500 hover:text-white transition-colors py-2 px-3 min-h-[44px] inline-flex items-center rounded-lg hover:bg-white/5">
               {t.footer.termsOfService}
             </Link>
           </div>

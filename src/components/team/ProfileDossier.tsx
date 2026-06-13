@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { publicImageSrc } from "@/lib/public-image";
 import { useLang } from "@/lib/translations/LanguageContext";
+import MobileBackButton from "@/components/MobileBackButton";
 import type { TeamProfile } from "./team-profiles";
 
 export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
@@ -21,11 +22,17 @@ export default function ProfileDossier({ profile }: { profile: TeamProfile }) {
   const bookSession = isArabic ? "احجز جلسة" : "Book a Session";
   const testimonialHeading = isArabic ? "آراء العملاء" : "Testimonial";
   const founderLabel = isArabic ? "المؤسسة" : "Founder";
+  const backToTeam = isArabic ? "العودة للفريق" : "Back to Team";
 
   return (
     <article className="bg-white">
+      {/* ── Mobile Back Button ── */}
+      <div className="fixed top-16 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-2 md:hidden">
+        <MobileBackButton href="/team" label={backToTeam} />
+      </div>
+
       {/* ── Top Spread ── */}
-      <section className="py-20 md:py-32 lg:py-40">
+      <section className="pt-28 md:pt-20 lg:pt-40">
         <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
           <div className="grid grid-cols-1 items-start gap-12 sm:gap-16 lg:grid-cols-12 lg:gap-24">
             
