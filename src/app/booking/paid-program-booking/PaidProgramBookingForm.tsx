@@ -232,7 +232,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
           <span className="text-lg text-slate-400 line-through">{original.toLocaleString()}</span>
         )}
         <span className={`text-4xl font-bold ${isDiscounted ? 'text-indigo-600' : 'text-slate-900'}`}>
-          {discounted.toLocaleString()}
+          {isArabic ? 'يبدأ من' : 'From'} {discounted.toLocaleString()}
         </span>
         <span className="text-slate-500 text-base">{isArabic ? 'درهم إماراتي' : 'AED'}</span>
         {isDiscounted && (
