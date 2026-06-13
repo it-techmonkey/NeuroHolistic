@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Mail, Shield } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -74,16 +74,31 @@ export default function ForgotPasswordPage() {
           </div>
 
           {success ? (
-            <div className="p-6 bg-emerald-50 border border-emerald-100 space-y-4">
-              <p className="text-sm text-emerald-900 font-medium">
-                ✓ Password reset link sent
-              </p>
-              <p className="text-xs text-emerald-700 leading-relaxed">
-                Check your email for a link to reset your password. If you don't see it, check your spam folder.
-              </p>
+            <div className="space-y-4">
+              <div className="p-6 bg-emerald-50 border border-emerald-100 space-y-4">
+                <p className="text-sm text-emerald-900 font-medium">
+                  ✓ Password reset link sent
+                </p>
+                <p className="text-xs text-emerald-700 leading-relaxed">
+                  Check your email for a link to reset your password. If you don't see it, check your spam folder.
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">Are you a therapist or admin?</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      If you don't receive the email (e.g. using a non-personal address), contact your administrator to reset your password directly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Link
                 href="/auth/login"
-                className="block text-xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                className="block text-center text-xs font-semibold text-slate-900 hover:text-indigo-600 underline underline-offset-4 pt-2"
               >
                 Return to Login
               </Link>
@@ -103,6 +118,22 @@ export default function ForgotPasswordPage() {
                   className={inputClass}
                   placeholder="you@example.com"
                 />
+              </div>
+
+              {/* Role-based hints */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                  <Mail className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    <span className="font-semibold">Clients:</span> A reset link will be sent to your email address.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+                  <Shield className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-violet-700 leading-relaxed">
+                    <span className="font-semibold">Therapists & admins:</span> If your email isn't a personal inbox, contact your administrator for a direct password reset.
+                  </p>
+                </div>
               </div>
 
               {error && (

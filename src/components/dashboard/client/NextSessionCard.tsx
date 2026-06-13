@@ -44,7 +44,6 @@ export default function NextSessionCard({ session, canScheduleNext, nextSessionN
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Action Required
           </div>
-          http://localhost:3000/booking/schedule-session
           <h3 className="text-2xl font-bold mb-2">
             Schedule Session {nextSessionNumber ?? ''}
           </h3>

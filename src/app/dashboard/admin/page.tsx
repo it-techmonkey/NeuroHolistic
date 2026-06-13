@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { AdminData } from '@/components/dashboard/admin/tabs/types';
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, Activity,
-  Loader2, RefreshCw, LogOut, CreditCard, Award, Percent
+  Loader2, RefreshCw, LogOut, CreditCard, Award, Percent, UserCircle
 } from 'lucide-react';
 import OverviewTab from '@/components/dashboard/admin/tabs/OverviewTab';
 import UsersTab from '@/components/dashboard/admin/tabs/UsersTab';
@@ -17,6 +17,7 @@ import SessionsTab from '@/components/dashboard/admin/tabs/SessionsTab';
 import PaymentsTab from '@/components/dashboard/admin/tabs/PaymentsTab';
 import CertificatesTab from '@/components/dashboard/admin/tabs/CertificatesTab';
 import DiscountsTab from '@/components/dashboard/admin/tabs/DiscountsTab';
+import Account from '@/components/dashboard/client/Account';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -27,6 +28,7 @@ const tabs = [
   { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'discounts', label: 'Discounts', icon: Percent },
   { id: 'certificates', label: 'Certificates', icon: Award },
+  { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
 
 export default function AdminDashboardPage() {
@@ -36,6 +38,7 @@ export default function AdminDashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [data, setData] = useState<AdminData | null>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
   const [error, setError] = useState('');
 
   const fetchData = useCallback(async () => {
@@ -54,8 +57,9 @@ export default function AdminDashboardPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/auth/login'); return; }
-      const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single();
+      const { data: userData } = await supabase.from('users').select('role, full_name, email, phone, country').eq('id', user.id).single();
       if (userData?.role !== 'admin') { router.push('/dashboard/client'); return; }
+      setAdminUser({ ...userData, id: user.id });
       setIsAdmin(true);
       await fetchData();
       setLoading(false);
@@ -177,6 +181,18 @@ export default function AdminDashboardPage() {
         {activeTab === 'payments' && <PaymentsTab />}
         {activeTab === 'discounts' && <DiscountsTab />}
         {activeTab === 'certificates' && <CertificatesTab data={data} />}
+        {activeTab === 'profile' && adminUser && (
+          <Account user={{
+            user_metadata: {
+              full_name: adminUser.full_name || '',
+              first_name: adminUser.full_name?.split(' ')[0] || '',
+              last_name: adminUser.full_name?.split(' ').slice(1).join(' ') || '',
+              phone: adminUser.phone || '',
+              country: adminUser.country || '',
+            },
+            email: adminUser.email || '',
+          }} />
+        )}
       </main>
     </div>
   );

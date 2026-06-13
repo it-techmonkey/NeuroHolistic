@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Users, Search, Filter, UserCheck, Shield, GraduationCap } from 'lucide-react';
+import { Users, Search, Filter, UserCheck, Shield, GraduationCap, Key, X, Copy, Check } from 'lucide-react';
 import type { AdminData } from './types';
 
 type RoleFilter = 'all' | 'client' | 'therapist' | 'admin';
@@ -12,9 +12,20 @@ const roleBadgeClasses: Record<string, string> = {
   admin: 'bg-amber-50 text-amber-700 border border-amber-200',
 };
 
+interface ResetResult {
+  tempPassword: string;
+  user: { id: string; email: string; name: string; role: string };
+}
+
 export default function UsersTab({ data }: { data: AdminData }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetResult, setResetResult] = useState<ResetResult | null>(null);
+  const [resetError, setResetError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const filteredUsers = useMemo(() => {
     return data.users.filter((user) => {
@@ -37,6 +48,44 @@ export default function UsersTab({ data }: { data: AdminData }) {
     { label: 'Therapists', value: 'therapist', count: stats.therapist },
     { label: 'Admins', value: 'admin', count: stats.admin },
   ];
+
+  const openResetModal = (user: { id: string; fullName?: string; email: string }) => {
+    setResetTarget({ id: user.id, name: user.fullName || 'Unnamed', email: user.email });
+    setResetResult(null);
+    setResetError('');
+    setCopied(false);
+    setResetModalOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetTarget) return;
+    setResetLoading(true);
+    setResetError('');
+    setResetResult(null);
+
+    try {
+      const res = await fetch('/api/admin/users/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: resetTarget.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+      setResetResult(data);
+    } catch (err: any) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const copyPassword = () => {
+    if (resetResult?.tempPassword) {
+      navigator.clipboard.writeText(resetResult.tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -97,12 +146,13 @@ export default function UsersTab({ data }: { data: AdminData }) {
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Programs</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500 font-medium">No users found</p>
                   </td>
@@ -142,6 +192,16 @@ export default function UsersTab({ data }: { data: AdminData }) {
                     <td className="px-4 py-3 text-slate-500">
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => openResetModal(user)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                        title={`Reset password for ${user.fullName || user.email}`}
+                      >
+                        <Key className="w-3 h-3" />
+                        Reset
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -154,6 +214,96 @@ export default function UsersTab({ data }: { data: AdminData }) {
         <p className="text-xs text-slate-400 text-center">
           Showing {filteredUsers.length} of {data.users.length} users
         </p>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetModalOpen && resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !resetLoading && setResetModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Reset Password</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{resetTarget.name} &mdash; {resetTarget.email}</p>
+              </div>
+              <button
+                onClick={() => setResetModalOpen(false)}
+                disabled={resetLoading}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {!resetResult ? (
+                <>
+                  <p className="text-sm text-slate-600">
+                    This will generate a new temporary password for this user. Share it securely with them.
+                  </p>
+
+                  {resetError && (
+                    <div className="text-xs text-red-600 bg-red-50 p-3 border-l-2 border-red-500">
+                      {resetError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setResetModalOpen(false)}
+                      disabled={resetLoading}
+                      className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleResetPassword}
+                      disabled={resetLoading}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50"
+                    >
+                      {resetLoading ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Key className="w-4 h-4" />
+                      )}
+                      {resetLoading ? 'Generating...' : 'Generate New Password'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-medium text-emerald-800">
+                      New password generated successfully
+                    </p>
+                    <div className="flex items-center gap-2 bg-white rounded-lg border border-emerald-200 px-3 py-2.5">
+                      <code className="flex-1 text-sm font-mono text-slate-900 break-all select-all">
+                        {resetResult.tempPassword}
+                      </code>
+                      <button
+                        onClick={copyPassword}
+                        className="shrink-0 p-1.5 text-slate-400 hover:text-emerald-600 rounded-md transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-emerald-700">
+                      Share this password securely with {resetTarget.name}. They can change it from their profile after logging in.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setResetModalOpen(false)}
+                    className="w-full px-4 py-2.5 text-sm font-medium text-white bg-[#2B2F55] rounded-xl hover:bg-[#1E2140] transition-colors"
+                  >
+                    Done
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -14,7 +14,7 @@ import {
   notifySessionCompleted,
   type NotificationBooking,
 } from '@/lib/services/notification.service';
-import { toDubaiDateTime, isUpcomingSession, isPastSession, getDubaiToday } from '@/lib/booking/session-flow';
+import { toDubaiDateTime, isUpcomingSession, isPastSession, getDubaiToday, getDubaiDayOfWeek } from '@/lib/booking/session-flow';
 import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
 import { generateSlug, therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
 import { generateHourlySlotStarts, defaultHourlyBookingSlots } from '@/lib/bookings/therapist-scope';
@@ -1066,7 +1066,7 @@ export class BookingService {
     }
 
     // Generate base slots from availability
-    const dayOfWeek = new Date(`${date}T12:00:00`).getDay();
+    const dayOfWeek = getDubaiDayOfWeek(date);
     const allSlotsSet = new Set<string>();
 
     if (resolved) {
@@ -1083,15 +1083,9 @@ export class BookingService {
         return false;
       });
 
-      if (windows.length > 0) {
-        for (const w of windows) {
-          generateHourlySlotStarts(w.start_time ?? '09:00', w.end_time ?? '17:00').forEach((t) => allSlotsSet.add(t));
-        }
-      } else {
-        defaultHourlyBookingSlots().forEach((t) => allSlotsSet.add(t));
+      for (const w of windows) {
+        generateHourlySlotStarts(w.start_time ?? '09:00', w.end_time ?? '17:00').forEach((t) => allSlotsSet.add(t));
       }
-    } else {
-      defaultHourlyBookingSlots().forEach((t) => allSlotsSet.add(t));
     }
 
     let allSlots = Array.from(allSlotsSet).sort((a, b) => a.localeCompare(b));
