@@ -44,6 +44,7 @@ import GoogleCalendarConnect from '@/components/settings/GoogleCalendarConnect';
 import ProgressComparison from '@/components/dashboard/therapist/ProgressComparison';
 import ArchiveTab from '@/components/dashboard/therapist/Archive';
 import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
+import Account from '@/components/dashboard/client/Account';
 import { isUpcomingSession, isPastSession, getDubaiToday } from '@/lib/booking/session-flow';
 
 // Types
@@ -124,7 +125,7 @@ type DashboardStats = {
   pendingAssessments: number;
 };
 
-type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive';
+type ViewMode = 'overview' | 'clients' | 'sessions' | 'archive' | 'account';
 const MAX_SEVERITY = 60;
 const toReadinessScore = (severity: number) =>
   Math.max(0, Math.min(MAX_SEVERITY, MAX_SEVERITY - severity));
@@ -632,6 +633,7 @@ export default function TherapistDashboardPage() {
                 { id: 'clients' as ViewMode, label: 'Clients', icon: Users },
                 { id: 'sessions' as ViewMode, label: 'Sessions', icon: Calendar },
                 { id: 'archive' as ViewMode, label: 'Archive', icon: FileText },
+                { id: 'account' as ViewMode, label: 'Profile', icon: UserCircle },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -684,7 +686,7 @@ export default function TherapistDashboardPage() {
                     Google Calendar
                   </button>
                   <button
-                    onClick={() => { setShowAccountMenu(false); }}
+                    onClick={() => { setShowAccountMenu(false); setViewMode('account'); }}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <UserCircle className="w-4 h-4" />
@@ -714,6 +716,7 @@ export default function TherapistDashboardPage() {
             { id: 'clients' as ViewMode, label: 'Clients' },
             { id: 'sessions' as ViewMode, label: 'Sessions' },
             { id: 'archive' as ViewMode, label: 'Archive' },
+            { id: 'account' as ViewMode, label: 'Profile' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1178,6 +1181,20 @@ export default function TherapistDashboardPage() {
         {/* ARCHIVE VIEW */}
         {viewMode === 'archive' && therapistId && (
           <ArchiveTab therapistId={therapistId} />
+        )}
+
+        {/* ACCOUNT VIEW */}
+        {viewMode === 'account' && (
+          <Account user={{
+            user_metadata: {
+              full_name: therapistInfo?.full_name || '',
+              first_name: therapistInfo?.full_name?.split(' ')[0] || '',
+              last_name: therapistInfo?.full_name?.split(' ').slice(1).join(' ') || '',
+              phone: therapistInfo?.phone || '',
+              country: therapistInfo?.country || '',
+            },
+            email: therapistInfo?.email || '',
+          }} />
         )}
       </div>
 

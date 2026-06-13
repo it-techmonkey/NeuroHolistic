@@ -65,3 +65,15 @@ export function toDubaiDateTime(date: string, time: string) {
 export function getDubaiToday(reference = new Date()) {
   return getDubaiNowParts(reference).date;
 }
+
+export function getDubaiDayOfWeek(dateStr: string): number {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Dubai',
+    weekday: 'short',
+  });
+  const weekday = formatter.format(date);
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return map[weekday] ?? date.getDay();
+}

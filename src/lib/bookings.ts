@@ -1,5 +1,6 @@
 import { supabase } from './supabase/client';
 import type { Database } from './supabase/database.types';
+import { getDubaiToday } from '@/lib/booking/session-flow';
 
 type Booking = Database['public']['Tables']['bookings']['Row'];
 
@@ -54,28 +55,28 @@ export async function getBookingsByProgramId(programId: string): Promise<Booking
  */
 export function separateBookings(bookings: Booking[]) {
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  const today = getDubaiToday(now);
+
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Dubai',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  const currentTime = formatter.format(now);
 
   const upcoming = bookings.filter((b) => {
-    // If date is in future, it's upcoming
     if (b.date > today) return true;
-    // If date is today and time is in future, it's upcoming
     if (b.date === today) {
-      const bookingTime = b.time; // Format: HH:MM
-      const currentTime = now.toISOString().split('T')[1].substring(0, 5); // HH:MM
-      return bookingTime > currentTime;
+      return b.time > currentTime;
     }
     return false;
   });
 
   const past = bookings.filter((b) => {
-    // If date is in past, it's past
     if (b.date < today) return true;
-    // If date is today and time is in past, it's past
     if (b.date === today) {
-      const bookingTime = b.time;
-      const currentTime = now.toISOString().split('T')[1].substring(0, 5);
-      return bookingTime <= currentTime;
+      return b.time <= currentTime;
     }
     return false;
   });
