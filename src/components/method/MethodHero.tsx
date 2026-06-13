@@ -12,10 +12,20 @@ export default function MethodHero() {
     ? "/images/pages/arabic method page head banner.jpg"
     : "/images/pages/method-img3.webp";
 
+  // Split Arabic title for better visibility
+  const heroTitle = isArabic ? (
+    <>
+      {mp.titlePart1} <br />
+      <span className="font-normal">{mp.titlePart2}</span>
+    </>
+  ) : (
+    mp.title
+  );
+
   return (
     <PageHero
       eyebrow={mp.eyebrow}
-      title={<>{mp.title}</>}
+      title={heroTitle}
       description={mp.description}
       imageSrc={heroImageSrc}
       imageAlt={mp.title}

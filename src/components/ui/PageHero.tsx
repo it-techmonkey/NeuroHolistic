@@ -41,7 +41,7 @@ export default function PageHero({
   const { isArabic } = useLang();
   
   return (
-    <section className="relative flex min-h-[80vh] w-full items-center overflow-hidden pt-28 pb-12 sm:min-h-[85vh] sm:pt-32 sm:pb-14 md:min-h-[90vh] md:pt-40 md:pb-16">
+    <section className="relative flex min-h-screen w-full items-center overflow-hidden pt-24 pb-8 sm:min-h-[85vh] sm:pt-28 sm:pb-10 md:min-h-[90vh] md:pt-36 md:pb-12 lg:min-h-screen lg:pt-40 lg:pb-16">
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">
@@ -51,7 +51,7 @@ export default function PageHero({
           fill
           priority
           className={`object-cover ${imagePosition}`}
-          sizes="100vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
           quality={95}
         />
         <div className="absolute inset-0 bg-[#0B1028]/60" />
