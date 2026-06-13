@@ -19,7 +19,7 @@ export default function Hero() {
   if (isArabic) {
     // Client-provided Arabic text: "هناك شكلاً آخراً للوجود" and "معهد نيوروهوليستيك"
     eyebrowLines = ["هناك", "شكلاً آخراً"];
-    titleText = "للوجود"; // big heading text (keeps same h1 sizing)
+    titleText = "للوجود" as typeof h.title; // big heading text (keeps same h1 sizing)
     // Put the client-provided organisation name on the second tagline line
     taglineLines = ["", "معهد نيوروهوليستيك"];
   }
