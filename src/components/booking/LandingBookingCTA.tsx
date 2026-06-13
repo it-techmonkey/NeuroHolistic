@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/context";
-import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 type EligibilityResult = {
@@ -33,13 +32,18 @@ export default function LandingBookingCTA({
   primaryClassName,
   secondaryClassName = "",
   containerClassName = "",
-  dashboardLabel = "Go to Dashboard",
-  signupLabel = "Sign Up",
+  dashboardLabel,
+  signupLabel,
 }: LandingBookingCTAProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { t, isUrdu } = useLang();
+  const { t } = useLang();
   const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
+
+  const dashboardLabelText = dashboardLabel ?? t.consultationForm.goToDashboard;
+  const signupLabelText = signupLabel ?? t.finalCTA.signUpNow;
+  const bookPaidProgramLabel = t.finalCTA.bookPaidProgram;
+  const bookFreeConsultationLabel = t.consultationForm.bookFreeConsultation;
 
   useEffect(() => {
     if (!isAuthenticated || !user?.email) {
@@ -97,7 +101,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/therapist" className={`${primaryClassName} group`}>
-          {dashboardLabel}
+          {dashboardLabelText}
         </a>
       </div>
     );
@@ -107,7 +111,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/admin" className={`${primaryClassName} group`}>
-          {dashboardLabel}
+          {dashboardLabelText}
         </a>
       </div>
     );
@@ -119,7 +123,7 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/dashboard/client" className={`${primaryClassName} group`}>
-          {dashboardLabel}
+          {dashboardLabelText}
         </a>
       </div>
     );
@@ -130,11 +134,11 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/booking/paid-program-booking" className={`${primaryClassName} group`}>
-          Book Paid Program
+          {bookPaidProgramLabel}
         </a>
         {eligibility.canBookConsultation && secondaryClassName && (
           <a href="/consultation/book" className={`${secondaryClassName} group`}>
-            Book Free Consultation
+            {bookFreeConsultationLabel}
           </a>
         )}
       </div>
@@ -146,11 +150,11 @@ export default function LandingBookingCTA({
     return (
       <div className={containerClassName}>
         <a href="/booking/paid-program-booking" className={`${primaryClassName} group`}>
-          Book Paid Program
+          {bookPaidProgramLabel}
         </a>
         {secondaryClassName && (
           <a href="/consultation/book" className={`${secondaryClassName} group`}>
-            Book Free Consultation
+            {bookFreeConsultationLabel}
           </a>
         )}
       </div>
@@ -161,7 +165,7 @@ export default function LandingBookingCTA({
   return (
     <div className={containerClassName}>
       <a href={isAuthenticated ? "/dashboard/client" : "/auth/signup"} className={`${primaryClassName} group`}>
-        {isAuthenticated ? dashboardLabel : signupLabel}
+        {isAuthenticated ? dashboardLabelText : signupLabelText}
       </a>
     </div>
   );

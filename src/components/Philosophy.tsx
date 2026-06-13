@@ -44,12 +44,8 @@ export default function Philosophy() {
               {t.philosophy.heading}
             </motion.h2> */}
 
-            <motion.p
-              variants={itemVariants}
-              className="mx-auto max-w-[680px] text-[16px] leading-[2] text-[#475569] md:text-[17px] mt-2"
-            >
-              {t.philosophy.description}
-            </motion.p>
+            {/* Description moved to the Method section hero per client request.
+                Keeping this area empty to avoid duplicate content. */}
           </div>
 
         </div>

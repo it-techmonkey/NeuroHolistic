@@ -4,16 +4,25 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import HeroBookingForm from "@/components/booking/HeroBookingForm";
 import { useLang } from "@/lib/translations/LanguageContext";
-import { useLang } from "@/lib/translations/LanguageContext";
 
 export default function Hero() {
-  const { t } = useLang();
+  const { t, isArabic } = useLang();
   const h = t.hero;
 
-  const eyebrowLines = h.eyebrow.split("\n");
-  const taglineLines = h.tagline.split("\n");
+  // Default (from translations)
+  let eyebrowLines = h.eyebrow.split("\n");
+  let titleText = h.title;
+  let taglineLines = h.tagline.split("\n");
 
-  const { isArabic } = useLang();
+  // Override with exact client-provided Arabic strings while preserving
+  // the original structure, sizes and classes used for the English hero.
+  if (isArabic) {
+    // Client-provided Arabic text: "هناك شكلاً آخراً للوجود" and "معهد نيوروهوليستيك"
+    eyebrowLines = ["هناك", "شكلاً آخراً"];
+    titleText = "للوجود"; // big heading text (keeps same h1 sizing)
+    // Put the client-provided organisation name on the second tagline line
+    taglineLines = ["", "معهد نيوروهوليستيك"];
+  }
 
   // Use a dedicated Arabic hero image only for the Arabic version of the homepage.
   const heroImageSrc = isArabic
@@ -60,7 +69,7 @@ export default function Hero() {
                 lineHeight: 0.92,
               }}
             >
-              {h.title}
+              {titleText}
             </h1>
             <div className="mt-10 h-px w-[72px] bg-[#D3AB79] sm:mt-11" />
             <p className="mt-7 text-[18px] font-normal uppercase leading-[1.6] tracking-[5] !text-[#D3AB79] sm:text-[21px] md:text-[23px]">

@@ -200,6 +200,7 @@ export const ar = {
   // ── Final CTA ──
   finalCTA: {
     signUpNow: "سجل الآن",
+    bookPaidProgram: "احجز برنامجًا مدفوعًا",
   },
 
   // ── HeroBookingForm ──
