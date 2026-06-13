@@ -323,7 +323,7 @@ export default function SessionDevelopmentForm({
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-4">
+          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -426,7 +426,7 @@ export default function SessionDevelopmentForm({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Techniques Used</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {TECHNIQUE_OPTIONS.map(technique => (
                     <button
                       key={technique}
@@ -647,6 +647,7 @@ export default function SessionDevelopmentForm({
                   </div>
 
                   <div className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-slate-100">
@@ -696,6 +697,7 @@ export default function SessionDevelopmentForm({
                         </tr>
                       </tbody>
                     </table>
+                    </div>
                   </div>
 
                   {/* Progress Summary */}

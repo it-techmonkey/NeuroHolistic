@@ -23,7 +23,7 @@ export default function ContactPage() {
         metaTags={["مشاورت", "اکیڈمی", "شراکت"]}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-16">
         <div className="mx-auto max-w-[860px] px-6 md:px-12">
           <div className="rounded-2xl border border-slate-200 p-6 md:p-8 bg-slate-50">
             <h2 className="text-2xl font-semibold text-slate-900">{t.contactPage.contactDetails}</h2>

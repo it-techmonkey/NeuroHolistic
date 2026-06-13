@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { createClient } from '@/lib/auth/server';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: userData } = await authClient
+      .from('users').select('role').eq('id', user.id).single();
+    if (userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id: programId } = await params;
     const supabase = getServiceSupabase();
 
-    // Verify program exists
     const { data: program, error: fetchError } = await supabase
       .from('programs')
       .select('*')
@@ -20,7 +30,6 @@ export async function POST(
       return NextResponse.json({ error: 'Program not found' }, { status: 404 });
     }
 
-    // Activate
     const { error: updateError } = await supabase
       .from('programs')
       .update({

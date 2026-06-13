@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
@@ -12,26 +12,45 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [sessionError, setSessionError] = useState(false);
+  const [sessionReady, setSessionReady] = useState<boolean | null>(null);
   const router = useRouter();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Check if user has a valid session (they should from the email link)
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    let mounted = true;
 
-      if (!session) {
-        setSessionError(true);
-
-
-
-        
+    // Check session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session) {
+        setSessionReady(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
-    };
+    });
 
-    checkSession();
+    // Also listen for auth state changes (handles async URL hash processing)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        if (session) {
+          setSessionReady(true);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        }
+      }
+    );
+
+    // Fallback timeout: if no session after 5 seconds, show error
+    timeoutRef.current = setTimeout(() => {
+      if (mounted && sessionReady === null) {
+        setSessionReady(false);
+      }
+    }, 5000);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -73,7 +92,19 @@ export default function ResetPasswordPage() {
   const inputClass =
     'w-full bg-white px-0 py-3 border-b border-slate-200 focus:border-slate-900 focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 font-light rounded-none';
 
-  if (sessionError) {
+  // Loading state while session is being established
+  if (sessionReady === null) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-6 text-center">
+          <div className="w-8 h-8 border-2 border-[#2B2F55]/30 border-t-[#2B2F55] rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-500">Verifying your reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionReady === false) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="w-full max-w-sm space-y-6 text-center">
@@ -114,7 +145,7 @@ export default function ResetPasswordPage() {
 
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20">
-        <div className="w-full max-w-sm space-y-10">
+        <div className="w-full max-w-sm space-y-8 md:space-y-10">
           <Link href="/auth/login" className="group flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-8 hover:text-slate-900 transition-colors">
             <ChevronLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
             Back to Login

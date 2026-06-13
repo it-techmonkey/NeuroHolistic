@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { resolveTherapistUserRow } from '@/lib/bookings/resolve-therapist-user';
 import { createZiinaPaymentIntent } from '@/lib/payments/ziina';
 import {
   ACADEMY_PRICING,
@@ -8,6 +9,7 @@ import {
   type ProgramType,
   getPrice,
 } from '@/lib/payments/pricing';
+import { getActiveDiscount, applyDiscount } from '@/lib/payments/discount';
 
 type RequestedProgramType = ProgramType | 'academy';
 
@@ -20,7 +22,8 @@ function isProgramType(value: unknown): value is RequestedProgramType {
 }
 
 function cleanAppUrl(request: NextRequest) {
-  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+  // Always prefer request origin (correct for local/dev/prod) over env variable
+  return request.nextUrl.origin.replace(/\/$/, '');
 }
 
 export async function POST(request: NextRequest) {
@@ -37,6 +40,10 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const programType = body?.programType;
   const paymentOption = body?.paymentOption;
+  const preferredDate = body?.preferredDate || null;
+  const preferredTime = body?.preferredTime || null;
+
+  console.log('[Create Payment] Request received:', { programType, paymentOption, preferredDate, preferredTime, therapistSlug: body?.therapistSlug });
 
   if (!isProgramType(programType) || !isPaymentOption(paymentOption)) {
     return NextResponse.json(
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingProgram, error: existingError } = await supabase
     .from('programs')
-    .select('id, status, payment_status')
+    .select('id, status, payment_status, total_sessions, used_sessions')
     .eq('user_id', user.id)
     .in('status', ['pending', 'active'])
     .order('created_at', { ascending: false })
@@ -61,7 +68,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unable to check your current program status' }, { status: 500 });
   }
 
-  if (existingProgram) {
+  // For per_session payments, allow purchase if existing program has no remaining sessions
+  if (existingProgram && paymentOption === 'per_session') {
+    const remaining = (existingProgram.total_sessions || 0) - (existingProgram.used_sessions || 0);
+    if (remaining > 0) {
+      return NextResponse.json(
+        {
+          error: 'You still have sessions remaining in your current program. Please use them before purchasing more.',
+          programId: existingProgram.id,
+          status: existingProgram.status,
+          paymentStatus: existingProgram.payment_status,
+          sessionsRemaining: remaining,
+        },
+        { status: 409 }
+      );
+    }
+    // No remaining sessions — fall through to create a new program
+  } else if (existingProgram && paymentOption === 'full') {
     const message =
       existingProgram.status === 'pending'
         ? 'You already have a program pending payment confirmation.'
@@ -98,18 +121,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unable to confirm consultation eligibility' }, { status: 500 });
     }
 
-    if (!completedConsultation) {
-      return NextResponse.json(
-        {
-          error: 'You must complete a free consultation before purchasing a paid program.',
-          requiresConsultation: true,
-        },
-        { status: 403 }
-      );
+    if (completedConsultation) {
+      therapistId = completedConsultation.therapist_user_id;
+      therapistName = completedConsultation.therapist_name || body?.therapistName || 'Assigned Therapist';
+    } else if (typeof body?.therapistSlug === 'string' && body.therapistSlug.trim()) {
+      const resolvedTherapist = await resolveTherapistUserRow(supabase, body.therapistSlug.trim());
+      therapistId = resolvedTherapist?.id ?? null;
+      therapistName = resolvedTherapist?.full_name || body?.therapistName || null;
+    } else if (typeof body?.therapistName === 'string' && body.therapistName.trim()) {
+      therapistName = body.therapistName.trim();
     }
-
-    therapistId = completedConsultation.therapist_user_id;
-    therapistName = completedConsultation.therapist_name || body?.therapistName || 'Assigned Therapist';
   }
 
   const { data: userData } = await supabase
@@ -125,13 +146,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Your account is missing an email address.' }, { status: 400 });
   }
 
-  const amountAed = isAcademy
+  const baseAmountAed = isAcademy
     ? paymentOption === 'full'
       ? ACADEMY_PRICING.fullProgram
       : ACADEMY_PRICING.installment
     : getPrice(programType, paymentOption, therapistName);
+
+  // Server-side discount: fetch from DB, ignore client-sent value
+  const activeDiscount = await getActiveDiscount(user.id);
+  const discount = activeDiscount
+    ? applyDiscount(baseAmountAed, activeDiscount.discountPercent)
+    : null;
+
+  const amountAed = discount ? discount.discountedPrice : baseAmountAed;
   const amountFils = Math.round(amountAed * 100);
-  const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : 10;
+  const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : paymentOption === 'per_session' ? 1 : 10;
   const storedProgramType: RequestedProgramType = isAcademy ? 'academy' : programType;
   const appUrl = cleanAppUrl(request);
 
@@ -141,6 +170,7 @@ export async function POST(request: NextRequest) {
     programType,
     storedProgramType,
     paymentOption,
+    originalAmountAed: baseAmountAed,
     amountAed,
     amountFils,
     currency: 'AED',
@@ -149,6 +179,15 @@ export async function POST(request: NextRequest) {
     therapistName: isAcademy ? 'NeuroHolistic Academy' : therapistName,
     clientName,
     clientEmail,
+    preferredDate,
+    preferredTime,
+    ...(discount
+      ? {
+          discountPercent: discount.discountPercent,
+          discountedAmountAed: discount.discountedPrice,
+          savingsAed: discount.savings,
+        }
+      : {}),
   };
 
   const { data: paymentRow, error: paymentError } = await supabase
@@ -174,7 +213,7 @@ export async function POST(request: NextRequest) {
   const failureUrl = `${appUrl}/payment/ziina/failure?payment_intent_id={PAYMENT_INTENT_ID}`;
   const message = `NeuroHolistic ${isAcademy ? 'Academy' : programType} - ${
     paymentOption === 'full' ? 'Full payment' : 'Per-session payment'
-  }`;
+  }${discount ? ` (${discount.discountPercent}% discount applied)` : ''}`;
 
   const result = await createZiinaPaymentIntent({
     amount: amountFils,

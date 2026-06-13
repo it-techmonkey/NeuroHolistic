@@ -69,13 +69,12 @@ export default function Sessions({
 
     setRescheduleError('');
     try {
-      const res = await fetch('/api/bookings/reschedule', {
+      const res = await fetch(`/api/bookings/${reschedulingSession.id}/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookingId: reschedulingSession.id,
-          newDate: selectedDate,
-          newTime: selectedSlot,
+          date: selectedDate,
+          time: selectedSlot,
         }),
       });
 

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { login } from '@/app/auth/actions';
 import { AuthGoBackButton } from '@/components/auth/AuthGoBackButton';
@@ -61,8 +62,17 @@ function LoginForm() {
       {/* Visual Side */}
       <div className="hidden md:flex md:w-1/2 bg-[#2B2F55] items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-[#2B2F55]" />
-        {/* Abstract pattern could go here */}
         <div className="relative z-10 max-w-md text-white">
+           <Link href="/" className="inline-block mb-8 hover:opacity-80 transition-opacity">
+             <Image
+               src="/images/team/logo.svg"
+               alt="NeuroHolistic Institute"
+               width={64}
+               height={64}
+               className="h-16 w-16"
+               priority
+             />
+           </Link>
            <p className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-semibold mb-6">
               NeuroHolistic Institute
            </p>
@@ -78,7 +88,20 @@ function LoginForm() {
 
       {/* Form Side */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20">
-        <div className="w-full max-w-sm space-y-10">
+        <div className="w-full max-w-sm space-y-8 md:space-y-10">
+          <div className="flex items-center gap-3 md:hidden">
+            <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+              <Image
+                src="/images/team/logo.svg"
+                alt="NeuroHolistic Institute"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+                priority
+              />
+            </Link>
+            <span className="text-xs uppercase tracking-[0.15em] text-slate-400 font-semibold">NeuroHolistic</span>
+          </div>
           <AuthGoBackButton />
 
           <div className="space-y-2">
@@ -129,7 +152,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                   tabIndex={-1}
                 >
                   {showPassword ? (

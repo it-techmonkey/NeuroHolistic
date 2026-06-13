@@ -18,12 +18,12 @@ export async function GET() {
 
     const serviceSupabase = getServiceSupabase();
 
-    // Check for active or pending program
+    // Check for active or pending program (NOT completed - users should be able to book new programs)
     const { data: program, error } = await serviceSupabase
       .from('programs')
       .select('*')
       .eq('user_id', user.id)
-      .in('status', ['active', 'pending', 'completed'])
+      .in('status', ['active', 'pending'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -47,6 +47,11 @@ export async function GET() {
       firstSession = session;
     }
 
+    // Calculate remaining sessions
+    const sessionsRemaining = program
+      ? (program.total_sessions || 0) - (program.used_sessions || 0)
+      : 0;
+
     // Check if user has used their free consultation
     const { data: freeConsult } = await serviceSupabase
       .from('bookings')
@@ -61,6 +66,8 @@ export async function GET() {
       program: program || null,
       firstPendingSession: firstSession,
       hasUsedFreeConsultation: !!freeConsult,
+      sessionsRemaining,
+      canPurchasePerSession: sessionsRemaining <= 0,
     });
   } catch (error) {
     console.error('[Check Program]', error);
@@ -115,6 +122,7 @@ export async function POST(request: NextRequest) {
       .from("programs")
       .select("id, total_sessions, used_sessions, created_at")
       .eq("user_id", user.id)
+      .in('status', ['active', 'pending'])
       .order("created_at", { ascending: false })
       .maybeSingle();
 

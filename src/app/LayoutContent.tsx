@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
+import ScrollToTop from "@/components/ScrollToTop";
 import { useLang } from "@/lib/translations/LanguageContext";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -35,9 +36,10 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <ScrollToTop />
       {isPublicPage && !isBookingFlow && <Navbar />}
       {isBookingFlow && (
-        <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/10 bg-[#0B1028]/95 backdrop-blur-md">
+        <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/10 bg-[#0B1028]/95 backdrop-blur-md pt-safe">
           <div className="mx-auto max-w-[1200px] h-16 px-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 text-white">
               <Image src="/images/logo.svg" alt="NeuroHolistic" width={26} height={22} unoptimized />

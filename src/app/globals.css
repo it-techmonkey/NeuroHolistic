@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -18,6 +19,7 @@
 
   --radius-card: 20px;
   --radius-button: 10px;
+  --font-arabic: 'Tajawal', 'Noto Sans Arabic', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 * {
@@ -141,6 +143,12 @@ html[lang="ar"] li,
 html[lang="ar"] dd,
 html[lang="ar"] dt {
   font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif;
+}
+
+/* Override inline font-family on Hero for Arabic */
+html[lang="ar"] [style*="font-hero-copy"],
+html[lang="ar"] [style*="font-hero-display"] {
+  font-family: var(--font-arabic), "Tajawal", "Noto Sans Arabic", sans-serif !important;
 }
 
 p {
@@ -279,4 +287,64 @@ button:disabled {
 /* RTL: reverse visual column flow while keeping DOM order */
 [dir="rtl"] .rtl-grid-reverse {
   direction: rtl;
+}
+
+/* ── Safe Area Insets for Notched Devices ── */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+.pb-safe {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.pt-safe {
+  padding-top: var(--safe-area-top);
+}
+
+/* ── Mobile Touch Target Utility ── */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Scrollbar Hide Utility ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Smooth Scrollbar for Mobile Nav ── */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* ── iOS Zoom Prevention on Input Focus ── */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="url"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }

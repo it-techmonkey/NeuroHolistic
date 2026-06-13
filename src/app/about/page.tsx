@@ -53,8 +53,8 @@ export default function AboutPage() {
       />
 
       {/* ── Section 01: The Chronology (Editorial Spreads) ── */}
-      <section className="py-24 md:py-32 lg:py-40">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-12 space-y-20 md:space-y-32">
+      <section className="py-16 md:py-24 lg:py-40">
+        <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12 space-y-16 md:space-y-32">
           {JOURNEY.map((block, i) => (
             <div key={block.title}>
               {block.isFullWidth ? (
@@ -129,9 +129,9 @@ export default function AboutPage() {
       </section>
 
       {/* ── Section 02: Institute Functions (Registry Matrix) ── */}
-      <section className="bg-[#FAFBFF] py-24 md:py-32 border-y border-[#E2E8F0]">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-          <div className="mb-20 grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <section className="bg-[#FAFBFF] py-16 md:py-24 lg:py-32 border-y border-[#E2E8F0]">
+        <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
+          <div className="mb-12 md:mb-20 grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
             <div>
               <h2 className="text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]">{t.about.birthOfInstitute}</h2>
             </div>
@@ -147,9 +147,9 @@ export default function AboutPage() {
               t.about.function2,
               t.about.function3,
             ].map((text, i) => (
-              <div key={i} className="group flex flex-col justify-between border-b border-[#E2E8F0] p-10 transition-colors hover:bg-white md:border-l last:md:border-l-0">
-                <span className="mb-8 font-mono text-[12px] text-[#CBD5E1] group-hover:text-[#6366F1] transition-colors">[ 0{i+1} ]</span>
-                <p className="text-[17px] font-medium text-[#0F172A] leading-snug">{text}</p>
+              <div key={i} className="group flex flex-col justify-between border-b border-[#E2E8F0] p-6 md:p-10 transition-colors hover:bg-white md:border-l last:md:border-l-0">
+                <span className="mb-6 md:mb-8 font-mono text-[12px] text-[#CBD5E1] group-hover:text-[#6366F1] transition-colors">[ 0{i+1} ]</span>
+                <p className="text-[15px] md:text-[17px] font-medium text-[#0F172A] leading-snug">{text}</p>
               </div>
             ))}
           </div>
@@ -157,14 +157,14 @@ export default function AboutPage() {
       </section>
 
 {/* ── Section 03: Founder (Editorial Spread) ── */}
-<section className="py-24 md:py-32 lg:py-40 bg-white">
-  <div className="mx-auto max-w-[1280px] px-6 md:px-12">
-    <div className="mb-16 md:mb-24">
+<section className="py-16 md:py-24 lg:py-40 bg-white">
+  <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
+    <div className="mb-12 md:mb-16 lg:mb-24">
       <motion.h2 
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-[34px] font-light text-[#0F172A] md:text-[52px] leading-tight"
+        className="text-[28px] md:text-[34px] lg:text-[52px] font-light text-[#0F172A] leading-tight"
       >
         {t.about.founderName}
       </motion.h2>
@@ -232,18 +232,18 @@ export default function AboutPage() {
 </section>
 
       {/* ── Section 04: Vision for the Future ── */}
-      <section className="bg-gradient-to-b from-[#FAFBFF] to-[#F1F5F9] py-24 md:py-32 border-t border-[#E2E8F0]">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-12">
+      <section className="bg-gradient-to-b from-[#FAFBFF] to-[#F1F5F9] py-16 md:py-24 lg:py-32 border-t border-[#E2E8F0]">
+        <div className="mx-auto max-w-[1280px] px-5 sm:px-6 md:px-12">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-16 text-[34px] font-light tracking-tight text-[#0F172A] md:text-[48px]"
+            className="mb-10 md:mb-16 text-[28px] md:text-[34px] lg:text-[48px] font-light tracking-tight text-[#0F172A]"
           >
             {t.about.visionForFuture}
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {[
               t.about.visionParagraph1,
               t.about.visionParagraph2,
@@ -255,12 +255,12 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.8 }}
-                className="group rounded-[20px] border border-[#E2E8F0] bg-white p-8 md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-500 hover:border-[#CBD5E1] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+                className="group rounded-[20px] border border-[#E2E8F0] bg-white p-6 md:p-8 lg:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-500 hover:border-[#CBD5E1] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
               >
-                <span className="mb-8 block font-mono text-[12px] text-[#6366F1]/50 group-hover:text-[#6366F1] transition-colors">
+                <span className="mb-6 md:mb-8 block font-mono text-[12px] text-[#6366F1]/50 group-hover:text-[#6366F1] transition-colors">
                   0{i + 1}
                 </span>
-                <p className={`text-[16px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
+                <p className={`text-[15px] md:text-[16px] ${isArabic ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569]`}>
                   {text}
                 </p>
               </motion.div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { getCurrentUserWithRole } from '@/lib/auth/server';
 import { therapistBookingsOrFilter } from '@/lib/bookings/therapist-scope';
+import { isUpcomingSession } from '@/lib/booking/session-flow';
 
 function getServiceSupabase() {
   return createServiceClient(
@@ -176,10 +177,9 @@ export async function GET() {
         client.program = null;
       }
 
-      // Find next session
-      const now = new Date();
+      // Find next session (Dubai timezone)
       client.nextSession = client.bookings
-        .filter((b: any) => (b.status === 'confirmed' || b.status === 'scheduled') && new Date(`${b.date}T${b.time}`) >= now)
+        .filter((b: any) => (b.status === 'confirmed' || b.status === 'scheduled') && isUpcomingSession({ date: b.date, time: b.time }))
         .sort((a: any, b: any) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())[0] || null;
     }
 
@@ -188,8 +188,7 @@ export async function GET() {
     // Overview stats
     const completedBookings = (bookings ?? []).filter((b: any) => b.status === 'completed');
     const upcomingBookings = (bookings ?? []).filter((b: any) => {
-      const now = new Date();
-      return (b.status === 'confirmed' || b.status === 'scheduled') && new Date(`${b.date}T${b.time}`) >= now;
+      return (b.status === 'confirmed' || b.status === 'scheduled') && isUpcomingSession({ date: b.date, time: b.time });
     });
     const pendingDocs = (devForms ?? []).filter((f: any) => !f.submitted_at);
 

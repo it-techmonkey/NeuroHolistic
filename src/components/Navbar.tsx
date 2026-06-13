@@ -334,7 +334,7 @@ export default function Navbar() {
               {t.navbar.bookNow}
             </BookNowButton>
 
-            <button onClick={() => setMobileOpen(!mobileOpen)} className={`lg:hidden p-1.5 transition-colors duration-200 ${textColor} hover:opacity-70 rounded-lg`}>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className={`lg:hidden p-2.5 transition-colors duration-200 ${textColor} hover:opacity-70 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center`}>
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
               </svg>
@@ -386,15 +386,15 @@ export default function Navbar() {
                 <Image src="/images/logo.svg" alt="NeuroHolistic" width={28} height={24} className="w-6 h-5" unoptimized />
                 <span className="font-bold tracking-tighter text-base sm:text-lg">NeuroHolistic</span>
               </div>
-                <button onClick={() => setMobileOpen(false)} className={`p-1.5 rounded-lg transition-colors duration-200 ${isLightPage ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
+                <button onClick={() => setMobileOpen(false)} className={`p-2.5 rounded-lg transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center ${isLightPage ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <nav className="flex flex-col gap-5 overflow-y-auto flex-1 pb-4">
+              <nav className="flex flex-col gap-1 overflow-y-auto flex-1 pb-4" role="dialog" aria-modal="true" aria-label="Navigation menu">
                 {[...PRIMARY_LINKS, ...COMPANY_LINKS].map((item) => (
                   <div key={item.label}>
-                    <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                    <Link href={item.href} onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'}`}>
                       {item.label}
                     </Link>
                     {'children' in item && item.children && (
@@ -404,7 +404,7 @@ export default function Navbar() {
                             key={child.href}
                             href={child.href}
                             onClick={() => setMobileOpen(false)}
-                            className={`text-sm font-light py-2 px-3 rounded-lg transition-all duration-200 ${
+                            className={`text-sm font-light py-2.5 px-3 min-h-[40px] flex items-center rounded-lg transition-all duration-200 ${
                               isLightPage
                                 ? 'text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700'
                                 : 'text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white'
@@ -428,22 +428,22 @@ export default function Navbar() {
                       toggleLang();
                       setMobileOpen(false);
                     }}
-                    className={`text-left text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}
+                    className={`text-left text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'}`}
                   >
                     {lang === "en" ? "العربية" : "English"}
                   </button>
                 )}
 
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'} ${!isAuthenticated ? 'hidden' : ''}`}>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'} ${!isAuthenticated ? 'hidden' : ''}`}>
                   {t.navbar.dashboard}
                 </Link>
-                <Link href="/consultation/book" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                <Link href="/consultation/book" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'}`}>
                   {t.navbar.bookConsultation}
                 </Link>
-                <Link href="/booking/paid-program-booking?mode=academy" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                <Link href="/booking/paid-program-booking?mode=academy" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'}`}>
                   {t.navbar.applyAcademy}
                 </Link>
-                <Link href="/faqs" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-2 transition-opacity duration-200 ${isLightPage ? 'hover:opacity-60' : 'hover:opacity-70'}`}>
+                <Link href="/faqs" onClick={() => setMobileOpen(false)} className={`text-lg sm:text-xl font-light py-3 px-2 min-h-[44px] flex items-center transition-opacity duration-200 rounded-lg ${isLightPage ? 'hover:bg-slate-50 hover:opacity-60' : 'hover:bg-white/5 hover:opacity-70'}`}>
                   {t.navbar.faq}
                 </Link>
               </nav>
@@ -453,19 +453,19 @@ export default function Navbar() {
                   {isAuthenticated ? (
                     <button
                       onClick={() => { setMobileOpen(false); handleLogout(); }}
-                      className={`col-span-3 py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
+                      className={`col-span-3 py-3 rounded-lg font-medium text-[11px] min-h-[44px] flex items-center justify-center transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
                     >
                       {t.navbar.logout}
                     </button>
                   ) : (
                     <>
-                      <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
+                      <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-3 rounded-lg font-medium text-[11px] min-h-[44px] flex items-center justify-center transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
                         {t.navbar.therapistLogin}
                       </Link>
-                      <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
+                      <Link href="/auth/login" onClick={() => setMobileOpen(false)} className={`py-3 rounded-lg font-medium text-[11px] min-h-[44px] flex items-center justify-center transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
                         {t.navbar.clientLogin}
                       </Link>
-                      <a href={`mailto:${CONTACT_INFO.email}`} className={`py-2 rounded-lg font-medium text-[11px] transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
+                      <a href={`mailto:${CONTACT_INFO.email}`} className={`py-3 rounded-lg font-medium text-[11px] min-h-[44px] flex items-center justify-center transition-colors duration-200 ${isLightPage ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}>
                         {t.navbar.contact}
                       </a>
                     </>

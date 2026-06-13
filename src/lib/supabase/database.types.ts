@@ -681,6 +681,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_discounts: {
+        Row: {
+          id: string;
+          client_id: string;
+          discount_percent: number;
+          assigned_by: string;
+          reason: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          discount_percent: number;
+          assigned_by: string;
+          reason?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          discount_percent?: number;
+          assigned_by?: string;
+          reason?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

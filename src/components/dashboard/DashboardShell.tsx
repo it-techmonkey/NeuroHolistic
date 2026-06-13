@@ -73,7 +73,7 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/60 pt-safe">
         <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <DashboardHomeLogo className="mr-1" />
@@ -125,7 +125,7 @@ export default function DashboardShell({
                 key={tab.key}
                 onClick={() => onTabChange?.(tab.key)}
                 className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all
+                  flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all min-h-[44px]
                   ${isActive
                     ? 'bg-[#2B2F55] text-white'
                     : 'text-slate-500 hover:bg-slate-100'

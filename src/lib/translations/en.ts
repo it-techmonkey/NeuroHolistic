@@ -62,13 +62,10 @@ export const en = {
 
   // ── Hero ──
   hero: {
-    resetFromWithin: "Reset From Within.",
-    transformYourLife: "Transform Your Life.",
-    designedForResults: "Designed for deep, lasting results.",
+    eyebrow: "There is\nanother way",
+    title: "To Exist.",
+    tagline: "NeuroHolistic\nInstitute™",
     bookConsultation: "Book a Consultation",
-    status: "Status",
-    systemRestored: "System Restored",
-    neuralBalance: "Neural Balance",
   },
 
   // ── Philosophy ──

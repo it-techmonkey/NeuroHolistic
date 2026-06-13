@@ -22,33 +22,6 @@ interface DiagnosticAssessmentFormProps {
   previewMode?: boolean;
 }
 
-const NERVOUS_SYSTEM_PATTERNS = [
-  { value: 'regulated', label: 'Regulated' },
-  { value: 'hyper', label: 'Hyper (anxious / tense)' },
-  { value: 'hypo', label: 'Hypo (shutdown / low energy)' },
-  { value: 'mixed', label: 'Mixed' },
-];
-
-const CURRENT_SYMPTOM_OPTIONS = [
-  'Anxiety',
-  'Panic attacks',
-  'Emotional overwhelm',
-  'Emotional numbness',
-  'Sadness / low mood',
-  'Irritability',
-  'Anger outbursts',
-  'Fearfulness',
-  'Excessive worry',
-  'Feeling stuck',
-  'Relationship difficulty',
-  'Physical symptoms',
-  'Sleep difficulty',
-  'Fatigue',
-  'Stress overload',
-  'Lack of direction',
-  'Other',
-];
-
 const EMOTIONAL_PATTERNS = [
   'Anxiety',
   'Panic attacks',
@@ -57,6 +30,7 @@ const EMOTIONAL_PATTERNS = [
   'Sadness / low mood',
   'Irritability',
   'Anger outbursts',
+  'Emotional instability',
   'Fearfulness',
   'Excessive worry',
   'Feeling emotionally disconnected',
@@ -186,35 +160,6 @@ const LIFE_AREAS = [
   'Sense of purpose',
   'Daily functioning',
   'Spiritual connection',
-  'Other',
-];
-
-const LIFE_FUNCTIONING = [
-  'Relationships',
-  'Work / career',
-  'Daily functioning',
-  'Decision-making',
-  'Self-worth',
-  'Financial wellbeing',
-  'Social life',
-  'Physical health',
-  'Motivation',
-  'Productivity',
-  'Sense of purpose',
-  'Spiritual connection',
-  'Other',
-];
-
-const TRIED_PREVIOUSLY = [
-  'Therapy',
-  'Medication',
-  'Coaching',
-  'Self-help',
-  'Meditation',
-  'Holistic treatments',
-  'Lifestyle changes',
-  'Spiritual practices',
-  'Nothing yet',
   'Other',
 ];
 
@@ -623,58 +568,12 @@ const THERAPEUTIC_PRIORITIES = [
 
 const SESSION_FREQUENCY_OPTIONS = ['1x Weekly', '2x Weekly', 'Intensive Program', 'Flexible As Needed'];
 
-const PATTERN_TIMELINE_OPTIONS = [
-  { value: 'recent_activation', label: 'Recent activation' },
-  { value: 'long_standing', label: 'Long-standing pattern' },
-  { value: 'lifelong', label: 'Lifelong / early imprint expression' },
-  { value: 'unclear', label: 'Unclear' },
-];
-
 const PARENTAL_INFLUENCE_OPTIONS = [
   { value: 'mother', label: 'Mother' },
   { value: 'father', label: 'Father' },
   { value: 'both', label: 'Both' },
   { value: 'none', label: 'None / no clear influence' },
   { value: 'other', label: 'Other (specify)' },
-];
-
-const CORE_PATTERN_OPTIONS = [
-  'Abandonment',
-  'Rejection / Not enough',
-  'Control / Safety',
-  'Suppression / Expression',
-  'Other',
-];
-
-const CONTRIBUTING_FACTOR_OPTIONS = [
-  'Emotional inconsistency',
-  'Lack of safety',
-  'High pressure / responsibility',
-  'Trauma / shock event',
-  'Emotional neglect',
-  'Other',
-];
-
-const COUNTRIES = [
-  'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia',
-  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belarus', 'Belgium',
-  'Bolivia', 'Bosnia and Herzegovina', 'Brazil', 'Bulgaria', 'Cambodia',
-  'Canada', 'Chile', 'China', 'Colombia', 'Costa Rica', 'Croatia', 'Cuba',
-  'Cyprus', 'Czech Republic', 'Denmark', 'Dominican Republic', 'Ecuador',
-  'Egypt', 'El Salvador', 'Estonia', 'Ethiopia', 'Finland', 'France',
-  'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Honduras', 'Hong Kong',
-  'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
-  'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya',
-  'Kuwait', 'Latvia', 'Lebanon', 'Libya', 'Lithuania', 'Luxembourg', 'Malaysia',
-  'Mexico', 'Moldova', 'Morocco', 'Myanmar', 'Nepal', 'Netherlands',
-  'New Zealand', 'Nicaragua', 'Nigeria', 'North Korea', 'Norway', 'Oman',
-  'Pakistan', 'Panama', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
-  'Puerto Rico', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia', 'Serbia',
-  'Singapore', 'Slovakia', 'Slovenia', 'South Africa', 'South Korea', 'Spain',
-  'Sri Lanka', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
-  'Tanzania', 'Thailand', 'Tunisia', 'Turkey', 'Uganda', 'Ukraine',
-  'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay',
-  'Uzbekistan', 'Venezuela', 'Vietnam', 'Yemen', 'Zimbabwe',
 ];
 
 const SCORE_LABELS: Record<number, string> = {
@@ -756,8 +655,8 @@ export default function DiagnosticAssessmentForm({
     client_country: existingAssessment?.client_country ?? clientData?.country ?? '',
     client_occupation: existingAssessment?.client_occupation ?? '',
     relationship_status: existingAssessment?.relationship_status ?? '',
-    gender: '',
-    nationality: '',
+    gender: existingAssessment?.gender ?? '',
+    nationality: existingAssessment?.nationality ?? '',
     assessment_date: new Date().toISOString().split('T')[0],
     therapist_name: '',
 
@@ -765,15 +664,15 @@ export default function DiagnosticAssessmentForm({
     main_complaint: existingAssessment?.main_complaint ?? '',
     current_symptoms: parseMultiValue(existingAssessment?.current_symptoms),
     current_symptoms_other: existingAssessment?.current_symptoms_other ?? '',
-    affected_life_areas: [] as string[],
-    affected_life_areas_other: '',
-    symptom_duration: '',
-    life_impact: '',
-    biggest_goal: '',
-    transformation_vision: '',
-    tried_previously: [] as string[],
-    tried_previously_other: '',
-    current_experience_words: '',
+    affected_life_areas: parseMultiValue(existingAssessment?.affected_life_areas),
+    affected_life_areas_other: existingAssessment?.affected_life_areas_other ?? '',
+    symptom_duration: existingAssessment?.symptom_duration ?? '',
+    life_impact: existingAssessment?.life_impact ?? '',
+    biggest_goal: existingAssessment?.biggest_goal ?? '',
+    transformation_vision: existingAssessment?.transformation_vision ?? '',
+    tried_previously: parseMultiValue(existingAssessment?.tried_previously),
+    tried_previously_other: existingAssessment?.tried_previously_other ?? '',
+    current_experience_words: existingAssessment?.current_experience_words ?? '',
 
     // Previous Therapy
     previous_therapy: existingAssessment?.previous_therapy ?? false,
@@ -781,8 +680,8 @@ export default function DiagnosticAssessmentForm({
 
     // Symptoms - Nervous System
     nervous_system_pattern: existingAssessment?.nervous_system_pattern ?? '',
-    nervous_system_symptoms: [] as string[],
-    nervous_system_symptoms_other: '',
+    nervous_system_symptoms: parseMultiValue(existingAssessment?.nervous_system_symptoms),
+    nervous_system_symptoms_other: existingAssessment?.nervous_system_symptoms_other ?? '',
     nervous_system_score: existingAssessment?.nervous_system_score ?? 0,
 
     // Symptoms - Emotional State
@@ -807,9 +706,9 @@ export default function DiagnosticAssessmentForm({
     behavioral_patterns_score: existingAssessment?.behavioral_patterns_score ?? 0,
 
     // Symptoms - Sleep
-    sleep_symptoms: [] as string[],
-    sleep_symptoms_other: '',
-    sleep_symptoms_score: 0,
+    sleep_symptoms: parseMultiValue(existingAssessment?.sleep_symptoms),
+    sleep_symptoms_other: existingAssessment?.sleep_symptoms_other ?? '',
+    sleep_symptoms_score: existingAssessment?.sleep_symptoms_score ?? 0,
 
     // Symptoms - Life Functioning
     life_functioning_patterns: parseMultiValue(existingAssessment?.life_functioning_patterns),
@@ -817,24 +716,24 @@ export default function DiagnosticAssessmentForm({
     life_functioning_score: existingAssessment?.life_functioning_score ?? 0,
 
     // Life Status & Functional Assessment
-    relationship_quality: [] as string[],
-    relationship_emotional_safety: '',
-    relationship_challenges: '',
-    relationship_fulfillment_score: 0,
-    has_children: '',
-    children_relationship: [] as string[],
-    children_relationship_other: '',
-    parenting_fulfillment_score: 0,
-    employment_status: '',
-    work_fulfillment_score: 0,
-    work_state: [] as string[],
-    work_state_other: '',
-    social_life: [] as string[],
-    social_life_other: '',
-    feel_understood: '',
-    sleep_description: [] as string[],
-    sleep_description_other: '',
-    average_sleep_hours: '',
+    relationship_quality: parseMultiValue(existingAssessment?.relationship_quality),
+    relationship_emotional_safety: existingAssessment?.relationship_emotional_safety ?? '',
+    relationship_challenges: existingAssessment?.relationship_challenges ?? '',
+    relationship_fulfillment_score: existingAssessment?.relationship_fulfillment_score ?? 0,
+    has_children: existingAssessment?.has_children ?? '',
+    children_relationship: parseMultiValue(existingAssessment?.children_relationship),
+    children_relationship_other: existingAssessment?.children_relationship_other ?? '',
+    parenting_fulfillment_score: existingAssessment?.parenting_fulfillment_score ?? 0,
+    employment_status: existingAssessment?.employment_status ?? '',
+    work_fulfillment_score: existingAssessment?.work_fulfillment_score ?? 0,
+    work_state: parseMultiValue(existingAssessment?.work_state),
+    work_state_other: existingAssessment?.work_state_other ?? '',
+    social_life: parseMultiValue(existingAssessment?.social_life),
+    social_life_other: existingAssessment?.social_life_other ?? '',
+    feel_understood: existingAssessment?.feel_understood ?? '',
+    sleep_description: parseMultiValue(existingAssessment?.sleep_description),
+    sleep_description_other: existingAssessment?.sleep_description_other ?? '',
+    average_sleep_hours: existingAssessment?.average_sleep_hours ?? '',
 
     // Root Cause Analysis
     root_cause_pattern_timeline: existingAssessment?.root_cause_pattern_timeline ?? '',
@@ -844,49 +743,49 @@ export default function DiagnosticAssessmentForm({
     root_cause_core_patterns_other: existingAssessment?.root_cause_core_patterns_other ?? '',
     root_cause_contributing_factors: parseMultiValue(existingAssessment?.root_cause_contributing_factors),
     root_cause_contributing_factors_other: existingAssessment?.root_cause_contributing_factors_other ?? '',
-    mother_emotional_presence: '',
-    mother_physical_presence: '',
-    mother_emotional_state: [] as string[],
-    mother_characteristics: [] as string[],
-    mother_relationship: '',
-    mother_emotional_safety: '',
-    mother_longing: '',
-    father_emotional_presence: '',
-    father_physical_presence: '',
-    father_emotional_state: [] as string[],
-    father_characteristics: [] as string[],
-    father_relationship: '',
-    father_emotional_safety: '',
-    father_longing: '',
-    parents_relationship: '',
-    parents_relationship_impact: '',
-    birth_order: '',
-    number_of_siblings: '',
-    sibling_age_gap: '',
-    sibling_relationship: [] as string[],
-    family_role: [] as string[],
+    mother_emotional_presence: existingAssessment?.mother_emotional_presence ?? '',
+    mother_physical_presence: existingAssessment?.mother_physical_presence ?? '',
+    mother_emotional_state: parseMultiValue(existingAssessment?.mother_emotional_state),
+    mother_characteristics: parseMultiValue(existingAssessment?.mother_characteristics),
+    mother_relationship: existingAssessment?.mother_relationship ?? '',
+    mother_emotional_safety: existingAssessment?.mother_emotional_safety ?? '',
+    mother_longing: existingAssessment?.mother_longing ?? '',
+    father_emotional_presence: existingAssessment?.father_emotional_presence ?? '',
+    father_physical_presence: existingAssessment?.father_physical_presence ?? '',
+    father_emotional_state: parseMultiValue(existingAssessment?.father_emotional_state),
+    father_characteristics: parseMultiValue(existingAssessment?.father_characteristics),
+    father_relationship: existingAssessment?.father_relationship ?? '',
+    father_emotional_safety: existingAssessment?.father_emotional_safety ?? '',
+    father_longing: existingAssessment?.father_longing ?? '',
+    parents_relationship: existingAssessment?.parents_relationship ?? '',
+    parents_relationship_impact: existingAssessment?.parents_relationship_impact ?? '',
+    birth_order: existingAssessment?.birth_order ?? '',
+    number_of_siblings: existingAssessment?.number_of_siblings ?? '',
+    sibling_age_gap: existingAssessment?.sibling_age_gap ?? '',
+    sibling_relationship: parseMultiValue(existingAssessment?.sibling_relationship),
+    family_role: parseMultiValue(existingAssessment?.family_role),
 
     // Clinical Summary
     clinical_condition_brief: existingAssessment?.clinical_condition_brief ?? '',
     therapist_focus: existingAssessment?.therapist_focus ?? '',
     therapy_goal: existingAssessment?.therapy_goal ?? '',
-    predominant_nervous_system_state: '',
-    predominant_emotional_state: '',
-    subconscious_patterns: [] as string[],
-    attachment_style_indicators: [] as string[],
-    possible_root_mechanisms: [] as string[],
-    defense_mechanisms: [] as string[],
-    general_presentation_notes: '',
-    emotional_congruence: '',
-    body_language: [] as string[],
-    body_language_notes: '',
-    resistance_patterns: [] as string[],
-    resistance_notes: '',
-    key_themes: [] as string[],
-    clinical_insights: '',
-    therapeutic_priority: [] as string[],
-    recommended_session_frequency: '',
-    additional_recommendations: '',
+    predominant_nervous_system_state: existingAssessment?.predominant_nervous_system_state ?? '',
+    predominant_emotional_state: existingAssessment?.predominant_emotional_state ?? '',
+    subconscious_patterns: parseMultiValue(existingAssessment?.subconscious_patterns),
+    attachment_style_indicators: parseMultiValue(existingAssessment?.attachment_style_indicators),
+    possible_root_mechanisms: parseMultiValue(existingAssessment?.possible_root_mechanisms),
+    defense_mechanisms: parseMultiValue(existingAssessment?.defense_mechanisms),
+    general_presentation_notes: existingAssessment?.general_presentation_notes ?? '',
+    emotional_congruence: existingAssessment?.emotional_congruence ?? '',
+    body_language: parseMultiValue(existingAssessment?.body_language),
+    body_language_notes: existingAssessment?.body_language_notes ?? '',
+    resistance_patterns: parseMultiValue(existingAssessment?.resistance_patterns),
+    resistance_notes: existingAssessment?.resistance_notes ?? '',
+    key_themes: parseMultiValue(existingAssessment?.key_themes),
+    clinical_insights: existingAssessment?.clinical_insights ?? '',
+    therapeutic_priority: parseMultiValue(existingAssessment?.therapeutic_priority),
+    recommended_session_frequency: existingAssessment?.recommended_session_frequency ?? '',
+    additional_recommendations: existingAssessment?.additional_recommendations ?? '',
   });
 
   useEffect(() => {
@@ -951,7 +850,7 @@ export default function DiagnosticAssessmentForm({
 
   const goalReadinessScore = form.nervous_system_score + form.emotional_state_score +
     form.cognitive_patterns_score + form.body_symptoms_score +
-    form.behavioral_patterns_score + form.life_functioning_score;
+    form.behavioral_patterns_score;
 
   const handleSave = async () => {
     if (!form.main_complaint) {
@@ -964,18 +863,6 @@ export default function DiagnosticAssessmentForm({
     }
     if (!form.date_of_birth) {
       setError('Date of birth is required');
-      return;
-    }
-    if (!form.client_email) {
-      setError('Email is required');
-      return;
-    }
-    if (!form.client_phone) {
-      setError('Phone is required');
-      return;
-    }
-    if (form.current_symptoms.length === 0) {
-      setError('At least one current symptom is required');
       return;
     }
     if (submitMode === 'archive' && !archivedClientId) {
@@ -1124,6 +1011,80 @@ export default function DiagnosticAssessmentForm({
         therapy_goal: appendSection(form.therapy_goal, 'Desired Outcomes & Recommendations', therapyGoalDetails),
         assessed_at: new Date().toISOString(),
         status: 'submitted',
+
+        // Structured columns for Report Card
+        gender: form.gender || null,
+        nationality: form.nationality || null,
+        affected_life_areas: form.affected_life_areas.length > 0 ? form.affected_life_areas : null,
+        affected_life_areas_other: form.affected_life_areas_other || null,
+        symptom_duration: form.symptom_duration || null,
+        life_impact: form.life_impact || null,
+        current_experience_words: form.current_experience_words || null,
+        biggest_goal: form.biggest_goal || null,
+        transformation_vision: form.transformation_vision || null,
+        nervous_system_symptoms: form.nervous_system_symptoms.length > 0 ? form.nervous_system_symptoms : null,
+        nervous_system_symptoms_other: form.nervous_system_symptoms_other || null,
+        sleep_symptoms: form.sleep_symptoms.length > 0 ? form.sleep_symptoms : null,
+        sleep_symptoms_other: form.sleep_symptoms_other || null,
+        sleep_symptoms_score: form.sleep_symptoms_score || null,
+        tried_previously: form.tried_previously.length > 0 ? form.tried_previously : null,
+        tried_previously_other: form.tried_previously_other || null,
+        relationship_quality: form.relationship_quality.length > 0 ? form.relationship_quality : null,
+        relationship_emotional_safety: form.relationship_emotional_safety || null,
+        relationship_challenges: form.relationship_challenges || null,
+        relationship_fulfillment_score: form.relationship_fulfillment_score || null,
+        has_children: form.has_children || null,
+        children_relationship: form.children_relationship.length > 0 ? form.children_relationship : null,
+        children_relationship_other: form.children_relationship_other || null,
+        parenting_fulfillment_score: form.parenting_fulfillment_score || null,
+        employment_status: form.employment_status || null,
+        work_fulfillment_score: form.work_fulfillment_score || null,
+        work_state: form.work_state.length > 0 ? form.work_state : null,
+        work_state_other: form.work_state_other || null,
+        social_life: form.social_life.length > 0 ? form.social_life : null,
+        social_life_other: form.social_life_other || null,
+        feel_understood: form.feel_understood || null,
+        sleep_description: form.sleep_description.length > 0 ? form.sleep_description : null,
+        sleep_description_other: form.sleep_description_other || null,
+        average_sleep_hours: form.average_sleep_hours || null,
+        mother_emotional_presence: form.mother_emotional_presence || null,
+        mother_physical_presence: form.mother_physical_presence || null,
+        mother_emotional_state: form.mother_emotional_state.length > 0 ? form.mother_emotional_state : null,
+        mother_characteristics: form.mother_characteristics.length > 0 ? form.mother_characteristics : null,
+        mother_relationship: form.mother_relationship || null,
+        mother_emotional_safety: form.mother_emotional_safety || null,
+        mother_longing: form.mother_longing || null,
+        father_emotional_presence: form.father_emotional_presence || null,
+        father_physical_presence: form.father_physical_presence || null,
+        father_emotional_state: form.father_emotional_state.length > 0 ? form.father_emotional_state : null,
+        father_characteristics: form.father_characteristics.length > 0 ? form.father_characteristics : null,
+        father_relationship: form.father_relationship || null,
+        father_emotional_safety: form.father_emotional_safety || null,
+        father_longing: form.father_longing || null,
+        parents_relationship: form.parents_relationship || null,
+        parents_relationship_impact: form.parents_relationship_impact || null,
+        birth_order: form.birth_order || null,
+        number_of_siblings: form.number_of_siblings || null,
+        sibling_age_gap: form.sibling_age_gap || null,
+        sibling_relationship: form.sibling_relationship.length > 0 ? form.sibling_relationship : null,
+        family_role: form.family_role.length > 0 ? form.family_role : null,
+        predominant_nervous_system_state: form.predominant_nervous_system_state || null,
+        predominant_emotional_state: form.predominant_emotional_state || null,
+        subconscious_patterns: form.subconscious_patterns.length > 0 ? form.subconscious_patterns : null,
+        attachment_style_indicators: form.attachment_style_indicators.length > 0 ? form.attachment_style_indicators : null,
+        possible_root_mechanisms: form.possible_root_mechanisms.length > 0 ? form.possible_root_mechanisms : null,
+        defense_mechanisms: form.defense_mechanisms.length > 0 ? form.defense_mechanisms : null,
+        general_presentation_notes: form.general_presentation_notes || null,
+        emotional_congruence: form.emotional_congruence || null,
+        body_language: form.body_language.length > 0 ? form.body_language : null,
+        body_language_notes: form.body_language_notes || null,
+        resistance_patterns: form.resistance_patterns.length > 0 ? form.resistance_patterns : null,
+        resistance_notes: form.resistance_notes || null,
+        key_themes: form.key_themes.length > 0 ? form.key_themes : null,
+        clinical_insights: form.clinical_insights || null,
+        therapeutic_priority: form.therapeutic_priority.length > 0 ? form.therapeutic_priority : null,
+        recommended_session_frequency: form.recommended_session_frequency || null,
+        additional_recommendations: form.additional_recommendations || null,
       };
 
       if (previewMode) {
@@ -1220,7 +1181,7 @@ export default function DiagnosticAssessmentForm({
     maxSelect?: number;
     onSelectNew?: () => void;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => {
         const selectedArr = form[field as keyof typeof form] as string[];
         const selected = selectedArr.includes(option);
@@ -1263,7 +1224,7 @@ export default function DiagnosticAssessmentForm({
     disabled?: boolean;
     onSelectNew?: () => void;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option.value}
@@ -1298,7 +1259,7 @@ export default function DiagnosticAssessmentForm({
     field: string;
     disabled?: boolean;
   }) => (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {options.map(option => (
         <button
           key={option}
@@ -1351,7 +1312,7 @@ export default function DiagnosticAssessmentForm({
             </div>
             <div className="text-right">
               <p className="text-sm text-slate-500">Goal Distance</p>
-              <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/60</p>
+              <p className="text-2xl font-bold text-indigo-600">{goalReadinessScore}/50</p>
             </div>
           </div>
 
@@ -1386,7 +1347,7 @@ export default function DiagnosticAssessmentForm({
           {activeSection === 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-slate-900 mb-4">Basic Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
                   <input
@@ -1406,40 +1367,6 @@ export default function DiagnosticAssessmentForm({
                     disabled={isReadOnly}
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={form.client_email}
-                    onChange={(e) => updateField('client_email', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
-                  <input
-                    type="tel"
-                    value={form.client_phone}
-                    onChange={(e) => updateField('client_phone', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Country</label>
-                  <select
-                    value={form.client_country}
-                    onChange={(e) => updateField('client_country', e.target.value)}
-                    disabled={isReadOnly}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  >
-                    <option value="">Select country...</option>
-                    {COUNTRIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
@@ -1574,79 +1501,6 @@ export default function DiagnosticAssessmentForm({
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Current Symptoms * (select all that apply)</label>
-                <PatternCheckbox options={CURRENT_SYMPTOM_OPTIONS} field="current_symptoms" disabled={isReadOnly} />
-                {form.current_symptoms.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.current_symptoms_other}
-                      onChange={(e) => updateField('current_symptoms_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other symptoms..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">What have you tried previously to address these symptoms?</label>
-                <PatternCheckbox options={TRIED_PREVIOUSLY} field="tried_previously" disabled={isReadOnly} />
-                {form.tried_previously.includes('Other') && (
-                  <input
-                    type="text"
-                    value={form.tried_previously_other}
-                    onChange={(e) => updateField('tried_previously_other', e.target.value)}
-                    disabled={isReadOnly}
-                    placeholder="Please specify..."
-                    className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Briefly describe your current experience in your own words</label>
-                <textarea
-                  value={form.current_experience_words}
-                  onChange={(e) => updateField('current_experience_words', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                />
-              </div>
-              <div className="border-t border-slate-200 pt-6">
-                <h4 className="font-medium text-slate-900 mb-3">Previous Therapy</h4>
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => !isReadOnly && updateField('previous_therapy', !form.previous_therapy)}
-                    disabled={isReadOnly}
-                    className={`w-12 h-6 rounded-full transition-colors ${
-                      form.previous_therapy ? 'bg-indigo-600' : 'bg-slate-200'
-                    } ${isReadOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <span
-                      className={`block w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                        form.previous_therapy ? 'translate-x-6' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                  <span className="text-sm text-slate-700">Has previous therapy experience</span>
-                </div>
-                {form.previous_therapy && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Previous Therapy Details</label>
-                    <textarea
-                      value={form.previous_therapy_details}
-                      onChange={(e) => updateField('previous_therapy_details', e.target.value)}
-                      rows={4}
-                      disabled={isReadOnly}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                      placeholder="Describe previous therapy experience, types, duration, outcomes..."
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -1657,24 +1511,11 @@ export default function DiagnosticAssessmentForm({
 
               {/* 1. Nervous System */}
               <div className={`border rounded-lg overflow-hidden transition-colors ${
-                form.nervous_system_pattern || form.nervous_system_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
+                form.nervous_system_symptoms.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
               }`}>
                 <div className="p-4">
                   <h4 className="font-medium text-slate-800 mb-3">1. Nervous System</h4>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Observed Pattern</label>
-                  <SingleSelect
-                    options={NERVOUS_SYSTEM_PATTERNS}
-                    field="nervous_system_pattern"
-                    disabled={isReadOnly}
-                    onSelectNew={() =>
-                      openScorePrompt(
-                        'nervous_system_score',
-                        'Nervous System Score',
-                        'You selected a nervous system pattern. Set the severity now.'
-                      )
-                    }
-                  />
-                  <div className="mt-4">
+                  <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Nervous System Symptoms</label>
                     <PatternCheckbox
                       options={NERVOUS_SYSTEM_SYMPTOMS}
@@ -1924,52 +1765,44 @@ export default function DiagnosticAssessmentForm({
                 )}
               </div>
 
-              {/* 7. Life Functioning */}
-              <div className={`border rounded-lg overflow-hidden transition-colors ${
-                form.life_functioning_patterns.length > 0 ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-200'
-              }`}>
-                <div className="p-4">
-                  <h4 className="font-medium text-slate-800 mb-3">7. Life Functioning</h4>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Impact Areas</label>
+              {/* 7. Previous Attempts & Current Experience */}
+              <div className="border border-slate-200 rounded-lg p-4 space-y-5">
+                <h4 className="font-medium text-slate-800 mb-3">7. Previous Attempts & Current Experience</h4>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">What have you tried previously to address these symptoms? (Select all that apply)</label>
                   <PatternCheckbox
-                    options={LIFE_FUNCTIONING}
-                    field="life_functioning_patterns"
+                    options={['Therapy', 'Medication', 'Coaching', 'Self-help', 'Meditation', 'Holistic treatments', 'Lifestyle changes', 'Spiritual practices', 'Nothing yet', 'Other']}
+                    field="tried_previously"
                     disabled={isReadOnly}
-                    onSelectNew={() =>
-                      openScorePrompt(
-                        'life_functioning_score',
-                        'Life Functioning Score',
-                        'You selected a life-impact pattern. Set the severity now.'
-                      )
-                    }
                   />
-                  {form.life_functioning_patterns.includes('Other') && (
+                  {form.tried_previously.includes('Other') && (
                     <input
                       type="text"
-                      value={form.life_functioning_patterns_other}
-                      onChange={(e) => updateField('life_functioning_patterns_other', e.target.value)}
+                      value={form.tried_previously_other}
+                      onChange={(e) => updateField('tried_previously_other', e.target.value)}
                       disabled={isReadOnly}
                       placeholder="Please specify..."
                       className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
                     />
                   )}
                 </div>
-                {form.life_functioning_patterns.length > 0 && (
-                  <div className="px-4 pb-4 border-t border-indigo-100 pt-4">
-                    <ScoreSlider
-                      label="Severity — How much is the client's life impacted overall?"
-                      field="life_functioning_score"
-                      value={form.life_functioning_score}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Briefly describe your current experience in your own words:</label>
+                  <textarea
+                    value={form.current_experience_words}
+                    onChange={(e) => updateField('current_experience_words', e.target.value)}
+                    rows={4}
+                    disabled={isReadOnly}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                    placeholder="Describe your current experience..."
+                  />
+                </div>
               </div>
 
               {/* Baseline Score Summary */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
                     <span>Nervous System:</span>
                     <span className="font-medium">{form.nervous_system_score}/10</span>
@@ -1990,14 +1823,10 @@ export default function DiagnosticAssessmentForm({
                     <span>Behavioral:</span>
                     <span className="font-medium">{form.behavioral_patterns_score}/10</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Life Functioning:</span>
-                    <span className="font-medium">{form.life_functioning_score}/10</span>
-                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
                   <span>Goal Distance:</span>
-                  <span className="text-indigo-600">{goalReadinessScore}/60</span>
+                  <span className="text-indigo-600">{goalReadinessScore}/50</span>
                 </div>
               </div>
             </div>
@@ -2051,22 +1880,20 @@ export default function DiagnosticAssessmentForm({
                     disabled={isReadOnly}
                   />
                 </div>
-                {form.has_children === 'Yes' && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">How would you describe your relationship with your children?</label>
-                    <PatternCheckbox options={CHILDREN_RELATIONSHIP} field="children_relationship" disabled={isReadOnly} />
-                    {form.children_relationship.includes('Other') && (
-                      <input
-                        type="text"
-                        value={form.children_relationship_other}
-                        onChange={(e) => updateField('children_relationship_other', e.target.value)}
-                        disabled={isReadOnly}
-                        placeholder="Please specify..."
-                        className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                      />
-                    )}
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">How would you describe your relationship with your children?</label>
+                  <PatternCheckbox options={CHILDREN_RELATIONSHIP} field="children_relationship" disabled={isReadOnly} />
+                  {form.children_relationship.includes('Other') && (
+                    <input
+                      type="text"
+                      value={form.children_relationship_other}
+                      onChange={(e) => updateField('children_relationship_other', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Please specify..."
+                      className="mt-3 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                  )}
+                </div>
 
                 <h4 className="font-medium text-slate-900 border-t border-slate-100 pt-4">Work & Fulfillment</h4>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -2272,68 +2099,6 @@ export default function DiagnosticAssessmentForm({
                   </div>
                 </div>
               </div>
-
-              {/* 1. Pattern Expression Timeline */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  1. Pattern Expression Timeline — "How long have you been aware of this pattern or experiencing its effects?"
-                </label>
-                <SingleSelect options={PATTERN_TIMELINE_OPTIONS} field="root_cause_pattern_timeline" disabled={isReadOnly} />
-              </div>
-
-              {/* 2. Dominant Parental Influence */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">2. Dominant Parental Influence</label>
-                <SingleSelect options={PARENTAL_INFLUENCE_OPTIONS} field="root_cause_parental_influence" disabled={isReadOnly} />
-                {form.root_cause_parental_influence === 'other' && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_parental_influence_other}
-                      onChange={(e) => updateField('root_cause_parental_influence_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* 3. Core Pattern */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">3. Core Pattern (select top 1-2)</label>
-                <PatternCheckbox options={CORE_PATTERN_OPTIONS} field="root_cause_core_patterns" disabled={isReadOnly} maxSelect={2} />
-                {form.root_cause_core_patterns.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_core_patterns_other}
-                      onChange={(e) => updateField('root_cause_core_patterns_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other core pattern..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Key Contributing Factors */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">4. Key Contributing Factors</label>
-                <PatternCheckbox options={CONTRIBUTING_FACTOR_OPTIONS} field="root_cause_contributing_factors" disabled={isReadOnly} />
-                {form.root_cause_contributing_factors.includes('Other') && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      value={form.root_cause_contributing_factors_other}
-                      onChange={(e) => updateField('root_cause_contributing_factors_other', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Please specify other contributing factors..."
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -2464,44 +2229,11 @@ export default function DiagnosticAssessmentForm({
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Condition Brief</label>
-                <textarea
-                  value={form.clinical_condition_brief}
-                  onChange={(e) => updateField('clinical_condition_brief', e.target.value)}
-                  rows={4}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Brief clinical summary of the client's condition..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Therapist Main Focus</label>
-                <textarea
-                  value={form.therapist_focus}
-                  onChange={(e) => updateField('therapist_focus', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Areas the therapist will focus on..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Therapy Goal</label>
-                <textarea
-                  value={form.therapy_goal}
-                  onChange={(e) => updateField('therapy_goal', e.target.value)}
-                  rows={3}
-                  disabled={isReadOnly}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                  placeholder="Goals for therapy outcomes..."
-                />
-              </div>
 
               {/* Baseline Score */}
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">Baseline Score</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
                     <span>Nervous System:</span>
                     <span className="font-medium">{form.nervous_system_score}/10</span>
@@ -2529,7 +2261,7 @@ export default function DiagnosticAssessmentForm({
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between font-semibold">
                   <span>Goal Distance:</span>
-                  <span className="text-indigo-600">{goalReadinessScore}/60</span>
+                  <span className="text-indigo-600">{goalReadinessScore}/50</span>
                 </div>
               </div>
             </div>

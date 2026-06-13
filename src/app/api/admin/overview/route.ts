@@ -48,23 +48,23 @@ export async function GET() {
     const therapists = users.filter(u => u.role === 'therapist');
     const clients = users.filter(u => u.role === 'client');
     const activePrograms = programs.filter(p => p.status === 'active');
-    // Revenue policy: count only admin-verified program payments.
+    // Revenue policy: sum verified program price_paid and bookings paid amounts
     const programRevenue = programs.reduce((sum, p) => {
-      const price = p.price_paid ?? 0;
-      if (p.payment_status === 'verified' && price === 7700) {
-        return sum + 7700;
+      const price = Number(p.price_paid ?? 0);
+      if (p.payment_status === 'verified') {
+        return sum + price;
       }
       return sum;
     }, 0);
-    
+
     const singleSessionRevenue = bookings.reduce((sum, b) => {
-      // Only count valid single session price: 800
-      if (b.type === 'paid_session' && b.price === 800) {
-        return sum + 800;
+      const price = Number(b.price ?? 0);
+      if (b.type === 'paid_session') {
+        return sum + price;
       }
       return sum;
     }, 0);
-    
+
     const totalRevenue = programRevenue + singleSessionRevenue;
 
     const now = new Date();
