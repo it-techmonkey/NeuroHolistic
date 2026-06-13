@@ -7,7 +7,7 @@ import {
   Loader2, Calendar, Clock, CheckCircle, AlertCircle,
   Video, FileText, User, Mail, TrendingUp, ChevronRight,
   Search, BarChart3, Settings, LogOut, UserCircle,
-  ChevronDown, Download, Eye, File, Image, Hourglass
+  ChevronDown, Download, Eye, File, Image, Hourglass, CreditCard
 } from 'lucide-react';
 import Progress from '@/components/dashboard/client/Progress';
 import Account from '@/components/dashboard/client/Account';
@@ -423,15 +423,24 @@ export default function ClientDashboardPage() {
                     </div>
                   </div>
                 )}
-                {/* No free consultation booked - show Book button */}
+                {/* No free consultation booked - show both Book Free Consultation and Buy Paid Program */}
                 {data?.programStatus === 'none' && !data?.hasCompletedFreeConsult && !data?.hasBookedFreeConsult && (
-                  <a
-                    href="/consultation/book"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Book Free Consultation
-                  </a>
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href="/consultation/book"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Book Free Consultation
+                    </a>
+                    <a
+                      href="/booking/paid-program-booking"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-semibold hover:bg-white/30 transition-colors border border-white/20"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Buy a Paid Program
+                    </a>
+                  </div>
                 )}
                 {/* Free consultation completed - show Book Paid Program or Pending status */}
                 {data?.programStatus === 'consultation_done' && (

@@ -94,6 +94,7 @@ export default function PaymentButtons({ userEmail, userName }: PaymentButtonsPr
             transformation journey at the best rate.
           </p>
           <div className="mb-6">
+            <span className="text-slate-500 text-sm">From</span>{' '}
             <span className="text-4xl font-bold text-slate-900">7,700</span>
             <span className="text-slate-500 text-base ml-1">AED</span>
             <p className="text-slate-500 text-sm mt-1">10 sessions · 770 AED / session</p>
