@@ -37,19 +37,15 @@ export default function Philosophy() {
           
           {/* Header Area */}
           <div className="mx-auto max-w-[840px] text-center">
-            <motion.h2
+            {/* <motion.h2
               variants={itemVariants}
               className="mb-3 text-[16px] font-medium leading-[1.4] tracking-tight text-[#0B1028] md:text-[23px] lg:text-[26px]"
             >
               {t.philosophy.heading}
-            </motion.h2>
+            </motion.h2> */}
 
-            <motion.p
-              variants={itemVariants}
-              className="mx-auto max-w-[680px] text-[16px] leading-[2] text-[#475569] md:text-[17px] mt-2"
-            >
-              {t.philosophy.description}
-            </motion.p>
+            {/* Description moved to the Method section hero per client request.
+                Keeping this area empty to avoid duplicate content. */}
           </div>
 
         </div>

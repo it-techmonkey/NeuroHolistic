@@ -198,6 +198,7 @@ export const en = {
   // ── Final CTA ──
   finalCTA: {
     signUpNow: "Signup Now",
+    bookPaidProgram: "Book Paid Program",
   },
 
   // ── HeroBookingForm ──

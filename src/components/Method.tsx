@@ -32,6 +32,13 @@ export default function MethodHero() {
             <p className={`mb-4 text-[14px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#64748B] md:text-[15px]`}>
               {t.method.subtitle}
             </p>
+
+            {/* Description moved under the Method title for both languages.
+                Uses the shared `philosophy.description` string so English and Arabic
+                render identical content according to the active language. */}
+            <p className={`mb-6 text-[15px] ${isUrdu ? 'leading-[2]' : 'leading-[1.8]'} text-[#475569] max-w-2xl mx-auto`}>
+              {t.philosophy.description}
+            </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/method"
