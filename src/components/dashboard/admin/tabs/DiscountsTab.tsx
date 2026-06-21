@@ -5,6 +5,9 @@ import {
   Percent, Loader2, Search, Trash2, UserPlus, X, CheckCircle,
   Mail, Calendar, MessageSquare, RefreshCw
 } from 'lucide-react';
+import { STANDARD_PRICING, GROUP_PRICING } from '@/lib/payments/pricing';
+
+const DISCOUNT_TIERS = [10, 15, 20] as const;
 
 interface DiscountRecord {
   id: string;
@@ -233,7 +236,7 @@ export default function DiscountsTab() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        {[10, 15, 20].map(pct => (
+        {DISCOUNT_TIERS.map(pct => (
           <div key={pct} className="bg-white border border-slate-200 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Percent className="w-4 h-4 text-slate-400" />
@@ -421,7 +424,7 @@ export default function DiscountsTab() {
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-700 mb-2">Discount Tier</label>
               <div className="grid grid-cols-3 gap-2">
-                {[10, 15, 20].map(pct => (
+                {DISCOUNT_TIERS.map(pct => (
                   <button
                     key={pct}
                     onClick={() => setSelectedPercent(pct)}
@@ -456,13 +459,13 @@ export default function DiscountsTab() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-slate-400">Private (Full):</span>{' '}
-                    <span className="line-through text-slate-400">7,700</span>{' '}
-                    <span className="font-semibold text-indigo-600">{Math.round(7700 * (1 - selectedPercent / 100)).toLocaleString()} AED</span>
+                    <span className="line-through text-slate-400">{STANDARD_PRICING.fullProgram.toLocaleString()}</span>{' '}
+                    <span className="font-semibold text-indigo-600">{Math.round(STANDARD_PRICING.fullProgram * (1 - selectedPercent / 100)).toLocaleString()} AED</span>
                   </div>
                   <div>
                     <span className="text-slate-400">Group (Full):</span>{' '}
-                    <span className="line-through text-slate-400">4,500</span>{' '}
-                    <span className="font-semibold text-indigo-600">{Math.round(4500 * (1 - selectedPercent / 100)).toLocaleString()} AED</span>
+                    <span className="line-through text-slate-400">{GROUP_PRICING.fullProgram.toLocaleString()}</span>{' '}
+                    <span className="font-semibold text-indigo-600">{Math.round(GROUP_PRICING.fullProgram * (1 - selectedPercent / 100)).toLocaleString()} AED</span>
                   </div>
                 </div>
               </div>
