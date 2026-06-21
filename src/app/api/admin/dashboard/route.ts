@@ -263,6 +263,22 @@ export async function GET() {
       })),
       activeProgramsDetail,
       recentActivity,
+      programs: programs.map(p => ({
+        id: p.id,
+        user_id: p.user_id,
+        therapist_user_id: p.therapist_user_id,
+        therapist_name: p.therapist_name,
+        total_sessions: p.total_sessions,
+        used_sessions: p.used_sessions || 0,
+        sessions_completed: p.sessions_completed || 0,
+        status: p.status,
+        program_type: p.program_type || 'private',
+        price_paid: p.price_paid ?? null,
+        payment_status: p.payment_status || 'pending',
+        client_name: p.client_name,
+        client_email: p.client_email,
+        created_at: p.created_at,
+      })),
     });
   } catch (error) {
     console.error('[Admin Dashboard]', error);
