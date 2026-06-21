@@ -7,6 +7,7 @@ import {
   CalendarDays, User, CreditCard, AlertCircle, Activity, BookOpen,
 } from 'lucide-react';
 import { toDisplayTime } from '@/lib/booking/slots';
+import { getPricingConfig } from '@/lib/payments/pricing';
 
 type Step = 'client' | 'details' | 'payment' | 'review';
 
@@ -180,6 +181,18 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
       .catch(() => setSlots([]))
       .finally(() => setSlotsLoading(false));
   }, [selectedTherapist, selectedDate]);
+
+  // Auto-calculate price when therapist or new program type changes
+  useEffect(() => {
+    if (sessionType !== 'program') return;
+    if (!selectedTherapist) return;
+
+    const type = newProgramType === 'academy' ? 'private' : newProgramType;
+    const config = getPricingConfig(type, selectedTherapist.full_name);
+    const autoPrice = config.fullProgram;
+    setAmountAed(String(autoPrice));
+    setPaymentStatus('paid');
+  }, [sessionType, selectedTherapist, newProgramType]);
 
   const filteredClients = useMemo(() => {
     if (!clientSearch) return clients;
@@ -910,6 +923,7 @@ function StepPayment({
             onChange={(e) => onAmountChange(e.target.value)}
             className="w-full border border-slate-200 rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
           />
+          <p className="text-[11px] text-slate-400 mt-1">Auto-calculated from therapist pricing. You can edit if needed.</p>
         </div>
       )}
 
