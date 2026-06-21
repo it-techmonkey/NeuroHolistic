@@ -8,10 +8,10 @@ const ACCREDITATIONS = [
     name: "Complementary Medical Association", 
     abbr: "CMA", 
     status: "Full Member Provider",
-    id: "REG-8820"
+    id: "CMA 3256"
   },
   { 
-    name: "CPD Certification Service", 
+    name: "CMA CPD Recognition", 
     abbr: "CPD", 
     status: "Accredited Excellence",
     id: "UK-CPD-21"

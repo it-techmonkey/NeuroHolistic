@@ -141,7 +141,7 @@ export default function ResearchPage() {
             viewport={{ once: true }}
             className="text-center text-[32px] font-light text-white md:text-[44px]"
           >
-            {rp.publicationsTitle1} <br/>& <span className="italic text-slate-400">{rp.publicationsTitle2}</span>
+            {rp.publicationsTitle1} <br/>{lang !== "en" ? "" : "& "}<span className="italic text-slate-400">{rp.publicationsTitle2}</span>
           </motion.h3>
 
           <div className="mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">

@@ -198,6 +198,7 @@ export const en = {
   // ── Final CTA ──
   finalCTA: {
     signUpNow: "Signup Now",
+    bookPaidProgram: "Book Paid Program",
   },
 
   // ── HeroBookingForm ──
@@ -510,6 +511,8 @@ export const en = {
   methodPage: {
     eyebrow: "The Methodology",
     title: "The NeuroHolistic Method",
+    titlePart1: "The NeuroHolistic",
+    titlePart2: "Method",
     description: "Systematic approaches to transformation. Harnessing neuroplasticity for lasting growth and systemic coherence.",
     bookConsultation: "Book a Consultation",
     exploreResearch: "Explore Research",
