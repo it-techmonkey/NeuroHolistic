@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
             client_name: client.full_name || 'Client',
             client_email: client.email,
             payment_status: paymentStatus === 'paid' ? 'verified' : paymentStatus === 'pending' ? 'pending_verification' : 'verified',
-            price_paid: amountAed ? Math.round(amountAed * 100) : null,
+            price_paid: amountAed || null,
             admin_notes: adminNotes || null,
           })
           .select('id')
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
     if (paymentStatus === 'paid' && amountAed && amountAed > 0) {
       await supabase.from('payments').insert({
         user_id: clientUserId,
-        amount: Math.round(amountAed * 100), // Store in fils/cents
+        amount: amountAed,
         currency: 'AED',
         type: sessionType === 'program' ? 'full_program' : 'single_session',
         status: 'paid',
