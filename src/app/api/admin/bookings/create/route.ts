@@ -4,8 +4,6 @@ import { createClient } from '@/lib/auth/server';
 import { BookingService } from '@/lib/services/booking.service';
 import { notifyBookingConfirmed, type NotificationBooking } from '@/lib/services/notification.service';
 
-const BOOKING_TIME_SLOTS = ['09:00', '11:00', '14:00', '16:00', '18:00', '20:00'] as const;
-
 export async function POST(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -49,9 +47,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!BOOKING_TIME_SLOTS.includes(time)) {
+    // Validate time format (HH:MM) — accept any valid time from the availability API
+    if (!/^\d{2}:\d{2}$/.test(time)) {
       return NextResponse.json(
-        { error: 'Invalid time slot' },
+        { error: 'Invalid time format. Must be HH:MM' },
         { status: 400 }
       );
     }
@@ -242,22 +241,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.statusCode ?? 500 });
     }
 
-    // Create payment record if paid
+    // Create payment record ONLY if the program doesn't already have a paid payment
     if (paymentStatus === 'paid' && amountAed && amountAed > 0) {
-      await supabase.from('payments').insert({
-        user_id: clientUserId,
-        amount: amountAed,
-        currency: 'AED',
-        type: sessionType === 'program' ? 'full_program' : 'single_session',
-        status: 'paid',
-        payment_reference: `admin-${Date.now()}`,
-        program_id: resolvedProgramId || null,
-        metadata: {
-          bookedBy: 'admin',
-          adminUserId: user.id,
-          adminNotes: adminNotes || null,
-        },
-      });
+      let alreadyPaid = false;
+      if (resolvedProgramId) {
+        const { data: existingPayment } = await supabase
+          .from('payments')
+          .select('id')
+          .eq('program_id', resolvedProgramId)
+          .eq('status', 'paid')
+          .limit(1)
+          .maybeSingle();
+        alreadyPaid = !!existingPayment;
+      }
+
+      if (!alreadyPaid) {
+        await supabase.from('payments').insert({
+          user_id: clientUserId,
+          amount: amountAed,
+          currency: 'AED',
+          type: sessionType === 'program' ? 'full_program' : 'single_session',
+          status: 'paid',
+          payment_reference: `admin-${Date.now()}`,
+          program_id: resolvedProgramId || null,
+          metadata: {
+            bookedBy: 'admin',
+            adminUserId: user.id,
+            adminNotes: adminNotes || null,
+          },
+        });
+      }
     }
 
     // If admin notes, store on program if applicable
