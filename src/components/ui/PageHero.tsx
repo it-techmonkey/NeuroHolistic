@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { useLang } from "@/lib/translations/LanguageContext";
@@ -45,14 +45,11 @@ export default function PageHero({
       
       {/* ── Background Layer ── */}
       <div className="absolute inset-0 z-0">
-        <Image
+        <img
           src={imageSrc}
           alt={imageAlt}
-          fill
-          priority
-          className={`object-cover ${imagePosition}`}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
-          quality={95}
+          fetchPriority="high"
+          className={`absolute inset-0 h-full w-full object-cover ${imagePosition}`}
         />
         <div className="absolute inset-0 bg-[#0B1028]/60" />
       </div>
