@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope, ChevronRight, CalendarDays } from 'lucide-react';
+import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope, ChevronRight, CalendarDays, Banknote } from 'lucide-react';
 import ScheduleStep from '@/components/booking/shared/ScheduleStep';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -76,6 +76,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
   });
   const [formError, setFormError] = useState('');
   const [pendingPaymentOption, setPendingPaymentOption] = useState<PaymentOption | null>(null);
+  const [pendingCashPayment, setPendingCashPayment] = useState(false);
+  const [cashPaymentSuccess, setCashPaymentSuccess] = useState(false);
+  const [cashPaymentId, setCashPaymentId] = useState('');
   const [userDiscount, setUserDiscount] = useState<DiscountInfo | null>(null);
   const [locallyAuthenticated, setLocallyAuthenticated] = useState(false);
   const effectivelyAuthenticated = isAuthenticated || locallyAuthenticated;
@@ -156,6 +159,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       setSelectedTherapist(null);
     } else if (step === 'details') {
       setStep('payment');
+      setPendingCashPayment(false);
     }
   };
 
@@ -182,6 +186,63 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       });
     } catch (err: any) {
       alert(err.message || 'Failed to start payment.');
+      setProcessing(false);
+    }
+  };
+
+  const handleCashPayment = async () => {
+    if (!selectedProgramType) return;
+
+    if (!effectivelyAuthenticated) {
+      setPendingCashPayment(true);
+      setStep('details');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const res = await fetch('/api/bookings/cash-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          programType: academyMode ? 'academy' : selectedProgramType,
+          paymentOption: selectedPaymentOption || 'full',
+          therapistName: selectedTherapist?.name,
+          therapistSlug: selectedTherapist?.slug,
+          discountPercent: userDiscount?.discountPercent,
+          preferredDate: selectedDate || undefined,
+          preferredTime: selectedTime || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create cash payment request');
+
+      const programLabel = selectedProgramType === 'private' ? 'Private Program' : 'Group Program';
+      const sessionsLabel = (selectedPaymentOption || 'full') === 'full' ? '10 sessions' : '1 session';
+      const therapistLabel = selectedTherapist?.name ? ` with ${selectedTherapist.name}` : '';
+      const price = userDiscount
+        ? applyClientDiscount(getPriceForDisplay(selectedProgramType, selectedPaymentOption || 'full', selectedTherapist), userDiscount.discountPercent)
+        : getPriceForDisplay(selectedProgramType, selectedPaymentOption || 'full', selectedTherapist);
+
+      const message = encodeURIComponent(
+        `Hello, I would like to pay by cash for the following program:\n\n` +
+        `Program: ${programLabel}\n` +
+        `Sessions: ${sessionsLabel}${therapistLabel}\n` +
+        `Amount: AED ${price.toLocaleString()}\n` +
+        `Reference: ${data.paymentId}\n\n` +
+        `Please guide me with the cash payment process.`
+      );
+
+      setCashPaymentId(data.paymentId);
+      setProcessing(false);
+      setCashPaymentSuccess(true);
+
+      setTimeout(() => {
+        window.open(`https://wa.me/971585778090?text=${message}`, '_blank');
+      }, 2500);
+    } catch (err: any) {
+      alert(err.message || 'Failed to initiate cash payment.');
       setProcessing(false);
     }
   };
@@ -523,6 +584,33 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               </button>
             </div>
           </div>
+
+          {/* Pay by Cash */}
+          <div className="mt-2">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-slate-50 text-slate-400 text-xs font-medium">
+                  {isArabic ? 'أو' : 'OR'}
+                </span>
+              </div>
+            </div>
+            <button onClick={handleCashPayment} disabled={processing}
+              className="w-full mt-4 py-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold text-[15px] transition-all flex items-center justify-center gap-2 hover:bg-emerald-100 hover:border-emerald-600 disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed">
+              {processing ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> {isArabic ? 'جارٍ المعالجة...' : 'Processing...'}</>
+              ) : (
+                <><Banknote className="w-5 h-5" /> {isArabic ? 'الدفع نقدياً' : 'Pay by Cash'}</>
+              )}
+            </button>
+            <p className="text-center text-xs text-slate-400 mt-2">
+              {isArabic
+                ? 'ادفع نقدياً وسنتواصل معك عبر واتساب لإتمام العملية'
+                : 'Pay with cash — we\'ll coordinate via WhatsApp to complete your booking'}
+            </p>
+          </div>
         </div>
       )}
 
@@ -674,7 +762,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
       )}
 
       {/* STEP: Details (unauthenticated users - create account after payment selection) */}
-      {step === 'details' && selectedProgramType && pendingPaymentOption && (
+      {step === 'details' && selectedProgramType && (pendingPaymentOption || pendingCashPayment) && (
         <div className={`space-y-6 ${isArabic ? 'text-right' : ''}`}>
           <button onClick={handleBack} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -693,7 +781,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                     {selectedTherapist && ` — ${selectedTherapist.name}`}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {pendingPaymentOption === 'full' ? (isArabic ? 'دفع كامل' : 'Full payment') : (isArabic ? 'لكل جلسة' : 'Per session')}
+                    {pendingCashPayment
+                      ? (isArabic ? 'الدفع نقدياً' : 'Pay by Cash')
+                      : pendingPaymentOption === 'full' ? (isArabic ? 'دفع كامل' : 'Full payment') : (isArabic ? 'لكل جلسة' : 'Per session')}
                   </p>
                 </div>
               </div>
@@ -701,15 +791,15 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 {userDiscount ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-400 line-through">
-                      {getPriceForDisplay(selectedProgramType, pendingPaymentOption, selectedTherapist).toLocaleString()} AED
+                      {getPriceForDisplay(selectedProgramType, pendingPaymentOption || 'full', selectedTherapist).toLocaleString()} AED
                     </span>
                     <span className="text-xl font-bold text-indigo-600">
-                      {applyClientDiscount(getPriceForDisplay(selectedProgramType, pendingPaymentOption, selectedTherapist), userDiscount.discountPercent).toLocaleString()} AED
+                      {applyClientDiscount(getPriceForDisplay(selectedProgramType, pendingPaymentOption || 'full', selectedTherapist), userDiscount.discountPercent).toLocaleString()} AED
                     </span>
                   </div>
                 ) : (
                   <p className="text-xl font-bold text-slate-900">
-                    {getPriceForDisplay(selectedProgramType, pendingPaymentOption, selectedTherapist).toLocaleString()} AED
+                    {getPriceForDisplay(selectedProgramType, pendingPaymentOption || 'full', selectedTherapist).toLocaleString()} AED
                   </p>
                 )}
               </div>
@@ -756,15 +846,58 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   refresh_token: signupData.session.refresh_token || '',
                 });
               }
-              setSelectedPaymentOption(pendingPaymentOption);
-              await redirectToZiinaCheckout({
-                programType: academyMode ? 'academy' : selectedProgramType!,
-                paymentOption: pendingPaymentOption,
-                therapistName: selectedTherapist?.name,
-                therapistSlug: selectedTherapist?.slug,
-                preferredDate: selectedDate || undefined,
-                preferredTime: selectedTime || undefined,
-              });
+
+              if (pendingCashPayment) {
+                const cashRes = await fetch('/api/bookings/cash-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    programType: academyMode ? 'academy' : selectedProgramType,
+                    paymentOption: pendingPaymentOption || 'full',
+                    therapistName: selectedTherapist?.name,
+                    therapistSlug: selectedTherapist?.slug,
+                    discountPercent: userDiscount?.discountPercent,
+                    preferredDate: selectedDate || undefined,
+                    preferredTime: selectedTime || undefined,
+                  }),
+                });
+                const cashData = await cashRes.json();
+                if (!cashRes.ok) throw new Error(cashData.error || 'Failed to create cash payment request');
+
+                const programLabel = selectedProgramType === 'private' ? 'Private Program' : 'Group Program';
+                const sessionsLabel = (pendingPaymentOption || 'full') === 'full' ? '10 sessions' : '1 session';
+                const therapistLabel = selectedTherapist?.name ? ` with ${selectedTherapist.name}` : '';
+                const price = userDiscount
+                  ? applyClientDiscount(getPriceForDisplay(selectedProgramType, pendingPaymentOption || 'full', selectedTherapist), userDiscount.discountPercent)
+                  : getPriceForDisplay(selectedProgramType, pendingPaymentOption || 'full', selectedTherapist);
+
+                const message = encodeURIComponent(
+                  `Hello, I would like to pay by cash for the following program:\n\n` +
+                  `Program: ${programLabel}\n` +
+                  `Sessions: ${sessionsLabel}${therapistLabel}\n` +
+                  `Amount: AED ${price.toLocaleString()}\n` +
+                  `Reference: ${cashData.paymentId}\n\n` +
+                  `Please guide me with the cash payment process.`
+                );
+
+                setCashPaymentId(cashData.paymentId);
+                setProcessing(false);
+                setCashPaymentSuccess(true);
+
+                setTimeout(() => {
+                  window.open(`https://wa.me/971585778090?text=${message}`, '_blank');
+                }, 2500);
+              } else {
+                setSelectedPaymentOption(pendingPaymentOption);
+                await redirectToZiinaCheckout({
+                  programType: academyMode ? 'academy' : selectedProgramType!,
+                  paymentOption: pendingPaymentOption!,
+                  therapistName: selectedTherapist?.name,
+                  therapistSlug: selectedTherapist?.slug,
+                  preferredDate: selectedDate || undefined,
+                  preferredTime: selectedTime || undefined,
+                });
+              }
             } catch (err: any) {
               setFormError(err.message || 'Something went wrong');
             } finally {
@@ -805,9 +938,38 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             </div>
             <button type="submit" disabled={processing || !formData.name || !formData.email || !formData.phone || !formData.country || !formData.password}
               className="w-full py-3.5 rounded-xl bg-indigo-600 text-white font-semibold text-[15px] transition-all flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
-              {processing ? <><Loader2 className="w-4 h-4 animate-spin" /> {isArabic ? 'جارٍ إنشاء الحساب...' : 'Creating Account...'}</> : <><CreditCard className="w-4 h-4" /> {isArabic ? 'إنشاء حساب والمتابعة للدفع' : 'Create Account & Proceed to Payment'}</>}
+              {processing ? <><Loader2 className="w-4 h-4 animate-spin" /> {isArabic ? 'جارٍ إنشاء الحساب...' : 'Creating Account...'}</> : <>{pendingCashPayment ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />} {isArabic ? 'إنشاء حساب والمتابعة' : pendingCashPayment ? 'Create Account & Pay by Cash' : 'Create Account & Proceed to Payment'}</>}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Cash Payment Success Overlay */}
+      {cashPaymentSuccess && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
+              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              {isArabic ? 'تم إنشاء طلب الدفع بنجاح' : 'Payment Request Created!'}
+            </h3>
+            <p className="text-slate-500 text-sm mb-4">
+              {isArabic
+                ? 'تم حفظ طلبك. جارٍ فتح واتساب للمتابعة مع فريق الخدمة.'
+                : 'Your request has been saved. Opening WhatsApp to continue with our team.'}
+            </p>
+            <div className="bg-slate-50 rounded-xl p-4 mb-5">
+              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">
+                {isArabic ? 'رقم المرجع' : 'Reference ID'}
+              </p>
+              <p className="text-sm font-mono font-bold text-slate-700">{cashPaymentId}</p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 font-medium">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {isArabic ? 'جارٍ فتح واتساب...' : 'Opening WhatsApp...'}
+            </div>
+          </div>
         </div>
       )}
     </div>

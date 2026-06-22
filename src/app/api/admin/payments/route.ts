@@ -16,6 +16,7 @@ export async function GET() {
 
     const supabase = getServiceSupabase();
 
+    // 1. Fetch programs awaiting verification
     const { data: programs, error } = await supabase
       .from('programs')
       .select('*')
@@ -27,14 +28,46 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
-    // Fetch related payment records (if any) for richer admin context
-    const programIds = (programs || []).map((p: any) => p.id).filter(Boolean);
+    // 2. Fetch pending payment records that have a program_id
+    //    (catches any orphaned or mismatched records)
+    const { data: pendingPayments } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('status', 'pending')
+      .not('program_id', 'is', null)
+      .order('created_at', { ascending: false });
+
+    // Build a set of program IDs already from the programs query
+    const programIds = new Set((programs || []).map((p: any) => p.id));
+
+    // 3. For any pending payments whose program isn't already in the list,
+    //    fetch the program and add it
+    const extraProgramIds: string[] = [];
+    for (const pay of (pendingPayments || [])) {
+      if (pay.program_id && !programIds.has(pay.program_id)) {
+        extraProgramIds.push(pay.program_id);
+      }
+    }
+
+    let extraPrograms: any[] = [];
+    if (extraProgramIds.length > 0) {
+      const { data: epData } = await supabase
+        .from('programs')
+        .select('*')
+        .in('id', extraProgramIds);
+      extraPrograms = epData || [];
+    }
+
+    const allPrograms = [...(programs || []), ...extraPrograms];
+
+    // 4. Fetch related payment records for all programs
+    const allProgramIds = allPrograms.map((p: any) => p.id).filter(Boolean);
     let relatedPayments: any[] = [];
-    if (programIds.length > 0) {
+    if (allProgramIds.length > 0) {
       const { data: rpData, error: rpError } = await supabase
         .from('payments')
         .select('*')
-        .in('program_id', programIds);
+        .in('program_id', allProgramIds);
 
       if (rpError) {
         console.error('[Admin Payments] related payments fetch error', rpError);
@@ -44,8 +77,10 @@ export async function GET() {
       }
     }
 
-    const payments = (programs || []).map((p: any) => {
+    // 5. Build the final payments list
+    const payments = allPrograms.map((p: any) => {
       const paymentRow = (relatedPayments || []).find((pay: any) => String(pay.program_id) === String(p.id));
+      const metadata = paymentRow?.metadata || {};
       return {
         id: p.id,
         userId: p.user_id,
@@ -60,8 +95,9 @@ export async function GET() {
         totalSessions: p.total_sessions,
         status: p.status,
         createdAt: p.created_at,
-        payment_reference: paymentRow?.payment_reference || paymentRow?.payment_reference || null,
+        payment_reference: paymentRow?.payment_reference || null,
         payment_metadata: paymentRow?.metadata || null,
+        paymentMethod: metadata.payment_method || (p.payment_id?.startsWith('CASH-') ? 'cash' : 'ziina'),
       };
     });
 
