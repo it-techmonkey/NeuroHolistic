@@ -132,7 +132,7 @@ export default function Footer() {
                 </a>
                 {CONTACT_INFO.mobiles.map((mobile, index) => (
                   <a key={mobile.href} href={mobile.href} className="text-[13px] text-slate-400 hover:text-white transition-colors py-2 px-2 min-h-[44px] inline-flex items-center -mx-2 rounded-lg hover:bg-white/5">
-                    Mobile {index + 1}: {mobile.label}
+                    {index === 0 ? "Work" : "Office"}: {mobile.label}
                   </a>
                 ))}
               </div>

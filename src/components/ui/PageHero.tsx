@@ -49,7 +49,7 @@ export default function PageHero({
           src={imageSrc}
           alt={imageAlt}
           fetchPriority="high"
-          className={`absolute inset-0 h-full w-full object-cover ${imagePosition}`}
+          className={`absolute inset-0 !h-full !w-full object-cover ${imagePosition}`}
         />
         <div className="absolute inset-0 bg-[#0B1028]/60" />
       </div>

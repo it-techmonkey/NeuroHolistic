@@ -48,7 +48,7 @@ export default function ContactPage() {
               </p>
               {CONTACT_INFO.mobiles.map((mobile, index) => (
                 <p key={mobile.href}>
-                  Mobile {index + 1}{" "}
+                  {index === 0 ? "Work" : "Office"}{" "}
                   <a className="text-indigo-600 hover:underline" href={mobile.href}>
                     {mobile.label}
                   </a>
