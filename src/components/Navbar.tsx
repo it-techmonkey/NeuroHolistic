@@ -98,6 +98,19 @@ export default function Navbar() {
     };
   }, [mobileOpen]);
 
+  const contactRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!contactOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (contactRef.current && !contactRef.current.contains(e.target as Node)) {
+        setContactOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [contactOpen]);
+
   async function handleLogout() {
     await supabase.auth.signOut();
     window.location.replace('/');
@@ -262,7 +275,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="relative hidden md:flex items-center">
+            <div ref={contactRef} className="relative hidden md:flex items-center">
               <button
                 onClick={() => setContactOpen(!contactOpen)}
                 className={`p-2 rounded-full transition-opacity duration-200 hover:opacity-70 ${textColor}`}
@@ -276,7 +289,7 @@ export default function Navbar() {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 w-64 z-[110]"
+                    className="absolute top-full right-0 mt-2 w-64 z-[110]"
                   >
                     <div className={`rounded-xl border p-3 shadow-lg backdrop-blur-sm ${isLightPage ? 'bg-white/90 border-slate-50' : 'bg-[#080C20]/90 border-white/5'}`}>
                       <a href={`mailto:${CONTACT_INFO.email}`} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-[12px] font-medium ${isLightPage ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>

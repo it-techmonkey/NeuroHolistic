@@ -19,6 +19,12 @@ export default function AcademyIntro() {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-[1100px] mb-12"
         >
+          {/* Mobile: heading above image */}
+          <h2 className="text-center text-[28px] font-light leading-[1.1] tracking-tight text-[#0F172A] px-4 mb-6 md:hidden">
+            {t.academyIntro.heading1} <br />
+            <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
+          </h2>
+
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[8px] bg-white">
             <Image
               src="/images/team/team.png"
@@ -29,9 +35,10 @@ export default function AcademyIntro() {
               sizes="(max-width: 1024px) 100vw, 80vw"
               priority
             />
-            <div className="absolute inset-0 flex items-start justify-center pt-8 md:pt-20 lg:pt-30">
-              <h2 className="text-center text-[28px] font-light leading-[1.1] tracking-tight text-[#0F172A] md:text-[48px] px-4">
-                {t.academyIntro.heading1} <br className="md:hidden" />
+            {/* Desktop: heading overlaid on image */}
+            <div className="absolute inset-0 hidden md:flex items-start justify-center pt-20 lg:pt-30">
+              <h2 className="text-center text-[48px] font-light leading-[1.1] tracking-tight text-[#0F172A] px-4">
+                {t.academyIntro.heading1} <br />
                 <span className="text-[#64748B] font-normal italic">{t.academyIntro.heading2}</span>
               </h2>
             </div>
