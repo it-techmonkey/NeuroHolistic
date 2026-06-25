@@ -304,7 +304,7 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className="relative w-full max-w-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
             style={{ maxHeight: '90vh' }}
             initial={{ scale: 0.96, y: 16 }}
             animate={{ scale: 1, y: 0 }}
@@ -312,7 +312,7 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
             transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Book Session for Client</h2>
                 <p className="text-sm text-slate-500">Schedule a session on behalf of a client</p>
@@ -326,7 +326,7 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
             </div>
 
             {/* Progress Steps */}
-            <div className="px-6 py-3 border-b border-slate-100 bg-slate-50">
+            <div className="px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
               <div className="flex items-center gap-2">
                 {stepOrder.map((s, i) => {
                   const { label, icon: Icon } = stepLabels[s];
@@ -353,8 +353,8 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
               </div>
             </div>
 
-            {/* Content */}
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
+            {/* Content — flex-1 with overflow-y-auto so it scrolls between fixed header and footer */}
+            <div className="flex-1 overflow-y-auto min-h-0">
               {loading ? (
                 <div className="p-12 text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#2B2F55] mx-auto mb-4" />
@@ -451,7 +451,7 @@ export default function AdminBookingModal({ isOpen, onClose, onSuccess }: AdminB
 
             {/* Footer */}
             {!loading && !success && (
-              <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+              <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
                 <button
                   onClick={handleBack}
                   disabled={step === 'client'}
@@ -814,12 +814,12 @@ function StepDetails({
       {/* Date */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">Date</label>
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
           {availableDates.map(d => (
             <button
               key={d.value}
               onClick={() => onSelectDate(d.value)}
-              className={`p-2 rounded-xl text-center transition-colors ${
+              className={`snap-start shrink-0 p-2 rounded-xl text-center transition-colors min-w-[72px] ${
                 selectedDate === d.value
                   ? 'bg-[#2B2F55] text-white'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -849,7 +849,7 @@ function StepDetails({
             No available slots for this date. Try another date.
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {slots.map(s => (
               <button
                 key={s.time}
