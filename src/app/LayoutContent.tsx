@@ -55,12 +55,12 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         <main
           dir={isArabic ? "rtl" : "ltr"}
           lang={isArabic ? "ar" : "en"}
-          className={isArabic ? "arabic-text font-arabic" : ""}
+          className={`${isArabic ? "arabic-text font-arabic" : ""} ${isBookingFlow ? "scroll-pt-16" : ""}`}
         >
           {children}
         </main>
       ) : (
-        <main>{children}</main>
+        <main className={isBookingFlow ? "scroll-pt-16" : ""}>{children}</main>
       )}
       {isPublicPage && !isBookingFlow && <Footer />}
       {!isDashboardRoute && <FloatingWhatsAppButton />}
