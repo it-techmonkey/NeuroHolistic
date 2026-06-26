@@ -8,6 +8,7 @@ import ScientificFoundation from "@/components/ScientificFoundation";
 import Team from "@/components/Team";
 import AcademyCTA from "@/components/AcademyCTA";
 import Research from "@/components/Research";
+import HomeTestimonials from "@/components/HomeTestimonials";
 import FinalCTA from "@/components/FinalCTA";
 
 export default function HomePage() {
@@ -23,6 +24,7 @@ export default function HomePage() {
       <Team />
       <AcademyCTA />
       <Research />
+      <HomeTestimonials />
       <FinalCTA />
     </div>
   );
