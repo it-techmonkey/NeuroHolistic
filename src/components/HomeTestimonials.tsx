@@ -289,16 +289,16 @@ function TestimonialsMarquee() {
 
 /* Card width on mobile — slightly smaller to show ~1.3 cards at 375px */
 const CARD_MOBILE_W = 280;
-const GAP_MOBILE    = 14;
+const GAP_MOBILE = 14;
 /* Loop point = one full set of 7 cards */
-const LOOP_MOBILE   = TESTIMONIALS.length * (CARD_MOBILE_W + GAP_MOBILE);
+const LOOP_MOBILE = TESTIMONIALS.length * (CARD_MOBILE_W + GAP_MOBILE);
 /* Duplicate for seamless loop */
 const DOUBLED_MOBILE = [...TESTIMONIALS, ...TESTIMONIALS];
 
 function MobileCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const touching  = useRef(false);
-  const rafId     = useRef<number | null>(null);
+  const touching = useRef(false);
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -333,7 +333,7 @@ function MobileCarousel() {
         paddingBottom: "8px",
       }}
       onTouchStart={() => { touching.current = true; }}
-      onTouchEnd={()   => { touching.current = false; }}
+      onTouchEnd={() => { touching.current = false; }}
       onTouchCancel={() => { touching.current = false; }}
     >
       {DOUBLED_MOBILE.map((t, i) => (
