@@ -33,35 +33,7 @@ function StarIcon({ filled }: { filled: boolean }) {
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
 const TESTIMONIALS = [
-  /* — Original 3 — */
-  {
-    text: "I noticed fewer stress spikes within weeks. The method gave me a practical framework to regulate my system and lead with more clarity.",
-    name: "Maxin Will",
-    role: "Product Manager",
-    rating: 5,
-    avatar: "MW",
-    outcome: "Calmer baseline in 4 weeks",
-    location: "",
-  },
-  {
-    text: "The sessions felt both precise and human. Better sleep, less cognitive noise, and a sustained sense of calm became my new baseline.",
-    name: "Alina Rose",
-    role: "Founder",
-    rating: 5,
-    avatar: "AR",
-    outcome: "Improved sleep and focus",
-    location: "",
-  },
-  {
-    text: "This is the first wellness approach that felt measurable. My team noticed the difference in how I communicate and make decisions.",
-    name: "Daniel Cho",
-    role: "Head of Operations",
-    rating: 5,
-    avatar: "DC",
-    outcome: "Higher leadership composure",
-    location: "",
-  },
-  /* — 7 New real testimonials — */
+  /* — Real testimonials — */
   {
     text: "I suffered from insomnia for 15 years during which I tried many kinds of therapies and medications. I was about to lose hope, but I met Dr. Fawzia. Now I sleep like a baby.",
     name: "A. J",

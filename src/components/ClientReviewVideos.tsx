@@ -5,9 +5,21 @@ import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
-const REVIEW_VIDEO_IDS = ["p2Jkd8jzEcE", "5QNC8cCo4hY", "GtuinW2sDGU"] as const;
+// 3 original + 5 new = 8 total (shown 3 per page)
+const REVIEW_VIDEO_IDS = [
+  "p2Jkd8jzEcE",   // original 1
+  "5QNC8cCo4hY",   // original 2
+  "GtuinW2sDGU",   // original 3
+  "x-NSML6xcZQ",  // new Short 1
+  "y8gU1iBTogM",  // new Short 2
+  "eToZSMUufnI",  // new 3
+  "cyGJVcDc1bc",  // new 4
+  "EaJBSGlGhm8",  // new 5
+  "VfL87QN3Wes",  // new 6
+];
 
 const YT_CHANNEL = "https://www.youtube.com/channel/UCnONxQoFETCBOBEteFO1i4Q";
+const PAGE_SIZE = 3;
 
 /* ─── Sub-components ─────────────────────────────────────────────────────── */
 
@@ -19,7 +31,6 @@ function YouTubeIcon({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-/* Standard YouTube landscape embed — unchanged style */
 function VideoEmbed({ videoId }: { videoId: string }) {
   const src = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
   return (
@@ -34,62 +45,6 @@ function VideoEmbed({ videoId }: { videoId: string }) {
           loading="lazy"
           referrerPolicy="strict-origin-when-cross-origin"
         />
-      </div>
-    </div>
-  );
-}
-
-/* 4th card — same outer card size as the YouTube cards but video is portrait 3:4 centred inside */
-function LocalVideoCard({ src }: { src: string }) {
-  const [playing, setPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  /* Clicking the overlay starts playback and removes the overlay */
-  const handleOverlayClick = () => {
-    if (!videoRef.current) return;
-    videoRef.current.play();
-  };
-
-  return (
-    /* Outer wrapper matches YouTube card dimensions: landscape aspect-video container */
-    <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[#0F172A] shadow-[0_12px_40px_-18px_rgba(15,23,42,0.25)]">
-      <div className="relative aspect-video w-full flex items-center justify-center">
-
-        {/* Portrait 3:4 video centred inside the landscape card */}
-        <div
-          className="relative h-full"
-          style={{ aspectRatio: "3 / 4" }}
-        >
-          {/* Video — always has native controls so pause/scrub works naturally */}
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover"
-            playsInline
-            preload="metadata"
-            controls
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
-          >
-            <source src={src} type="video/mp4" />
-          </video>
-
-          {/* Red YouTube-style play overlay — covers video only while paused.
-              pointer-events:none is removed so clicking it triggers play.
-              Once playing, overlay is gone so native controls are fully usable. */}
-          {!playing && (
-            <div
-              className="absolute inset-0 flex items-center justify-center bg-black/25 cursor-pointer transition-colors hover:bg-black/10"
-              onClick={handleOverlayClick}
-            >
-              <svg viewBox="0 0 68 48" className="w-16 h-auto drop-shadow-lg" aria-hidden="true">
-                <path d="M66.52 7.74A8.55 8.55 0 0 0 60.52 1.7C55.22 0 34 0 34 0S12.78 0 7.48 1.7A8.55 8.55 0 0 0 1.48 7.74C0 13.12 0 24 0 24s0 10.88 1.48 16.26A8.55 8.55 0 0 0 7.48 46.3C12.78 48 34 48 34 48s21.22 0 26.52-1.7a8.55 8.55 0 0 0 6-6.04C68 34.88 68 24 68 24s0-10.88-1.48-16.26z" fill="#FF0000"/>
-                <path d="M27 34l18-10L27 14v20z" fill="#fff"/>
-              </svg>
-            </div>
-          )}
-        </div>
-
       </div>
     </div>
   );
@@ -129,19 +84,6 @@ function NavBtn({
   );
 }
 
-/* ─── All items in order ─────────────────────────────────────────────────── */
-
-type VideoItem =
-  | { kind: "yt"; id: string }
-  | { kind: "local"; src: string };
-
-const ALL_ITEMS: VideoItem[] = [
-  ...REVIEW_VIDEO_IDS.map((id) => ({ kind: "yt" as const, id })),
-  { kind: "local", src: "/Testimonial video.mp4" },
-];
-
-const PAGE_SIZE = 3; // videos visible at one time
-
 /* ─── Props ──────────────────────────────────────────────────────────────── */
 
 type Props = {
@@ -154,8 +96,8 @@ type Props = {
 export default function ClientReviewVideos({ heading, subtitle }: Props) {
   const { t } = useLang();
   const [page, setPage] = useState(0);
-  const totalPages = Math.ceil(ALL_ITEMS.length / PAGE_SIZE);
-  const visibleItems = ALL_ITEMS.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const totalPages = Math.ceil(REVIEW_VIDEO_IDS.length / PAGE_SIZE);
+  const visibleIds = REVIEW_VIDEO_IDS.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   /* ── Swipe support (mobile) ── */
   const touchStartX = useRef<number | null>(null);
@@ -178,17 +120,22 @@ export default function ClientReviewVideos({ heading, subtitle }: Props) {
       </div>
 
       {/* Navigation row */}
-      <div className="mb-6 flex items-center justify-end gap-3">
-        <NavBtn
-          direction="prev"
-          onClick={() => setPage((p) => Math.max(p - 1, 0))}
-          disabled={page === 0}
-        />
-        <NavBtn
-          direction="next"
-          onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
-          disabled={page === totalPages - 1}
-        />
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-[14px] text-[#94A3B8]">
+          {page * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE + PAGE_SIZE, REVIEW_VIDEO_IDS.length)} of {REVIEW_VIDEO_IDS.length} videos
+        </p>
+        <div className="flex gap-3">
+          <NavBtn
+            direction="prev"
+            onClick={() => setPage((p) => Math.max(p - 1, 0))}
+            disabled={page === 0}
+          />
+          <NavBtn
+            direction="next"
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+            disabled={page === totalPages - 1}
+          />
+        </div>
       </div>
 
       {/* Video grid — dir=ltr keeps order identical in Arabic RTL mode */}
@@ -198,13 +145,9 @@ export default function ClientReviewVideos({ heading, subtitle }: Props) {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {visibleItems.map((item, i) =>
-          item.kind === "yt" ? (
-            <VideoEmbed key={item.id} videoId={item.id} />
-          ) : (
-            <LocalVideoCard key={`local-${i}`} src={item.src} />
-          )
-        )}
+        {visibleIds.map((id) => (
+          <VideoEmbed key={id} videoId={id} />
+        ))}
       </div>
 
       {/* YouTube Channel button */}
