@@ -119,8 +119,8 @@ export default function ClientReviewVideos({ heading, subtitle }: Props) {
         <p className="mx-auto mt-4 max-w-[560px] text-[16px] leading-[1.7] text-[#475569] md:text-[17px]">{subtitle}</p>
       </div>
 
-      {/* Navigation row */}
-      <div className="mb-6 flex items-center justify-between">
+      {/* Navigation row — dir=ltr keeps arrows on the right in Arabic RTL */}
+      <div dir="ltr" className="mb-6 flex items-center justify-between">
         <p className="text-[14px] text-[#94A3B8]">
           {page * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE + PAGE_SIZE, REVIEW_VIDEO_IDS.length)} of {REVIEW_VIDEO_IDS.length} videos
         </p>
@@ -148,32 +148,6 @@ export default function ClientReviewVideos({ heading, subtitle }: Props) {
         {visibleIds.map((id) => (
           <VideoEmbed key={id} videoId={id} />
         ))}
-      </div>
-
-      {/* YouTube Channel button */}
-      <div className="mt-10 flex justify-center">
-        <a
-          href={YT_CHANNEL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group inline-flex items-center gap-3 rounded-full bg-[#0F172A] px-7 py-3.5 text-[14px] font-semibold text-white shadow-[0_8px_24px_-6px_rgba(15,23,42,0.3)] transition-all duration-300 hover:bg-[#1E293B] hover:shadow-[0_12px_32px_-6px_rgba(15,23,42,0.4)]"
-        >
-          <YouTubeIcon className="h-5 w-5 text-white" />
-          {t.testimonials.watchMoreOnYouTube}
-          <svg
-            className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
-        </a>
       </div>
     </div>
   );

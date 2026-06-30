@@ -255,8 +255,8 @@ export default function Testimonials() {
           </motion.p>
         </div>
 
-        {/* Navigation row */}
-        <motion.div variants={itemVariants} className="mb-6 flex items-center justify-between">
+        {/* Navigation row — dir=ltr keeps arrows on the right in Arabic RTL */}
+        <motion.div variants={itemVariants} dir="ltr" className="mb-6 flex items-center justify-between">
           {/* Page indicator */}
           <p className="text-[14px] text-[#94A3B8]">
             {page * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE + PAGE_SIZE, TESTIMONIALS.length)} of {TESTIMONIALS.length} reviews
