@@ -7,7 +7,7 @@ import {
   Loader2, Calendar, Clock, CheckCircle, AlertCircle,
   Video, FileText, User, Mail, TrendingUp, ChevronRight,
   Search, BarChart3, Settings, LogOut, UserCircle,
-  ChevronDown, Download, Eye, File, Image, Hourglass, CreditCard
+  ChevronDown, Download, Eye, File, Image, Hourglass, CreditCard, X
 } from 'lucide-react';
 import Progress from '@/components/dashboard/client/Progress';
 import Account from '@/components/dashboard/client/Account';
@@ -124,12 +124,114 @@ export default function ClientDashboardPage() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
 
+  // Reschedule & Cancel state
+  const [reschedulingSession, setReschedulingSession] = useState<Session | null>(null);
+  const [cancellingSessionId, setCancellingSessionId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [slots, setSlots] = useState<any[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [rescheduleError, setRescheduleError] = useState('');
+  const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
+
   // Session filter state
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all');
 
   // Account menu state
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!reschedulingSession || !selectedDate) {
+      setSlots([]);
+      return;
+    }
+
+    async function fetchSlots() {
+      setSlotsLoading(true);
+      setRescheduleError('');
+      try {
+        const res = await fetch(
+          `/api/bookings/availability?therapistId=${reschedulingSession?.therapist_user_id || reschedulingSession?.therapist_name}&date=${selectedDate}`
+        );
+        if (res.ok) {
+          const slotData = await res.json();
+          setSlots(slotData.slots || []);
+        }
+      } catch {
+        setRescheduleError('Could not load availability');
+      } finally {
+        setSlotsLoading(false);
+      }
+    }
+    fetchSlots();
+  }, [reschedulingSession, selectedDate]);
+
+  const handleRescheduleConfirm = async () => {
+    if (!reschedulingSession || !selectedDate || !selectedSlot) return;
+
+    setRescheduleError('');
+    try {
+      const res = await fetch(`/api/bookings/${reschedulingSession.id}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: selectedDate,
+          time: selectedSlot,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Reschedule failed');
+      }
+
+      setRescheduleSuccess(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      setRescheduleError(err.message);
+    }
+  };
+
+  const closeReschedule = () => {
+    setReschedulingSession(null);
+    setSelectedDate('');
+    setSlots([]);
+    setSelectedSlot('');
+    setRescheduleError('');
+    setRescheduleSuccess(false);
+  };
+
+  const handleCancelSession = async (sessionId: string) => {
+    if (!confirm('Are you sure you want to cancel this session?')) return;
+    
+    setCancellingSessionId(sessionId);
+    try {
+      const res = await fetch(`/api/bookings/${sessionId}/cancel`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Cancel failed');
+      }
+
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setCancellingSessionId(null);
+    }
+  };
+
+  const checkIsWithin24Hours = (date: string, time: string) => {
+    if (!date || !time) return false;
+    const sessionTime = new Date(`${date}T${time}:00+04:00`);
+    const diffHours = (sessionTime.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    return diffHours < 24 && diffHours > 0;
+  };
 
   useEffect(() => {
     async function init() {
@@ -419,7 +521,11 @@ export default function ClientDashboardPage() {
                     )}
                     <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg text-sm text-white/90">
                       <Calendar className="w-4 h-4" />
-                      {new Date(data.bookedFreeConsult.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {data.bookedFreeConsult.time}
+                      {data.bookedFreeConsult.date ? (
+                        <>{new Date(data.bookedFreeConsult.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {data.bookedFreeConsult.time}</>
+                      ) : (
+                        'Date Pending'
+                      )}
                     </div>
                   </div>
                 )}
@@ -589,6 +695,10 @@ export default function ClientDashboardPage() {
                         session={session}
                         isHighlighted
                         documents={getSessionDocuments(session)}
+                        onReschedule={setReschedulingSession}
+                        onCancel={handleCancelSession}
+                        isCancelling={cancellingSessionId === session.id}
+                        within24Hours={checkIsWithin24Hours(session.date, session.time)}
                       />
                     ))}
                   </div>
@@ -791,6 +901,10 @@ export default function ClientDashboardPage() {
                       isExpanded={expandedSession === session.id}
                       onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
                       documents={getSessionDocuments(session)}
+                      onReschedule={setReschedulingSession}
+                      onCancel={handleCancelSession}
+                      isCancelling={cancellingSessionId === session.id}
+                      within24Hours={checkIsWithin24Hours(session.date, session.time)}
                     />
                   ))}
                 </div>
@@ -835,6 +949,10 @@ export default function ClientDashboardPage() {
                           isExpanded={expandedSession === session.id}
                           onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
                           documents={getSessionDocuments(session)}
+                          onReschedule={setReschedulingSession}
+                          onCancel={handleCancelSession}
+                          isCancelling={cancellingSessionId === session.id}
+                          within24Hours={checkIsWithin24Hours(session.date, session.time)}
                         />
                       ))}
                     </div>
@@ -1013,6 +1131,91 @@ export default function ClientDashboardPage() {
         {viewMode === 'account' && (
           <Account user={userInfo} />
         )}
+
+        {/* Reschedule Modal */}
+        {reschedulingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-slate-900">Reschedule Session</h3>
+                <button onClick={closeReschedule} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {rescheduleSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <p className="text-green-700 font-medium text-lg">Session rescheduled successfully!</p>
+                  <p className="text-sm text-slate-500 mt-2">Reloading...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {rescheduleError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                      {rescheduleError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">New Date</label>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(''); }}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {selectedDate && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">New Time</label>
+                      {slotsLoading ? (
+                        <p className="text-sm text-slate-400">Loading availability...</p>
+                      ) : slots.length === 0 ? (
+                        <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">No slots available for this date.</p>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2">
+                          {slots.map(slot => (
+                            <button
+                              key={slot.time}
+                              onClick={() => setSelectedSlot(slot.time)}
+                              className={`py-2 px-2 text-xs rounded-lg border transition-colors ${
+                                selectedSlot === slot.time
+                                  ? 'bg-indigo-600 text-white border-indigo-600'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                              }`}
+                            >
+                              {slot.display}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="pt-4 flex justify-end gap-3">
+                    <button onClick={closeReschedule} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleRescheduleConfirm}
+                      disabled={!selectedSlot}
+                      className={`px-6 py-2.5 text-sm rounded-xl text-white font-medium ${
+                        selectedSlot ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-300 cursor-not-allowed'
+                      }`}
+                    >
+                      Confirm Reschedule
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1044,10 +1247,18 @@ function SessionCard({
   session,
   isHighlighted = false,
   documents,
+  onReschedule,
+  onCancel,
+  isCancelling,
+  within24Hours,
 }: {
   session: Session;
   isHighlighted?: boolean;
   documents: Document[];
+  onReschedule?: (session: Session) => void;
+  onCancel?: (sessionId: string) => void;
+  isCancelling?: boolean;
+  within24Hours?: boolean;
 }) {
   return (
     <div className={`rounded-xl p-5 border transition-colors ${
@@ -1074,7 +1285,7 @@ function SessionCard({
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mt-4">
         {session.meeting_link && (
           <a
             href={session.meeting_link}
@@ -1088,6 +1299,38 @@ function SessionCard({
           >
             <Video className="w-4 h-4" /> Join
           </a>
+        )}
+        {onReschedule && (
+          <button
+            onClick={() => onReschedule(session)}
+            disabled={within24Hours}
+            title={within24Hours ? 'Cannot reschedule within 24 hours' : ''}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              within24Hours
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : isHighlighted
+                  ? 'bg-white/20 text-white hover:bg-white/30'
+                  : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+            }`}
+          >
+            Reschedule
+          </button>
+        )}
+        {onCancel && (
+          <button
+            onClick={() => onCancel(session.id)}
+            disabled={within24Hours || isCancelling}
+            title={within24Hours ? 'Cannot cancel within 24 hours' : ''}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              within24Hours
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : isHighlighted
+                  ? 'bg-red-500/20 text-red-100 hover:bg-red-500/30'
+                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+            }`}
+          >
+            {isCancelling ? '...' : 'Cancel'}
+          </button>
         )}
         {documents.length > 0 && (
           <span className={`inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm ${
@@ -1107,12 +1350,20 @@ function SessionDetailCard({
   onToggle,
   documents,
   isCompleted = false,
+  onReschedule,
+  onCancel,
+  isCancelling,
+  within24Hours,
 }: {
   session: Session;
   isExpanded: boolean;
   onToggle: () => void;
   documents: Document[];
   isCompleted?: boolean;
+  onReschedule?: (session: Session) => void;
+  onCancel?: (sessionId: string) => void;
+  isCancelling?: boolean;
+  within24Hours?: boolean;
 }) {
   const getDocIcon = (type: string) => {
     switch (type) {
@@ -1184,6 +1435,34 @@ function SessionDetailCard({
               >
                 <Video className="w-4 h-4" /> Join Session
               </a>
+            )}
+            {!isCompleted && onReschedule && (
+              <button
+                onClick={() => onReschedule(session)}
+                disabled={within24Hours}
+                title={within24Hours ? 'Cannot reschedule within 24 hours' : ''}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  within24Hours
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Calendar className="w-4 h-4" /> Reschedule
+              </button>
+            )}
+            {!isCompleted && onCancel && (
+              <button
+                onClick={() => onCancel(session.id)}
+                disabled={within24Hours || isCancelling}
+                title={within24Hours ? 'Cannot cancel within 24 hours' : ''}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  within24Hours
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                    : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                }`}
+              >
+                <X className="w-4 h-4" /> {isCancelling ? '...' : 'Cancel Session'}
+              </button>
             )}
           </div>
 

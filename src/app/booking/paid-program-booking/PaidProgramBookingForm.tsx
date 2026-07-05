@@ -305,6 +305,37 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
     );
   };
 
+  const PaymentBreakdown = ({ type, option }: { type: ProgramType; option: PaymentOption }) => {
+    const original = getPriceForDisplay(type, option, selectedTherapist);
+    const subtotal = userDiscount ? applyClientDiscount(original, userDiscount.discountPercent) : original;
+    const isDiscounted = !!userDiscount;
+    const vatAmount = Math.round(subtotal * 0.05 * 100) / 100;
+    const total = subtotal + vatAmount;
+
+    return (
+      <div className="space-y-2 text-[15px]">
+        {isDiscounted && (
+          <div className="flex justify-between text-slate-400 line-through text-sm">
+            <span>{isArabic ? 'السعر الأصلي' : 'Original Price'}</span>
+            <span>{original.toLocaleString()} AED</span>
+          </div>
+        )}
+        <div className="flex justify-between text-slate-600">
+          <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'} {isDiscounted && <span className="text-emerald-600 font-medium text-xs ml-1">(-{userDiscount.discountPercent}%)</span>}</span>
+          <span>{subtotal.toLocaleString()} AED</span>
+        </div>
+        <div className="flex justify-between text-slate-600">
+          <span>{isArabic ? 'ضريبة القيمة المضافة (5%)' : 'VAT & Service (5%)'}</span>
+          <span>{vatAmount.toLocaleString()} AED</span>
+        </div>
+        <div className="flex justify-between text-slate-900 font-bold text-xl pt-3 border-t border-slate-100 mt-2">
+          <span>{isArabic ? 'الإجمالي' : 'Total to Pay'}</span>
+          <span>{total.toLocaleString()} AED</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'} className="space-y-6">
       {/* Step indicator */}
@@ -550,8 +581,8 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   : (isArabic ? 'ادفع مقابل جميع الجلسات العشر مقدماً ووفر.' : 'Pay for all 10 sessions upfront and save.')}
               </p>
               <div className="mb-6">
-                <PriceTag type={selectedProgramType} option="full" />
-                <p className="text-slate-500 text-sm mt-1">
+                <PaymentBreakdown type={selectedProgramType} option="full" />
+                <p className="text-slate-500 text-sm mt-3 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">
                   {academyMode
                     ? `5 sessions · ${Math.round(getPriceForDisplay(selectedProgramType, 'full', selectedTherapist) / (userDiscount ? (1 - userDiscount.discountPercent / 100) : 1) / 5)} AED / session`
                     : `${isArabic ? '10 جلسات' : '10 sessions'} · ${getPerSessionFromFull(getPriceForDisplay(selectedProgramType, 'full', selectedTherapist))} AED / session`}
@@ -575,8 +606,8 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   : (isArabic ? 'ادفع لكل جلسة بشكل منفصل. مرونة للاستمرار حسب وتيرتك.' : 'Pay for each session individually. Flexibility to continue at your own pace.')}
               </p>
               <div className="mb-6">
-                <PriceTag type={selectedProgramType} option="per_session" />
-                <p className="text-slate-500 text-sm mt-1">{isArabic ? 'لكل جلسة' : 'per session'}</p>
+                <PaymentBreakdown type={selectedProgramType} option="per_session" />
+                <p className="text-slate-500 text-sm mt-3 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">{isArabic ? 'لكل جلسة' : 'per session'}</p>
               </div>
               <button onClick={() => handlePayment('per_session')} disabled={processing}
                 className="w-full py-3.5 rounded-xl border-2 border-indigo-600 text-indigo-600 font-semibold text-[15px] transition-all flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:border-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">

@@ -158,7 +158,13 @@ export async function POST(request: NextRequest) {
     ? applyDiscount(baseAmountAed, activeDiscount.discountPercent)
     : null;
 
-  const amountAed = discount ? discount.discountedPrice : baseAmountAed;
+  const subtotalAed = discount ? discount.discountedPrice : baseAmountAed;
+  
+  // Calculate 5% VAT
+  const vatRate = 0.05;
+  const vatAmountAed = Math.round(subtotalAed * vatRate * 100) / 100;
+  const amountAed = subtotalAed + vatAmountAed;
+  
   const amountFils = Math.round(amountAed * 100);
   const totalSessions = isAcademy ? ACADEMY_PRICING.installmentCount : paymentOption === 'per_session' ? 1 : 10;
   const storedProgramType: RequestedProgramType = isAcademy ? 'academy' : programType;
@@ -171,6 +177,8 @@ export async function POST(request: NextRequest) {
     storedProgramType,
     paymentOption,
     originalAmountAed: baseAmountAed,
+    subtotalAed,
+    vatAmountAed,
     amountAed,
     amountFils,
     currency: 'AED',

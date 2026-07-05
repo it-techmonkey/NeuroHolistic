@@ -37,6 +37,7 @@ export default function Sessions({
   const [rescheduleError, setRescheduleError] = useState('');
   const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all');
+  const [cancellingSessionId, setCancellingSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!reschedulingSession || !selectedDate) {
@@ -99,6 +100,35 @@ export default function Sessions({
     setSelectedSlot('');
     setRescheduleError('');
     setRescheduleSuccess(false);
+  };
+
+  const handleCancelSession = async (sessionId: string) => {
+    if (!confirm('Are you sure you want to cancel this session?')) return;
+    
+    setCancellingSessionId(sessionId);
+    try {
+      const res = await fetch(`/api/bookings/${sessionId}/cancel`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Cancel failed');
+      }
+
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setCancellingSessionId(null);
+    }
+  };
+
+  const checkIsWithin24Hours = (date: string, time: string) => {
+    if (!date || !time) return false;
+    const sessionTime = new Date(`${date}T${time}:00+04:00`);
+    const diffHours = (sessionTime.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    return diffHours < 24 && diffHours > 0;
   };
 
   // Check if user has a scheduled consultation
@@ -320,12 +350,37 @@ export default function Sessions({
                     Join Session
                   </a>
                 )}
-                <button
-                  onClick={() => setReschedulingSession(scheduledConsultation)}
-                  className="inline-flex items-center px-5 py-2.5 border border-emerald-300 text-sm font-medium rounded-xl text-emerald-700 bg-white hover:bg-emerald-50"
-                >
-                  Reschedule
-                </button>
+                {(() => {
+                  const within24 = checkIsWithin24Hours(scheduledConsultation.date, scheduledConsultation.time);
+                  return (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setReschedulingSession(scheduledConsultation)}
+                        disabled={within24}
+                        title={within24 ? 'Cannot reschedule within 24 hours' : ''}
+                        className={`inline-flex items-center px-5 py-2.5 border text-sm font-medium rounded-xl transition-colors ${
+                          within24
+                            ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
+                            : 'border-emerald-300 text-emerald-700 bg-white hover:bg-emerald-50'
+                        }`}
+                      >
+                        Reschedule
+                      </button>
+                      <button
+                        onClick={() => handleCancelSession(scheduledConsultation.id)}
+                        disabled={within24 || cancellingSessionId === scheduledConsultation.id}
+                        title={within24 ? 'Cannot cancel within 24 hours' : ''}
+                        className={`inline-flex items-center px-5 py-2.5 border text-sm font-medium rounded-xl transition-colors ${
+                          within24
+                            ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
+                            : 'border-red-200 text-red-700 bg-white hover:bg-red-50'
+                        }`}
+                      >
+                        {cancellingSessionId === scheduledConsultation.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -417,14 +472,37 @@ export default function Sessions({
                           Join Session
                         </a>
                       )}
-                      {hasActiveProgram && (
-                        <button
-                          onClick={() => setReschedulingSession(session)}
-                          className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50"
-                        >
-                          Reschedule
-                        </button>
-                      )}
+                      {hasActiveProgram && (() => {
+                        const within24 = checkIsWithin24Hours(session.date, session.time);
+                        return (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setReschedulingSession(session)}
+                              disabled={within24}
+                              title={within24 ? 'Cannot reschedule within 24 hours' : ''}
+                              className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-xl transition-colors ${
+                                within24
+                                  ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
+                                  : 'border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+                              }`}
+                            >
+                              Reschedule
+                            </button>
+                            <button
+                              onClick={() => handleCancelSession(session.id)}
+                              disabled={within24 || cancellingSessionId === session.id}
+                              title={within24 ? 'Cannot cancel within 24 hours' : ''}
+                              className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-xl transition-colors ${
+                                within24
+                                  ? 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
+                                  : 'border-red-200 text-red-700 bg-white hover:bg-red-50'
+                              }`}
+                            >
+                              {cancellingSessionId === session.id ? '...' : 'Cancel'}
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

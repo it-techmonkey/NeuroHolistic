@@ -388,7 +388,7 @@ export default function ClientReportCard({
         SCORE_FIELDS.forEach((f) => {
           const bv = baseline?.[f.key] ?? 0;
           const lv2 = latest?.[f.key] ?? 0;
-          lv(`  ${f.label}`, `${bv}/10 \u2192 ${lv2}/10`);
+          lv(`  ${f.label}`, `${bv}/10 -> ${lv2}/10`);
         });
       }
 
@@ -509,10 +509,14 @@ export default function ClientReportCard({
               </tbody>
             </table>
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Td label="Previously Tried"><TagList items={joinList(a.tried_previously)} /></Td>
-            {a.current_experience_words && <Td label="Client Experience (Own Words)">{cleanText(a.current_experience_words)}</Td>}
-          </div>
+          <table className="w-full text-sm mt-3 border-t border-slate-100">
+            <tbody>
+              <tr>
+                <Td label="Previously Tried" span={1}><TagList items={joinList(a.tried_previously)} /></Td>
+                {a.current_experience_words && <Td label="Client Experience (Own Words)" span={1}>{cleanText(a.current_experience_words)}</Td>}
+              </tr>
+            </tbody>
+          </table>
         </TableSection>
 
         {/* Table 4: Life Status & Functional Assessment */}
