@@ -273,6 +273,14 @@ export class BookingService {
       return { success: false, error: `Cannot reschedule a booking with status "${booking.status}"`, statusCode: 409 };
     }
 
+    // 24-hour check
+    const sessionTime = new Date(`${booking.date}T${booking.time}:00+04:00`);
+    const now = new Date();
+    const diffHours = (sessionTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < 24) {
+      return { success: false, error: 'Cannot reschedule within 24 hours of the session start time.', statusCode: 403 };
+    }
+
     if ((booking.reschedule_count ?? 0) >= MAX_RESCHEDULES) {
       return { success: false, error: `Maximum reschedule limit (${MAX_RESCHEDULES}) reached`, statusCode: 409 };
     }
@@ -385,6 +393,14 @@ export class BookingService {
 
     if (booking.status !== 'confirmed' && booking.status !== 'scheduled') {
       return { success: false, error: `Cannot cancel a booking with status "${booking.status}"`, statusCode: 409 };
+    }
+
+    // 24-hour check
+    const sessionTime = new Date(`${booking.date}T${booking.time}:00+04:00`);
+    const now = new Date();
+    const diffHours = (sessionTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < 24) {
+      return { success: false, error: 'Cannot cancel within 24 hours of the session start time.', statusCode: 403 };
     }
 
     // Cancel booking
