@@ -316,7 +316,7 @@ export default function FreeConsultationForm({
 
     if (mode === 'page') {
       return (
-      <div className="min-h-screen bg-[#0B1028] pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#0B1028] pt-28 sm:pt-32 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-lg mx-auto">{loadingContent}</div>
         </div>
       );
@@ -391,7 +391,7 @@ export default function FreeConsultationForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.phone}</label>
               <input
@@ -470,7 +470,7 @@ export default function FreeConsultationForm({
           {/* Therapist Selection */}
           <div>
             <label className="block text-xs font-medium text-white/70 mb-2">{t.consultationForm.selectTherapist}</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {therapists.map(therapist => (
                 <button
                   key={therapist.id}
@@ -521,7 +521,7 @@ export default function FreeConsultationForm({
                   {t.consultationForm.noSlots}
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                   {slots.map(slot => (
                     <button
                       key={slot.time}
@@ -625,7 +625,7 @@ export default function FreeConsultationForm({
 
   if (mode === 'page') {
     return (
-      <div className="min-h-screen bg-[#0B1028] pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#0B1028] pt-28 sm:pt-32 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-lg mx-auto">
           {formContent}
         </div>

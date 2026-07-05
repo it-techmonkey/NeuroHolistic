@@ -49,8 +49,8 @@ export default function Hero() {
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#050608] to-transparent" />
       </div>
 
-      <div className="relative z-10 w-full px-6 pb-14 pt-28 sm:px-10 sm:pb-16 sm:pt-32 md:px-[92px] lg:pt-36">
-        <div className="flex min-h-[calc(100dvh-10rem)] w-full items-center">
+      <div className="relative z-10 w-full px-6 pb-14 pt-32 sm:px-10 sm:pb-16 sm:pt-32 md:px-[92px] lg:pt-36">
+        <div className="flex min-h-[calc(100dvh-10rem)] max-md:min-h-0 w-full items-center">
           <div
             className="flex max-w-[650px] flex-col items-start text-left"
             style={{ fontFamily: "var(--font-hero-copy), 'Montserrat', system-ui, sans-serif" }}

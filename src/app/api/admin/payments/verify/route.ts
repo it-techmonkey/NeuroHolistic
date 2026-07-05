@@ -173,6 +173,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to verify payment' }, { status: 500 });
       }
 
+      // Update the linked payment record status
+      if (program.payment_id) {
+        await supabase
+          .from('payments')
+          .update({ status: 'paid' })
+          .eq('program_id', programId);
+      }
+
       // Assign therapist-client relationship
       if (program.therapist_user_id && program.user_id) {
         await supabase.from('therapist_clients').upsert({
@@ -223,6 +231,14 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         console.error('[Payment Verify]', updateError);
         return NextResponse.json({ error: 'Failed to reject payment' }, { status: 500 });
+      }
+
+      // Update the linked payment record status
+      if (program.payment_id) {
+        await supabase
+          .from('payments')
+          .update({ status: 'failed' })
+          .eq('program_id', programId);
       }
 
       // Record admin reject action for audit

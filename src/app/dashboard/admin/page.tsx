@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { AdminData } from '@/components/dashboard/admin/tabs/types';
 import {
-  LayoutDashboard, Users, UserCheck, CalendarDays, Activity,
+  LayoutDashboard, Users, UserCheck, CalendarDays,
   Loader2, RefreshCw, LogOut, CreditCard, Award, Percent, UserCircle
 } from 'lucide-react';
 import OverviewTab from '@/components/dashboard/admin/tabs/OverviewTab';
@@ -13,7 +13,6 @@ import UsersTab from '@/components/dashboard/admin/tabs/UsersTab';
 import DashboardHomeLogo from '@/components/dashboard/DashboardHomeLogo';
 import TherapistsTab from '@/components/dashboard/admin/tabs/TherapistsTab';
 import BookingsTab from '@/components/dashboard/admin/tabs/BookingsTab';
-import SessionsTab from '@/components/dashboard/admin/tabs/SessionsTab';
 import PaymentsTab from '@/components/dashboard/admin/tabs/PaymentsTab';
 import CertificatesTab from '@/components/dashboard/admin/tabs/CertificatesTab';
 import DiscountsTab from '@/components/dashboard/admin/tabs/DiscountsTab';
@@ -21,10 +20,9 @@ import Account from '@/components/dashboard/client/Account';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'users', label: 'Users', icon: Users },
-  { id: 'therapists', label: 'Therapists', icon: UserCheck },
   { id: 'bookings', label: 'Bookings', icon: CalendarDays },
-  { id: 'sessions', label: 'Sessions', icon: Activity },
+  { id: 'users', label: 'Clients', icon: Users },
+  { id: 'therapists', label: 'Therapists', icon: UserCheck },
   { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'discounts', label: 'Discounts', icon: Percent },
   { id: 'certificates', label: 'Certificates', icon: Award },
@@ -174,10 +172,9 @@ export default function AdminDashboardPage() {
         )}
 
         {activeTab === 'overview' && <OverviewTab data={data} />}
+        {activeTab === 'bookings' && <BookingsTab data={data} onRefresh={fetchData} />}
         {activeTab === 'users' && <UsersTab data={data} />}
         {activeTab === 'therapists' && <TherapistsTab data={data} />}
-        {activeTab === 'bookings' && <BookingsTab data={data} />}
-        {activeTab === 'sessions' && <SessionsTab data={data} />}
         {activeTab === 'payments' && <PaymentsTab />}
         {activeTab === 'discounts' && <DiscountsTab />}
         {activeTab === 'certificates' && <CertificatesTab data={data} />}

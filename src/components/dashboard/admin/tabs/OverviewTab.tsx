@@ -1,35 +1,68 @@
 'use client';
 
+import { useMemo } from 'react';
 import { AdminData } from './types';
 import {
-  Users, CalendarDays, DollarSign, Clock,
-  CheckCircle2, AlertCircle, CreditCard, GraduationCap
+  CalendarDays, DollarSign, CheckCircle2, CreditCard, Users,
+  Clock, ArrowRight,
 } from 'lucide-react';
 
 export default function OverviewTab({ data }: { data: AdminData }) {
-  const { kpis, activeProgramsDetail, recentActivity } = data;
+  const { kpis, activeProgramsDetail } = data;
   const fmtCurrency = (n: number) => `AED ${new Intl.NumberFormat('en-US').format(n)}`;
 
   const pendingPayments = data.payments.filter(p => p.status === 'pending_verification');
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
+  const upcomingBookings = useMemo(() => {
+    const now = new Date();
+    return data.bookings
+      .filter((b: any) =>
+        (b.status === 'confirmed' || b.status === 'scheduled') &&
+        b.date && b.time &&
+        new Date(`${b.date}T${b.time}`) >= now
+      )
+      .sort((a: any, b: any) => {
+        const da = new Date(`${a.date}T${a.time}`);
+        const db = new Date(`${b.date}T${b.time}`);
+        return da.getTime() - db.getTime();
+      })
+      .slice(0, 6);
+  }, [data.bookings]);
+
+  const therapistStats = useMemo(() => {
+    const now = new Date();
+    return (data.therapists ?? []).map((t: any) => {
+      const upcoming = data.bookings.filter((b: any) =>
+        (b.therapistName === t.name) &&
+        (b.status === 'confirmed' || b.status === 'scheduled') &&
+        b.date && b.time &&
+        new Date(`${b.date}T${b.time}`) >= now
+      ).length;
+      return { ...t, upcomingCount: upcoming };
+    })
+    .filter((t: any) => t.stats?.totalClients > 0)
+    .sort((a: any, b: any) => (b.upcomingCount) - (a.upcomingCount))
+    .slice(0, 5);
+  }, [data.therapists, data.bookings]);
+
   return (
     <div className="space-y-6">
-      {/* Top KPIs */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Today's Sessions"
           value={`${kpis.todayBookings}`}
           icon={<CalendarDays className="w-5 h-5" />}
           accent="indigo"
-          sub={`${kpis.upcomingBookings} upcoming`}
+          sub={`${kpis.upcomingBookings} upcoming total`}
         />
         <KpiCard
-          label="Pending Payments"
-          value={`${pendingPayments.length}`}
-          icon={<CreditCard className="w-5 h-5" />}
-          accent={pendingPayments.length > 0 ? 'amber' : 'emerald'}
-          sub={pendingPayments.length > 0 ? fmtCurrency(totalPendingAmount) : 'All clear'}
+          label="Total Clients"
+          value={`${kpis.totalClients}`}
+          icon={<Users className="w-5 h-5" />}
+          accent="emerald"
+          sub={`${kpis.totalTherapists} therapists`}
         />
         <KpiCard
           label="Active Programs"
@@ -39,88 +72,122 @@ export default function OverviewTab({ data }: { data: AdminData }) {
           sub={`${kpis.completedPrograms} completed`}
         />
         <KpiCard
-          label="Revenue"
+          label="Total Revenue"
           value={fmtCurrency(kpis.totalRevenue)}
           icon={<DollarSign className="w-5 h-5" />}
           accent="emerald"
-          sub={`${kpis.totalClients} clients`}
+          sub={`${fmtCurrency(kpis.academyRevenue)} academy`}
         />
       </div>
 
-      {/* Academy KPI Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <GraduationCap className="w-4 h-4 text-purple-500" />
-            <span className="text-xs text-slate-500">Academy Enrolled</span>
-          </div>
-          <p className="text-xl font-bold text-purple-600">{kpis.totalAcademyPrograms}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">{kpis.academyActive} active · {kpis.academyCompleted} completed</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign className="w-4 h-4 text-emerald-500" />
-            <span className="text-xs text-slate-500">Academy Revenue</span>
-          </div>
-          <p className="text-xl font-bold text-emerald-600">{fmtCurrency(kpis.academyRevenue)}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">from {kpis.totalAcademyPrograms} enrollments</p>
-        </div>
-      </div>
-
+      {/* Upcoming Sessions + Pending Payments side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Schedule */}
+        {/* Upcoming Sessions */}
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">Today's Schedule</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {recentActivity.filter(a => a.type === 'booking').length > 0
-                  ? `${recentActivity.filter(a => a.type === 'booking').length} bookings today`
-                  : 'No bookings today'}
-              </p>
+              <h3 className="text-sm font-semibold text-slate-900">Upcoming Sessions</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{upcomingBookings.length} scheduled</p>
             </div>
+            <Clock className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-            {recentActivity.filter(a => a.type === 'booking').length === 0 ? (
+          <div className="divide-y divide-slate-100">
+            {upcomingBookings.length === 0 ? (
               <div className="px-5 py-8 text-center">
                 <CalendarDays className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">No sessions scheduled for today</p>
+                <p className="text-sm text-slate-500">No upcoming sessions</p>
               </div>
             ) : (
-              recentActivity
-                .filter(a => a.type === 'booking')
-                .slice(0, 8)
-                .map((a, i) => (
+              upcomingBookings.map((b: any, i: number) => {
+                const dateObj = new Date(`${b.date}T${b.time}`);
+                const isToday = dateObj.toDateString() === new Date().toDateString();
+                const isTomorrow = dateObj.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeLabel = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                return (
                   <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          a.status === 'completed' ? 'bg-emerald-500' :
-                          a.status === 'confirmed' ? 'bg-blue-500' :
-                          a.status === 'cancelled' ? 'bg-red-500' :
-                          'bg-slate-300'
-                        }`} />
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">{a.description}</p>
-                          {a.therapistName && (
-                            <p className="text-[11px] text-slate-400">with {a.therapistName}</p>
-                          )}
-                        </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-900 truncate">{b.clientName || 'Client'}</p>
+                        <p className="text-[11px] text-slate-400 truncate">with {b.therapistName || 'Therapist'}</p>
                       </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                        a.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                        a.status === 'confirmed' ? 'bg-blue-50 text-blue-700' :
-                        a.status === 'cancelled' ? 'bg-red-50 text-red-700' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>
-                        {a.status}
-                      </span>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className={`text-xs font-medium ${isToday ? 'text-indigo-600' : isTomorrow ? 'text-amber-600' : 'text-slate-600'}`}>{dateLabel}</p>
+                        <p className="text-[11px] text-slate-400">{timeLabel}</p>
+                      </div>
                     </div>
                   </div>
-                ))
+                );
+              })
             )}
           </div>
         </div>
+
+        {/* Pending Payments */}
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Pending Payments</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {pendingPayments.length > 0
+                  ? `${pendingPayments.length} awaiting review`
+                  : 'All payments verified'}
+              </p>
+            </div>
+            {pendingPayments.length > 0 && (
+              <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+                <DollarSign className="w-3.5 h-3.5" />
+                {fmtCurrency(totalPendingAmount)}
+              </span>
+            )}
+          </div>
+          <div className="divide-y divide-slate-100">
+            {pendingPayments.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">No pending payments</p>
+              </div>
+            ) : (
+              pendingPayments.slice(0, 5).map((p, i) => (
+                <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-900 truncate">{p.clientName || 'Client'}</p>
+                    <p className="text-[11px] text-slate-400">{p.clientEmail}</p>
+                  </div>
+                  <p className="text-sm font-bold text-slate-900 flex-shrink-0 ml-3">{fmtCurrency(p.amount)}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Therapist Activity + Active Programs side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Therapist Activity */}
+        {therapistStats.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900">Therapist Activity</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{therapistStats.length} therapists</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {therapistStats.map((t: any, i: number) => (
+                <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
+                    <p className="text-[11px] text-slate-400">{t.stats?.totalClients || 0} clients</p>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <p className="text-sm font-semibold text-slate-700">{t.upcomingCount}</p>
+                    <p className="text-[11px] text-slate-400">upcoming</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Active Programs */}
         <div className="bg-white rounded-xl border border-slate-200">
@@ -135,7 +202,7 @@ export default function OverviewTab({ data }: { data: AdminData }) {
                 <p className="text-sm text-slate-500">No active programs</p>
               </div>
             ) : (
-              activeProgramsDetail.slice(0, 8).map((p, i) => (
+              activeProgramsDetail.slice(0, 6).map((p, i) => (
                 <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
@@ -147,7 +214,7 @@ export default function OverviewTab({ data }: { data: AdminData }) {
                       )}
                     </div>
                     <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
-                      {p.sessionsCompleted}/{p.totalSessions} sessions
+                      {p.sessionsCompleted}/{p.totalSessions}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -163,71 +230,6 @@ export default function OverviewTab({ data }: { data: AdminData }) {
               ))
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Pending Payments */}
-      {pendingPayments.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">Pending Payment Verifications</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{pendingPayments.length} awaiting review — {fmtCurrency(totalPendingAmount)}</p>
-            </div>
-            <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Action needed
-            </span>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {pendingPayments.slice(0, 5).map((p, i) => (
-              <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{p.clientName || 'Client'}</p>
-                  <p className="text-[11px] text-slate-400">{p.clientEmail}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-slate-900">{fmtCurrency(p.amount)}</p>
-                  <p className="text-[11px] text-slate-400 capitalize">{p.programType || 'program'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-semibold text-slate-900">Recent Activity</h3>
-        </div>
-        <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-          {recentActivity.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-8">No recent activity</p>
-          ) : (
-            recentActivity.slice(0, 6).map((a, i) => (
-              <div key={i} className="px-5 py-3 hover:bg-slate-50 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                    a.type === 'booking' ? 'bg-blue-500' :
-                    a.type === 'payment' ? 'bg-emerald-500' :
-                    'bg-amber-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-700 truncate">{a.description}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-slate-400 capitalize">{a.type}</span>
-                      {a.timestamp && (
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(a.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
         </div>
       </div>
     </div>

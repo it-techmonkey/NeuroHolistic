@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CalendarDays, Search, Filter, Clock } from 'lucide-react';
+import { CalendarDays, Search, Clock, Plus } from 'lucide-react';
 import type { AdminData } from './types';
+import AdminBookingModal from './AdminBookingModal';
 
 type StatusFilter = 'all' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'scheduled' | 'pending';
 type TypeFilter = 'all' | 'free_consultation' | 'program';
@@ -43,10 +44,11 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr; }
 }
 
-export default function BookingsTab({ data }: { data: AdminData }) {
+export default function BookingsTab({ data, onRefresh }: { data: AdminData; onRefresh?: () => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   const bookings = data.bookings ?? [];
 
@@ -68,9 +70,18 @@ export default function BookingsTab({ data }: { data: AdminData }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900">Bookings</h2>
-        <p className="text-sm text-slate-500">Review all booking activity</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Bookings</h2>
+          <p className="text-sm text-slate-500">Review all booking activity</p>
+        </div>
+        <button
+          onClick={() => setShowBookingModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#2B2F55] text-white text-sm font-medium rounded-xl hover:bg-[#1e2140] transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Book for Client
+        </button>
       </div>
 
       {/* Status Cards */}
@@ -171,6 +182,14 @@ export default function BookingsTab({ data }: { data: AdminData }) {
       <p className="text-xs text-slate-400 text-center">
         Showing {filteredBookings.length} of {bookings.length} bookings
       </p>
+
+      <AdminBookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        onSuccess={() => {
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 }

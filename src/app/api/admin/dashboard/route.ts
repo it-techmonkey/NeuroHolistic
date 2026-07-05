@@ -159,9 +159,15 @@ export async function GET() {
       return sum + (p.price_paid ?? 0);
     }, 0);
 
-    // Active programs detail
+    // Active programs detail — only include programs that have actual sessions booked
     const activeProgramsDetail = programs
-      .filter(p => p.status === 'active')
+      .filter(p => {
+        if (p.status !== 'active') return false;
+        // Exclude programs with no sessions and no bookings
+        const hasSessions = sessions.some(s => s.program_id === p.id);
+        const hasBookings = bookings.some(b => b.program_id === p.id);
+        return hasSessions || hasBookings || p.used_sessions > 0;
+      })
       .map(p => {
         const client = userMap.get(p.user_id);
         const therapist = userMap.get(p.therapist_user_id);
@@ -263,6 +269,22 @@ export async function GET() {
       })),
       activeProgramsDetail,
       recentActivity,
+      programs: programs.map(p => ({
+        id: p.id,
+        user_id: p.user_id,
+        therapist_user_id: p.therapist_user_id,
+        therapist_name: p.therapist_name,
+        total_sessions: p.total_sessions,
+        used_sessions: p.used_sessions || 0,
+        sessions_completed: p.sessions_completed || 0,
+        status: p.status,
+        program_type: p.program_type || 'private',
+        price_paid: p.price_paid ?? null,
+        payment_status: p.payment_status || 'pending',
+        client_name: p.client_name,
+        client_email: p.client_email,
+        created_at: p.created_at,
+      })),
     });
   } catch (error) {
     console.error('[Admin Dashboard]', error);

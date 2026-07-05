@@ -43,7 +43,7 @@ body {
   overflow-x: hidden;
 }
 
-img,
+img:not([data-nimg]),
 video,
 canvas,
 svg {
