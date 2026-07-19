@@ -5,8 +5,9 @@ import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
-// 3 original + 5 new = 8 total (shown 3 per page)
+// 3 original + 5 new + Suzana = 9 total (shown 3 per page)
 const REVIEW_VIDEO_IDS = [
+  "E0k5HNrXs20",  // Suzana
   "p2Jkd8jzEcE",   // original 1
   "5QNC8cCo4hY",   // original 2
   "GtuinW2sDGU",   // original 3

@@ -136,7 +136,7 @@ function EventRow({
 
         <div className="md:col-span-5" dir={locale === "ar" ? "rtl" : "ltr"}>
           <h3 className="mb-4 text-[24px] font-semibold tracking-tight text-[#0F172A] md:text-[28px]">{copy.title}</h3>
-          <p className="max-w-[400px] text-[15px] leading-relaxed text-[#64748B]">{copy.description}</p>
+          <p className="max-w-[400px] text-[15px] leading-relaxed text-[#64748B]">{copy.cardDescription ?? copy.description}</p>
         </div>
 
         <div className="md:col-span-3" dir={locale === "ar" ? "rtl" : "ltr"}>

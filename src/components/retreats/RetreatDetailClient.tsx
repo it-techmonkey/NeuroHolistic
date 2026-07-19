@@ -7,6 +7,7 @@ import { useContentLocale } from "@/components/retreats/locale";
 import { useLang } from "@/lib/translations/LanguageContext";
 import { ar } from "@/lib/translations/ar";
 import MobileBackButton from "@/components/MobileBackButton";
+import RetreatWaitlistButton from "@/components/retreats/RetreatWaitlistButton";
 
 interface Props {
   retreat: RetreatItem;
@@ -45,9 +46,29 @@ export default function RetreatDetailClient({ retreat }: Props) {
           {copy.title}
         </h1>
 
-        <p className="mt-6 text-[17px] leading-[1.8] text-[#475569]" dir={locale === "ar" ? "rtl" : "ltr"}>
-          {copy.description}
-        </p>
+        {copy.subtitle && (
+          <p
+            className="mt-3 text-[16px] font-medium uppercase tracking-widest text-[#6366F1]"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            {copy.subtitle}
+          </p>
+        )}
+
+        {copy.hook && (
+          <p
+            className="mt-6 text-[19px] italic leading-[1.8] text-[#334155]"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            {copy.hook}
+          </p>
+        )}
+
+        {copy.description.split("\n\n").map((para, i) => (
+          <p key={i} className="mt-6 text-[17px] leading-[1.8] text-[#475569]" dir={locale === "ar" ? "rtl" : "ltr"}>
+            {para}
+          </p>
+        ))}
 
         <div className="mt-10 grid gap-4 rounded-[14px] border border-[#E2E8F0] bg-[#FAFBFF] p-6 md:grid-cols-2">
           <p className="text-[15px] text-[#334155]">
@@ -64,6 +85,27 @@ export default function RetreatDetailClient({ retreat }: Props) {
             {retreat.capacity ? `${retreat.capacity} ${D.detailCapacityParticipants}` : D.detailCapacityTbd}
           </p>
         </div>
+
+        {copy.closingLine && (
+          <p
+            className="mt-12 text-[19px] font-medium italic leading-[1.8] text-[#0F172A]"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
+            {copy.closingLine}
+          </p>
+        )}
+
+        {copy.ctaLabel && retreat.isWaitlistOnly && (
+          <div className="mt-10 flex" dir={locale === "ar" ? "rtl" : "ltr"}>
+            <RetreatWaitlistButton
+              retreatId={retreat.slug ?? retreat.id}
+              retreatTitle={copy.title}
+              ctaLabel={copy.ctaLabel}
+              locale={locale}
+              className="inline-flex h-14 items-center justify-center rounded-full bg-[#0F172A] px-10 text-[14px] font-bold uppercase tracking-widest text-white transition-all hover:bg-[#1E293B]"
+            />
+          </div>
+        )}
       </div>
     </section>
   );
