@@ -79,7 +79,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "مريم القيسي",
     },
     role: {
-      en: "NeuroHolistic Certified",
+      en: "NeuroHolistic Certified Practitioner",
       ar: "ممارِسة معتمدة في نيوروهوليستك",
     },
     heroTitle: {
@@ -121,8 +121,8 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "نورا يوسف",
     },
     role: {
-      en: "NeuroHolistic Certified",
-      ar: "ممارِسة معتمدة في نيوروهوليستك",
+      en: "NeuroHolistic Certified Therapist",
+      ar: "معالِجة معتمدة في نيوروهوليستك",
     },
     heroTitle: {
       en: "Noura Youssef",
@@ -163,8 +163,8 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "ذكرى خياطة",
     },
     role: {
-      en: "NeuroHolistic Certified",
-      ar: "ممارِسة معتمدة في نيوروهوليستك",
+      en: "NeuroHolistic Certified Therapist",
+      ar: "معالِجة معتمدة في نيوروهوليستك",
     },
     heroTitle: {
       en: "Zekra Khayata",
@@ -205,8 +205,8 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "ريم مبيّض",
     },
     role: {
-      en: "NeuroHolistic Certified",
-      ar: "ممارِسة معتمدة في نيوروهوليستك",
+      en: "NeuroHolistic Certified Therapist",
+      ar: "معالِجة معتمدة في نيوروهوليستك",
     },
     heroTitle: {
       en: "Reem Mobayed",
@@ -247,7 +247,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "فوارس عازار",
     },
     role: {
-      en: "NeuroHolistic Certified",
+      en: "NeuroHolistic Certified Practitioner",
       ar: "ممارِسة معتمدة في نيوروهوليستك",
     },
     heroTitle: {
@@ -289,7 +289,7 @@ export const TEAM_PROFILES: TeamProfile[] = [
       ar: "جود شرف الدين",
     },
     role: {
-      en: "NeuroHolistic Certified",
+      en: "NeuroHolistic Certified Practitioner",
       ar: "ممارِس معتمد في نيوروهوليستك",
     },
     heroTitle: {

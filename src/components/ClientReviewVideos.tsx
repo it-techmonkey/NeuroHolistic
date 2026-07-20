@@ -5,7 +5,7 @@ import { useLang } from "@/lib/translations/LanguageContext";
 
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
-// 3 original + 3 new + Suzana = 7 total (shown 3 per page)
+// 3 original + 2 new + Suzana = 6 total (shown 3 per page)
 const REVIEW_VIDEO_IDS = [
   "E0k5HNrXs20",  // Suzana
   "p2Jkd8jzEcE",   // original 1
@@ -14,7 +14,6 @@ const REVIEW_VIDEO_IDS = [
   "eToZSMUufnI",  // new 3
   "cyGJVcDc1bc",  // new 4
   "EaJBSGlGhm8",  // new 5
-  "VfL87QN3Wes",  // new 6
 ];
 
 const YT_CHANNEL = "https://www.youtube.com/channel/UCnONxQoFETCBOBEteFO1i4Q";
