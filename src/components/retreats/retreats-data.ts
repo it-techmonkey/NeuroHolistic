@@ -30,6 +30,46 @@ export const FEATURED_RETREAT: FeaturedRetreatData = {
 
 export const UPCOMING_RETREATS: RetreatItem[] = [
   {
+    id: "4",
+    image: "/images/pages/retreat.jpg",
+    slug: "she-like-never-before",
+    isWaitlistOnly: true,
+    locales: {
+      en: {
+        title: "SHE: Like Never Before™",
+        subtitle: "A Five-Day Sanctuary for Women",
+        cardDescription:
+          "An invitation to put the world down for a while, and gently reconnect with the woman beneath the roles, the expectations, and the endless pressure to become someone else.",
+        hook:
+          "You do not need to become anything. You simply need to allow yourself to be. Just think about it, \"What remains when the pressure to be everything for everyone... disappears?\"",
+        description:
+          "This retreat is an invitation to put the world down for a while. From the pressure to always be more, do more, carry more, and become more, or else be disappointed, not enough or broken.\n\nCreated through the NeuroHolistic Method™, SHE: Like Never Before™ is a deeply immersive experience that invites you to gently reconnect with the woman beneath the expectations, the roles, the responsibilities, and the endless pressure to become someone you were never meant to be, not by becoming someone new, but by allowing yourself to return to who you have always been. Because perhaps the woman you have been searching for has always been there.\n\nShe has simply been waiting for you to lay the loads down and come home.",
+        closingLine:
+          "Perhaps... You simply need to allow yourself to be. Because when the pressure to become everything for everyone finally disappears... what remains... is SHE. Like never before.",
+        ctaLabel: "Join The Wish List",
+        date: "Join The Wish List",
+        location: "To be announced",
+        duration: "5 days",
+      },
+      ar: {
+        title: "هي: كما لم تكن من قبل",
+        subtitle: "تجربة غامرة تمتد خمسة أيام للمرأة",
+        cardDescription:
+          "دعوة لأن تضعي العالم جانباً لبعض الوقت، وتعيدي التواصل بلطف مع المرأة الكامنة خلف الأدوار والتوقعات والضغط المستمر لتصبحي شخصاً آخر.",
+        hook:
+          "لستِ بحاجة إلى أن تصبحي شيئاً آخر. كل ما تحتاجينه هو أن تسمحي لنفسك أن تكوني. توقفي للحظة واسألي نفسك: \"ماذا يبقى عندما يختفي الضغط الذي يدفعك إلى أن تكوني كل شيء... لكل شخص\".",
+        description:
+          "هذه التجربة هي دعوة لأن تضعي العالم جانباً لبعض الوقت. وأن تتحرري من الضغط الذي يدفعك دائماً إلى أن تكوني أكثر، وتفعلي أكثر، وتتحملي أكثر، وتصبحي أكثر، وإلا فستخيبين الظن، أو تشعرين بأنك لستِ كافية، أو بأن هناك شيئاً مكسوراً في داخلك.\n\nومن خلال منهج NeuroHolistic™، صُمِّمت SHE: Like Never Before™ كتجربة غامرة وعميقة، تدعوك بلطف إلى إعادة التواصل مع المرأة الكامنة خلف التوقعات، والأدوار، والمسؤوليات، والضغط المستمر لتصبحي شخصاً لم تُخلقي لتكونيه؛ ليس بأن تصبحي امرأةً جديدة، بل بأن تسمحي لنفسك أن تعودي إلى المرأة التي كنتِها دائماً. لأن... ربما المرأة التي ظللتِ تبحثين عنها كانت هناك منذ البداية.\n\nوكل ما كانت تنتظره هو أن تضعي الأثقال جانباً... وتعودي إلى نفسك.",
+        closingLine:
+          "ربما... كل ما تحتاجينه هو أن تسمحي لنفسك أن تكون كما هي في العمق. لأنه عندما يختفي أخيراً الضغط الذي يدفعك إلى أن تكوني كل شيء... لكل شخص... ما يبقى... هو أنتٍ.. كما لم تكوني من قبل.",
+        ctaLabel: "انضمي إلى قائمة الانتظار",
+        date: "انضمي إلى قائمة الانتظار",
+        location: "سيُعلن لاحقاً",
+        duration: "5 أيام",
+      },
+    },
+  },
+  {
     id: "1",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80",
     slug: "spring-restoration-2025",

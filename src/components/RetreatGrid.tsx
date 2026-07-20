@@ -72,7 +72,7 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
                     <span className="text-[14px] text-[#475569]">{copy.location}</span>
                   </div>
 
-                  <p className="mb-8 line-clamp-2 text-[15px] leading-relaxed text-[#64748B]">{copy.description}</p>
+                  <p className="mb-8 line-clamp-2 text-[15px] leading-relaxed text-[#64748B]">{copy.cardDescription ?? copy.description}</p>
 
                   <Link
                     href={href}

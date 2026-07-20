@@ -63,9 +63,9 @@ export default function Hero() {
             <h1
               className="mt-8 text-[50px] uppercase text-[#D3AB79] sm:mt-9 sm:text-[70px] md:text-[86px] lg:text-[90px]"
               style={{
-                fontFamily: "var(--font-hero-display), 'Playfair Display', serif",
-                fontWeight: 300,
-                letterSpacing: 10,
+                fontFamily: "var(--font-display), 'Lato', sans-serif",
+                fontWeight: 700,
+                letterSpacing: 0,
                 lineHeight: 0.92,
               }}
             >

@@ -3,6 +3,8 @@
 import PageHero from "@/components/ui/PageHero";
 import { useLang } from "@/lib/translations/LanguageContext";
 
+const PODCAST_VIDEO_ID = "VfL87QN3Wes";
+
 export default function ResourcesPage() {
   const { t } = useLang();
   const rp = t.resourcesPage;
@@ -44,6 +46,22 @@ export default function ResourcesPage() {
             <div key={section.title} className="rounded-xl border border-slate-200 p-6 bg-slate-50/50">
               <h2 className="text-xl font-semibold text-slate-900">{section.title}</h2>
               <p className="mt-3 text-slate-600 leading-relaxed">{section.desc}</p>
+
+              {section.title === rp.mediaTitle && (
+                <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+                  <div className="relative aspect-video w-full bg-slate-900">
+                    <iframe
+                      title="NeuroHolistic Podcast"
+                      src={`https://www.youtube.com/embed/${PODCAST_VIDEO_ID}?rel=0&modestbranding=1`}
+                      className="absolute inset-0 h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
