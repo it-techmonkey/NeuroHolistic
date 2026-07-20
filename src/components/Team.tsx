@@ -11,7 +11,18 @@ export default function Team() {
   const { t, isArabic } = useLang();
 
   const founder = TEAM_PROFILES.find(member => member.slug === "fawzia-yassmina");
-  const practitioners = TEAM_PROFILES.filter(member => member.slug !== "fawzia-yassmina");
+
+  const HOME_PRACTITIONER_ORDER = [
+    "reem-mobayed",
+    "noura-youssef",
+    "zekra-khayata",
+    "mariam-al-kaisi",
+    "fawares-azaar",
+    "joud-charafeddin",
+  ];
+  const practitioners = HOME_PRACTITIONER_ORDER
+    .map(slug => TEAM_PROFILES.find(member => member.slug === slug))
+    .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
   return (
     <section className="bg-[#FCFCFD] py-8 md:py-10">
