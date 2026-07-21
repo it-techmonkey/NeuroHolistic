@@ -395,6 +395,7 @@ export const en = {
     upcomingLine2: "sessions",
     locationLabel: "Location",
     viewRegistration: "View registration",
+    hideDetails: "Hide details",
   },
 
   eventsListing: {

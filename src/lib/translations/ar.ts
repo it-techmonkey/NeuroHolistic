@@ -397,6 +397,7 @@ export const ar = {
     upcomingLine2: "القادمة",
     locationLabel: "الموقع",
     viewRegistration: "عرض التسجيل",
+    hideDetails: "إخفاء التفاصيل",
   },
 
   eventsListing: {
