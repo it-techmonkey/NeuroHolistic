@@ -1,9 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import Image from "next/image";
 import type { RetreatItem } from "./types";
 import { ar } from "@/lib/translations/ar";
 import { useLang } from "@/lib/translations/LanguageContext";
+import { publicImageSrc } from "@/lib/public-image";
 import RetreatWaitlistButton from "./RetreatWaitlistButton";
 
 interface Props {
@@ -18,15 +19,13 @@ export default function RetreatInlineDetail({ retreat, locale }: Props) {
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="overflow-hidden"
-    >
-      <div className="border-t border-[#E2E8F0] p-4 pt-8 md:p-6 md:pt-10">
-        <h3 className="text-[28px] font-semibold leading-tight text-[#0F172A] md:text-[36px]" dir={dir}>
+    <div>
+      <div className="relative h-[280px] w-full md:h-[420px]">
+        <Image src={publicImageSrc(retreat.image)} alt={copy.title} fill className="object-cover" priority />
+      </div>
+
+      <div className="p-6 md:p-10">
+        <h3 className="text-[28px] font-semibold leading-tight text-[#0F172A] md:text-[40px]" dir={dir}>
           {copy.title}
         </h3>
 
@@ -37,7 +36,7 @@ export default function RetreatInlineDetail({ retreat, locale }: Props) {
         )}
 
         {copy.hook && (
-          <p className="mt-6 text-[17px] italic leading-[1.8] text-[#334155]" dir={dir}>
+          <p className="mt-6 text-[18px] italic leading-[1.8] text-[#334155]" dir={dir}>
             {copy.hook}
           </p>
         )}
@@ -48,7 +47,7 @@ export default function RetreatInlineDetail({ retreat, locale }: Props) {
           </p>
         ))}
 
-        <div className="mt-10 grid gap-4 rounded-[14px] border border-[#E2E8F0] bg-white p-6 md:grid-cols-2">
+        <div className="mt-10 grid gap-4 rounded-[14px] border border-[#E2E8F0] bg-[#FAFBFF] p-6 md:grid-cols-2">
           <p className="text-[15px] text-[#334155]">
             <strong>{D.detailDateLabel}</strong> {copy.date}
           </p>
@@ -65,13 +64,13 @@ export default function RetreatInlineDetail({ retreat, locale }: Props) {
         </div>
 
         {copy.closingLine && (
-          <p className="mt-10 text-[17px] font-medium italic leading-[1.8] text-[#0F172A]" dir={dir}>
+          <p className="mt-10 text-[18px] font-medium italic leading-[1.8] text-[#0F172A]" dir={dir}>
             {copy.closingLine}
           </p>
         )}
 
         {copy.ctaLabel && retreat.isWaitlistOnly && (
-          <div className="mt-8 flex" dir={dir}>
+          <div className="mt-10 flex" dir={dir}>
             <RetreatWaitlistButton
               retreatId={retreat.slug ?? retreat.id}
               retreatTitle={copy.title}
@@ -82,6 +81,6 @@ export default function RetreatInlineDetail({ retreat, locale }: Props) {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -31,7 +31,7 @@ export const FEATURED_RETREAT: FeaturedRetreatData = {
 export const UPCOMING_RETREATS: RetreatItem[] = [
   {
     id: "4",
-    image: "/images/pages/retreat.jpg",
+    image: "/images/pages/retreats post image.jpg",
     slug: "she-like-never-before",
     isWaitlistOnly: true,
     locales: {
