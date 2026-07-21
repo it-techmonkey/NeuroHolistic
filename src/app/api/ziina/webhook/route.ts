@@ -47,6 +47,9 @@ interface PaymentMetadata {
   name?: string;
   email?: string;
   phone?: string | null;
+  selectedDate?: string | null;
+  selectedDateLabelEn?: string | null;
+  selectedDateLabelAr?: string | null;
 }
 
 function verifyWebhookSignature(rawBody: string, request: NextRequest) {
@@ -149,17 +152,26 @@ async function sendEventPaymentEmails(params: {
   email: string;
   phone: string | null;
   amountAed: number;
+  selectedDateLabel: string | null;
 }) {
   if (!process.env.RESEND_API_KEY) return;
 
   const firstName = params.name.trim().split(' ')[0] || 'there';
+  const dateRow = params.selectedDateLabel
+    ? `<tr><td style="padding:6px 12px;color:#64748b;">Session date</td><td style="padding:6px 12px;font-weight:500;">${params.selectedDateLabel}</td></tr>`
+    : '';
 
   const detailsTable = `<table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:16px 0;">
   <tr><td style="padding:6px 12px;color:#64748b;">Name</td><td style="padding:6px 12px;font-weight:500;">${params.name}</td></tr>
   <tr><td style="padding:6px 12px;color:#64748b;">Email</td><td style="padding:6px 12px;">${params.email}</td></tr>
   ${params.phone ? `<tr><td style="padding:6px 12px;color:#64748b;">Phone</td><td style="padding:6px 12px;">${params.phone}</td></tr>` : ''}
+  ${dateRow}
   <tr><td style="padding:6px 12px;color:#64748b;">Amount paid</td><td style="padding:6px 12px;">AED ${params.amountAed}</td></tr>
 </table>`;
+
+  const dateSentence = params.selectedDateLabel
+    ? ` Your selected session date is <strong>${params.selectedDateLabel}</strong>.`
+    : '';
 
   const clientEmail = resend.emails.send({
     from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
@@ -167,7 +179,7 @@ async function sendEventPaymentEmails(params: {
     subject: `Payment confirmed: ${params.eventTitle}`,
     html: eventEmailLayout('Registration & Payment Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
-      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed. We'll send the joining details to this email closer to the event date.</p>`),
+      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed.${dateSentence} We'll send the joining details to this email closer to the event date.</p>`),
   });
 
   const adminEmail = resend.emails.send({
@@ -297,6 +309,7 @@ export async function POST(request: NextRequest) {
       email,
       phone: metadata.phone || null,
       amountAed: metadata.amountAed || payment.amount,
+      selectedDateLabel: metadata.selectedDateLabelEn || null,
     }).catch((error) => console.error('[Ziina Webhook] Failed to send event emails:', error));
 
     return NextResponse.json({ success: true, message: 'Event payment processed' });

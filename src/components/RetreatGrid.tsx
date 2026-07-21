@@ -1,12 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
 import type { RetreatItem } from "./retreats/types";
 import { useContentLocale } from "./retreats/locale";
 import { useLang } from "@/lib/translations/LanguageContext";
 import { ar } from "@/lib/translations/ar";
+import RetreatInlineDetail from "./retreats/RetreatInlineDetail";
 
 interface RetreatGridProps {
   retreats: RetreatItem[];
@@ -30,61 +29,19 @@ export default function RetreatGrid({ retreats }: RetreatGridProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
-          {retreats.map((retreat, i) => {
-            const copy = retreat.locales[locale];
-            const href = retreat.slug ? `/retreats/${retreat.slug}` : `/retreats?id=${retreat.id}`;
-
-            return (
-              <motion.div
-                key={retreat.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.8 }}
-                className="group flex flex-col"
-              >
-                <Link
-                  href={href}
-                  className="relative mb-8 block aspect-[16/10] overflow-hidden border border-[#F1F5F9] bg-[#FAFBFF] p-2 transition-all group-hover:border-[#6366F1]"
-                >
-                  <div className="relative h-full w-full overflow-hidden bg-slate-200">
-                    <Image
-                      src={retreat.image}
-                      alt={copy.title}
-                      fill
-                      className="object-cover grayscale-[30%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  </div>
-                </Link>
-
-                <div className="flex flex-1 flex-col" dir={locale === "ar" ? "rtl" : "ltr"}>
-                  <div className="mb-4 flex items-center justify-between">
-                    <span className="font-mono text-[12px] text-[#CBD5E1]">0{i + 1}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#6366F1]">{copy.date}</span>
-                  </div>
-
-                  <h3 className="mb-3 text-[22px] font-semibold tracking-tight text-[#0F172A]">{copy.title}</h3>
-
-                  <div className="mb-6 flex flex-col gap-1 border-l border-[#E2E8F0] pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-[#94A3B8]">{L.locationLabel}</span>
-                    <span className="text-[14px] text-[#475569]">{copy.location}</span>
-                  </div>
-
-                  <p className="mb-8 line-clamp-2 text-[15px] leading-relaxed text-[#64748B]">{copy.cardDescription ?? copy.description}</p>
-
-                  <Link
-                    href={href}
-                    className="group mt-auto inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-widest text-[#0F172A]"
-                  >
-                    <span className="border-b border-transparent pb-0.5 transition-all group-hover:border-[#0F172A]">{L.viewRegistration}</span>
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                  </Link>
-                </div>
-              </motion.div>
-            );
-          })}
+        <div className="flex flex-col gap-8">
+          {retreats.map((retreat, i) => (
+            <motion.div
+              key={retreat.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.8 }}
+              className="overflow-hidden rounded-[24px] border border-[#E2E8F0]"
+            >
+              <RetreatInlineDetail retreat={retreat} locale={locale} />
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

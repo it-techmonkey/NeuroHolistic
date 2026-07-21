@@ -8,6 +8,7 @@ import { useLang } from "@/lib/translations/LanguageContext";
 import { ar } from "@/lib/translations/ar";
 import MobileBackButton from "@/components/MobileBackButton";
 import RetreatWaitlistButton from "@/components/retreats/RetreatWaitlistButton";
+import { publicImageSrc } from "@/lib/public-image";
 
 interface Props {
   retreat: RetreatItem;
@@ -35,7 +36,7 @@ export default function RetreatDetailClient({ retreat }: Props) {
 
         <div className="mt-6 overflow-hidden rounded-[18px] border border-[#E2E8F0]">
           <div className="relative h-[280px] w-full md:h-[420px]">
-            <Image src={retreat.image} alt={copy.title} fill className="object-cover" priority />
+            <Image src={publicImageSrc(retreat.image)} alt={copy.title} fill className="object-cover" priority />
           </div>
         </div>
 

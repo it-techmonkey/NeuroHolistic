@@ -24,6 +24,15 @@ export default function Team() {
     .map(slug => TEAM_PROFILES.find(member => member.slug === slug))
     .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
+  const HOME_TITLE_BY_SLUG: Record<string, { en: string; ar: string }> = {
+    "reem-mobayed": { en: "NeuroHolistic Certified Therapist", ar: "معالِجة معتمدة في نيوروهوليستك" },
+    "noura-youssef": { en: "NeuroHolistic Certified Therapist", ar: "معالِجة معتمدة في نيوروهوليستك" },
+    "zekra-khayata": { en: "NeuroHolistic Certified Therapist", ar: "معالِجة معتمدة في نيوروهوليستك" },
+    "mariam-al-kaisi": { en: "NeuroHolistic Certified Practitioner", ar: "ممارِسة معتمدة في نيوروهوليستك" },
+    "fawares-azaar": { en: "NeuroHolistic Certified Practitioner", ar: "ممارِسة معتمدة في نيوروهوليستك" },
+    "joud-charafeddin": { en: "NeuroHolistic Certified Practitioner", ar: "ممارِسة معتمدة في نيوروهوليستك" },
+  };
+
   return (
     <section className="bg-[#FCFCFD] py-8 md:py-10">
       <div className="mx-auto max-w-[1200px] px-6">
@@ -119,9 +128,14 @@ export default function Team() {
 
                 {/* Content */}
                 <div className="px-2">
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#2B2F55] transition-colors">
+                  <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-[#2B2F55] transition-colors">
                     {isArabic ? member.name.ar : member.name.en}
                   </h3>
+                  {HOME_TITLE_BY_SLUG[member.slug] && (
+                    <p className="text-[12px] font-semibold uppercase tracking-wider text-[#6366F1] mb-2">
+                      {isArabic ? HOME_TITLE_BY_SLUG[member.slug].ar : HOME_TITLE_BY_SLUG[member.slug].en}
+                    </p>
+                  )}
                   <p className="text-[14px] leading-relaxed text-slate-500 font-light line-clamp-2 mb-3">
                     {isArabic ? member.shortBio.ar : member.shortBio.en}
                   </p>

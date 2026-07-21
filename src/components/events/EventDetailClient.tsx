@@ -133,6 +133,7 @@ export default function EventDetailClient({ event }: Props) {
                 eventTitle={copy.title}
                 ctaLabel={copy.ctaLabel}
                 locale={locale}
+                sessionDates={event.sessionDates}
                 className="inline-flex h-14 items-center justify-center rounded-full bg-[#0F172A] px-10 text-[14px] font-bold uppercase tracking-widest text-white transition-all hover:bg-[#1E293B]"
               />
             ) : (

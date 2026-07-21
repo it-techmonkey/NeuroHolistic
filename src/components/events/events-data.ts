@@ -8,6 +8,12 @@ export const MOCK_EVENTS: EventItem[] = [
     image: "/images/pages/method-img1.webp",
     slug: "neuroholistic-consciousness-quantum-leap",
     isPaid: true,
+    sessionDates: [
+      { value: "2026-09-09", label: { en: "September 9, 2026", ar: "9 سبتمبر 2026" } },
+      { value: "2026-10-09", label: { en: "October 9, 2026", ar: "9 أكتوبر 2026" } },
+      { value: "2026-11-09", label: { en: "November 9, 2026", ar: "9 نوفمبر 2026" } },
+      { value: "2026-12-09", label: { en: "December 9, 2026", ar: "9 ديسمبر 2026" } },
+    ],
     locales: {
       en: {
         title: "NeuroHolistic Consciousness Quantum Leap™",
@@ -57,7 +63,7 @@ export const MOCK_EVENTS: EventItem[] = [
         ],
         price: "AED 1,000 / $274",
         ctaLabel: "Book Now",
-        date: "September 9, 2026",
+        date: "September 9 · October 9 · November 9 · December 9, 2026",
         time: "6:00 PM – 10:00 PM",
         location: "Online",
         typeLabel: "Live online",
@@ -110,7 +116,7 @@ export const MOCK_EVENTS: EventItem[] = [
         ],
         price: "1,000 درهم إماراتي - 274 دولار أمريكي",
         ctaLabel: "احجز الآن",
-        date: "9 سبتمبر 2026",
+        date: "9 سبتمبر · 9 أكتوبر · 9 نوفمبر · 9 ديسمبر 2026",
         time: "6:00 – 10:00 مساءً",
         location: "عبر الإنترنت",
         typeLabel: "جلسة عبر الإنترنت",

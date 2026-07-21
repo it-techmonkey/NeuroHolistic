@@ -2,11 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { EventSessionDate } from "./types";
 
 interface Labels {
   namePlaceholder: string;
   emailPlaceholder: string;
   phonePlaceholder: string;
+  dateLabel: string;
+  datePlaceholder: string;
   submit: string;
   submitting: string;
   alreadyPaid: string;
@@ -17,6 +20,8 @@ const EN_LABELS: Labels = {
   namePlaceholder: "Full name",
   emailPlaceholder: "Email address",
   phonePlaceholder: "Phone (optional)",
+  dateLabel: "Select a session date",
+  datePlaceholder: "Choose a date",
   submit: "Continue to payment",
   submitting: "Redirecting to payment...",
   alreadyPaid: "You are already registered and paid for this event.",
@@ -27,6 +32,8 @@ const AR_LABELS: Labels = {
   namePlaceholder: "الاسم الكامل",
   emailPlaceholder: "البريد الإلكتروني",
   phonePlaceholder: "رقم الهاتف (اختياري)",
+  dateLabel: "اختر موعد الجلسة",
+  datePlaceholder: "اختر تاريخاً",
   submit: "المتابعة إلى الدفع",
   submitting: "جارٍ التحويل إلى صفحة الدفع...",
   alreadyPaid: "أنت مسجّل وقد دفعت بالفعل لهذه الفعالية.",
@@ -39,14 +46,16 @@ interface Props {
   ctaLabel: string;
   locale: "en" | "ar";
   className?: string;
+  sessionDates?: EventSessionDate[];
 }
 
-export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, locale, className }: Props) {
+export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, locale, className, sessionDates }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const L = locale === "ar" ? AR_LABELS : EN_LABELS;
   const dir = locale === "ar" ? "rtl" : "ltr";
+  const hasDateChoice = !!sessionDates && sessionDates.length > 1;
 
   const handleClose = () => {
     setIsOpen(false);
@@ -60,8 +69,12 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
+    const selectedDateValue = String(formData.get("sessionDate") || "");
 
     if (!name || !email) return;
+    if (hasDateChoice && !selectedDateValue) return;
+
+    const selectedDate = sessionDates?.find((d) => d.value === selectedDateValue) ?? null;
 
     setStatus("submitting");
     setErrorMessage("");
@@ -70,7 +83,15 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
       const res = await fetch("/api/events/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, eventTitle, name, email, phone }),
+        body: JSON.stringify({
+          eventId,
+          eventTitle,
+          name,
+          email,
+          phone,
+          selectedDate: selectedDate?.value ?? null,
+          selectedDateLabel: selectedDate?.label[locale] ?? null,
+        }),
       });
       const data = await res.json();
 
@@ -130,6 +151,31 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-4">
                 <h3 className="text-[20px] font-semibold text-[#0F172A]">{eventTitle}</h3>
+
+                {hasDateChoice && (
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="sessionDate" className="text-[13px] font-medium text-[#334155]">
+                      {L.dateLabel}
+                    </label>
+                    <select
+                      id="sessionDate"
+                      name="sessionDate"
+                      required
+                      defaultValue=""
+                      className="h-12 rounded-xl border border-[#E2E8F0] px-4 text-[15px] text-[#0F172A] outline-none transition-colors focus:border-[#6366F1]"
+                    >
+                      <option value="" disabled>
+                        {L.datePlaceholder}
+                      </option>
+                      {sessionDates!.map((d) => (
+                        <option key={d.value} value={d.value}>
+                          {d.label[locale]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <input
                   name="name"
                   type="text"

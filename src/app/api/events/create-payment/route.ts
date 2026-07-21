@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createZiinaPaymentIntent } from '@/lib/payments/ziina';
 import { getEventPrice } from '@/lib/events/event-pricing';
+import { MOCK_EVENTS } from '@/components/events/events-data';
 
 function cleanAppUrl(request: NextRequest) {
   return request.nextUrl.origin.replace(/\/$/, '');
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
   const name = body?.name;
   const email = body?.email;
   const phone = body?.phone || null;
+  const selectedDateValue = body?.selectedDate || null;
 
   if (!eventId || !eventTitle || !name || !email) {
     return NextResponse.json(
@@ -26,6 +28,21 @@ export async function POST(request: NextRequest) {
   if (!price) {
     return NextResponse.json({ error: 'This event is not configured for payment.' }, { status: 400 });
   }
+
+  // Server-side source of truth for session dates — never trust a label from the client.
+  const eventConfig = MOCK_EVENTS.find((e) => (e.slug ?? e.id) === eventId);
+  const sessionDates = eventConfig?.sessionDates ?? [];
+
+  if (sessionDates.length > 1) {
+    if (!selectedDateValue) {
+      return NextResponse.json({ error: 'Please select a session date.' }, { status: 400 });
+    }
+    if (!sessionDates.some((d) => d.value === selectedDateValue)) {
+      return NextResponse.json({ error: 'Invalid session date selected.' }, { status: 400 });
+    }
+  }
+
+  const selectedDateLabel = sessionDates.find((d) => d.value === selectedDateValue)?.label ?? null;
 
   const supabase = getServiceSupabase();
 
@@ -58,6 +75,9 @@ export async function POST(request: NextRequest) {
     name,
     email,
     phone,
+    selectedDate: selectedDateValue,
+    selectedDateLabelEn: selectedDateLabel?.en ?? null,
+    selectedDateLabelAr: selectedDateLabel?.ar ?? null,
   };
 
   const { data: paymentRow, error: paymentError } = await supabase
@@ -126,6 +146,7 @@ export async function POST(request: NextRequest) {
         amount_paid: price.amountAed,
         currency: 'AED',
         payment_reference: result.paymentIntentId,
+        selected_date: selectedDateValue,
       })
       .eq('id', existingRegistration.id);
   } else {
@@ -139,6 +160,7 @@ export async function POST(request: NextRequest) {
       amount_paid: price.amountAed,
       currency: 'AED',
       payment_reference: result.paymentIntentId,
+      selected_date: selectedDateValue,
     });
   }
 
