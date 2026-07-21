@@ -409,7 +409,7 @@ export const en = {
     filterRetreats: "Retreats",
     filterLiveOnline: "Live online",
     noResults: "No results match the current filters.",
-    registerNow: "Register now",
+    registerNow: "Read more",
     dateLocationLabel: "Date // Location",
     periods: {
       "2025-04": "April 2025",
