@@ -283,12 +283,6 @@ export async function POST(request: NextRequest) {
 
     // Send notifications to client + therapist
     const therapistEmail = therapist.email;
-    const formattedDate = new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const hr = parseInt(time.split(':')[0], 10);
-    const min = time.split(':')[1];
-    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
 
     const notificationBooking: NotificationBooking = {
       id: result.bookingId!,
@@ -297,8 +291,8 @@ export async function POST(request: NextRequest) {
       clientPhone: client.phone,
       therapistName: therapist.full_name || 'Therapist',
       therapistEmail,
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
+      sessionDate: date,
+      sessionTime: time,
       meetingLink: result.meetLink || null,
       sessionNumber: resolvedSessionNumber ?? undefined,
       type: sessionType,
