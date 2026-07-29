@@ -1195,13 +1195,6 @@ export class BookingService {
     therapistName: string,
     meetLink: string
   ) {
-    const formattedDate = new Date(`${input.date}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const hr = parseInt(input.time.split(':')[0], 10);
-    const min = input.time.split(':')[1];
-    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
-
     // Get therapist email
     let therapistEmail: string | null = null;
     if (input.therapistId && UUID_REGEX.test(input.therapistId)) {
@@ -1220,8 +1213,8 @@ export class BookingService {
       clientPhone: input.phone,
       therapistName,
       therapistEmail,
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
+      sessionDate: input.date,
+      sessionTime: input.time,
       meetingLink: meetLink || null,
       sessionNumber: input.sessionNumber ?? undefined,
       type: input.type,
@@ -1236,13 +1229,6 @@ export class BookingService {
     newTime: string,
     meetLink: string | null
   ) {
-    const formattedDate = new Date(`${newDate}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const hr = parseInt(newTime.split(':')[0], 10);
-    const min = newTime.split(':')[1];
-    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
-
     let therapistEmail: string | null = null;
     if (booking.therapist_user_id) {
       const { data: tUser } = await this.supabase
@@ -1260,8 +1246,8 @@ export class BookingService {
       clientPhone: booking.phone,
       therapistName: booking.therapist_name,
       therapistEmail,
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
+      sessionDate: newDate,
+      sessionTime: newTime,
       meetingLink: meetLink,
       sessionNumber: booking.session_number,
       type: booking.type,
@@ -1271,13 +1257,6 @@ export class BookingService {
   }
 
   private async sendCancelNotifications(booking: any) {
-    const formattedDate = new Date(`${booking.date}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const hr = parseInt(booking.time.split(':')[0], 10);
-    const min = booking.time.split(':')[1];
-    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
-
     let therapistEmail: string | null = null;
     if (booking.therapist_user_id) {
       const { data: tUser } = await this.supabase
@@ -1295,8 +1274,8 @@ export class BookingService {
       clientPhone: booking.phone,
       therapistName: booking.therapist_name,
       therapistEmail,
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
+      sessionDate: booking.date,
+      sessionTime: booking.time,
       meetingLink: booking.meeting_link,
       sessionNumber: booking.session_number,
       type: booking.type,
@@ -1306,13 +1285,6 @@ export class BookingService {
   }
 
   private async sendSessionCompletedNotifications(booking: any) {
-    const formattedDate = new Date(`${booking.date}T00:00:00`).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const hr = parseInt(booking.time.split(':')[0], 10);
-    const min = booking.time.split(':')[1];
-    const formattedTime = `${hr % 12 || 12}:${min} ${hr >= 12 ? 'PM' : 'AM'}`;
-
     let therapistEmail: string | null = null;
     if (booking.therapist_user_id) {
       const { data: tUser } = await this.supabase
@@ -1330,8 +1302,8 @@ export class BookingService {
       clientPhone: booking.phone,
       therapistName: booking.therapist_name || 'Your Therapist',
       therapistEmail,
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
+      sessionDate: booking.date,
+      sessionTime: booking.time,
       meetingLink: booking.meeting_link,
       sessionNumber: booking.session_number,
       type: booking.type,
