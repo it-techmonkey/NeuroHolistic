@@ -19,6 +19,7 @@ Generated: 2026-03-27T05:03:57.757Z
 | Full Name | Email | Password | Role |
 |-----------|-------|----------|------|
 | Admin User | admin.user@neuroholisticinstitute.com | *2szQZXnn4%P&NfH | admin |
+| Admin User | admin@neuroholisticinstitute.com | Dubai@1473@ | admin |
 
 ## Login URL
 
