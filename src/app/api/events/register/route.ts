@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { normalizePhone } from '@/lib/phone';
+import { ensureEventMeetings } from '@/lib/events/event-meetings';
+import { sessionScheduleHtml } from '@/lib/events/event-emails';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
@@ -34,6 +37,7 @@ async function sendRegistrationEmails(params: {
   name: string;
   email: string;
   phone: string | null;
+  scheduleHtml: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -56,7 +60,9 @@ async function sendRegistrationEmails(params: {
     subject: `You're registered: ${params.eventTitle}`,
     html: emailLayout('Registration Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
-      <p style="margin:0 0 16px;color:#334155;">You're registered for <strong>${params.eventTitle}</strong>. We'll send the joining details to this email closer to the event date.</p>`),
+      <p style="margin:0 0 16px;color:#334155;">You're registered for <strong>${params.eventTitle}</strong>.</p>
+      ${params.scheduleHtml || `<p style="margin:0 0 16px;color:#334155;">We&rsquo;ll send the joining details to this email closer to the event date.</p>`}
+      <p style="margin:16px 0 0;color:#64748b;font-size:13px;">We'll also email you a reminder before each session.</p>`),
   });
 
   const adminEmail = resend.emails.send({
@@ -88,6 +94,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // A mobile number with a country code is mandatory for every registration.
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { error: 'A valid mobile number including the country code is required.' },
+        { status: 400 }
+      );
+    }
+
     const supabase = getServiceSupabase();
 
     const { error } = await supabase.from('event_registrations').insert({
@@ -95,7 +110,7 @@ export async function POST(request: NextRequest) {
       event_title: eventTitle,
       name,
       email,
-      phone: phone || null,
+      phone: normalizedPhone,
     });
 
     if (error) {
@@ -109,9 +124,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to register.' }, { status: 500 });
     }
 
-    sendRegistrationEmails({ eventTitle, name, email, phone: phone || null }).catch((err) =>
-      console.error('[EventRegister] Notification error:', err)
-    );
+    // Provision the Meet links (idempotent) so the confirmation email can
+    // carry the joining details straight away. Provisioning must never block
+    // the confirmation email — if it fails, we still confirm the registration
+    // and the reminder emails will carry the links later.
+    (async () => {
+      let scheduleHtml = '';
+      try {
+        const { meetings } = await ensureEventMeetings(supabase, eventId);
+        scheduleHtml = sessionScheduleHtml(meetings);
+      } catch (err) {
+        console.error('[EventRegister] Meet provisioning failed:', err);
+      }
+
+      await sendRegistrationEmails({
+        eventTitle,
+        name,
+        email,
+        phone: normalizedPhone,
+        scheduleHtml,
+      });
+    })().catch((err) => console.error('[EventRegister] Notification error:', err));
 
     return NextResponse.json({ success: true });
   } catch (error) {

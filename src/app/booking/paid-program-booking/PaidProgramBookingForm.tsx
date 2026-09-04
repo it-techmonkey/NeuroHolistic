@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import PhoneInput from "@/components/ui/PhoneInput";
+import { isValidPhone } from "@/lib/phone";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope, ChevronRight, CalendarDays, Banknote } from 'lucide-react';
 import ScheduleStep from '@/components/booking/shared/ScheduleStep';
@@ -766,9 +768,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
-                  <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
-                    placeholder="+971 50 000 0000" required autoComplete="tel" inputMode="tel" />
+                  <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}
+                    locale={isArabic ? 'ar' : 'en'}
+                    inputClassName="border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'الدولة *' : 'Country *'}</label>
@@ -950,9 +952,9 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
-                <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
-                  placeholder="+971 50 000 0000" required autoComplete="tel" inputMode="tel" />
+                <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}
+                  locale={isArabic ? 'ar' : 'en'}
+                  inputClassName="border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'الدولة *' : 'Country *'}</label>

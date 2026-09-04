@@ -97,6 +97,39 @@ export default function EventDetailClient({ event }: Props) {
           )}
         </div>
 
+        {copy.schedule && (
+          <div className="mt-12" dir={locale === "ar" ? "rtl" : "ltr"}>
+            <h2 className="text-[22px] font-semibold text-[#0F172A] md:text-[26px]">{copy.schedule.heading}</h2>
+            {copy.schedule.intro && <p className="mt-3 text-[16px] leading-[1.8] text-[#475569]">{copy.schedule.intro}</p>}
+            <div className="mt-6 overflow-x-auto rounded-[14px] border border-[#E2E8F0]">
+              <table className="w-full min-w-[560px] border-collapse text-start">
+                <thead>
+                  <tr className="bg-[#FAFBFF]">
+                    <th className="px-5 py-3 text-start font-mono text-[11px] uppercase tracking-widest text-[#94A3B8]">
+                      {copy.schedule.columns.part}
+                    </th>
+                    <th className="px-5 py-3 text-start font-mono text-[11px] uppercase tracking-widest text-[#94A3B8]">
+                      {copy.schedule.columns.description}
+                    </th>
+                    <th className="px-5 py-3 text-start font-mono text-[11px] uppercase tracking-widest text-[#94A3B8]">
+                      {copy.schedule.columns.date}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {copy.schedule.rows.map((row, i) => (
+                    <tr key={i} className="border-t border-[#E2E8F0] align-top">
+                      <td className="px-5 py-4 text-[15px] font-semibold text-[#0F172A]">{row.part}</td>
+                      <td className="px-5 py-4 text-[15px] leading-relaxed text-[#475569]">{row.description}</td>
+                      <td className="px-5 py-4 text-[15px] font-medium text-[#334155]">{row.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {copy.sections && copy.sections.length > 0 && (
           <div className="mt-12 flex flex-col gap-10" dir={locale === "ar" ? "rtl" : "ltr"}>
             {copy.sections.map((section, i) => (

@@ -417,6 +417,7 @@ export const en = {
       "2025-06": "June 2025",
       "2026-08": "August 2026",
       "2026-09": "September 2026",
+      "2026-10": "October 2026",
     },
     notFoundTitle: "Event not found | NeuroHolistic",
     backToEvents: "Back to Events",

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { fetchPortalPayments, revenueByTherapist, sumRevenue } from '@/lib/payments/revenue';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
 
@@ -36,6 +37,7 @@ export async function GET() {
       diagnosticAssessmentsResult,
       devFormsResult,
       sessionsResult,
+      portalPayments,
     ] = await Promise.all([
       supabase.from('therapist_clients').select('*'),
       supabase.from('programs').select('*'),
@@ -43,6 +45,7 @@ export async function GET() {
       supabase.from('diagnostic_assessments').select('id, client_id, therapist_id, goal_readiness_score, assessed_at, created_at'),
       supabase.from('session_development_forms').select('id, therapist_id, client_id, created_at, goal_readiness_score'),
       supabase.from('sessions').select('*'),
+      fetchPortalPayments(supabase),
     ]);
 
     const therapistClients = therapistClientsResult.data ?? [];
@@ -51,6 +54,14 @@ export async function GET() {
     const diagnosticAssessments = diagnosticAssessmentsResult.data ?? [];
     const devForms = devFormsResult.data ?? [];
     const sessions = sessionsResult.data ?? [];
+
+    // Revenue policy: only payments captured through the portal count.
+    const therapistPortalRevenue = revenueByTherapist(portalPayments, programs);
+    const programPortalRevenue = new Map<string, number>();
+    for (const payment of portalPayments) {
+      if (!payment.program_id) continue;
+      programPortalRevenue.set(payment.program_id, (programPortalRevenue.get(payment.program_id) ?? 0) + payment.amount);
+    }
 
     // Build detailed data for each therapist
     const therapistsWithDetails = therapists.map(therapist => {
@@ -88,25 +99,8 @@ export async function GET() {
       const completedSessions = therapistSessions.filter(s => s.status === 'completed');
       const scheduledSessions = therapistSessions.filter(s => s.status === 'scheduled');
 
-      // Calculate revenue - only 800 (single session) or 7700 (full program) allowed
-      const programRevenue = therapistPrograms.reduce((sum: number, p: any) => {
-        const price = p.price_paid ?? 0;
-        // Only count valid program prices: 7700 for full program
-        if (price === 7700) {
-          return sum + 7700;
-        }
-        return sum;
-      }, 0);
-      
-      const singleSessionRevenue = therapistBookings.reduce((sum: number, b: any) => {
-        // Only count valid single session price: 800
-        if (b.type === 'paid_session' && b.price === 800) {
-          return sum + 800;
-        }
-        return sum;
-      }, 0);
-      
-      const totalRevenue = programRevenue + singleSessionRevenue;
+      // Revenue policy: only portal-captured payments attributed to this therapist.
+      const totalRevenue = therapistPortalRevenue.get(therapist.id) ?? 0;
 
       // Calculate average goal readiness score improvement
       const assessmentsWithScores = therapistAssessments.filter(a => a.goal_readiness_score !== null);
@@ -135,7 +129,7 @@ export async function GET() {
           assessmentsCount: clientAssessments.length,
           hasActiveProgram: clientProgram?.status === 'active',
           hasCompletedProgram: clientProgram?.status === 'completed',
-          revenue: clientProgram?.price_paid || 0,
+          revenue: clientProgram ? (programPortalRevenue.get(clientProgram.id) ?? 0) : 0,
         };
       });
 

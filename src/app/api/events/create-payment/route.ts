@@ -3,6 +3,7 @@ import { getServiceSupabase } from '@/lib/supabase/service';
 import { createZiinaPaymentIntent } from '@/lib/payments/ziina';
 import { getEventPrice } from '@/lib/events/event-pricing';
 import { MOCK_EVENTS } from '@/components/events/events-data';
+import { normalizePhone } from '@/lib/phone';
 
 function cleanAppUrl(request: NextRequest) {
   return request.nextUrl.origin.replace(/\/$/, '');
@@ -14,12 +15,20 @@ export async function POST(request: NextRequest) {
   const eventTitle = body?.eventTitle;
   const name = body?.name;
   const email = body?.email;
-  const phone = body?.phone || null;
+  const phone = normalizePhone(body?.phone);
   const selectedDateValue = body?.selectedDate || null;
 
   if (!eventId || !eventTitle || !name || !email) {
     return NextResponse.json(
       { error: 'Missing required fields: eventId, eventTitle, name, email' },
+      { status: 400 }
+    );
+  }
+
+  // A mobile number with a country code is mandatory for every registration.
+  if (!phone) {
+    return NextResponse.json(
+      { error: 'A valid mobile number including the country code is required.' },
       { status: 400 }
     );
   }
@@ -48,12 +57,17 @@ export async function POST(request: NextRequest) {
 
   const { data: existingRegistration } = await supabase
     .from('event_registrations')
-    .select('id, payment_status')
+    .select('id, payment_status, status')
     .eq('event_id', eventId)
     .ilike('email', email)
     .maybeSingle();
 
-  if (existingRegistration && existingRegistration.payment_status === 'paid') {
+  // A cancelled registration may be re-purchased; only an active paid one blocks.
+  if (
+    existingRegistration &&
+    existingRegistration.payment_status === 'paid' &&
+    existingRegistration.status !== 'cancelled'
+  ) {
     return NextResponse.json(
       { error: 'You are already registered and paid for this event.' },
       { status: 409 }
@@ -147,6 +161,10 @@ export async function POST(request: NextRequest) {
         currency: 'AED',
         payment_reference: result.paymentIntentId,
         selected_date: selectedDateValue,
+        status: 'active',
+        cancelled_at: null,
+        cancelled_by: null,
+        cancellation_reason: null,
       })
       .eq('id', existingRegistration.id);
   } else {

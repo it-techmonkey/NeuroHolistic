@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureEventMeetings } from '@/lib/events/event-meetings';
+import { sessionScheduleHtml } from '@/lib/events/event-emails';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
@@ -153,6 +155,7 @@ async function sendEventPaymentEmails(params: {
   phone: string | null;
   amountAed: number;
   selectedDateLabel: string | null;
+  scheduleHtml: string;
 }) {
   if (!process.env.RESEND_API_KEY) return;
 
@@ -179,7 +182,9 @@ async function sendEventPaymentEmails(params: {
     subject: `Payment confirmed: ${params.eventTitle}`,
     html: eventEmailLayout('Registration & Payment Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
-      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed.${dateSentence} We'll send the joining details to this email closer to the event date.</p>`),
+      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed.${dateSentence}</p>
+      ${params.scheduleHtml || `<p style="margin:0 0 16px;color:#334155;">We&rsquo;ll send the joining details to this email closer to the event date.</p>`}
+      <p style="margin:16px 0 0;color:#64748b;font-size:13px;">We&rsquo;ll also email you a reminder before each session.</p>`),
   });
 
   const adminEmail = resend.emails.send({
@@ -303,14 +308,27 @@ export async function POST(request: NextRequest) {
       .update({ status: 'paid', metadata: { ...metadata, ziinaStatus: status } })
       .eq('id', payment.id);
 
-    sendEventPaymentEmails({
-      eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
-      name: metadata.name || 'Guest',
-      email,
-      phone: metadata.phone || null,
-      amountAed: metadata.amountAed || payment.amount,
-      selectedDateLabel: metadata.selectedDateLabelEn || null,
-    }).catch((error) => console.error('[Ziina Webhook] Failed to send event emails:', error));
+    // Provision Meet links (idempotent) so the confirmation carries them.
+    // Meet provisioning must never block the payment confirmation email.
+    (async () => {
+      let scheduleHtml = '';
+      try {
+        const { meetings } = await ensureEventMeetings(supabase, eventId);
+        scheduleHtml = sessionScheduleHtml(meetings);
+      } catch (error) {
+        console.error('[Ziina Webhook] Meet provisioning failed:', error);
+      }
+
+      await sendEventPaymentEmails({
+        eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
+        name: metadata.name || 'Guest',
+        email,
+        phone: metadata.phone || null,
+        amountAed: metadata.amountAed || payment.amount,
+        selectedDateLabel: metadata.selectedDateLabelEn || null,
+        scheduleHtml,
+      });
+    })().catch((error) => console.error('[Ziina Webhook] Failed to send event emails:', error));
 
     return NextResponse.json({ success: true, message: 'Event payment processed' });
   }

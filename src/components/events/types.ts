@@ -8,6 +8,20 @@ export interface EventContentSection {
   items: string[];
 }
 
+/** One row of the journey/schedule table shown on the detail page. */
+export interface EventScheduleRow {
+  part: string;
+  description: string;
+  date: string;
+}
+
+export interface EventSchedule {
+  heading: string;
+  intro?: string;
+  columns: { part: string; description: string; date: string };
+  rows: EventScheduleRow[];
+}
+
 export interface EventLocaleFields {
   title: string;
   subtitle?: string;
@@ -16,6 +30,8 @@ export interface EventLocaleFields {
   cardDescription?: string;
   description: string;
   sections?: EventContentSection[];
+  /** Optional structured schedule table (e.g. a multi-part journey). */
+  schedule?: EventSchedule;
   closingLine?: string;
   price?: string;
   ctaLabel?: string;
@@ -31,6 +47,16 @@ export interface EventSessionDate {
   label: { en: string; ar: string };
 }
 
+/** A single live session of an event, used for Meet links and reminders. */
+export interface EventLiveSession {
+  /** Stable key, e.g. "liberation-1". Never change it once registrations exist. */
+  key: string;
+  title: { en: string; ar: string };
+  /** Local Dubai (Asia/Dubai) wall-clock start/end, ISO without offset. */
+  startsAt: string;
+  endsAt: string;
+}
+
 export interface EventItem {
   id: string;
   image: string;
@@ -43,6 +69,15 @@ export interface EventItem {
   isPaid?: boolean;
   /** When set (2+ entries), the registration form asks the user to pick one session date. */
   sessionDates?: EventSessionDate[];
+  /**
+   * Email of the therapist hosting the event. The Meet link and calendar entry
+   * are created on this person's connected Google account.
+   */
+  hostTherapistEmail?: string;
+  /** Live sessions that receive a Meet link and reminder emails. */
+  liveSessions?: EventLiveSession[];
+  /** When true, this event is also featured on the /academy page. */
+  showOnAcademyPage?: boolean;
   locales: {
     en: EventLocaleFields;
     ar: EventLocaleFields;
