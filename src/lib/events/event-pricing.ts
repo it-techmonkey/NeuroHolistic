@@ -16,6 +16,13 @@ export const EVENT_PRICES: Record<string, EventPrice> = {
       ar: "1,000 درهم إماراتي - 274 دولار أمريكي",
     },
   },
+  "neuroholistic-consciousness-quantum-leap-monthly": {
+    amountAed: 1000,
+    displayLabel: {
+      en: "AED 1,000 / $274",
+      ar: "1,000 درهم إماراتي - 274 دولار أمريكي",
+    },
+  },
 };
 
 export function getEventPrice(eventId: string): EventPrice | null {
