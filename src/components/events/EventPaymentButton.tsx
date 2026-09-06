@@ -2,12 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import PhoneInput from "@/components/ui/PhoneInput";
+import { isValidPhone, PHONE_ERROR } from "@/lib/phone";
 import type { EventSessionDate } from "./types";
 
 interface Labels {
   namePlaceholder: string;
   emailPlaceholder: string;
-  phonePlaceholder: string;
+  phoneLabel: string;
   dateLabel: string;
   datePlaceholder: string;
   submit: string;
@@ -19,7 +21,7 @@ interface Labels {
 const EN_LABELS: Labels = {
   namePlaceholder: "Full name",
   emailPlaceholder: "Email address",
-  phonePlaceholder: "Phone (optional)",
+  phoneLabel: "Mobile number",
   dateLabel: "Select a session date",
   datePlaceholder: "Choose a date",
   submit: "Continue to payment",
@@ -31,7 +33,7 @@ const EN_LABELS: Labels = {
 const AR_LABELS: Labels = {
   namePlaceholder: "الاسم الكامل",
   emailPlaceholder: "البريد الإلكتروني",
-  phonePlaceholder: "رقم الهاتف (اختياري)",
+  phoneLabel: "رقم الهاتف المحمول",
   dateLabel: "اختر موعد الجلسة",
   datePlaceholder: "اختر تاريخاً",
   submit: "المتابعة إلى الدفع",
@@ -53,6 +55,7 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [phone, setPhone] = useState("");
   const L = locale === "ar" ? AR_LABELS : EN_LABELS;
   const dir = locale === "ar" ? "rtl" : "ltr";
   const hasDateChoice = !!sessionDates && sessionDates.length > 1;
@@ -61,6 +64,7 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
     setIsOpen(false);
     setStatus("idle");
     setErrorMessage("");
+    setPhone("");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -68,11 +72,16 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
-    const phone = String(formData.get("phone") || "").trim();
     const selectedDateValue = String(formData.get("sessionDate") || "");
 
     if (!name || !email) return;
     if (hasDateChoice && !selectedDateValue) return;
+
+    if (!isValidPhone(phone)) {
+      setStatus("error");
+      setErrorMessage(PHONE_ERROR[locale]);
+      return;
+    }
 
     const selectedDate = sessionDates?.find((d) => d.value === selectedDateValue) ?? null;
 
@@ -190,12 +199,12 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
                   placeholder={L.emailPlaceholder}
                   className="h-12 rounded-xl border border-[#E2E8F0] px-4 text-[15px] text-[#0F172A] outline-none transition-colors focus:border-[#6366F1]"
                 />
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder={L.phonePlaceholder}
-                  className="h-12 rounded-xl border border-[#E2E8F0] px-4 text-[15px] text-[#0F172A] outline-none transition-colors focus:border-[#6366F1]"
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="phone" className="text-[13px] font-medium text-[#334155]">
+                    {L.phoneLabel}
+                  </label>
+                  <PhoneInput id="phone" value={phone} onChange={setPhone} locale={locale} required />
+                </div>
 
                 {status === "error" && <p className="text-[14px] text-red-600">{errorMessage}</p>}
 

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PhoneInput from "@/components/ui/PhoneInput";
+import { isValidPhone } from "@/lib/phone";
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -121,6 +123,11 @@ export default function BookingForm({ onClose, bookingType = 'consultation' }: B
   const handleDetailsSubmit = async () => {
     if (!formData.name || !formData.email || !formData.phone) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      setError('Please enter a valid mobile number including the country code');
       return;
     }
 
@@ -352,12 +359,11 @@ export default function BookingForm({ onClose, bookingType = 'consultation' }: B
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
-            <input
-              type="tel"
+            <PhoneInput
               value={formData.phone}
-              onChange={e => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-              placeholder="+971 50 000 0000"
+              onChange={(phone) => setFormData({ ...formData, phone })}
+              inputClassName="border border-slate-300 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+              required
             />
           </div>
 

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PhoneInput from "@/components/ui/PhoneInput";
+import { isValidPhone } from "@/lib/phone";
 import { supabase } from '@/lib/supabase/client';
 import HeroCalendar from './HeroCalendar';
 import { useLang } from '@/lib/translations/LanguageContext';
@@ -177,6 +179,13 @@ export default function FreeConsultationForm({
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       setError(t.consultationForm.pleaseFillAll);
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      setError(isArabic
+        ? 'يرجى إدخال رقم هاتف صحيح مع رمز الدولة'
+        : 'Please enter a valid mobile number including the country code');
       return;
     }
     if (formData.password.length < 8) {
@@ -394,14 +403,10 @@ export default function FreeConsultationForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-medium text-white/70 mb-1.5">{t.consultationForm.phone}</label>
-              <input
-                type="tel"
+              <PhoneInput
                 value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                className={inputClass}
-                autoComplete="tel"
-                inputMode="tel"
-                enterKeyHint="next"
+                onChange={(phone) => setFormData({ ...formData, phone })}
+                inputClassName={inputClass}
                 required
               />
             </div>

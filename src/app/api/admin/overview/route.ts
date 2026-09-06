@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
+import { fetchPortalPayments, revenueByTherapist, sumRevenue } from '@/lib/payments/revenue';
 
 export async function GET() {
   try {
@@ -26,6 +27,7 @@ export async function GET() {
       diagnosticAssessmentsResult,
       tcResult,
       devFormsResult,
+      portalPayments,
     ] = await Promise.all([
       supabase.from('users').select('*').order('created_at', { ascending: false }),
       supabase.from('programs').select('*').order('created_at', { ascending: false }),
@@ -34,6 +36,7 @@ export async function GET() {
       supabase.from('diagnostic_assessments').select('id, client_id, therapist_id, goal_readiness_score, assessed_at, nervous_system_score, emotional_state_score, cognitive_patterns_score, body_symptoms_score, behavioral_patterns_score, life_functioning_score').order('assessed_at', { ascending: false }),
       supabase.from('therapist_clients').select('*'),
       supabase.from('session_development_forms').select('id, therapist_id, client_id, created_at, pre_session_energy, pre_session_mood').order('created_at', { ascending: false }),
+      fetchPortalPayments(supabase),
     ]);
 
     const users = usersResult.data ?? [];
@@ -48,24 +51,10 @@ export async function GET() {
     const therapists = users.filter(u => u.role === 'therapist');
     const clients = users.filter(u => u.role === 'client');
     const activePrograms = programs.filter(p => p.status === 'active');
-    // Revenue policy: sum verified program price_paid and bookings paid amounts
-    const programRevenue = programs.reduce((sum, p) => {
-      const price = Number(p.price_paid ?? 0);
-      if (p.payment_status === 'verified') {
-        return sum + price;
-      }
-      return sum;
-    }, 0);
-
-    const singleSessionRevenue = bookings.reduce((sum, b) => {
-      const price = Number(b.price ?? 0);
-      if (b.type === 'paid_session') {
-        return sum + price;
-      }
-      return sum;
-    }, 0);
-
-    const totalRevenue = programRevenue + singleSessionRevenue;
+    // Revenue policy: only payments actually captured through the portal.
+    // Offline/manually-verified programs are excluded on purpose.
+    const totalRevenue = sumRevenue(portalPayments);
+    const therapistRevenue = revenueByTherapist(portalPayments, programs);
 
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -88,24 +77,8 @@ export async function GET() {
       );
       const therapistAssessments = diagnosticAssessments.filter(a => a.therapist_id === t.id);
 
-      // Revenue policy: count only admin-verified program payments.
-      const therapistProgramRevenue = therapistPrograms.reduce((sum: number, p: any) => {
-        const price = p.price_paid ?? 0;
-        if (p.payment_status === 'verified' && price === 7700) {
-          return sum + 7700;
-        }
-        return sum;
-      }, 0);
-      
-      const therapistSingleSessionRevenue = therapistBookings.reduce((sum: number, b: any) => {
-        // Only count valid single session price: 800
-        if (b.type === 'paid_session' && b.price === 800) {
-          return sum + 800;
-        }
-        return sum;
-      }, 0);
-      
-      const revenue = therapistProgramRevenue + therapistSingleSessionRevenue;
+      // Revenue policy: only portal-captured payments attributed to this therapist.
+      const revenue = therapistRevenue.get(t.id) ?? 0;
 
       return {
         id: t.id,

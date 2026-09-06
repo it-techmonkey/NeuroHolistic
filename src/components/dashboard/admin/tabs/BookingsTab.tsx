@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CalendarDays, Search, Clock, Plus } from 'lucide-react';
+import { CalendarDays, Search, Clock, Plus, XCircle } from 'lucide-react';
 import type { AdminData } from './types';
 import AdminBookingModal from './AdminBookingModal';
 
@@ -49,8 +49,38 @@ export default function BookingsTab({ data, onRefresh }: { data: AdminData; onRe
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState('');
 
   const bookings = data.bookings ?? [];
+
+  // Admin cancellation: not bound by the client-side 24-hour rule.
+  async function cancelBooking(booking: any) {
+    const who = booking.clientName ?? 'this client';
+    const reason = window.prompt(`Cancel the booking for ${who} on ${formatDate(booking.date)} at ${booking.time ?? '—'}?
+
+Optional reason:`);
+    if (reason === null) return;
+
+    setCancellingId(booking.id);
+    setCancelError('');
+    try {
+      const res = await fetch(`/api/admin/bookings/${booking.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() || null }),
+      });
+      const result = await res.json();
+      if (!res.ok || result.success === false) {
+        throw new Error(result.error || 'Failed to cancel booking');
+      }
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      setCancelError(err.message || 'Something went wrong');
+    } finally {
+      setCancellingId(null);
+    }
+  }
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -144,6 +174,7 @@ export default function BookingsTab({ data, onRefresh }: { data: AdminData; onRe
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Time</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -171,12 +202,30 @@ export default function BookingsTab({ data, onRefresh }: { data: AdminData; onRe
                         {booking.status ?? 'Unknown'}
                       </span>
                     </td>
+                    <td className="px-5 py-3 text-right">
+                      {booking.status === 'confirmed' || booking.status === 'scheduled' ? (
+                        <button
+                          onClick={() => cancelBooking(booking)}
+                          disabled={cancellingId === booking.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          {cancellingId === booking.id ? 'Cancelling…' : 'Cancel'}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {cancelError && (
+        <p className="text-xs text-red-600 text-center">{cancelError}</p>
       )}
 
       <p className="text-xs text-slate-400 text-center">

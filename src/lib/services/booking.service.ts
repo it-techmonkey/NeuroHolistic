@@ -43,6 +43,12 @@ export type CreateBookingInput = {
   sessionNumber?: number | null;
 };
 
+/** Options for cancelling a booking. Admins bypass ownership and the 24h rule. */
+export type CancelBookingOptions = {
+  asAdmin?: boolean;
+  reason?: string | null;
+};
+
 export type BookingResult = {
   success: boolean;
   bookingId?: string;
@@ -376,7 +382,15 @@ export class BookingService {
   // -----------------------------------------------------------------------
   // cancelBooking — cancels booking + session + program count + notifications
   // -----------------------------------------------------------------------
-  async cancelBooking(bookingId: string, userId: string): Promise<BookingResult> {
+  async cancelBooking(
+    bookingId: string,
+    userId: string,
+    options: CancelBookingOptions = {}
+  ): Promise<BookingResult> {
+    // Admins cancel on a client's behalf: they are not the booking owner and
+    // are not bound by the client-facing 24-hour cut-off.
+    const { asAdmin = false, reason = null } = options;
+
     const { data: booking, error: fetchErr } = await this.supabase
       .from('bookings')
       .select('*')
@@ -387,7 +401,7 @@ export class BookingService {
       return { success: false, error: 'Booking not found', statusCode: 404 };
     }
 
-    if (booking.user_id !== userId) {
+    if (!asAdmin && booking.user_id !== userId) {
       return { success: false, error: 'Not authorized', statusCode: 403 };
     }
 
@@ -395,12 +409,14 @@ export class BookingService {
       return { success: false, error: `Cannot cancel a booking with status "${booking.status}"`, statusCode: 409 };
     }
 
-    // 24-hour check
-    const sessionTime = new Date(`${booking.date}T${booking.time}:00+04:00`);
-    const now = new Date();
-    const diffHours = (sessionTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (diffHours < 24) {
-      return { success: false, error: 'Cannot cancel within 24 hours of the session start time.', statusCode: 403 };
+    if (!asAdmin) {
+      // 24-hour check
+      const sessionTime = new Date(`${booking.date}T${booking.time}:00+04:00`);
+      const now = new Date();
+      const diffHours = (sessionTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      if (diffHours < 24) {
+        return { success: false, error: 'Cannot cancel within 24 hours of the session start time.', statusCode: 403 };
+      }
     }
 
     // Cancel booking
@@ -409,6 +425,8 @@ export class BookingService {
       .update({
         status: 'cancelled',
         cancelled_at: new Date().toISOString(),
+        cancelled_by: userId,
+        cancellation_reason: reason,
         updated_at: new Date().toISOString(),
       })
       .eq('id', bookingId);

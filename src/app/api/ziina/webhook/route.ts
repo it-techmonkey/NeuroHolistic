@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureEventMeetings, findEvent, firstSessionMeetLink } from '@/lib/events/event-meetings';
+import { sessionScheduleHtml, sendEventEmail } from '@/lib/events/event-emails';
+import { registrationConfirmedEmail } from '@/lib/events/quantum-leap-emails';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
@@ -146,7 +149,8 @@ function eventEmailLayout(title: string, body: string): string {
 </html>`;
 }
 
-async function sendEventPaymentEmails(params: {
+/** Admin's own "someone paid" notification — sent for every paid event, regardless of template. */
+async function notifyAdminOfPaidRegistration(params: {
   eventTitle: string;
   name: string;
   email: string;
@@ -156,7 +160,6 @@ async function sendEventPaymentEmails(params: {
 }) {
   if (!process.env.RESEND_API_KEY) return;
 
-  const firstName = params.name.trim().split(' ')[0] || 'there';
   const dateRow = params.selectedDateLabel
     ? `<tr><td style="padding:6px 12px;color:#64748b;">Session date</td><td style="padding:6px 12px;font-weight:500;">${params.selectedDateLabel}</td></tr>`
     : '';
@@ -169,34 +172,49 @@ async function sendEventPaymentEmails(params: {
   <tr><td style="padding:6px 12px;color:#64748b;">Amount paid</td><td style="padding:6px 12px;">AED ${params.amountAed}</td></tr>
 </table>`;
 
+  try {
+    await resend.emails.send({
+      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
+      to: ADMIN_EMAIL,
+      subject: `[Admin] Paid event registration: ${params.eventTitle}`,
+      html: eventEmailLayout('New Paid Event Registration', `
+      <p style="margin:0 0 16px;color:#334155;">A registrant has paid for <strong>${params.eventTitle}</strong>.</p>
+      ${detailsTable}`),
+    });
+  } catch (error) {
+    console.error('[Ziina Webhook] Admin notification failed:', error);
+  }
+}
+
+/** Generic client confirmation, used for paid events without a client-approved onboarding sequence. */
+async function sendGenericPaidConfirmation(params: {
+  eventTitle: string;
+  name: string;
+  email: string;
+  selectedDateLabel: string | null;
+  scheduleHtml: string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const firstName = params.name.trim().split(' ')[0] || 'there';
   const dateSentence = params.selectedDateLabel
     ? ` Your selected session date is <strong>${params.selectedDateLabel}</strong>.`
     : '';
 
-  const clientEmail = resend.emails.send({
-    from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
-    to: params.email,
-    subject: `Payment confirmed: ${params.eventTitle}`,
-    html: eventEmailLayout('Registration & Payment Confirmed', `
+  try {
+    await resend.emails.send({
+      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
+      to: params.email,
+      subject: `Payment confirmed: ${params.eventTitle}`,
+      html: eventEmailLayout('Registration & Payment Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
-      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed.${dateSentence} We'll send the joining details to this email closer to the event date.</p>`),
-  });
-
-  const adminEmail = resend.emails.send({
-    from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
-    to: ADMIN_EMAIL,
-    subject: `[Admin] Paid event registration: ${params.eventTitle}`,
-    html: eventEmailLayout('New Paid Event Registration', `
-      <p style="margin:0 0 16px;color:#334155;">A registrant has paid for <strong>${params.eventTitle}</strong>.</p>
-      ${detailsTable}`),
-  });
-
-  const results = await Promise.allSettled([clientEmail, adminEmail]);
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      console.error('[Ziina Webhook] Event email send failed:', result.reason);
-    }
-  });
+      <p style="margin:0 0 16px;color:#334155;">Your payment has been received and your spot for <strong>${params.eventTitle}</strong> is confirmed.${dateSentence}</p>
+      ${params.scheduleHtml || `<p style="margin:0 0 16px;color:#334155;">We&rsquo;ll send the joining details to this email closer to the event date.</p>`}
+      <p style="margin:16px 0 0;color:#64748b;font-size:13px;">We&rsquo;ll also email you a reminder before each session.</p>`),
+    });
+  } catch (error) {
+    console.error('[Ziina Webhook] Client confirmation failed:', error);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -303,14 +321,49 @@ export async function POST(request: NextRequest) {
       .update({ status: 'paid', metadata: { ...metadata, ziinaStatus: status } })
       .eq('id', payment.id);
 
-    sendEventPaymentEmails({
-      eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
-      name: metadata.name || 'Guest',
-      email,
-      phone: metadata.phone || null,
-      amountAed: metadata.amountAed || payment.amount,
-      selectedDateLabel: metadata.selectedDateLabelEn || null,
-    }).catch((error) => console.error('[Ziina Webhook] Failed to send event emails:', error));
+    // Provision Meet links (idempotent) so the confirmation carries them.
+    // Meet provisioning must never block the payment confirmation email.
+    (async () => {
+      let meetings: Awaited<ReturnType<typeof ensureEventMeetings>>['meetings'] = [];
+      try {
+        ({ meetings } = await ensureEventMeetings(supabase, eventId));
+      } catch (error) {
+        console.error('[Ziina Webhook] Meet provisioning failed:', error);
+      }
+
+      const eventDef = findEvent(eventId);
+      const registrantName = metadata.name || 'Guest';
+
+      // Events with a client-approved onboarding sequence (currently the
+      // Quantum Leap cohort) get their exact literal copy; everything else
+      // gets the generic payment-confirmation email.
+      if (eventDef?.journeyTable) {
+        const { subject, html } = registrationConfirmedEmail({
+          event: eventDef,
+          registrantName,
+          locale: 'en',
+          firstSessionMeetLink: firstSessionMeetLink(eventDef, meetings),
+        });
+        await sendEventEmail({ to: email, subject, html, replyTo: eventDef.replyToEmail });
+      } else {
+        await sendGenericPaidConfirmation({
+          eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
+          name: registrantName,
+          email,
+          selectedDateLabel: metadata.selectedDateLabelEn || null,
+          scheduleHtml: sessionScheduleHtml(meetings),
+        });
+      }
+
+      await notifyAdminOfPaidRegistration({
+        eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
+        name: registrantName,
+        email,
+        phone: metadata.phone || null,
+        amountAed: metadata.amountAed || payment.amount,
+        selectedDateLabel: metadata.selectedDateLabelEn || null,
+      });
+    })().catch((error) => console.error('[Ziina Webhook] Failed to send event emails:', error));
 
     return NextResponse.json({ success: true, message: 'Event payment processed' });
   }

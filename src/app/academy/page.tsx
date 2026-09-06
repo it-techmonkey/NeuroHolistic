@@ -3,6 +3,7 @@ import AcademyIntro from "@/components/AcademyIntro";
 import TrainingStructure from "@/components/TrainingStructure";
 import ProfessionalOutcome from "@/components/ProfessionalOutcome";
 import Accreditation from "@/components/Accreditation";
+import AcademyUpcomingEvents from "@/components/AcademyUpcomingEvents";
 import AcademyCTA from "@/components/AcademyCTA";
 
 export const metadata = {
@@ -19,6 +20,7 @@ export default function AcademyPage() {
       <TrainingStructure />
       <ProfessionalOutcome />
       <Accreditation />
+      <AcademyUpcomingEvents />
       <AcademyCTA />
     </div>
   );

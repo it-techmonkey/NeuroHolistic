@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { createClient } from '@/lib/auth/server';
+import { isPortalPayment, revenueByMonth, revenueByTherapist, sumRevenue } from '@/lib/payments/revenue';
 
 export async function GET() {
   try {
@@ -39,6 +40,14 @@ export async function GET() {
     const sessions = sessionsResult.data ?? [];
     const payments = paymentsResult.data ?? [];
 
+    // Revenue policy: only payments actually captured through the portal.
+    // Offline/manually-verified programs are excluded on purpose.
+    const portalPayments = payments
+      .filter(isPortalPayment)
+      .map((p: any) => ({ ...p, amount: Number(p.amount ?? 0), metadata: p.metadata ?? {} }));
+    const monthlyPortalRevenue = revenueByMonth(portalPayments);
+    const therapistPortalRevenue = revenueByTherapist(portalPayments, programs);
+
     const therapists = users.filter(u => u.role === 'therapist');
     const clients = users.filter(u => u.role === 'client');
     const admins = users.filter(u => u.role === 'admin');
@@ -46,12 +55,8 @@ export async function GET() {
     // Build user lookup map
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    // Revenue
-    const programRevenue = programs.reduce((sum, p) => {
-      if (p.payment_status !== 'verified') return sum;
-      return sum + (p.price_paid ?? 0);
-    }, 0);
-    const totalRevenue = programRevenue;
+    // Revenue: portal-captured payments only.
+    const totalRevenue = sumRevenue(portalPayments);
 
     // Time buckets
     const now = new Date();
@@ -71,12 +76,10 @@ export async function GET() {
         const d = new Date(p.created_at);
         return d >= monthDate && d <= monthEnd;
       });
+      const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
       monthlyRevenue.push({
         month: monthLabel,
-        revenue: monthPrograms.reduce((sum, p) => {
-          if (p.payment_status !== 'verified') return sum;
-          return sum + (p.price_paid ?? 0);
-        }, 0),
+        revenue: monthlyPortalRevenue.get(monthKey) ?? 0,
         programs: monthPrograms.length,
       });
     }
@@ -142,10 +145,7 @@ export async function GET() {
           ).length,
           totalSessions: tSessions.length,
           completedSessions: tSessions.filter(s => s.status === 'completed').length,
-          revenue: tPrograms.reduce((sum, p) => {
-            if (p.payment_status !== 'verified') return sum;
-            return sum + (p.price_paid ?? 0);
-          }, 0),
+          revenue: therapistPortalRevenue.get(t.id) ?? 0,
         },
       };
     });
@@ -154,10 +154,10 @@ export async function GET() {
     const academyPrograms = programs.filter(p => p.program_type === 'academy');
     const academyActive = academyPrograms.filter(p => p.status === 'active');
     const academyCompleted = academyPrograms.filter(p => p.status === 'completed');
-    const academyRevenue = academyPrograms.reduce((sum, p) => {
-      if (p.payment_status !== 'verified') return sum;
-      return sum + (p.price_paid ?? 0);
-    }, 0);
+    const academyProgramIds = new Set(academyPrograms.map(p => p.id));
+    const academyRevenue = sumRevenue(
+      portalPayments.filter((p: any) => p.program_id && academyProgramIds.has(p.program_id))
+    );
 
     // Active programs detail — only include programs that have actual sessions booked
     const activeProgramsDetail = programs

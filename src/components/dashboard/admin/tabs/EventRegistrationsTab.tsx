@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { CalendarCheck, Search } from 'lucide-react';
+import { CalendarCheck, Search, Video, XCircle } from 'lucide-react';
 import { MOCK_EVENTS } from '@/components/events/events-data';
 
 type PaymentStatus = 'free' | 'pending' | 'paid' | 'failed';
@@ -19,6 +19,17 @@ interface EventRegistration {
   currency: string | null;
   selected_date: string | null;
   created_at: string;
+  status: 'active' | 'cancelled';
+  cancellation_reason: string | null;
+}
+
+interface EventMeeting {
+  id: string;
+  session_key: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  meet_link: string | null;
 }
 
 const statusColors: Record<PaymentStatus, string> = {
@@ -58,6 +69,11 @@ export default function EventRegistrationsTab() {
   const [selectedEventId, setSelectedEventId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [meetings, setMeetings] = useState<EventMeeting[]>([]);
+  const [meetState, setMeetState] = useState<{ hostConnected: boolean; hostEmail: string | null; sessionCount: number } | null>(null);
+  const [meetBusy, setMeetBusy] = useState(false);
+  const [meetError, setMeetError] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -75,6 +91,85 @@ export default function EventRegistrationsTab() {
     }
     load();
   }, []);
+
+  // Meet links are per event, so only load them once a specific event is picked.
+  useEffect(() => {
+    if (selectedEventId === 'all') {
+      setMeetings([]);
+      setMeetState(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/event-meetings?eventId=${encodeURIComponent(selectedEventId)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setMeetings(data.meetings ?? []);
+        setMeetState({
+          hostConnected: !!data.hostConnected,
+          hostEmail: data.hostTherapistEmail ?? null,
+          sessionCount: (data.sessions ?? []).length,
+        });
+      } catch {
+        /* non-fatal: the panel simply stays empty */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedEventId]);
+
+  async function generateMeetLinks() {
+    setMeetBusy(true);
+    setMeetError('');
+    try {
+      const res = await fetch('/api/admin/event-meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: selectedEventId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create Meet links');
+      setMeetings(data.meetings ?? []);
+      if (data.failed?.length) {
+        setMeetError(data.failed.map((f: any) => `${f.sessionKey}: ${f.error}`).join(' · '));
+      }
+    } catch (err: any) {
+      setMeetError(err.message || 'Something went wrong');
+    } finally {
+      setMeetBusy(false);
+    }
+  }
+
+  async function cancelRegistration(registration: EventRegistration) {
+    const reason = window.prompt(`Cancel ${registration.name}'s registration for "${registration.event_title}"?
+
+Optional reason (shown to the registrant):`);
+    if (reason === null) return;
+
+    setCancellingId(registration.id);
+    try {
+      const res = await fetch(`/api/admin/event-registrations/${registration.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel registration');
+
+      setRegistrations((prev) =>
+        prev.map((r) =>
+          r.id === registration.id
+            ? { ...r, status: 'cancelled' as const, cancellation_reason: reason.trim() || null }
+            : r
+        )
+      );
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setCancellingId(null);
+    }
+  }
 
   // Build the event dropdown from known events + any event_id present in the
   // data that isn't in the known list (keeps old/removed events visible too).
@@ -147,6 +242,63 @@ export default function EventRegistrationsTab() {
         </select>
       </div>
 
+      {/* Google Meet links — created on the host therapist's connected calendar */}
+      {selectedEventId !== 'all' && meetState && meetState.sessionCount > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Video className="w-4 h-4 text-slate-400" />
+              <div>
+                <p className="text-sm font-medium text-slate-900">Live session links</p>
+                <p className="text-xs text-slate-500">
+                  {meetState.hostEmail
+                    ? `Hosted on ${meetState.hostEmail}${meetState.hostConnected ? '' : ' — Google account not connected'}`
+                    : 'No host therapist configured for this event'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={generateMeetLinks}
+              disabled={meetBusy || !meetState.hostConnected}
+              className="px-3 py-2 rounded-lg text-xs font-medium bg-[#2B2F55] text-white disabled:opacity-50"
+            >
+              {meetBusy ? 'Creating…' : meetings.some((m) => m.meet_link) ? 'Create missing links' : 'Create Meet links'}
+            </button>
+          </div>
+
+          {!meetState.hostConnected && (
+            <p className="text-xs text-amber-600">
+              The host therapist must connect their Google Calendar (therapist dashboard → Google Calendar)
+              before links can be created.
+            </p>
+          )}
+
+          {meetError && <p className="text-xs text-red-600">{meetError}</p>}
+
+          {meetings.length > 0 && (
+            <ul className="divide-y divide-slate-100 border-t border-slate-100 pt-1">
+              {meetings.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <div>
+                    <p className="text-sm text-slate-800">{m.title}</p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(m.starts_at).toLocaleString('en-US', { timeZone: 'Asia/Dubai', dateStyle: 'medium', timeStyle: 'short' })} (Dubai)
+                    </p>
+                  </div>
+                  {m.meet_link ? (
+                    <a href={m.meet_link} target="_blank" rel="noreferrer" className="text-xs font-medium text-indigo-600 hover:underline">
+                      {m.meet_link}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-amber-600">No link yet</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {/* Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {statusFilters.filter((f) => f.key !== 'all').map((f) => (
@@ -203,7 +355,7 @@ export default function EventRegistrationsTab() {
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px]">
+            <table className="w-full min-w-[860px]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Registrant</th>
@@ -212,11 +364,12 @@ export default function EventRegistrationsTab() {
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Registered</th>
+                  <th className="text-right px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRegistrations.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={r.id} className={`transition-colors ${r.status === 'cancelled' ? 'bg-slate-50/60 text-slate-400' : 'hover:bg-slate-50'}`}>
                     <td className="px-5 py-3">
                       <p className="text-sm font-medium text-slate-900">{r.name}</p>
                       <p className="text-xs text-slate-400">{r.email}</p>
@@ -231,8 +384,27 @@ export default function EventRegistrationsTab() {
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColors[r.payment_status] || 'bg-slate-100 text-slate-600'}`}>
                         {r.payment_status}
                       </span>
+                      {r.status === 'cancelled' && (
+                        <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 text-red-700 border border-red-200">
+                          cancelled
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-sm text-slate-600">{formatDate(r.created_at)}</td>
+                    <td className="px-5 py-3 text-right">
+                      {r.status === 'cancelled' ? (
+                        <span className="text-xs text-slate-400">—</span>
+                      ) : (
+                        <button
+                          onClick={() => cancelRegistration(r)}
+                          disabled={cancellingId === r.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          {cancellingId === r.id ? 'Cancelling…' : 'Cancel'}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

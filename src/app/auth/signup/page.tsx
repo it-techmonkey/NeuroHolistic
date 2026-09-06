@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import PhoneInput from '@/components/ui/PhoneInput';
+import { isValidPhone } from '@/lib/phone';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signUp } from '@/app/auth/actions';
@@ -161,14 +163,12 @@ function SignUpForm() {
                 <label htmlFor="phone" className="text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-400 block pb-1">
                   Phone Number
                 </label>
-                <input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={setPhone}
+                  inputClassName={inputClass}
                   required
-                  className={inputClass}
-                  placeholder="+971 50 000 0000"
                 />
               </div>
 

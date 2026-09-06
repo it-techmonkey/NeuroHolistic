@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import PhoneInput from '@/components/ui/PhoneInput';
 import { supabase } from '@/lib/supabase/client';
 import { resetMyPassword } from '@/app/auth/actions';
 import {
@@ -260,12 +261,11 @@ export default function Account({ user }: { user: any }) {
               <Phone className="w-4 h-4 text-slate-400" />
               Phone Number
             </label>
-            <input
-              type="tel"
+            <PhoneInput
               value={form.phone}
-              onChange={(e) => updateField('phone', e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="+971 50 000 0000"
+              onChange={(phone) => updateField('phone', phone)}
+              inputClassName="border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              required
             />
           </div>
 
