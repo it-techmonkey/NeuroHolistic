@@ -57,6 +57,31 @@ export interface EventLiveSession {
   endsAt: string;
 }
 
+/** One row of the "journey overview" table used in onboarding emails. */
+export interface EventJourneyRow {
+  stage: { en: string; ar: string };
+  location: { en: string; ar: string };
+  date: { en: string; ar: string };
+  time: { en: string; ar: string };
+}
+
+/**
+ * A specific, date-scheduled onboarding email — distinct from the generic
+ * "N hours before every session" reminders. Used for a curated lead-up
+ * sequence (e.g. a 1-week-out email, a day-before email) tied to fixed
+ * calendar dates rather than computed offsets.
+ */
+export interface EventScheduledEmail {
+  /** Stable key, e.g. "liberation-week-before". Never reuse across templates. */
+  key: string;
+  /** Local Dubai (Asia/Dubai) wall-clock send time, ISO without offset. */
+  sendAt: string;
+  /** Which template to render. */
+  template: "week_before" | "day_before" | "hour_before";
+  /** Which live session (by key) this email is building up to — used to pull the Meet link. */
+  targetSessionKey: string;
+}
+
 export interface EventItem {
   id: string;
   image: string;
@@ -78,6 +103,18 @@ export interface EventItem {
   liveSessions?: EventLiveSession[];
   /** When true, this event is also featured on the /academy page. */
   showOnAcademyPage?: boolean;
+  /**
+   * Reply-to for every automated email about this event. Emails are still
+   * sent from the platform's verified address (BOOKING_EMAIL_FROM); replies
+   * land in this inbox.
+   */
+  replyToEmail?: string;
+  /** Invite link for the private participant community (e.g. WhatsApp). */
+  communityLink?: string | null;
+  /** "Journey overview" table rendered in onboarding emails, per locale. */
+  journeyTable?: EventJourneyRow[];
+  /** Curated, date-scheduled onboarding emails (distinct from the generic per-session reminders). */
+  scheduledEmails?: EventScheduledEmail[];
   locales: {
     en: EventLocaleFields;
     ar: EventLocaleFields;

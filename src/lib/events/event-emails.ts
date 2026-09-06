@@ -28,6 +28,48 @@ export function eventEmailLayout(title: string, body: string): string {
 </html>`;
 }
 
+/**
+ * A personal-voice email (signed by a named person, e.g. Dr. Fawzia) that
+ * starts directly with the greeting rather than a bold title line — matches
+ * how the client's approved copy for the Quantum Leap sequence is written.
+ * Keeps the same brand header/footer wrapper as `eventEmailLayout`.
+ */
+export function personalEventEmailLayout(body: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Segoe UI',Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div style="background:${BRAND_COLOR};padding:24px 32px;">
+        <h1 style="margin:0;color:#fff;font-size:20px;font-weight:600;">NeuroHolistic Institute</h1>
+      </div>
+      <div style="padding:32px;">
+        ${body}
+      </div>
+      <div style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+        <p style="margin:0;color:#94a3b8;font-size:12px;">NeuroHolistic Institute &bull; Dubai, UAE</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * The exact sign-off block used across the Quantum Leap onboarding sequence,
+ * as given by the client. Reused verbatim in every email in that sequence.
+ */
+export function fawziaSignatureHtml(): string {
+  return `<p style="margin:28px 0 0;color:#334155;line-height:1.7;">
+  Warmly,<br>
+  Dr. Fawzia Yassmina<br>
+  Founder, NeuroHolistic Institute<br>
+  Creator of the NeuroHolistic Method&trade;<br>
+  <strong>LIBERATE. EXPAND. ELEVATE. ALIGN. EMBODY.</strong>
+</p>`;
+}
+
 /** Schedule block listing every live session and its joining link. */
 export function sessionScheduleHtml(meetings: EventMeeting[]): string {
   if (meetings.length === 0) return '';
@@ -62,10 +104,13 @@ interface SendArgs {
   to: string;
   subject: string;
   html: string;
+  /** Where replies should land — e.g. the hosting therapist's inbox. The
+   * technical "From" always stays the platform's verified sending address. */
+  replyTo?: string | null;
 }
 
 /** Send one email; returns false rather than throwing so callers can continue. */
-export async function sendEventEmail({ to, subject, html }: SendArgs): Promise<boolean> {
+export async function sendEventEmail({ to, subject, html, replyTo }: SendArgs): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn('[EventEmail] RESEND_API_KEY not set, skipping email to', to);
@@ -73,7 +118,13 @@ export async function sendEventEmail({ to, subject, html }: SendArgs): Promise<b
   }
 
   try {
-    await new Resend(apiKey).emails.send({ from: FROM_ADDRESS, to, subject, html });
+    await new Resend(apiKey).emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject,
+      html,
+      ...(replyTo ? { replyTo } : {}),
+    });
     return true;
   } catch (error) {
     console.error('[EventEmail] Send failed:', error);

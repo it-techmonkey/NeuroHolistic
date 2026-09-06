@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { normalizePhone } from '@/lib/phone';
-import { ensureEventMeetings } from '@/lib/events/event-meetings';
-import { sessionScheduleHtml } from '@/lib/events/event-emails';
+import { ensureEventMeetings, findEvent, firstSessionMeetLink, type EventMeeting } from '@/lib/events/event-meetings';
+import { sessionScheduleHtml, sendEventEmail } from '@/lib/events/event-emails';
+import { registrationConfirmedEmail } from '@/lib/events/quantum-leap-emails';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
@@ -32,21 +33,18 @@ function emailLayout(title: string, body: string): string {
 </html>`;
 }
 
-async function sendRegistrationEmails(params: {
+/** Admin's own "someone signed up" notification — sent for every event, regardless of template. */
+async function notifyAdminOfRegistration(params: {
   eventTitle: string;
   name: string;
   email: string;
   phone: string | null;
-  scheduleHtml: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn('[EventRegister] RESEND_API_KEY not set, skipping emails');
+    console.warn('[EventRegister] RESEND_API_KEY not set, skipping admin notification');
     return;
   }
-
-  const resend = new Resend(apiKey);
-  const firstName = params.name.trim().split(' ')[0] || 'there';
 
   const detailsTable = `<table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:16px 0;">
   <tr><td style="padding:6px 12px;color:#64748b;">Name</td><td style="padding:6px 12px;font-weight:500;">${params.name}</td></tr>
@@ -54,32 +52,49 @@ async function sendRegistrationEmails(params: {
   ${params.phone ? `<tr><td style="padding:6px 12px;color:#64748b;">Phone</td><td style="padding:6px 12px;">${params.phone}</td></tr>` : ''}
 </table>`;
 
-  const clientEmail = resend.emails.send({
-    from: FROM_ADDRESS,
-    to: params.email,
-    subject: `You're registered: ${params.eventTitle}`,
-    html: emailLayout('Registration Confirmed', `
+  try {
+    await new Resend(apiKey).emails.send({
+      from: FROM_ADDRESS,
+      to: ADMIN_EMAIL,
+      subject: `[Admin] New event registration: ${params.eventTitle}`,
+      html: emailLayout('New Event Registration', `
+      <p style="margin:0 0 16px;color:#334155;">A new registrant signed up for <strong>${params.eventTitle}</strong>.</p>
+      ${detailsTable}`),
+    });
+  } catch (err) {
+    console.error('[EventRegister] Admin notification failed:', err);
+  }
+}
+
+/** Generic client confirmation, used for events without a client-approved onboarding sequence. */
+async function sendGenericConfirmation(params: {
+  eventTitle: string;
+  name: string;
+  email: string;
+  scheduleHtml: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[EventRegister] RESEND_API_KEY not set, skipping confirmation email');
+    return;
+  }
+
+  const firstName = params.name.trim().split(' ')[0] || 'there';
+
+  try {
+    await new Resend(apiKey).emails.send({
+      from: FROM_ADDRESS,
+      to: params.email,
+      subject: `You're registered: ${params.eventTitle}`,
+      html: emailLayout('Registration Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
       <p style="margin:0 0 16px;color:#334155;">You're registered for <strong>${params.eventTitle}</strong>.</p>
       ${params.scheduleHtml || `<p style="margin:0 0 16px;color:#334155;">We&rsquo;ll send the joining details to this email closer to the event date.</p>`}
       <p style="margin:16px 0 0;color:#64748b;font-size:13px;">We'll also email you a reminder before each session.</p>`),
-  });
-
-  const adminEmail = resend.emails.send({
-    from: FROM_ADDRESS,
-    to: ADMIN_EMAIL,
-    subject: `[Admin] New event registration: ${params.eventTitle}`,
-    html: emailLayout('New Event Registration', `
-      <p style="margin:0 0 16px;color:#334155;">A new registrant signed up for <strong>${params.eventTitle}</strong>.</p>
-      ${detailsTable}`),
-  });
-
-  const results = await Promise.allSettled([clientEmail, adminEmail]);
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      console.error('[EventRegister] Email send failed:', result.reason);
-    }
-  });
+    });
+  } catch (err) {
+    console.error('[EventRegister] Confirmation email failed:', err);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -129,21 +144,36 @@ export async function POST(request: NextRequest) {
     // the confirmation email — if it fails, we still confirm the registration
     // and the reminder emails will carry the links later.
     (async () => {
-      let scheduleHtml = '';
+      let meetings: EventMeeting[] = [];
       try {
-        const { meetings } = await ensureEventMeetings(supabase, eventId);
-        scheduleHtml = sessionScheduleHtml(meetings);
+        ({ meetings } = await ensureEventMeetings(supabase, eventId));
       } catch (err) {
         console.error('[EventRegister] Meet provisioning failed:', err);
       }
 
-      await sendRegistrationEmails({
-        eventTitle,
-        name,
-        email,
-        phone: normalizedPhone,
-        scheduleHtml,
-      });
+      const event = findEvent(eventId);
+
+      // Events with a client-approved onboarding sequence (currently the
+      // Quantum Leap cohort) get their exact literal copy; everything else
+      // gets the generic confirmation email.
+      if (event?.journeyTable) {
+        const { subject, html } = registrationConfirmedEmail({
+          event,
+          registrantName: name,
+          locale: 'en',
+          firstSessionMeetLink: firstSessionMeetLink(event, meetings),
+        });
+        await sendEventEmail({ to: email, subject, html, replyTo: event.replyToEmail });
+      } else {
+        await sendGenericConfirmation({
+          eventTitle,
+          name,
+          email,
+          scheduleHtml: sessionScheduleHtml(meetings),
+        });
+      }
+
+      await notifyAdminOfRegistration({ eventTitle, name, email, phone: normalizedPhone });
     })().catch((err) => console.error('[EventRegister] Notification error:', err));
 
     return NextResponse.json({ success: true });

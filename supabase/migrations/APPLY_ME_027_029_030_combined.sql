@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS public.event_reminders_sent (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   registration_id UUID NOT NULL REFERENCES public.event_registrations(id) ON DELETE CASCADE,
   session_key TEXT NOT NULL,
-  reminder_type TEXT NOT NULL CHECK (reminder_type IN ('reminder_7d', 'reminder_24h', 'reminder_1h')),
+  reminder_type TEXT NOT NULL CHECK (reminder_type IN ('week_before', 'day_before', 'hour_before', 'reminder_7d', 'reminder_24h', 'reminder_1h')),
   sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

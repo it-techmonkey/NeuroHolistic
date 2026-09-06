@@ -9,7 +9,60 @@ export const MOCK_EVENTS: EventItem[] = [
     slug: "neuroholistic-consciousness-quantum-leap",
     isPaid: true,
     hostTherapistEmail: "fawzia.yassmina@neuroholisticinstitute.com",
+    replyToEmail: "fawzia.yassmina@neuroholisticinstitute.com",
+    // TODO: client to provide the real WhatsApp community invite link before
+    // October 4, 2026 — the "week before" email references it directly.
+    communityLink: null,
     showOnAcademyPage: true,
+    journeyTable: [
+      {
+        stage: { en: "Liberation", ar: "التحرر" },
+        location: { en: "Live online", ar: "مباشر عبر الإنترنت" },
+        date: { en: "Oct 9 & 10", ar: "9 و 10 أكتوبر" },
+        time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
+      },
+      {
+        stage: { en: "Guided Integration", ar: "الدمج الموجّه" },
+        location: { en: "WhatsApp Community", ar: "مجتمع واتساب" },
+        date: { en: "Oct 11 to 22", ar: "11 إلى 22 أكتوبر" },
+        time: { en: "15 minutes daily", ar: "15 دقيقة يومياً" },
+      },
+      {
+        stage: { en: "Elevation", ar: "الارتقاء" },
+        location: { en: "Live online", ar: "مباشر عبر الإنترنت" },
+        date: { en: "Oct 23 & 24", ar: "23 و 24 أكتوبر" },
+        time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
+      },
+      {
+        stage: { en: "Integration & Embodiment", ar: "الدمج والتجسيد" },
+        location: { en: "Live online", ar: "مباشر عبر الإنترنت" },
+        date: { en: "Oct 31", ar: "31 أكتوبر" },
+        time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
+      },
+    ],
+    // Curated onboarding sequence leading up to the very first live session.
+    // Times not specified by the client for the Oct 4 / Oct 8 sends — set to
+    // 10:00 AM Dubai as a reasonable default; adjust if they want otherwise.
+    scheduledEmails: [
+      {
+        key: "liberation-week-before",
+        sendAt: "2026-10-04T10:00:00",
+        template: "week_before",
+        targetSessionKey: "liberation-1",
+      },
+      {
+        key: "liberation-day-before",
+        sendAt: "2026-10-08T10:00:00",
+        template: "day_before",
+        targetSessionKey: "liberation-1",
+      },
+      {
+        key: "liberation-hour-before",
+        sendAt: "2026-10-09T17:00:00",
+        template: "hour_before",
+        targetSessionKey: "liberation-1",
+      },
+    ],
     liveSessions: [
       {
         key: "liberation-1",

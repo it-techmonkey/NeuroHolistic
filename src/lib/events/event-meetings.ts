@@ -29,6 +29,21 @@ export function findEvent(eventId: string): EventItem | undefined {
   return MOCK_EVENTS.find((e) => (e.slug ?? e.id) === eventId);
 }
 
+/** Look up one provisioned meeting by its live-session key. */
+export function findMeetingBySessionKey(
+  meetings: EventMeeting[],
+  sessionKey: string | undefined
+): EventMeeting | undefined {
+  if (!sessionKey) return undefined;
+  return meetings.find((m) => m.session_key === sessionKey);
+}
+
+/** The Meet link for an event's very first live session, if provisioned. */
+export function firstSessionMeetLink(event: EventItem, meetings: EventMeeting[]): string | null {
+  const firstKey = event.liveSessions?.[0]?.key;
+  return findMeetingBySessionKey(meetings, firstKey)?.meet_link ?? null;
+}
+
 /** Dubai is UTC+4 year-round (no DST), so a fixed offset is safe here. */
 const DUBAI_OFFSET = '+04:00';
 

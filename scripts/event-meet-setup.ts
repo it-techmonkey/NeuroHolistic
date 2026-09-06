@@ -4,9 +4,15 @@
  *   npx tsx scripts/event-meet-setup.ts                 # read-only diagnosis
  *   npx tsx scripts/event-meet-setup.ts --provision     # create the Meet links
  *   npx tsx scripts/event-meet-setup.ts --reminders     # dry-run the reminder cron
+ *   npx tsx scripts/event-meet-setup.ts --reset --provision
+ *                                                        # wipe + recreate all 5 links
+ *                                                        # (use after switching the host's
+ *                                                        # connected Google account)
  *
- * Read-only by default. `--provision` is the only flag that writes anything,
- * and it creates real calendar entries on the host therapist's Google Calendar.
+ * Read-only by default. `--provision` and `--reset` are the flags that write
+ * anything — `--provision` creates real calendar entries on the host
+ * therapist's Google Calendar, `--reset` deletes the local event_meetings
+ * rows (not the remote calendar events on the old account).
  */
 
 import fs from 'fs';
@@ -39,6 +45,7 @@ async function main() {
     ?? 'neuroholistic-consciousness-quantum-leap';
   const doProvision = process.argv.includes('--provision');
   const doReminders = process.argv.includes('--reminders');
+  const doReset = process.argv.includes('--reset');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,11 +94,29 @@ async function main() {
   const hostId = await resolveHostTherapistId(supabase, event);
   console.log(`   user resolved    ${ok(!!hostId)}${hostId ? `  (${hostId})` : '  — email not found in users table'}`);
   let connected = false;
+  let connectedEmail: string | null = null;
   if (hostId) {
     connected = await isGoogleCalendarConnected(hostId);
     console.log(`   google connected ${ok(connected)}`);
     if (!connected) {
       console.log('   \x1b[33m→ She must sign in at /dashboard/therapist and connect Google Calendar.\x1b[0m');
+    } else {
+      try {
+        const { getValidAccessToken } = await import('../src/lib/google/token-service');
+        const { google } = await import('googleapis');
+        const token = await getValidAccessToken(hostId);
+        const auth = new google.auth.OAuth2();
+        auth.setCredentials({ access_token: token });
+        const calendar = google.calendar({ version: 'v3', auth });
+        const primary = await calendar.calendars.get({ calendarId: 'primary' });
+        connectedEmail = primary.data.id ?? null;
+        const isWorkspace = connectedEmail && event.hostTherapistEmail
+          ? connectedEmail.split('@')[1] === event.hostTherapistEmail.split('@')[1]
+          : false;
+        console.log(`   connected account ${connectedEmail}${isWorkspace ? ' \x1b[32m(matches institute domain)\x1b[0m' : ' \x1b[33m(personal account — 60min Meet limit risk on 4h sessions)\x1b[0m'}`);
+      } catch (err: any) {
+        console.log(`   \x1b[33mcould not verify connected account: ${err.message}\x1b[0m`);
+      }
     }
   }
 
@@ -103,6 +128,22 @@ async function main() {
 
   // ---------- 5. Meet links ----------
   console.log('\n5. Meet links');
+
+  if (doReset) {
+    console.log('   \x1b[33mResetting: deleting all event_meetings rows for this event...\x1b[0m');
+    console.log('   Note: this does NOT delete the old calendar events already created on the');
+    console.log('   previously-connected Google account — those are harmless leftovers there.');
+    const { error: resetError, count } = await supabase
+      .from('event_meetings')
+      .delete({ count: 'exact' })
+      .eq('event_id', EVENT_ID);
+    if (resetError) {
+      console.log(`   \x1b[31mReset failed: ${resetError.message}\x1b[0m`);
+    } else {
+      console.log(`   Deleted ${count ?? 0} row(s). Re-run with --provision to create fresh links${connectedEmail ? ` on ${connectedEmail}` : ''}.`);
+    }
+  }
+
   if (doProvision) {
     if (!connected) {
       console.log('   \x1b[31mSkipped: host therapist has no connected Google account.\x1b[0m');

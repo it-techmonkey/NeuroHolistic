@@ -41,11 +41,14 @@ CREATE POLICY "Admins manage event meetings"
   );
 
 -- ---------- 2. Reminder de-duplication ----------
+-- session_key here doubles as the scheduled-email key (e.g.
+-- "liberation-week-before") for the curated onboarding sequence, or an
+-- event_meetings.session_key for the generic per-session reminders.
 CREATE TABLE IF NOT EXISTS public.event_reminders_sent (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   registration_id UUID NOT NULL REFERENCES public.event_registrations(id) ON DELETE CASCADE,
   session_key TEXT NOT NULL,
-  reminder_type TEXT NOT NULL CHECK (reminder_type IN ('reminder_7d', 'reminder_24h', 'reminder_1h')),
+  reminder_type TEXT NOT NULL CHECK (reminder_type IN ('week_before', 'day_before', 'hour_before', 'reminder_7d', 'reminder_24h', 'reminder_1h')),
   sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
