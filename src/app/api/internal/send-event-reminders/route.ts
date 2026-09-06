@@ -7,6 +7,14 @@ import { sendCuratedScheduledEmails, sendGenericSessionReminders } from '@/lib/e
  * `@/lib/events/event-reminders` so it can be unit/integration tested with an
  * explicit `now` rather than always reading the real clock.
  */
+
+/**
+ * Each email takes ~400ms to hand off to Resend. The platform default of 10s
+ * would cut the run short at roughly 25 registrants, silently leaving everyone
+ * after that without their email — and for the time-sensitive reminders, the
+ * next day's run is past the window, so they would never receive it at all.
+ */
+export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

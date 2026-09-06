@@ -132,6 +132,37 @@ export interface ReminderRunResult {
   errors: number;
 }
 
+/**
+ * How many emails to send at once.
+ *
+ * Sending strictly one at a time takes ~400ms each, so ~25 registrants would
+ * blow a serverless function's time limit and silently cut the run short —
+ * leaving everyone after that point without their email. Two at a time keeps
+ * us inside Resend's documented rate limit while roughly halving the wall
+ * time (~300 emails within a 60s budget). See `maxDuration` on the cron route.
+ */
+const SEND_CONCURRENCY = 2;
+
+/** Run `worker` over `items`, at most `limit` at a time, preserving per-item results. */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  async function run() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await worker(items[index]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Curated onboarding sequence
 // ---------------------------------------------------------------------------
@@ -173,16 +204,9 @@ export async function sendCuratedScheduledEmails(
       const meetLink = targetMeeting?.meet_link ?? null;
       const session = event.liveSessions?.find((s) => s.key === scheduled.targetSessionKey);
 
-      for (const registrant of registrants) {
-        const outcome = await claimReminder(supabase, registrant.id, scheduled.key, scheduled.template);
-        if (outcome === 'already_sent') {
-          alreadySent += 1;
-          continue;
-        }
-        if (outcome === 'error') {
-          errors += 1;
-          continue;
-        }
+      const outcomes = await mapWithConcurrency(registrants, SEND_CONCURRENCY, async (registrant) => {
+        const claim = await claimReminder(supabase, registrant.id, scheduled.key, scheduled.template);
+        if (claim !== 'claimed') return claim;
 
         const { subject, html } = renderScheduledEmail(scheduled.template, {
           event,
@@ -193,12 +217,16 @@ export async function sendCuratedScheduledEmails(
         });
 
         const ok = await sendEventEmail({ to: registrant.email, subject, html, replyTo: event.replyToEmail });
-        if (ok) {
-          sent += 1;
-        } else {
-          errors += 1;
-          await releaseClaim(supabase, registrant.id, scheduled.key, scheduled.template);
-        }
+        if (ok) return 'sent' as const;
+
+        await releaseClaim(supabase, registrant.id, scheduled.key, scheduled.template);
+        return 'error' as const;
+      });
+
+      for (const outcome of outcomes) {
+        if (outcome === 'sent') sent += 1;
+        else if (outcome === 'already_sent') alreadySent += 1;
+        else errors += 1;
       }
     }
   }
@@ -273,29 +301,25 @@ export async function sendGenericSessionReminders(
 
     const audience = registrants.filter((r) => r.event_id === meeting.event_id);
 
-    for (const registration of audience) {
-      const outcome = await claimReminder(supabase, registration.id, meeting.session_key, window.type);
-      if (outcome === 'already_sent') {
-        alreadySent += 1;
-        continue;
-      }
-      if (outcome === 'error') {
-        errors += 1;
-        continue;
-      }
+    const outcomes = await mapWithConcurrency(audience, SEND_CONCURRENCY, async (registration) => {
+      const claim = await claimReminder(supabase, registration.id, meeting.session_key, window.type);
+      if (claim !== 'claimed') return claim;
 
       const ok = await sendEventEmail({
         to: registration.email,
         subject: `Reminder: ${meeting.title} starts ${window.label}`,
         html: genericReminderHtml(registration, meeting, window.label),
       });
+      if (ok) return 'sent' as const;
 
-      if (ok) {
-        sent += 1;
-      } else {
-        errors += 1;
-        await releaseClaim(supabase, registration.id, meeting.session_key, window.type);
-      }
+      await releaseClaim(supabase, registration.id, meeting.session_key, window.type);
+      return 'error' as const;
+    });
+
+    for (const outcome of outcomes) {
+      if (outcome === 'sent') sent += 1;
+      else if (outcome === 'already_sent') alreadySent += 1;
+      else errors += 1;
     }
   }
 
