@@ -52,9 +52,12 @@ export const MOCK_EVENTS: EventItem[] = [
     // session they're about to attend isn't happening.
     //
     // All sends are set to 16:45 Dubai so they are picked up by the single
-    // daily cron at 17:00 Dubai (13:00 UTC) — see vercel.json. That timing is
-    // what makes the hour-before emails land ~1 hour before an 18:00 session
-    // without needing a more frequent (paid-plan) cron.
+    // daily cron in vercel.json, which runs at 13:00 UTC = 17:00 Dubai — see
+    // the comment on that cron's route handler
+    // (src/app/api/internal/send-event-reminders/route.ts) for why these two
+    // times must move together. This is what makes the hour-before emails
+    // land ~1 hour before an 18:00 session without needing a more frequent
+    // (paid-plan) cron.
     scheduledEmails: [
       {
         key: "journey-week-before",
