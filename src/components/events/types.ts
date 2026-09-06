@@ -47,6 +47,28 @@ export interface EventSessionDate {
   label: { en: string; ar: string };
 }
 
+/**
+ * Per-session wording for the day-before / hour-before reminder emails.
+ * The structure of those emails is fixed (client-approved); only these
+ * phrases change from session to session, so the first session reads
+ * "Tomorrow, we begin" while the last reads "Tomorrow, we complete the
+ * journey".
+ */
+export interface EventSessionEmailCopy {
+  /** Opening line of the day-before email, e.g. "Tomorrow, we begin." */
+  dayBeforeLead: { en: string; ar: string };
+  /** Follow-up sentence of the day-before email. */
+  dayBeforeContext: { en: string; ar: string };
+  /** Opening line of the hour-before email, e.g. "We begin in one hour." */
+  hourBeforeLead: { en: string; ar: string };
+  /** Follow-up sentence of the hour-before email. */
+  hourBeforeContext: { en: string; ar: string };
+  /** Date line in the day-before email, e.g. "October 9, 2026". */
+  dateLine: { en: string; ar: string };
+  /** Date line in the hour-before email, e.g. "Today, October 9". */
+  todayLine: { en: string; ar: string };
+}
+
 /** A single live session of an event, used for Meet links and reminders. */
 export interface EventLiveSession {
   /** Stable key, e.g. "liberation-1". Never change it once registrations exist. */
@@ -55,6 +77,8 @@ export interface EventLiveSession {
   /** Local Dubai (Asia/Dubai) wall-clock start/end, ISO without offset. */
   startsAt: string;
   endsAt: string;
+  /** Wording used by this session's reminder emails. */
+  emailCopy?: EventSessionEmailCopy;
 }
 
 /** One row of the "journey overview" table used in onboarding emails. */

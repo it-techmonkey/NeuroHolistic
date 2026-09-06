@@ -1,4 +1,4 @@
-import type { EventItem, EventJourneyRow } from '@/components/events/types';
+import type { EventItem, EventJourneyRow, EventLiveSession } from '@/components/events/types';
 import { personalEventEmailLayout, fawziaSignatureHtml } from './event-emails';
 
 /**
@@ -86,8 +86,34 @@ export interface QuantumLeapEmailInput {
   event: EventItem;
   registrantName: string;
   locale: Locale;
-  /** The Meet link for the very first live session (Part I, Session 1), if provisioned yet. */
+  /**
+   * Meet link for the session this email is about. For the confirmation and
+   * week-before emails that's the first live session; for a day-before or
+   * hour-before reminder it's that specific session's own link.
+   */
   firstSessionMeetLink: string | null;
+  /**
+   * The session a reminder is counting down to. Supplies the per-session
+   * wording ("Tomorrow, we begin" vs "Tomorrow, we continue") and dates.
+   * Omitted for the confirmation and week-before emails.
+   */
+  session?: EventLiveSession;
+}
+
+/** Fallback wording so a session with no `emailCopy` still produces a sane email. */
+function sessionCopy(input: QuantumLeapEmailInput) {
+  const { session, locale } = input;
+  const c = session?.emailCopy;
+  const pick = (v: { en: string; ar: string } | undefined, fallback: string) => v?.[locale] ?? fallback;
+
+  return {
+    dayBeforeLead: pick(c?.dayBeforeLead, 'Tomorrow, we begin.'),
+    dayBeforeContext: pick(c?.dayBeforeContext, 'Your journey continues with the next live session.'),
+    hourBeforeLead: pick(c?.hourBeforeLead, 'We begin in one hour.'),
+    hourBeforeContext: pick(c?.hourBeforeContext, 'Your next live session begins today.'),
+    dateLine: pick(c?.dateLine, session?.startsAt?.slice(0, 10) ?? ''),
+    todayLine: pick(c?.todayLine, 'Today'),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -198,13 +224,14 @@ export function dayBeforeEmail(input: QuantumLeapEmailInput): { subject: string;
   const { event, registrantName, locale, firstSessionMeetLink } = input;
   const title = event.locales[locale].title;
   const l = T[locale];
+  const c = sessionCopy(input);
 
   const body = `
     <p style="margin:0 0 4px;color:#334155;">${l.dear(firstName(registrantName))}</p>
-    <p style="margin:16px 0 4px;color:#334155;">Tomorrow, we begin.</p>
-    <p style="margin:0 0 16px;color:#334155;">Your ${title} journey begins with Part I, Liberation.</p>
+    <p style="margin:16px 0 4px;color:#334155;">${c.dayBeforeLead}</p>
+    <p style="margin:0 0 16px;color:#334155;">${c.dayBeforeContext}</p>
 
-    <p style="margin:0 0 4px;color:#334155;">October 9, 2026</p>
+    <p style="margin:0 0 4px;color:#334155;">${c.dateLine}</p>
     <p style="margin:0 0 4px;color:#334155;">6:00 PM to 10:00 PM, UAE time</p>
     <p style="margin:0 0 16px;color:#334155;">Live Online</p>
 
@@ -218,7 +245,7 @@ export function dayBeforeEmail(input: QuantumLeapEmailInput): { subject: string;
   `;
 
   return {
-    subject: `Tomorrow, We Begin | ${title}`,
+    subject: `${c.dayBeforeLead.replace(/\.$/, '')} | ${title}`,
     html: personalEventEmailLayout(body),
   };
 }
@@ -230,13 +257,14 @@ export function hourBeforeEmail(input: QuantumLeapEmailInput): { subject: string
   const { event, registrantName, locale, firstSessionMeetLink } = input;
   const title = event.locales[locale].title;
   const l = T[locale];
+  const c = sessionCopy(input);
 
   const body = `
     <p style="margin:0 0 4px;color:#334155;">${l.dear(firstName(registrantName))}</p>
-    <p style="margin:16px 0 4px;color:#334155;">We begin in one hour.</p>
-    <p style="margin:0 0 16px;color:#334155;">Your ${title} journey begins today with Part I, Liberation.</p>
+    <p style="margin:16px 0 4px;color:#334155;">${c.hourBeforeLead}</p>
+    <p style="margin:0 0 16px;color:#334155;">${c.hourBeforeContext}</p>
 
-    <p style="margin:0 0 4px;color:#334155;">Today, October 9</p>
+    <p style="margin:0 0 4px;color:#334155;">${c.todayLine}</p>
     <p style="margin:0 0 4px;color:#334155;">6:00 PM to 10:00 PM, UAE time</p>
     <p style="margin:0 0 16px;color:#334155;">Live Online</p>
 
@@ -250,7 +278,7 @@ export function hourBeforeEmail(input: QuantumLeapEmailInput): { subject: string
   `;
 
   return {
-    subject: `We Begin In One Hour | ${title}`,
+    subject: `${c.hourBeforeLead.replace(/\.$/, '')} | ${title}`,
     html: personalEventEmailLayout(body),
   };
 }

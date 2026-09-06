@@ -59,37 +59,41 @@ async function main() {
 
   const meetings = await getEventMeetings(supabase, EVENT_ID);
   const meetLink = firstSessionMeetLink(event, meetings);
-  console.log(`First-session Meet link: ${meetLink ?? '(none provisioned — emails will show the "being prepared" fallback)'}\n`);
+  const base = { event, registrantName: 'Jordan Test', locale: 'en' as const };
 
-  const input = {
-    event,
-    registrantName: 'Jordan Test',
-    locale: 'en' as const,
-    firstSessionMeetLink: meetLink,
-  };
+  // Build one entry per email the sequence will actually send, in send order,
+  // each using its own target session's wording and Meet link.
+  const templates: { key: string; render: () => { subject: string; html: string } }[] = [
+    { key: 'confirmation', render: () => registrationConfirmedEmail({ ...base, firstSessionMeetLink: meetLink }) },
+  ];
 
-  const templates: Record<string, () => { subject: string; html: string }> = {
-    confirmation: () => registrationConfirmedEmail(input),
-    week_before: () => weekBeforeEmail(input),
-    day_before: () => dayBeforeEmail(input),
-    hour_before: () => hourBeforeEmail(input),
-  };
+  for (const se of event.scheduledEmails ?? []) {
+    const session = event.liveSessions?.find((s) => s.key === se.targetSessionKey);
+    const link = meetings.find((m) => m.session_key === se.targetSessionKey)?.meet_link ?? null;
+    const input = { ...base, firstSessionMeetLink: link, session };
+    const render =
+      se.template === 'week_before'
+        ? () => weekBeforeEmail(input)
+        : se.template === 'day_before'
+          ? () => dayBeforeEmail(input)
+          : () => hourBeforeEmail(input);
+    templates.push({ key: se.key, render });
+  }
 
-  const keys = only ? [only] : Object.keys(templates);
-  const invalid = keys.filter((k) => !templates[k]);
-  if (invalid.length) {
-    console.error(`Unknown template(s): ${invalid.join(', ')}. Valid: ${Object.keys(templates).join(', ')}`);
+  const selected = only ? templates.filter((t) => t.key === only || t.key.includes(only)) : templates;
+  if (selected.length === 0) {
+    console.error(`No template matched "${only}". Available: ${templates.map((t) => t.key).join(', ')}`);
     process.exit(1);
   }
 
-  for (const key of keys) {
-    const { subject, html } = templates[key]();
-    console.log(`Sending "${key}" -> ${emailArg} ...`);
+  console.log(`Sending ${selected.length} email(s) to ${emailArg}\n`);
+  for (const { key, render } of selected) {
+    const { subject, html } = render();
     const ok = await sendEventEmail({ to: emailArg, subject, html, replyTo: event.replyToEmail });
-    console.log(`  ${ok ? 'sent' : 'FAILED'} — subject: "${subject}"`);
+    console.log(`  ${ok ? 'sent' : 'FAILED'}  ${key.padEnd(26)} "${subject}"`);
   }
 
-  console.log('\nDone. Check the inbox (and spam folder) for 4 separate emails.');
+  console.log(`\nDone. Check the inbox (and spam folder) for ${selected.length} separate email(s).`);
   console.log('This script wrote nothing to event_registrations or event_reminders_sent — nothing to clean up.');
 }
 

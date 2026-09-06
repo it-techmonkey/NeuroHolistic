@@ -33,10 +33,30 @@ type ServiceSupabase = ReturnType<typeof getServiceSupabase>;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
-// How late a scheduled email may still fire after its target time, in case a
-// cron run was missed. Long enough to survive a missed day, short enough that
-// a multi-day outage doesn't dump a stale "we begin in one hour" on anyone.
-const CATCH_UP_WINDOW_MS = 2 * DAY_MS;
+
+/**
+ * How late each kind of scheduled email may still be sent after its target
+ * time, if a cron run was missed.
+ *
+ * These are deliberately tight for the time-sensitive templates: an email
+ * saying "we begin in one hour" that arrives the next morning is worse than
+ * no email at all, so it is skipped rather than sent wrong. The window must
+ * still be at least as long as the gap between cron runs, or the email can
+ * never fire — see the note on cron frequency in vercel.json.
+ */
+// Each window is sized so the email can never contradict itself:
+//  - hour_before  : sends are at 16:45 for an 18:00 session, so 60 minutes
+//                   keeps it strictly before the session starts.
+//  - day_before   : 6 hours keeps it in the same evening, so "tomorrow" is
+//                   still true (a wider window could cross midnight).
+//  - week_before  : not time-critical; a day late still reads correctly.
+// All three comfortably exceed normal Vercel cron drift, which is minutes.
+const CATCH_UP_WINDOW_MS: Record<string, number> = {
+  week_before: 24 * HOUR_MS,
+  day_before: 6 * HOUR_MS,
+  hour_before: 60 * 60_000,
+};
+const DEFAULT_CATCH_UP_MS = 6 * HOUR_MS;
 
 interface Registration {
   id: string;
@@ -128,7 +148,17 @@ export async function sendCuratedScheduledEmails(
 
     const due = event.scheduledEmails.filter((se) => {
       const sendAtMs = new Date(toDubaiIso(se.sendAt)).getTime();
-      return now >= sendAtMs && now - sendAtMs <= CATCH_UP_WINDOW_MS;
+      const window = CATCH_UP_WINDOW_MS[se.template] ?? DEFAULT_CATCH_UP_MS;
+      const lateBy = now - sendAtMs;
+      if (lateBy < 0) return false;
+      if (lateBy > window) {
+        console.warn(
+          `[EventReminders] Skipping "${se.key}" — ${Math.round(lateBy / HOUR_MS)}h late, past its ` +
+            `${Math.round(window / HOUR_MS)}h window. Sending it now would be misleading.`
+        );
+        return false;
+      }
+      return true;
     });
     if (due.length === 0) continue;
 
@@ -141,6 +171,7 @@ export async function sendCuratedScheduledEmails(
     for (const scheduled of due) {
       const targetMeeting = findMeetingBySessionKey(meetings, scheduled.targetSessionKey);
       const meetLink = targetMeeting?.meet_link ?? null;
+      const session = event.liveSessions?.find((s) => s.key === scheduled.targetSessionKey);
 
       for (const registrant of registrants) {
         const outcome = await claimReminder(supabase, registrant.id, scheduled.key, scheduled.template);
@@ -158,6 +189,7 @@ export async function sendCuratedScheduledEmails(
           registrantName: registrant.name,
           locale: 'en',
           firstSessionMeetLink: meetLink,
+          session,
         });
 
         const ok = await sendEventEmail({ to: registrant.email, subject, html, replyTo: event.replyToEmail });

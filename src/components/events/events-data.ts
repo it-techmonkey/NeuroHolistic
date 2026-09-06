@@ -40,27 +40,78 @@ export const MOCK_EVENTS: EventItem[] = [
         time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
       },
     ],
-    // Curated onboarding sequence leading up to the very first live session.
-    // Times not specified by the client for the Oct 4 / Oct 8 sends — set to
-    // 10:00 AM Dubai as a reasonable default; adjust if they want otherwise.
+    // Curated reminder sequence.
+    //
+    //  - ONE "week before" email for the whole journey (Oct 4).
+    //  - A "day before" + "hour before" pair for each live session.
+    //
+    // The two back-to-back second days (Oct 10 and Oct 24) deliberately get
+    // no "day before" email: it would land on the morning of the preceding
+    // session and read "tomorrow we continue" hours before that day's own
+    // "we begin in one hour" — confusing enough that someone might think the
+    // session they're about to attend isn't happening.
+    //
+    // All sends are set to 16:45 Dubai so they are picked up by the single
+    // daily cron at 17:00 Dubai (13:00 UTC) — see vercel.json. That timing is
+    // what makes the hour-before emails land ~1 hour before an 18:00 session
+    // without needing a more frequent (paid-plan) cron.
     scheduledEmails: [
       {
-        key: "liberation-week-before",
-        sendAt: "2026-10-04T10:00:00",
+        key: "journey-week-before",
+        sendAt: "2026-10-04T16:45:00",
         template: "week_before",
         targetSessionKey: "liberation-1",
       },
+      // --- Part I, Liberation ---
       {
-        key: "liberation-day-before",
-        sendAt: "2026-10-08T10:00:00",
+        key: "liberation-1-day-before",
+        sendAt: "2026-10-08T16:45:00",
         template: "day_before",
         targetSessionKey: "liberation-1",
       },
       {
-        key: "liberation-hour-before",
-        sendAt: "2026-10-09T17:00:00",
+        key: "liberation-1-hour-before",
+        sendAt: "2026-10-09T16:45:00",
         template: "hour_before",
         targetSessionKey: "liberation-1",
+      },
+      {
+        key: "liberation-2-hour-before",
+        sendAt: "2026-10-10T16:45:00",
+        template: "hour_before",
+        targetSessionKey: "liberation-2",
+      },
+      // --- Part II, Elevation ---
+      {
+        key: "elevation-1-day-before",
+        sendAt: "2026-10-22T16:45:00",
+        template: "day_before",
+        targetSessionKey: "elevation-1",
+      },
+      {
+        key: "elevation-1-hour-before",
+        sendAt: "2026-10-23T16:45:00",
+        template: "hour_before",
+        targetSessionKey: "elevation-1",
+      },
+      {
+        key: "elevation-2-hour-before",
+        sendAt: "2026-10-24T16:45:00",
+        template: "hour_before",
+        targetSessionKey: "elevation-2",
+      },
+      // --- Integration & Embodiment ---
+      {
+        key: "integration-day-before",
+        sendAt: "2026-10-30T16:45:00",
+        template: "day_before",
+        targetSessionKey: "integration",
+      },
+      {
+        key: "integration-hour-before",
+        sendAt: "2026-10-31T16:45:00",
+        template: "hour_before",
+        targetSessionKey: "integration",
       },
     ],
     liveSessions: [
@@ -69,30 +120,100 @@ export const MOCK_EVENTS: EventItem[] = [
         title: { en: "Part I — Liberation (Session 1)", ar: "الجزء الأول — التحرر (الجلسة 1)" },
         startsAt: "2026-10-09T18:00:00",
         endsAt: "2026-10-09T22:00:00",
+        emailCopy: {
+          dayBeforeLead: { en: "Tomorrow, we begin.", ar: "غداً، نبدأ." },
+          dayBeforeContext: {
+            en: "Your journey begins with Part I, Liberation.",
+            ar: "تبدأ رحلتك مع الجزء الأول، التحرر.",
+          },
+          hourBeforeLead: { en: "We begin in one hour.", ar: "نبدأ بعد ساعة واحدة." },
+          hourBeforeContext: {
+            en: "Your journey begins today with Part I, Liberation.",
+            ar: "تبدأ رحلتك اليوم مع الجزء الأول، التحرر.",
+          },
+          dateLine: { en: "October 9, 2026", ar: "9 أكتوبر 2026" },
+          todayLine: { en: "Today, October 9", ar: "اليوم، 9 أكتوبر" },
+        },
       },
       {
         key: "liberation-2",
         title: { en: "Part I — Liberation (Session 2)", ar: "الجزء الأول — التحرر (الجلسة 2)" },
         startsAt: "2026-10-10T18:00:00",
         endsAt: "2026-10-10T22:00:00",
+        emailCopy: {
+          dayBeforeLead: { en: "Tomorrow, we continue.", ar: "غداً، نواصل." },
+          dayBeforeContext: {
+            en: "Your journey continues with Part I, Liberation — Session 2.",
+            ar: "تستمر رحلتك مع الجزء الأول، التحرر — الجلسة الثانية.",
+          },
+          hourBeforeLead: { en: "We continue in one hour.", ar: "نواصل بعد ساعة واحدة." },
+          hourBeforeContext: {
+            en: "Your journey continues today with Part I, Liberation — Session 2.",
+            ar: "تستمر رحلتك اليوم مع الجزء الأول، التحرر — الجلسة الثانية.",
+          },
+          dateLine: { en: "October 10, 2026", ar: "10 أكتوبر 2026" },
+          todayLine: { en: "Today, October 10", ar: "اليوم، 10 أكتوبر" },
+        },
       },
       {
         key: "elevation-1",
         title: { en: "Part II — Elevation (Session 1)", ar: "الجزء الثاني — الارتقاء (الجلسة 1)" },
         startsAt: "2026-10-23T18:00:00",
         endsAt: "2026-10-23T22:00:00",
+        emailCopy: {
+          dayBeforeLead: { en: "Tomorrow, we elevate.", ar: "غداً، نرتقي." },
+          dayBeforeContext: {
+            en: "Your journey continues with Part II, Elevation.",
+            ar: "تستمر رحلتك مع الجزء الثاني، الارتقاء.",
+          },
+          hourBeforeLead: { en: "We continue in one hour.", ar: "نواصل بعد ساعة واحدة." },
+          hourBeforeContext: {
+            en: "Your journey continues today with Part II, Elevation.",
+            ar: "تستمر رحلتك اليوم مع الجزء الثاني، الارتقاء.",
+          },
+          dateLine: { en: "October 23, 2026", ar: "23 أكتوبر 2026" },
+          todayLine: { en: "Today, October 23", ar: "اليوم، 23 أكتوبر" },
+        },
       },
       {
         key: "elevation-2",
         title: { en: "Part II — Elevation (Session 2)", ar: "الجزء الثاني — الارتقاء (الجلسة 2)" },
         startsAt: "2026-10-24T18:00:00",
         endsAt: "2026-10-24T22:00:00",
+        emailCopy: {
+          dayBeforeLead: { en: "Tomorrow, we continue.", ar: "غداً، نواصل." },
+          dayBeforeContext: {
+            en: "Your journey continues with Part II, Elevation — Session 2.",
+            ar: "تستمر رحلتك مع الجزء الثاني، الارتقاء — الجلسة الثانية.",
+          },
+          hourBeforeLead: { en: "We continue in one hour.", ar: "نواصل بعد ساعة واحدة." },
+          hourBeforeContext: {
+            en: "Your journey continues today with Part II, Elevation — Session 2.",
+            ar: "تستمر رحلتك اليوم مع الجزء الثاني، الارتقاء — الجلسة الثانية.",
+          },
+          dateLine: { en: "October 24, 2026", ar: "24 أكتوبر 2026" },
+          todayLine: { en: "Today, October 24", ar: "اليوم، 24 أكتوبر" },
+        },
       },
       {
         key: "integration",
         title: { en: "Integration & Embodiment", ar: "الدمج والتجسيد" },
         startsAt: "2026-10-31T18:00:00",
         endsAt: "2026-10-31T22:00:00",
+        emailCopy: {
+          dayBeforeLead: { en: "Tomorrow, we come together one last time.", ar: "غداً، نلتقي للمرة الأخيرة." },
+          dayBeforeContext: {
+            en: "Your journey completes with the final session, Integration & Embodiment.",
+            ar: "تكتمل رحلتك مع الجلسة الختامية، الدمج والتجسيد.",
+          },
+          hourBeforeLead: { en: "We gather in one hour.", ar: "نلتقي بعد ساعة واحدة." },
+          hourBeforeContext: {
+            en: "Today we come together for the final session, Integration & Embodiment.",
+            ar: "نلتقي اليوم في الجلسة الختامية، الدمج والتجسيد.",
+          },
+          dateLine: { en: "October 31, 2026", ar: "31 أكتوبر 2026" },
+          todayLine: { en: "Today, October 31", ar: "اليوم، 31 أكتوبر" },
+        },
       },
     ],
     locales: {

@@ -1,4 +1,14 @@
 {
+  "_comment_crons": [
+    "Both crons run once a day, which is all the Vercel Hobby plan allows.",
+    "",
+    "send-event-reminders is scheduled at 13:00 UTC = 17:00 Dubai. That time is",
+    "chosen deliberately: every event email is scheduled for 16:45 Dubai, so a",
+    "single daily run at 17:00 picks all of them up 15 minutes later — including",
+    "the 'one hour before' emails, which then land roughly an hour before an",
+    "18:00 session. Moving this time without also moving the sendAt values in",
+    "events-data.ts will cause the hour-before emails to be skipped as too late."
+  ],
   "crons": [
     {
       "path": "/api/internal/send-reminders",
@@ -6,7 +16,7 @@
     },
     {
       "path": "/api/internal/send-event-reminders",
-      "schedule": "30 6 * * *"
+      "schedule": "0 13 * * *"
     }
   ]
 }
