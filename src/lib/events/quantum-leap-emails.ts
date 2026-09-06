@@ -34,36 +34,40 @@ const T = {
   },
 } as const;
 
+/**
+ * Renders each journey stage as its own card (stage name, then location ·
+ * date · time on one flowing line) instead of a rigid 4-column table.
+ *
+ * A fixed-width table forces short strings like "Oct 9 & 10" into a narrow
+ * cell on a phone screen, which wraps word-by-word ("Oct" / "9 &" / "10").
+ * A card that spans the full email width lets that same text wrap normally,
+ * like any paragraph — so it reads correctly at any screen size, in every
+ * mail client, without depending on CSS media-query support (which many
+ * email clients, especially on desktop, don't honor).
+ */
 function journeyTableHtml(rows: EventJourneyRow[], locale: Locale): string {
-  const l = T[locale];
-  const cell = 'padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#334155;';
-  const head = 'padding:10px 12px;border-bottom:2px solid #e2e8f0;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.03em;text-align:left;';
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  const sep = locale === 'ar' ? ' · ' : ' · ';
 
-  const body = rows
-    .map(
-      (r) => `<tr>
-  <td style="${cell}font-weight:600;color:#0f172a;">${r.stage[locale]}</td>
-  <td style="${cell}">${r.location[locale]}</td>
-  <td style="${cell}">${r.date[locale]}</td>
-  <td style="${cell}">${r.time[locale]}</td>
-</tr>`
-    )
+  const cards = rows
+    .map((r, i) => {
+      const isLast = i === rows.length - 1;
+      return `<div style="padding:14px 16px;${isLast ? '' : 'border-bottom:1px solid #e2e8f0;'}">
+    <div style="font-weight:700;color:#0f172a;font-size:14px;margin-bottom:4px;">${r.stage[locale]}</div>
+    <div style="color:#64748b;font-size:13px;line-height:1.5;">${r.location[locale]}${sep}${r.date[locale]}${sep}${r.time[locale]}</div>
+  </div>`;
+    })
     .join('');
 
-  return `<table style="width:100%;border-collapse:collapse;margin:16px 0;">
-  <thead><tr>
-    <th style="${head}">${l.stage}</th>
-    <th style="${head}">${l.location}</th>
-    <th style="${head}">${l.date}</th>
-    <th style="${head}">${l.time}</th>
-  </tr></thead>
-  <tbody>${body}</tbody>
-</table>`;
+  return `<div dir="${dir}" style="margin:16px 0;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">${cards}</div>`;
 }
+
+/** Neutral "note" styling — used for things that are simply pending, not warnings or errors. */
+const NOTE_STYLE = 'background:#f5f3ff;border:1px solid #ddd6fe;color:#4338ca;';
 
 function sessionAccessBlock(label: string, meetLink: string | null): string {
   if (!meetLink) {
-    return `<p style="margin:16px 0;padding:14px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e;font-size:14px;">
+    return `<p style="margin:16px 0;padding:14px 16px;border-radius:8px;font-size:14px;${NOTE_STYLE}">
       Your joining link is being prepared and will be sent to you shortly, well ahead of the session.
     </p>`;
   }
@@ -130,7 +134,7 @@ export function weekBeforeEmail(input: QuantumLeapEmailInput): { subject: string
     ? `<p style="margin:0 0 8px;color:#334155;">Join the private community here:</p>
        <p style="margin:0 0 16px;"><a href="${event.communityLink}" style="color:#4F46E5;font-weight:600;">${event.communityLink}</a></p>
        <p style="margin:0 0 16px;color:#334155;">Please, join before October 9.</p>`
-    : `<p style="margin:0 0 16px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;">
+    : `<p style="margin:0 0 16px;padding:12px 14px;border-radius:8px;${NOTE_STYLE}">
          Your private community invite is on its way — you'll receive it separately before October 9.
        </p>`;
 
