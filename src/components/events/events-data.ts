@@ -22,7 +22,7 @@ export const MOCK_EVENTS: EventItem[] = [
         time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
       },
       {
-        stage: { en: "Guided Integration", ar: "الدمج الموجّه" },
+        stage: { en: "Guided Integration", ar: "التكامل الموجّه" },
         location: { en: "WhatsApp Community", ar: "مجتمع واتساب" },
         date: { en: "Oct 11 to 22", ar: "11 إلى 22 أكتوبر" },
         time: { en: "15 minutes daily", ar: "15 دقيقة يومياً" },
@@ -34,7 +34,7 @@ export const MOCK_EVENTS: EventItem[] = [
         time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
       },
       {
-        stage: { en: "Integration & Embodiment", ar: "الدمج والتجسيد" },
+        stage: { en: "Integration & Embodiment", ar: "التكامل والتجسيد" },
         location: { en: "Live online", ar: "مباشر عبر الإنترنت" },
         date: { en: "Oct 31", ar: "31 أكتوبر" },
         time: { en: "6:00 PM to 10:00 PM", ar: "6:00 إلى 10:00 مساءً" },
@@ -200,19 +200,19 @@ export const MOCK_EVENTS: EventItem[] = [
       },
       {
         key: "integration",
-        title: { en: "Integration & Embodiment", ar: "الدمج والتجسيد" },
+        title: { en: "Integration & Embodiment", ar: "التكامل والتجسيد" },
         startsAt: "2026-10-31T18:00:00",
         endsAt: "2026-10-31T22:00:00",
         emailCopy: {
           dayBeforeLead: { en: "Tomorrow, we come together one last time.", ar: "غداً، نلتقي للمرة الأخيرة." },
           dayBeforeContext: {
             en: "Your journey completes with the final session, Integration & Embodiment.",
-            ar: "تكتمل رحلتك مع الجلسة الختامية، الدمج والتجسيد.",
+            ar: "تكتمل رحلتك مع الجلسة الختامية، التكامل والتجسيد.",
           },
           hourBeforeLead: { en: "We gather in one hour.", ar: "نلتقي بعد ساعة واحدة." },
           hourBeforeContext: {
             en: "Today we come together for the final session, Integration & Embodiment.",
-            ar: "نلتقي اليوم في الجلسة الختامية، الدمج والتجسيد.",
+            ar: "نلتقي اليوم في الجلسة الختامية، التكامل والتجسيد.",
           },
           dateLine: { en: "October 31, 2026", ar: "31 أكتوبر 2026" },
           todayLine: { en: "Today, October 31", ar: "اليوم، 31 أكتوبر" },
@@ -232,48 +232,49 @@ export const MOCK_EVENTS: EventItem[] = [
         schedule: {
           heading: "The Journey",
           intro:
-            "The experience unfolds through two live Liberation sessions, followed by a guided integration journey with daily reminders and practices, then two live Elevation sessions, and a final Integration & Embodiment session.",
+            "The experience unfolds through two live Liberation sessions, followed by a guided integration journey with daily reminders and practices, then two live Elevation sessions, and a final Integration & Embodiment session, as shown in the table below.",
           columns: { part: "Part", description: "Description", date: "Date" },
           rows: [
             {
-              part: "Part 1 — Liberation",
-              description: "2 successive live sessions",
+              part: "Part 1 - Liberation",
+              description: "2 successive Live Sessions",
               date: "October 9 & 10 · 6:00 PM to 10:00 PM",
             },
             {
               part: "Guided Integration",
               description:
-                "You join the private participant community and receive guidance, awareness prompts, and NeuroHolistic practices",
+                "You join private participant community and receive guidance, awareness prompts, and NeuroHolistic practices",
               date: "October 11 to 22",
             },
             {
-              part: "Part 2 — Elevation",
-              description: "2 successive live sessions",
+              part: "Part 2 - Elevation",
+              description: "2 successive Live Sessions",
               date: "October 23 & 24 · 6:00 PM to 10:00 PM",
             },
             {
               part: "Integration & Embodiment",
-              description: "1 live session",
+              description: "1 Live Session",
               date: "October 31 · 6:00 PM to 10:00 PM",
             },
           ],
         },
         sections: [
           {
-            heading: "1. Part I — Liberation",
-            intro: "October 9 & 10, 2026 · 6:00 PM to 10:00 PM · 8 hours live online",
-            items: [
+            heading: "1. Part I, Liberation",
+            intro: "October 9 & 10, 2026 · 6:00 PM to 10:00 PM · 8 Hours Live Online",
+            paragraphs: [
               "Across two intensive live sessions, you will explore the emotional patterns, conditioning, subconscious responses, and automatic states that can keep you operating from contracted levels of consciousness.",
-              "Through the NeuroHolistic transformational process, you will be guided through: Awareness → Acknowledgement → Identification → Allowing → Processing → Elevation.",
+              "Through the NeuroHolistic transformational process, you will be guided through: Awareness → Acknowledgement → Identification → Allowing → Processing → Elevation",
               "We journey through emotional states such as shame, guilt, fear, anger, and other patterns of emotional survival, progressively opening toward courage, acceptance, and Love.",
-              "Love becomes the bridge. Because before consciousness can expand, we first create space beyond what has been unconsciously controlling us.",
+              "Love becomes the bridge.",
+              "Because before consciousness can expand, we first create space beyond what has been unconsciously controlling us.",
             ],
           },
           {
             heading: "2. The Guided Integration Journey",
-            intro:
-              "October 11 to 22, 2026. The live experience continues into everyday life. This part of the journey requires 15 minutes a day with simple integration practices.",
-            items: [
+            intro: "October 11 to 22, 2026",
+            paragraphs: [
+              "The live experience continues into everyday life. This part of the journey requires 15 minutes a day with simple integration practices.",
               "During the period between the two intensive weekends, you will become part of a private participant community and receive guidance, awareness prompts, and NeuroHolistic practices designed to help you observe what is happening within you as you move through your normal life.",
               "Rather than treating integration as homework, these practices invite you to become increasingly conscious of your emotional responses, body, thoughts, perceptions, relationships, choices, and automatic patterns.",
               "The integration journey will include two progressive practices, supported by short daily prompts and reminders.",
@@ -281,40 +282,43 @@ export const MOCK_EVENTS: EventItem[] = [
             ],
           },
           {
-            heading: "3. Part II — Elevation",
-            intro: "October 23 & 24, 2026 · 6:00 PM to 10:00 PM · 8 hours live online",
-            items: [
+            heading: "3. Part II, Elevation",
+            intro: "October 23 & 24, 2026 · 6:00 PM to 10:00 PM · 8 Hours Live Online",
+            paragraphs: [
               "Once space has been created, the journey moves from liberation into expansion.",
               "These two intensive sessions explore progressively expanded states of awareness and the possibility of experiencing yourself and life beyond habitual conditioning and automatic perception.",
               "We move beyond Love toward the higher layers of the NeuroHolistic consciousness framework, exploring expanded awareness, peace, conscious creation, alignment, and what we describe within the framework as enlightenment.",
-              "The focus gradually shifts from “What am I trying to become free from?” to “From what level of consciousness do I choose to live?”",
+              "The focus gradually shifts from: “What am I trying to become free from?” to: “From what level of consciousness do I choose to live?”",
             ],
           },
           {
             heading: "4. Integration & Embodiment",
-            intro: "October 31, 2026 · Final live integration session",
-            items: [
+            intro: "October 31, 2026 · Final Live Integration Session",
+            paragraphs: [
               "One week after the intensive, we come together again.",
               "This final session creates space to reflect on what has changed, explore what emerged as you returned to everyday life, ask questions, integrate insights, and support the embodiment of the work beyond the event itself.",
-              "The objective is not to leave you with a temporary peak experience. It is to help you bring greater awareness into how you actually live.",
+              "The objective is not to leave you with a temporary peak experience.",
+              "It is to help you bring greater awareness into how you actually live.",
             ],
           },
           {
             heading: "The Complete Experience",
             items: [
-              "20 live hours.",
-              "4 × 4-hour intensive live sessions.",
-              "1 final 4-hour Integration & Embodiment session.",
-              "Guided Integration Journey.",
-              "Daily awareness prompts & practices.",
-              "Private participant community.",
-              "Live guidance with Dr. Fawzia Yassmina.",
+              "20 Live Hours",
+              "4 × 4-Hour Intensive Live Sessions",
+              "1 Final 4-Hour Integration & Embodiment Session",
+              "Guided Integration Journey",
+              "Daily Awareness Prompts & Practices",
+              "Private Participant Community",
+              "Live Guidance with Dr. Fawzia Yassmina",
+              "Location: Online, Live",
+              "Price: AED 1,000 / USD 274",
             ],
           },
           {
             heading: "What This Experience Can Open For You",
             intro:
-              "This is an experience designed to take you beyond the level from which you have been experiencing yourself and your life. You will be guided to:",
+              "This is an experience designed to take you beyond the level from which you have been experiencing yourself and your life. Across this journey, you will be guided to move beyond the unconscious emotional patterns, conditioning, and automatic states that may have shaped your reality for years, often without you even realizing they were there. You will experience what becomes possible when you stop living from fear, guilt, shame, anger, emotional survival, and old subconscious programming, and begin accessing progressively expanded states of awareness, love, peace, freedom, and conscious creation. You will be guided to:",
             items: [
               "Liberate yourself from the emotional patterns that keep recreating the same reality. Go beneath the surface of recurring reactions, relationships, choices, and experiences to meet the deeper patterns from which they arise, and begin releasing their hold over your life.",
               "Move beyond the automatic version of you. Discover how much of what you call “me” may actually be conditioning, emotional memory, protective responses, and subconscious programming, and experience the freedom that becomes possible when you are no longer unconsciously governed by them.",
@@ -324,6 +328,8 @@ export const MOCK_EVENTS: EventItem[] = [
               "Access higher states of consciousness. Journey from emotional survival through courage, acceptance, and love, and into progressively expanded states of awareness, peace, conscious creation, and alignment within the NeuroHolistic consciousness framework.",
               "Experience the space between who you have been and who you are capable of becoming. Beyond the story. Beyond the conditioning. Beyond the automatic response. And begin asking a fundamentally different question: “If my past no longer has to determine the state from which I live… what becomes possible now?”",
             ],
+            outro:
+              "This is the essence of the NeuroHolistic Consciousness Quantum Leap™. Changing the level of consciousness from which you experience and create your life.",
           },
           {
             heading: "Who Is This For?",
@@ -337,7 +343,7 @@ export const MOCK_EVENTS: EventItem[] = [
           },
         ],
         closingLine:
-          "Liberate. Expand. Elevate. Align. Embody. — NeuroHolistic Consciousness Quantum Leap™, October 9 to 31, 2026, Live Online.",
+          "LIBERATE. EXPAND. ELEVATE. ALIGN. EMBODY. — NeuroHolistic Consciousness Quantum Leap™, October 9 to 31, 2026 | Live Online",
         price: "AED 1,000 / USD 274",
         ctaLabel: "Book Now",
         date: "October 9 – 31, 2026",
@@ -346,127 +352,133 @@ export const MOCK_EVENTS: EventItem[] = [
         typeLabel: "Live online",
       },
       ar: {
-        title: "القفزة الكمية في الوعي بمنهج NeuroHolistic™",
-        subtitle: "رحلة غامرة مباشرة عبر الإنترنت إلى آفاق أوسع من الوعي",
+        title: "قفزة نوعية في الوعي عبر منهج النيوهوليستك™",
+        subtitle: "تجربة مكثفة ومباشرة عبر الإنترنت نحو وعي أكثر اتساعاً",
         cardDescription:
-          "رحلة غامرة مباشرة عبر الإنترنت — 20 ساعة على مدار خمس جلسات مع فترة دمج موجّهة — صُممت لتأخذك إلى ما هو أبعد من الأنماط العاطفية التلقائية، ولتغير مستوى الوعي الذي تختبر منه الحياة.",
+          "رحلة غامرة مباشرة عبر الإنترنت — 20 ساعة على مدار خمس جلسات مع فترة تكامل موجّهة — صُممت لتأخذك إلى ما وراء الأنماط العاطفية التلقائية، ولتغيّر مستوى الوعي الذي تختبر منه الحياة.",
         hook:
-          "تخيل... أنت في سلام. أنت حرّ حقاً. أنت تخلق حياتك بوعي. هذا ليس حلماً، بل هي الحياة من مستوى مختلف من الوعي.",
+          "تخيّل... أن تعيش بسلام. أن تكون حراً بحق. أن تصنع حياتك بوعي. هذا ليس حلماً. إنها الحياة عندما تختبرها من مستوى مختلف من الوعي.",
         description:
-          "يقضي معظم الناس حياتهم وهم يحاولون تغيير ظروفهم، دون وعي بالأنماط العاطفية، والبرمجة المكتسبة، والاستجابات التلقائية، والتصورات التي تؤثر بصمت في أفكارهم، وقراراتهم، وعلاقاتهم، وطريقة اختبارهم للحياة.\n\nالقفزة الكمية في الوعي بمنهج NeuroHolistic™ هي تجربة تحولية غامرة، صُممت لتأخذك إلى ما هو أبعد من تلك الأنماط التلقائية، وإلى طريقة مختلفة جذرياً لاختبار نفسك، والآخرين، والحياة.\n\nوتستند هذه التجربة إلى منهج NeuroHolistic™، حيث تجمع بين علم النفس، والمبادئ المستندة إلى علوم الأعصاب، واستكشاف العقل اللاواعي، والوعي الجسدي، ومعالجة المشاعر، وتطوير الوعي، ضمن رحلة تحولية واحدة متكاملة.\n\nوالهدف هو تغيير المستوى الذي تختبر منه الحياة.",
+          "يقضي معظم الناس حياتهم وهم يحاولون تغيير ظروفهم، دون أن يدركوا الأنماط العاطفية، والبرمجة والتكييف النفسي، والاستجابات التلقائية، والتصورات التي تؤثر بصمت في أفكارهم، وقراراتهم، وعلاقاتهم، وتجربتهم للحياة.\n\nقفزة نوعية في الوعي عبر منهج النيوهوليستك™ هي تجربة تحولية غامرة، صُممت لتأخذك إلى ما وراء تلك الأنماط التلقائية، نحو طريقة مختلفة جذرياً في اختبار ذاتك، والآخرين، والحياة.\n\nترتكز هذه التجربة على منهج النيوهوليستك™ NeuroHolistic Method™، وتجمع ضمن رحلة تحولية واحدة ومنظمة بين علم النفس، والمبادئ المستندة إلى علم الأعصاب، واستكشاف العقل الباطن، والوعي الجسدي، والمعالجة العاطفية، وتطوير الوعي.\n\nالهدف هو تغيير المستوى الذي تختبر منه الحياة.",
         schedule: {
           heading: "الرحلة",
           intro:
-            "تتكشف التجربة عبر جلستي تحرر مباشرتين، تليهما رحلة دمج موجّهة مع تذكيرات وممارسات يومية، ثم جلستا ارتقاء مباشرتان، وأخيراً جلسة الدمج والتجسيد.",
-          columns: { part: "الجزء", description: "الوصف", date: "التاريخ" },
+            "تتدرج التجربة عبر جلستين مباشرتين للتحرر، تليهما تجربة تكامل موجهة تتضمن ممارسات وتذكيرات يومية، ثم جلستين مباشرتين للارتقاء، وأخيراً جلسة ختامية للتكامل والتجسيد.",
+          columns: { part: "المرحلة", description: "الوصف", date: "التاريخ" },
           rows: [
             {
-              part: "الجزء الأول — التحرر",
+              part: "المرحلة الأولى، التحرر",
               description: "جلستان مباشرتان متتاليتان",
-              date: "9 و 10 أكتوبر · 6:00 إلى 10:00 مساءً",
+              date: "9 و10 أكتوبر · من 6:00 إلى 10:00 مساءً",
             },
             {
-              part: "الدمج الموجّه",
+              part: "التكامل الموجّه",
               description:
-                "تنضم إلى مجتمع المشاركين الخاص وتتلقى إرشادات، ومحفزات وعي، وممارسات من منهج NeuroHolistic™",
-              date: "11 إلى 22 أكتوبر",
+                "الانضمام إلى مجتمع خاص بالمشاركين، مع إرشادات ومحفزات للوعي وممارسات نيوهوليستك",
+              date: "من 11 إلى 22 أكتوبر",
             },
             {
-              part: "الجزء الثاني — الارتقاء",
+              part: "المرحلة الثانية، الارتقاء",
               description: "جلستان مباشرتان متتاليتان",
-              date: "23 و 24 أكتوبر · 6:00 إلى 10:00 مساءً",
+              date: "23 و24 أكتوبر · من 6:00 إلى 10:00 مساءً",
             },
             {
-              part: "الدمج والتجسيد",
+              part: "التكامل والتجسيد",
               description: "جلسة مباشرة واحدة",
-              date: "31 أكتوبر · 6:00 إلى 10:00 مساءً",
+              date: "31 أكتوبر · من 6:00 إلى 10:00 مساءً",
             },
           ],
         },
         sections: [
           {
-            heading: "1. الجزء الأول — التحرر",
-            intro: "9 و 10 أكتوبر 2026 · 6:00 إلى 10:00 مساءً · 8 ساعات مباشرة عبر الإنترنت",
-            items: [
-              "على مدار جلستين مكثفتين مباشرتين، ستستكشف الأنماط العاطفية، والبرمجة المكتسبة، والاستجابات اللاواعية، والحالات التلقائية التي قد تبقيك تعمل من مستويات وعي منكمشة.",
-              "من خلال العملية التحولية في منهج NeuroHolistic™، سيتم إرشادك عبر: الوعي ← الإقرار ← التعرّف ← السماح ← المعالجة ← الارتقاء.",
-              "نخوض معاً رحلة عبر حالات عاطفية مثل الخزي، والذنب، والخوف، والغضب، وغيرها من أنماط النجاة العاطفية، وصولاً إلى الشجاعة، والتقبّل، والحب.",
-              "يصبح الحب هو الجسر. لأنه قبل أن يتسع الوعي، علينا أولاً أن نخلق مساحة تتجاوز ما كان يتحكم بنا دون وعي.",
+            heading: "1. الجزء الأول، التحرر",
+            intro: "9 و10 أكتوبر 2026 · من 6:00 مساءً إلى 10:00 مساءً · 8 ساعات مباشرة عبر الإنترنت",
+            paragraphs: [
+              "على امتداد جلستين مباشرتين مكثفتين، ستستكشف الأنماط العاطفية، والبرمجة والتكييف، واستجابات العقل الباطن، والحالات التلقائية التي قد تأسرك في مستويات منقبضة من الوعي.",
+              "من خلال العملية التحولية لمنهج النيوهوليستك، سيتم إرشادك عبر: الوعي ← الإقرار ← التعرّف والتحديد ← السماح ← المعالجة ← الارتقاء",
+              "ننتقل عبر حالات عاطفية مثل الخزي، والشعور بالذنب، والخوف، والغضب، وغيرها من أنماط الاستجابة الدفاعية الداخلية، لننفتح تدريجياً نحو الشجاعة، والتقبّل، والحب.",
+              "ويصبح الحب هو الجسر.",
+              "لأنه قبل أن يتمكن الوعي من الاتساع، نحتاج أولاً إلى خلق مساحة تتجاوز ما كان يتحكم بنا دون وعي.",
             ],
           },
           {
-            heading: "2. رحلة الدمج الموجّه",
-            intro:
-              "11 إلى 22 أكتوبر 2026. تستمر التجربة المباشرة داخل الحياة اليومية، وتتطلب 15 دقيقة يومياً من الممارسات البسيطة.",
-            items: [
-              "خلال الفترة الفاصلة بين الأسبوعين المكثفين، ستصبح جزءاً من مجتمع خاص بالمشاركين، وستتلقى إرشادات، ومحفزات وعي، وممارسات من منهج NeuroHolistic™ تساعدك على ملاحظة ما يحدث داخلك أثناء حياتك اليومية.",
-              "بدلاً من التعامل مع الدمج كواجب منزلي، تدعوك هذه الممارسات لأن تصبح أكثر وعياً باستجاباتك العاطفية، وجسدك، وأفكارك، وتصوراتك، وعلاقاتك، وخياراتك، وأنماطك التلقائية.",
-              "تتضمن رحلة الدمج ممارستين تدريجيتين، مدعومتين بمحفزات وتذكيرات يومية قصيرة.",
-              "لأن الوعي يصبح قوياً حين يتجاوز الجلسة ويدخل إلى الحياة اليومية.",
+            heading: "2. رحلة التكامل الموجّه",
+            intro: "من 11 إلى 22 أكتوبر 2026",
+            paragraphs: [
+              "تستمر التجربة المباشرة داخل حياتك اليومية. ويتطلب هذا الجزء من الرحلة 15 دقيقة يومياً فقط، من خلال ممارسات بسيطة للتكامل.",
+              "خلال الفترة الفاصلة بين الجزأين المكثفين، ستصبح جزءاً من مجتمع خاص بالمشاركين، وستتلقى إرشادات، ومحفزات للوعي، وممارسات نيوهوليستك صُممت لمساعدتك على ملاحظة ما يحدث داخلك أثناء ممارستك لحياتك الطبيعية.",
+              "وبدلاً من التعامل مع التكامل على أنه واجب عليك إنجازه، تدعوك هذه الممارسات إلى أن تصبح أكثر وعياً باستجاباتك العاطفية، وجسدك، وأفكارك، وتصوراتك، وعلاقاتك، واختياراتك، وأنماطك التلقائية.",
+              "ستتضمن رحلة التكامل ممارستين متدرجتين، تدعمهما محفزات قصيرة وتذكيرات يومية.",
+              "لأن الوعي يصبح أكثر قوة عندما يتجاوز حدود الجلسة ويدخل إلى تفاصيل الحياة اليومية.",
             ],
           },
           {
-            heading: "3. الجزء الثاني — الارتقاء",
-            intro: "23 و 24 أكتوبر 2026 · 6:00 إلى 10:00 مساءً · 8 ساعات مباشرة عبر الإنترنت",
-            items: [
-              "بعد أن تُخلق المساحة، تنتقل الرحلة من التحرر إلى الاتساع.",
-              "تستكشف هاتان الجلستان المكثفتان حالات وعي أوسع تدريجياً، وإمكانية اختبار نفسك والحياة بما يتجاوز البرمجة المعتادة والإدراك التلقائي.",
-              "نتجاوز الحب نحو الطبقات الأعلى من إطار الوعي في منهج NeuroHolistic™، مستكشفين الوعي المتسع، والسلام، والخلق الواعي، والانسجام.",
-              "ينتقل التركيز تدريجياً من سؤال: “مما أحاول أن أتحرر؟” إلى سؤال: “من أي مستوى من الوعي أختار أن أعيش؟”",
+            heading: "3. الجزء الثاني، الارتقاء",
+            intro: "23 و24 أكتوبر 2026 · من 6:00 مساءً إلى 10:00 مساءً · 8 ساعات مباشرة عبر الإنترنت",
+            paragraphs: [
+              "بعد أن يتم خلق المساحة الداخلية، تنتقل الرحلة من التحرر إلى الاتساع.",
+              "تستكشف هاتان الجلستان المكثفتان حالات متدرجة من الوعي الأكثر اتساعاً، وإمكانية اختبار ذاتك والحياة خارج حدود البرمجة المعتادة والإدراك التلقائي.",
+              "ننتقل إلى ما بعد الحب، نحو الطبقات الأعلى ضمن إطار الوعي في منهج النيوهوليستك، مستكشفين الوعي المتسع، والسلام، والخلق الواعي، والانسجام، وما نصفه ضمن هذا الإطار بـ الاستنارة.",
+              "ويتحول التركيز تدريجياً من السؤال: «ممَّ أحاول أن أتحرر؟» إلى: «من أي مستوى من الوعي أختار أن أعيش؟»",
             ],
           },
           {
-            heading: "4. الدمج والتجسيد",
-            intro: "31 أكتوبر 2026 · الجلسة المباشرة الختامية",
-            items: [
-              "بعد أسبوع من التجربة المكثفة، نلتقي مرة أخرى.",
-              "تخلق هذه الجلسة مساحة للتأمل فيما تغير، واستكشاف ما ظهر عند عودتك إلى حياتك اليومية، وطرح الأسئلة، ودمج الرؤى، ودعم تجسيد العمل بعد انتهاء الفعالية.",
-              "الهدف ليس أن تغادر بتجربة مؤقتة، بل أن تحمل وعياً أعمق إلى طريقة عيشك الفعلية.",
+            heading: "4. التكامل والتجسيد",
+            intro: "31 أكتوبر 2026 · الجلسة المباشرة الختامية للتكامل",
+            paragraphs: [
+              "بعد أسبوع من المرحلة المكثفة، نلتقي مجدداً.",
+              "تخلق هذه الجلسة الختامية مساحة للتأمل فيما تغيّر، واستكشاف ما ظهر عندما عدت إلى تفاصيل حياتك اليومية، وطرح الأسئلة، ودمج الاستبصارات، ودعم تجسيد ما اختبرته في حياتك بعد انتهاء الحدث.",
+              "فالهدف ليس أن تغادر بتجربة مؤقتة تبلغ فيها ذروة عابرة.",
+              "بل أن تحمل وعياً أعمق إلى الطريقة التي تعيش بها حياتك فعلياً.",
             ],
           },
           {
             heading: "التجربة الكاملة",
             items: [
-              "20 ساعة مباشرة.",
-              "4 جلسات مكثفة مباشرة × 4 ساعات.",
-              "جلسة ختامية واحدة للدمج والتجسيد مدتها 4 ساعات.",
-              "رحلة دمج موجّهة.",
-              "محفزات وممارسات وعي يومية.",
-              "مجتمع خاص بالمشاركين.",
-              "إرشاد مباشر مع الدكتورة فوزية ياسمينا.",
+              "20 ساعة مباشرة",
+              "4 جلسات مكثفة مباشرة، مدة كل منها 4 ساعات",
+              "جلسة ختامية للتكامل والتجسيد، مدتها 4 ساعات",
+              "رحلة تكامل موجّهة",
+              "محفزات وممارسات يومية للوعي",
+              "مجتمع خاص بالمشاركين",
+              "مع د. فوزية ياسمينة",
+              "المكان: مباشرة عبر الإنترنت",
+              "السعر: 1,000 درهم إماراتي / 274 دولاراً أمريكياً",
             ],
           },
           {
-            heading: "ماذا يمكن أن تفتح لك هذه التجربة؟",
+            heading: "ما الذي يمكن أن تفتحه لك هذه التجربة؟",
             intro:
-              "هذه تجربة صُممت لتأخذك إلى ما هو أبعد من المستوى الذي كنت تختبر منه نفسك وحياتك. سيتم إرشادك لـ:",
+              "هذه تجربة صُممت لتأخذك إلى ما وراء المستوى الذي اعتدت أن تختبر منه ذاتك وحياتك. على امتداد هذه الرحلة، سيتم إرشادك لتتجاوز الأنماط العاطفية اللاواعية، والبرمجة، والحالات التلقائية التي ربما شكّلت واقعك لسنوات، وفي كثير من الأحيان دون أن تدرك حتى وجودها. ستختبر ما يمكن أن يصبح ممكناً عندما تتوقف عن العيش من الخوف، والذنب، والخزي، والغضب، والاستجابة الدفاعية الداخلية، والبرمجة القديمة للعقل الباطن، وتبدأ في الوصول تدريجياً إلى حالات أكثر اتساعاً من الوعي، والحب، والسلام، والحرية، والخلق الواعي. سيتم إرشادك نحو:",
             items: [
-              "التحرر من الأنماط العاطفية التي تعيد خلق الواقع نفسه مرة بعد مرة، والنفاذ إلى ما تحت سطح الردود والعلاقات والخيارات المتكررة.",
-              "تجاوز النسخة التلقائية منك، واكتشاف كم مما تسميه “أنا” قد يكون برمجة وذاكرة عاطفية واستجابات دفاعية.",
-              "تغيير الحالة التي تختبر منها الحياة، بدلاً من محاولة السيطرة المستمرة على العالم من حولك لتشعر بشكل مختلف في داخلك.",
-              "اختبار الحرية العاطفية على عمق مختلف تماماً، لا بكبت المشاعر الصعبة ولا بإجبار نفسك على التفكير الإيجابي، بل بتعلم كيف تلتقيها وتعالجها وتتجاوزها.",
-              "توسيع إدراكك إلى ما هو أبعد من الواقع الذي علّمك ماضيك أن تتوقعه.",
-              "الوصول إلى حالات أعلى من الوعي، من النجاة العاطفية عبر الشجاعة والتقبل والحب، إلى السلام والخلق الواعي والانسجام.",
-              "اختبار المساحة بين من كنت ومن يمكنك أن تكون. وأن تبدأ بطرح سؤال مختلف جذرياً: “إذا لم يعد ماضيي مضطراً لتحديد الحالة التي أعيش منها… فما الذي يصبح ممكناً الآن؟”",
+              "التحرر من الأنماط العاطفية التي تعيد خلق الواقع نفسه. اذهب إلى ما وراء سطح ردود الأفعال والعلاقات والاختيارات والتجارب المتكررة، لتصل إلى الأنماط الأعمق التي تنشأ منها، وتبدأ في تحرير نفسك من سيطرتها على حياتك.",
+              "تجاوز النسخة التلقائية منك. اكتشف كم مما تسميه «أنا» قد يكون في حقيقته تكييفاً وبرمجة، وذاكرة عاطفية، واستجابات دفاعية، وبرامج لاواعية، واختبر الحرية التي تصبح ممكنة عندما لا تعود محكوماً بها دون وعي.",
+              "تغيير الحالة التي تختبر منها الحياة. بدلاً من المحاولة المستمرة للسيطرة على العالم من حولك كي تشعر بشكل مختلف في داخلك، تعلّم كيف تغيّر الحالة الداخلية التي من خلالها تدرك، وتفسر، وتختار، وتتواصل، وتخلق.",
+              "اختبار الحرية العاطفية على عمق مختلف تماماً. ليس من خلال قمع المشاعر الصعبة أو إجبار نفسك على التفكير بإيجابية، بل من خلال تعلم كيفية مواجهة الحالات العاطفية التي أبقتك في حالة من الانقباض، ومعالجتها، والانتقال إلى ما بعدها.",
+              "توسيع إدراكك إلى ما وراء الواقع الذي علّمك ماضيك أن تتوقعه. مع بدء تحرر الفلاتر العاطفية القديمة، قد تكتشف إمكانات، واختيارات، ووجهات نظر، ونسخاً من ذاتك لم يكن بإمكانك رؤيتها من داخل حالتك القديمة.",
+              "الوصول إلى حالات أعلى من الوعي. انتقل في رحلة من الاستجابة الدفاعية الداخلية، مروراً بالشجاعة والتقبّل والحب، وصولاً إلى حالات متدرجة من الوعي المتسع، والسلام، والخلق الواعي، والانسجام، ضمن إطار الوعي في منهج النيوهوليستك.",
+              "اختبار المساحة بين من كنت، ومن يمكنك أن تصبح. ما وراء القصة. ما وراء البرمجة. ما وراء الاستجابة التلقائية. وابدأ بطرح سؤال مختلف جذرياً: «إذا لم يعد الماضي مضطراً إلى تحديد الحالة التي أعيش منها... فما الذي يصبح ممكناً الآن؟»",
             ],
+            outro:
+              "هذا هو جوهر قفزة الوعي النوعية، أن تغيّر مستوى الوعي الذي تختبر منه حياتك وتصنعها.",
           },
           {
             heading: "لمن صُممت هذه التجربة؟",
-            intro: "هذه التجربة لمن يشعرون بالاستعداد للذهاب أعمق.",
+            intro: "هذه التجربة لمن يشعر بأنه مستعد للذهاب إلى عمق أكبر.",
             items: [
-              "لمن يدركون أن تغيير الظروف وحده لا يغير بالضرورة الأنماط التي تُعاش الحياة من خلالها.",
-              "لمن يرغبون في فهم أنفسهم بما يتجاوز ردود أفعالهم التلقائية.",
-              "لمن يبحثون عن وعي أكبر، وحرية عاطفية، وسلام داخلي، واختيار واعٍ، وعلاقة مختلفة مع أنفسهم ومع الحياة.",
-              "لا تُشترط خبرة سابقة بمنهج NeuroHolistic™. كل ما يلزم هو الفضول، والالتزام، والاستعداد لأن تلتقي نفسك بصدق.",
+              "لمن يدرك أن تغيير الظروف وحده لا يعني بالضرورة تغيير الأنماط التي نختبر الحياة من خلالها.",
+              "لمن يريد أن يفهم ذاته إلى ما وراء ردود أفعاله التلقائية.",
+              "لمن يسعى إلى وعي أعمق، وحرية عاطفية، وسلام داخلي، واختيار واعٍ، وعلاقة مختلفة مع ذاته ومع الحياة.",
+              "لا تحتاج إلى أي خبرة سابقة مع منهج النيوهوليستك™. كل ما تحتاجه هو الفضول، والالتزام، والاستعداد لمقابلة ذاتك بصدق.",
             ],
           },
         ],
         closingLine:
-          "تحرر. اتّسع. ارتقِ. انسجم. جسّد. — القفزة الكمية في الوعي بمنهج NeuroHolistic™، من 9 إلى 31 أكتوبر 2026، مباشرة عبر الإنترنت.",
-        price: "1,000 درهم إماراتي - 274 دولار أمريكي",
+          "تحرّر. اتّسع. ارتقِ. انسجم. جسّد. — قفزة نوعية في الوعي عبر منهج النيوهوليستك™، من 9 إلى 31 أكتوبر 2026 | مباشرة عبر الإنترنت",
+        price: "1,000 درهم إماراتي / 274 دولاراً أمريكياً",
         ctaLabel: "احجز الآن",
-        date: "9 – 31 أكتوبر 2026",
-        time: "6:00 – 10:00 مساءً",
+        date: "من 9 إلى 31 أكتوبر 2026",
+        time: "من 6:00 إلى 10:00 مساءً",
         location: "مباشرة عبر الإنترنت",
         typeLabel: "جلسة عبر الإنترنت",
       },

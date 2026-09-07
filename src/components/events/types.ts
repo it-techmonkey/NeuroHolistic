@@ -5,7 +5,16 @@ export type EventTypeKey = "workshop" | "retreat" | "online";
 export interface EventContentSection {
   heading: string;
   intro?: string;
-  items: string[];
+  /** Bulleted list items. Use for genuine lists only. */
+  items?: string[];
+  /**
+   * Flowing body paragraphs, rendered without bullets. Most narrative
+   * sections in the source documents are prose, not lists — using `items`
+   * for those adds bullets the client never wrote.
+   */
+  paragraphs?: string[];
+  /** Closing prose shown after the list, e.g. a summarising statement. */
+  outro?: string;
 }
 
 /** One row of the journey/schedule table shown on the detail page. */
