@@ -136,14 +136,31 @@ export default function EventDetailClient({ event }: Props) {
               <div key={i}>
                 <h2 className="text-[22px] font-semibold text-[#0F172A] md:text-[26px]">{section.heading}</h2>
                 {section.intro && <p className="mt-3 text-[16px] text-[#475569]">{section.intro}</p>}
-                <ul className="mt-4 flex flex-col gap-3">
-                  {section.items.map((item, j) => (
-                    <li key={j} className="flex items-start gap-3 text-[15px] leading-relaxed text-[#334155]">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6366F1]" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+
+                {section.paragraphs && section.paragraphs.length > 0 && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    {section.paragraphs.map((para, j) => (
+                      <p key={j} className="text-[15px] leading-[1.8] text-[#334155]">
+                        {para}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {section.items && section.items.length > 0 && (
+                  <ul className="mt-4 flex flex-col gap-3">
+                    {section.items.map((item, j) => (
+                      <li key={j} className="flex items-start gap-3 text-[15px] leading-relaxed text-[#334155]">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6366F1]" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {section.outro && (
+                  <p className="mt-5 text-[15px] font-medium leading-[1.8] text-[#334155]">{section.outro}</p>
+                )}
               </div>
             ))}
           </div>
