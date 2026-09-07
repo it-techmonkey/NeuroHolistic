@@ -2,8 +2,18 @@ import { Resend } from 'resend';
 import { formatSessionTime, type EventMeeting } from './event-meetings';
 
 const BRAND_COLOR = '#2B2F55';
-const FROM_ADDRESS =
-  process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>';
+
+/**
+ * Sender for every event-related email (registration confirmations, the
+ * Quantum Leap onboarding sequence, session reminders, admin notifications
+ * for event signups). Deliberately separate from `BOOKING_EMAIL_FROM`, which
+ * stays on the original noreply address for programs/bookings/consultations
+ * — only event emails moved to Support@ per the client's request.
+ */
+export const EVENT_EMAIL_FROM =
+  process.env.EVENT_EMAIL_FROM || 'NeuroHolistic Institute <Support@neuroholisticinstitute.com>';
+
+const FROM_ADDRESS = EVENT_EMAIL_FROM;
 
 export function eventEmailLayout(title: string, body: string): string {
   return `<!DOCTYPE html>

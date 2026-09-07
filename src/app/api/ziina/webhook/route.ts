@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureEventMeetings, findEvent, firstSessionMeetLink } from '@/lib/events/event-meetings';
-import { sessionScheduleHtml, sendEventEmail } from '@/lib/events/event-emails';
+import { sessionScheduleHtml, sendEventEmail, EVENT_EMAIL_FROM } from '@/lib/events/event-emails';
 import { registrationConfirmedEmail } from '@/lib/events/quantum-leap-emails';
 import crypto from 'crypto';
 import { Resend } from 'resend';
@@ -174,7 +174,7 @@ async function notifyAdminOfPaidRegistration(params: {
 
   try {
     await resend.emails.send({
-      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
+      from: EVENT_EMAIL_FROM,
       to: ADMIN_EMAIL,
       subject: `[Admin] Paid event registration: ${params.eventTitle}`,
       html: eventEmailLayout('New Paid Event Registration', `
@@ -203,7 +203,7 @@ async function sendGenericPaidConfirmation(params: {
 
   try {
     await resend.emails.send({
-      from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
+      from: EVENT_EMAIL_FROM,
       to: params.email,
       subject: `Payment confirmed: ${params.eventTitle}`,
       html: eventEmailLayout('Registration & Payment Confirmed', `

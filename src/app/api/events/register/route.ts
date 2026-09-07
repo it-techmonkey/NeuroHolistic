@@ -3,12 +3,12 @@ import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { normalizePhone } from '@/lib/phone';
 import { ensureEventMeetings, findEvent, firstSessionMeetLink, type EventMeeting } from '@/lib/events/event-meetings';
-import { sessionScheduleHtml, sendEventEmail } from '@/lib/events/event-emails';
+import { sessionScheduleHtml, sendEventEmail, EVENT_EMAIL_FROM } from '@/lib/events/event-emails';
 import { registrationConfirmedEmail } from '@/lib/events/quantum-leap-emails';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
-const FROM_ADDRESS = process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>';
+const FROM_ADDRESS = EVENT_EMAIL_FROM;
 
 function emailLayout(title: string, body: string): string {
   return `<!DOCTYPE html>
