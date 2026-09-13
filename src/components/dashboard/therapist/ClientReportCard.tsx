@@ -702,7 +702,9 @@ function TableSection({ title, children }: { title: string; children: ReactNode 
   return (
     <div>
       <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-700 mb-3">{title}</h3>
-      {children}
+      {/* Tables are the one thing allowed to be wider than the phone screen —
+          but only inside their own scroller, never by pushing the page sideways. */}
+      <div className="overflow-x-auto">{children}</div>
     </div>
   );
 }

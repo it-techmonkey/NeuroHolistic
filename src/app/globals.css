@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
 @import "tailwindcss";
+/* NOTE: tailwind.config.ts is deliberately NOT loaded. Tailwind v4 only reads
+   a v3-style config via `@config`, and adding that line now would apply the
+   config's own borderRadius scale (lg 8px→16px, xl 12px→20px, 2xl 16px→24px,
+   md 6px→12px) to all ~950 rounded-* usages in the app, which has been built
+   and visually signed off against stock Tailwind values. Treat the config
+   file as inert: its colours (primary-*, secondary-*) do not exist as classes.
+   To adopt those tokens, port them into a v4 `@theme` block here one at a
+   time and re-check the affected screens. */
 
 :root {
   --background: #f8fafc;
@@ -41,6 +49,13 @@ body {
   line-height: 1.7;
   letter-spacing: -0.01em;
   overflow-x: hidden;
+  /* A long unbroken string — an email address, a URL, a payment reference —
+     must wrap instead of pushing its container sideways. Because `overflow-x`
+     is hidden above, anything that does overflow is not scrollable, it is
+     simply invisible. `overflow-wrap` is inherited, so this one line covers
+     the whole tree. It only acts on words that would otherwise overflow;
+     normal wrapping is unchanged. */
+  overflow-wrap: break-word;
 }
 
 img:not([data-nimg]),
@@ -343,6 +358,11 @@ button:disabled {
   input[type="number"],
   input[type="url"],
   input[type="password"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="search"],
+  input:not([type]),
   textarea,
   select {
     font-size: 16px !important;

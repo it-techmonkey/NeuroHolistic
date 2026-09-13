@@ -325,7 +325,7 @@ export default function PaymentsTab() {
       {/* Review Modal */}
       {selectedPayment && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl border border-slate-200 max-h-[90dvh] overflow-y-auto overscroll-contain">
             <div className={`px-6 py-4 border-b ${
               selectedPayment.paymentMethod === 'cash' ? 'border-emerald-100 bg-emerald-50' : 'border-indigo-100 bg-indigo-50'
             }`}>
