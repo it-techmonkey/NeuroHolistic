@@ -765,7 +765,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                   placeholder="your@email.com" required autoComplete="email" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
                   <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}
@@ -949,7 +949,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                 placeholder="your@email.com" required autoComplete="email" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
                 <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}
