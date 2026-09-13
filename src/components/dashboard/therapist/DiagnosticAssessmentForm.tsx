@@ -2310,7 +2310,7 @@ export default function DiagnosticAssessmentForm({
       </div>
       {scorePrompt && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 p-5 max-h-[90dvh] overflow-y-auto overscroll-contain">
             <h3 className="text-base font-semibold text-slate-900">{scorePrompt.title}</h3>
             <p className="text-sm text-slate-600 mt-1 mb-4">{scorePrompt.description}</p>
             <p className="text-xs text-slate-500 mb-3">

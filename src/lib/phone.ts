@@ -62,10 +62,27 @@ function digitsOnly(value: string): string {
  * Build an E.164 number from a dial code and a national number.
  * Tolerates the user re-typing the country code or a leading trunk "0".
  */
+/**
+ * Longest national number we treat as plausible. Anything at or below this is
+ * taken at face value; only a longer number is read as the country code
+ * having been typed twice.
+ */
+const MAX_NATIONAL_LENGTH = 11;
+
 export function composePhone(dial: string, nationalNumber: string): string {
   const d = digitsOnly(dial);
   let n = digitsOnly(nationalNumber).replace(/^0+/, "");
-  if (d && n.startsWith(d)) n = n.slice(d.length).replace(/^0+/, "");
+
+  // Only strip a repeated country code when keeping it would make the number
+  // implausibly long. Matching on the prefix alone ate the first digits of
+  // numbers that legitimately begin with their own dial code — an Indian
+  // mobile like 9123456789 became 23456789, which still passed validation
+  // and was quietly stored wrong.
+  if (d && n.startsWith(d) && n.length > MAX_NATIONAL_LENGTH) {
+    const withoutDial = n.slice(d.length).replace(/^0+/, "");
+    if (withoutDial.length >= 6) n = withoutDial;
+  }
+
   return `+${d}${n}`;
 }
 
@@ -90,11 +107,30 @@ export function isValidPhone(value: string | null | undefined): boolean {
  * Normalize an arbitrary submitted value, returning null when it cannot be
  * accepted. API routes should reject on null rather than storing junk.
  */
+/** Dial code assumed when a number arrives with no country code at all. */
+const DEFAULT_DIAL = COUNTRY_CODES.find((c) => c.iso === DEFAULT_COUNTRY_ISO)!.dial;
+
 export function normalizePhone(value: string | null | undefined): string | null {
   if (!value) return null;
   let trimmed = value.trim().replace(/[\s()\-.]/g, "");
   if (trimmed.startsWith("00")) trimmed = `+${trimmed.slice(2)}`;
-  if (!trimmed.startsWith("+")) trimmed = `+${digitsOnly(trimmed)}`;
+
+  if (!trimmed.startsWith("+")) {
+    const digits = digitsOnly(trimmed);
+    const known = DIAL_CODES.filter((code) => digits.startsWith(code)).sort((a, b) => b.length - a.length)[0];
+
+    if (known && isValidPhone(`+${digits}`)) {
+      // Already carries a country code, just without the plus.
+      trimmed = `+${digits}`;
+    } else {
+      // A bare local number — "0501234567", "501234567", "042345678". Most of
+      // this clinic's numbers are UAE, and rejecting these outright made
+      // legacy profiles come back blank in the account form. Assume the
+      // default country rather than throwing the number away.
+      trimmed = composePhone(DEFAULT_DIAL, digits);
+    }
+  }
+
   return isValidPhone(trimmed) ? trimmed : null;
 }
 

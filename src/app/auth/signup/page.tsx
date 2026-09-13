@@ -40,6 +40,12 @@ function SignUpForm() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!isValidPhone(phone)) {
+      setError('Please enter a valid mobile number including the country code');
+      return;
+    }
+
     setLoading(true);
 
     const result = await signUp({

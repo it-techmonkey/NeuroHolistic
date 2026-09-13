@@ -272,7 +272,7 @@ export default function DiscountsTab() {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
@@ -345,7 +345,7 @@ export default function DiscountsTab() {
       {/* Assign Discount Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[90dvh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-slate-900">Assign Discount</h3>
               <button

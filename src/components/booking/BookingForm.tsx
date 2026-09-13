@@ -34,6 +34,13 @@ interface BookingResult {
   bookingId?: string;
 }
 
+/** Single-use password for an account whose owner sets a real one moments later. */
+function generateThrowawayPassword(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return `Tmp1!${Array.from(bytes, (b) => b.toString(36)).join('')}`;
+}
+
 function normalizeTherapistName(name: string): string {
   return name
     .toLowerCase()
@@ -143,10 +150,12 @@ export default function BookingForm({ onClose, bookingType = 'consultation' }: B
           firstName: formData.name.split(' ')[0] || formData.name,
           lastName: formData.name.split(' ').slice(1).join(' ') || '',
           email: formData.email,
-          password: formData.password || 'TempPass123!',
+          // A shared literal here meant every account created without a chosen
+          // password had the same publicly-known one. Generate a throwaway the
+          // client sets properly at the end of the booking instead.
+          password: formData.password || generateThrowawayPassword(),
           phone: formData.phone,
           country: formData.country,
-          role: 'client',
         }),
       });
 

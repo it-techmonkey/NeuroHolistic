@@ -48,6 +48,8 @@ export default function PhoneInput({
   const parsed = useMemo(() => splitPhone(value), [value]);
   const [iso, setIso] = useState(parsed.iso || DEFAULT_COUNTRY_ISO);
   const [national, setNational] = useState(parsed.nationalNumber);
+  // Nobody should be told their number is wrong while they are still typing it.
+  const [touched, setTouched] = useState(false);
 
   const country = COUNTRY_CODES.find((c) => c.iso === iso) ?? COUNTRY_CODES[0];
 
@@ -62,7 +64,7 @@ export default function PhoneInput({
   }, [value]);
   const fieldClass = inputClassName ?? BASE_FIELD;
   const isArabic = locale === "ar";
-  const invalid = required && national.length > 0 && !isValidPhone(composePhone(country.dial, national));
+  const invalid = required && touched && national.length > 0 && !isValidPhone(composePhone(country.dial, national));
 
   const emit = (nextIso: string, nextNational: string) => {
     const nextCountry = COUNTRY_CODES.find((c) => c.iso === nextIso) ?? COUNTRY_CODES[0];
@@ -71,40 +73,58 @@ export default function PhoneInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex gap-2" dir="ltr">
-        <select
-          aria-label={isArabic ? "رمز الدولة" : "Country code"}
-          value={iso}
-          disabled={disabled}
-          onChange={(e) => {
-            setIso(e.target.value);
-            emit(e.target.value, national);
-          }}
-          className={`${selectClassName ?? fieldClass} w-[132px] shrink-0 cursor-pointer px-2`}
-        >
-          {COUNTRY_CODES.map((c) => (
-            <option key={c.iso} value={c.iso}>
-              {c.flag} +{c.dial}
-            </option>
-          ))}
-        </select>
+      {/*
+        Sizing lives on these two wrappers, never on the controls themselves.
+        Callers pass their own look through `inputClassName`, and several of
+        those strings start with `w-full`, which would beat a fixed arbitrary
+        width set on the same element — Tailwind emits `.w-full` after the
+        arbitrary width utilities, so the caller's class wins the cascade.
+        That collapsed the row on narrow screens and pushed the number field
+        off-screen. Keeping width out of the caller's reach makes that
+        impossible. `min-w-0` lets the number field shrink past an <input>'s
+        intrinsic `size` width, which is the other half of the same bug.
+      */}
+      <div className="flex w-full gap-2" dir="ltr">
+        <div className="w-[112px] shrink-0">
+          <select
+            aria-label={isArabic ? "رمز الدولة" : "Country code"}
+            value={iso}
+            disabled={disabled}
+            onChange={(e) => {
+              setIso(e.target.value);
+              emit(e.target.value, national);
+            }}
+            style={{ paddingInline: 8 }}
+            className={`${selectClassName ?? fieldClass} w-full cursor-pointer`}
+          >
+            {COUNTRY_CODES.map((c) => (
+              <option key={c.iso} value={c.iso}>
+                {c.flag} +{c.dial}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <input
-          id={id}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel-national"
-          required={required}
-          disabled={disabled}
-          value={national}
-          placeholder={placeholder ?? (isArabic ? "50 000 0000" : "50 000 0000")}
-          onChange={(e) => {
-            const next = e.target.value.replace(/[^\d\s-]/g, "");
-            setNational(next);
-            emit(iso, next);
-          }}
-          className={`${fieldClass} w-full`}
-        />
+        <div className="min-w-0 flex-1">
+          <input
+            id={id}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            size={1}
+            required={required}
+            disabled={disabled}
+            value={national}
+            placeholder={placeholder ?? (isArabic ? "50 000 0000" : "50 000 0000")}
+            onChange={(e) => {
+              const next = e.target.value.replace(/[^\d\s-]/g, "");
+              setNational(next);
+              emit(iso, next);
+            }}
+            onBlur={() => setTouched(true)}
+            className={`${fieldClass} w-full`}
+          />
+        </div>
 
         {/* Submitted value for plain (non-controlled) <form> consumers. */}
         {name && <input type="hidden" name={name} value={national ? composePhone(country.dial, national) : ""} />}

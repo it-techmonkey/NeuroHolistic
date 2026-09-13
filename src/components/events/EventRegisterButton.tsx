@@ -122,7 +122,7 @@ export default function EventRegisterButton({ eventId, eventTitle, ctaLabel, loc
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="relative w-full max-w-[440px] overflow-hidden rounded-3xl bg-white p-8 shadow-2xl"
+              className="relative max-h-[90dvh] w-full max-w-[440px] overflow-y-auto overscroll-contain rounded-3xl bg-white p-8 shadow-2xl"
               initial={{ scale: 0.96, y: 16 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.96, y: 16 }}

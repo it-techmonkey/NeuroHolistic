@@ -1210,7 +1210,7 @@ export default function TherapistDashboardPage() {
       {/* Google Calendar Modal */}
       {showGoogleCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-slate-50 rounded-xl shadow-2xl w-full max-w-lg relative">
+          <div className="bg-slate-50 rounded-xl shadow-2xl w-full max-w-lg relative max-h-[90dvh] overflow-y-auto overscroll-contain">
             <button
               onClick={() => setShowGoogleCalendarModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"

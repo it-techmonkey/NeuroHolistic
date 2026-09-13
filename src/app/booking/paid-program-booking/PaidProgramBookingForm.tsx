@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import PhoneInput from "@/components/ui/PhoneInput";
-import { isValidPhone } from "@/lib/phone";
+import { isValidPhone, PHONE_ERROR } from "@/lib/phone";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Loader2, CreditCard, Users, User, ArrowLeft, Stethoscope, ChevronRight, CalendarDays, Banknote } from 'lucide-react';
 import ScheduleStep from '@/components/booking/shared/ScheduleStep';
@@ -716,6 +716,10 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 setFormError(isArabic ? 'يرجى تعبئة جميع الحقول' : 'Please fill in all fields');
                 return;
               }
+              if (!isValidPhone(formData.phone)) {
+                setFormError(PHONE_ERROR[isArabic ? 'ar' : 'en']);
+                return;
+              }
               if (formData.password.length < 8) {
                 setFormError(isArabic ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' : 'Password must be at least 8 characters');
                 return;
@@ -732,12 +736,20 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                     password: formData.password,
                     phone: formData.phone,
                     country: formData.country,
-                    role: 'client',
                   }),
                 });
                 const signupData = await signupRes.json();
                 if (!signupRes.ok && signupRes.status !== 409) {
                   throw new Error(signupData.error || 'Failed to create account');
+                }
+                if (signupRes.status === 409) {
+                  // The address belongs to an existing account and this was not
+                  // its password. There is no session, so carrying on would send
+                  // an unauthenticated buyer to checkout.
+                  setFormError(signupData.error || (isArabic
+                    ? 'يوجد حساب بهذا البريد الإلكتروني. يرجى تسجيل الدخول للمتابعة.'
+                    : 'An account with this email already exists. Please go back and sign in to continue.'));
+                  return;
                 }
                 if (signupData.session?.access_token) {
                   await supabase.auth.setSession({
@@ -765,7 +777,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                   placeholder="your@email.com" required autoComplete="email" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
                   <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}
@@ -850,6 +862,10 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
               setFormError(isArabic ? 'يرجى تعبئة جميع الحقول' : 'Please fill in all fields');
               return;
             }
+            if (!isValidPhone(formData.phone)) {
+              setFormError(PHONE_ERROR[isArabic ? 'ar' : 'en']);
+              return;
+            }
             if (formData.password.length < 8) {
               setFormError(isArabic ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' : 'Password must be at least 8 characters');
               return;
@@ -866,12 +882,17 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                   password: formData.password,
                   phone: formData.phone,
                   country: formData.country,
-                  role: 'client',
                 }),
               });
               const signupData = await signupRes.json();
               if (!signupRes.ok && signupRes.status !== 409) {
                 throw new Error(signupData.error || 'Failed to create account');
+              }
+              if (signupRes.status === 409) {
+                setFormError(signupData.error || (isArabic
+                  ? 'يوجد حساب بهذا البريد الإلكتروني. يرجى تسجيل الدخول للمتابعة.'
+                  : 'An account with this email already exists. Please go back and sign in to continue.'));
+                return;
               }
               if (signupData.session?.access_token) {
                 await supabase.auth.setSession({
@@ -949,7 +970,7 @@ export default function PaidProgramBookingForm({ userEmail, userName, isAuthenti
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                 placeholder="your@email.com" required autoComplete="email" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{isArabic ? 'رقم الهاتف *' : 'Phone *'}</label>
                 <PhoneInput value={formData.phone} onChange={(phone) => setFormData({ ...formData, phone })}

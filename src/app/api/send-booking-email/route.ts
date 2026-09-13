@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
       console.error('[Email] Resend error (client):', clientResponse.error);
     }
 
-    // Send admin notification in parallel (fire-and-forget)
-    resend.emails.send({
+    // Awaited: a promise left running past the response does not survive a
+    // serverless freeze, which silently dropped admin notifications.
+    await resend.emails.send({
       from: process.env.BOOKING_EMAIL_FROM || 'NeuroHolistic Institute <noreply@neuroholisticinstitute.com>',
       to: adminEmail,
       subject: `New Consultation Booking — ${name}`,
