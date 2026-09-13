@@ -3,7 +3,15 @@
 import { createClient } from '@/lib/auth/server';
 import { getHomeRouteForRole, resolveUserRole } from '@/lib/auth/role-routing';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { normalizePhone } from '@/lib/phone';
 import { headers } from 'next/headers';
+
+/** Supabase reports a duplicate address differently across versions. */
+function isDuplicateEmail(error: { code?: string; message?: string }): boolean {
+  if (error.code === 'email_exists' || error.code === 'user_already_exists') return true;
+  const message = (error.message || '').toLowerCase();
+  return message.includes('already been registered') || message.includes('already registered');
+}
 
 export async function signUp(formData: {
   firstName: string;
@@ -29,63 +37,54 @@ export async function signUp(formData: {
     return { error: 'Invalid email format' };
   }
 
+  // Reject a number we could not store in E.164 rather than saving junk that
+  // every later reminder and follow-up would silently fail to reach.
+  const normalizedPhone = normalizePhone(formData.phone);
+  if (formData.phone.trim() && !normalizedPhone) {
+    return { error: 'Please enter a valid mobile number including the country code' };
+  }
+
   const serviceSupabase = getServiceSupabase();
 
-  // Check if user already exists
-  const { data: usersList } = await serviceSupabase.auth.admin.listUsers();
-  const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === formData.email.toLowerCase());
+  const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+
+  // Create first and react to the duplicate error: atomic, and free of the
+  // unpaginated listUsers() scan that stopped seeing accounts past the first
+  // page of 50.
+  const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
+    email: formData.email,
+    password: formData.password,
+    email_confirm: true,
+    user_metadata: {
+      first_name: formData.firstName.trim(),
+      last_name: formData.lastName.trim(),
+      full_name: fullName,
+      phone: normalizedPhone,
+      country: formData.country?.trim() ?? '',
+    },
+  });
 
   let userId: string;
 
-  if (existingUser) {
-    // User already exists - update their password and ensure email is confirmed
-    const { error: updateError } = await serviceSupabase.auth.admin.updateUserById(
-      existingUser.id,
-      {
-        password: formData.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-          phone: formData.phone.trim(),
-          country: formData.country?.trim() ?? '',
-        },
-      }
-    );
-
-    if (updateError) {
-      console.error('[SignUp] Failed to update existing user:', updateError);
-      return { error: 'Failed to update account. Please try again.' };
-    }
-
-    userId = existingUser.id;
-  } else {
-    // Create new user with admin client - email is auto-confirmed
-    const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
-      email: formData.email,
-      password: formData.password,
-      email_confirm: true,
-      user_metadata: {
-        first_name: formData.firstName.trim(),
-        last_name: formData.lastName.trim(),
-        full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-        phone: formData.phone.trim(),
-        country: formData.country?.trim() ?? '',
-      },
-    });
-
-    if (authError) {
+  if (authError) {
+    if (!isDuplicateEmail(authError)) {
       console.error('[SignUp] Failed to create user:', authError);
       return { error: authError.message };
     }
 
-    if (!authData.user) {
-      return { error: 'Failed to create account.' };
-    }
-
-    userId = authData.user.id;
+    // The address is taken. Never reset the password of an account someone
+    // has not proved they own — that turned sign-up into account takeover,
+    // and privileged roles are preserved, so it reached admins too.
+    return {
+      error: 'An account with this email already exists. Please log in, or use "Forgot password" to regain access.',
+    };
   }
+
+  if (!authData.user) {
+    return { error: 'Failed to create account.' };
+  }
+
+  userId = authData.user.id;
 
   // Preserve privileged roles when account already exists.
   const { data: existingProfile } = await serviceSupabase
@@ -103,8 +102,8 @@ export async function signUp(formData: {
     id: userId,
     email: formData.email,
     role: preservedRole,
-    full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-    phone: formData.phone.trim() || null,
+    full_name: fullName,
+    phone: normalizedPhone,
     country: formData.country?.trim() ?? null,
   }, {
     onConflict: 'id',

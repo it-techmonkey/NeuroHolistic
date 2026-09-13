@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
       type: sessionType,
     };
 
-    notifyBookingConfirmed(notificationBooking).catch((err) =>
+    await notifyBookingConfirmed(notificationBooking).catch((err) =>
       console.error('[AdminBookingCreate] Notification error:', err)
     );
 

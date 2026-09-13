@@ -1,13 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { normalizePhone } from '@/lib/phone';
+
+/**
+ * Public sign-up used by the booking flows (free consultation, paid program).
+ *
+ * Two rules this route exists to enforce, both learned the hard way:
+ *
+ *  1. It never sets a password on an account that already exists. Proving you
+ *     own an address is the whole point of a password, so the only way past an
+ *     existing account is to supply its current one. Callers already treat 409
+ *     as "carry on without a session", so an existing client booking again
+ *     still completes their booking.
+ *
+ *  2. The role is never taken from the request. This endpoint is unauthenticated;
+ *     anything it accepts, a stranger can send. Privileged roles are granted
+ *     only by the authenticated admin routes.
+ */
+
+/** Supabase reports a duplicate address differently across versions. */
+function isDuplicateEmail(error: { code?: string; message?: string; status?: number }): boolean {
+  if (error.code === 'email_exists' || error.code === 'user_already_exists') return true;
+  const message = (error.message || '').toLowerCase();
+  return message.includes('already been registered') || message.includes('already registered');
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, password, phone, country, role = 'client' } = body;
+    const { firstName, lastName, email, password, phone, country } = body;
 
-    // Validation
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json({ error: 'First name, last name, email, and password are required.' }, { status: 400 });
     }
@@ -21,75 +44,91 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Country is required when phone is provided.' }, { status: 400 });
     }
 
-    const validRoles = ['client', 'therapist', 'admin'];
-    const userRole = validRoles.includes(role) ? role : 'client';
+    // Store phones in one shape everywhere, and refuse what we cannot store.
+    let normalizedPhone: string | null = null;
+    if (phone) {
+      normalizedPhone = normalizePhone(phone);
+      if (!normalizedPhone) {
+        return NextResponse.json(
+          { error: 'Please enter a valid mobile number including the country code.' },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Create admin client
+    // Self-service sign-up only ever creates a client.
+    const userRole = 'client';
+
     const supabaseAdmin = createSupabaseAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Check if user already exists by listing users and finding by email
-    const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    // Creating first and reacting to the duplicate error keeps this atomic —
+    // no "list every user" scan that silently stops at the first page, and no
+    // gap between checking and creating for two requests to race through.
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        phone: normalizedPhone,
+        country,
+      },
+    });
 
     let userId: string;
     let isNewUser = false;
 
-    if (existingUser) {
-      // User already exists - update their password and ensure email is confirmed
-      userId = existingUser.id;
-      
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-        existingUser.id,
-        {
-          password: password,
-          email_confirm: true,
-          user_metadata: {
-            first_name: firstName,
-            last_name: lastName,
-            phone,
-            country,
-          },
-        }
-      );
-
-      if (updateError) {
-        console.error('[Auth Signup] Failed to update user password:', updateError);
-        return NextResponse.json({ error: 'Failed to update account. Please try again.' }, { status: 500 });
-      }
-    } else {
-      // Create new user
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: userRole === 'client',
-        user_metadata: {
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-          country,
-        },
-      });
-
-      if (authError) {
+    if (authError) {
+      if (!isDuplicateEmail(authError)) {
         console.error('[Auth Signup] Failed to create user:', authError);
         return NextResponse.json({ error: authError.message }, { status: 400 });
       }
 
+      // The address is taken. The supplied password is the only acceptable
+      // proof of ownership — if it is wrong we change nothing at all.
+      const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError || !signInData.user) {
+        return NextResponse.json(
+          {
+            error: 'An account with this email already exists. Please log in, or reset your password if you have forgotten it.',
+            accountExists: true,
+          },
+          { status: 409 }
+        );
+      }
+
+      userId = signInData.user.id;
+
+      // Owner confirmed: refresh their details, but never their password.
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...signInData.user.user_metadata,
+          first_name: firstName,
+          last_name: lastName,
+          phone: normalizedPhone ?? signInData.user.user_metadata?.phone ?? null,
+          country: country ?? signInData.user.user_metadata?.country ?? null,
+        },
+      });
+    } else {
       if (!authData.user) {
         return NextResponse.json({ error: 'Failed to create auth user.' }, { status: 500 });
       }
-
       userId = authData.user.id;
       isNewUser = true;
     }
 
     const supabase = getServiceSupabase();
 
-    // Preserve privileged roles when account already exists.
+    // Preserve privileged roles when the account already exists.
     const { data: existingProfile } = await supabase
       .from('users')
       .select('role')
@@ -100,14 +139,13 @@ export async function POST(request: NextRequest) {
         ? existingProfile.role
         : userRole;
 
-    // Create or update record in users table
     if (isNewUser) {
       const { error: profileError } = await supabase.from('users').insert({
         id: userId,
         email,
         role: preservedRole,
         full_name: `${firstName} ${lastName}`.trim(),
-        phone: phone ?? null,
+        phone: normalizedPhone,
         country: country ?? null,
       });
 
@@ -115,13 +153,12 @@ export async function POST(request: NextRequest) {
         console.error('[Auth Signup] Failed to create user profile:', profileError);
       }
     } else {
-      // Update existing user profile
       await supabase.from('users').upsert({
         id: userId,
         email,
         role: preservedRole,
         full_name: `${firstName} ${lastName}`.trim(),
-        phone: phone ?? null,
+        phone: normalizedPhone,
         country: country ?? null,
       }, { onConflict: 'id' });
     }
@@ -134,8 +171,8 @@ export async function POST(request: NextRequest) {
 
     if (signInError) {
       console.error('[Auth Signup] Auto sign-in failed:', signInError);
-      return NextResponse.json({ 
-        error: 'Account created but sign-in failed. Please try logging in manually.' 
+      return NextResponse.json({
+        error: 'Account created but sign-in failed. Please try logging in manually.'
       }, { status: 500 });
     }
 
@@ -143,7 +180,7 @@ export async function POST(request: NextRequest) {
       success: true,
       userId: userId,
       email: email,
-      role: userRole,
+      role: preservedRole,
       session: {
         access_token: signInData.session?.access_token,
         refresh_token: signInData.session?.refresh_token,

@@ -69,7 +69,7 @@ export async function POST(
           ? `<p style="margin:0 0 16px;color:#334155;">If a refund is due, our team will be in touch about it separately.</p>`
           : '';
 
-      sendEventEmail({
+      await sendEventEmail({
         to: registration.email,
         subject: `Your registration has been cancelled: ${registration.event_title}`,
         html: eventEmailLayout('Registration Cancelled', `

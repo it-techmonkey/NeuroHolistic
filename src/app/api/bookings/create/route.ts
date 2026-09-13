@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { BookingService } from '@/lib/services/booking.service';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import { findAuthUserByEmail } from '@/lib/auth/find-user';
+import { normalizePhone } from '@/lib/phone';
 
 async function getOrCreateUser(email: string, name: string, phone: string, country: string, supabase: any) {
   const supabaseAdmin = createSupabaseAdmin(
@@ -9,8 +11,7 @@ async function getOrCreateUser(email: string, name: string, phone: string, count
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const existingUser = existingUsers?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+  const existingUser = await findAuthUserByEmail(supabaseAdmin, email);
 
   if (existingUser) {
     const { data: profile } = await supabase.from('users').select('id').eq('id', existingUser.id).maybeSingle();
@@ -34,8 +35,7 @@ async function getOrCreateUser(email: string, name: string, phone: string, count
 
   if (authError) {
     if (authError.message?.includes('already been registered')) {
-      const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-      const user = users?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+      const user = await findAuthUserByEmail(supabaseAdmin, email);
       if (user) return { userId: user.id, isNew: false, needsLogin: true };
     }
     return { userId: null, isNew: false, needsLogin: false };
@@ -77,13 +77,17 @@ export async function POST(request: NextRequest) {
 
     const supabase = getServiceSupabase();
 
+    // Store the number in the same E.164 shape as every other entry point, so
+    // a client booked here can be matched to the same client elsewhere.
+    const normalizedPhone = normalizePhone(phone);
+
     // Get or create user account
     let userId = clientUserId;
     let tempPassword = null;
     let isNewUser = false;
 
     if (!userId) {
-      const userResult = await getOrCreateUser(email, name, phone, country, supabase);
+      const userResult = await getOrCreateUser(email, name, normalizedPhone ?? '', country, supabase);
       userId = userResult.userId;
       tempPassword = userResult.tempPassword;
       isNewUser = userResult.isNew;
@@ -184,7 +188,7 @@ export async function POST(request: NextRequest) {
       userId,
       name,
       email,
-      phone,
+      phone: normalizedPhone ?? phone,
       country,
       therapistId,
       therapistName,

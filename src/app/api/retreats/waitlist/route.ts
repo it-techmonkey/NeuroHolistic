@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { normalizePhone } from '@/lib/phone';
+import { escapeHtml } from '@/lib/events/event-emails';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
@@ -45,9 +47,9 @@ async function sendWaitlistEmails(params: {
   const firstName = params.name.trim().split(' ')[0] || 'there';
 
   const detailsTable = `<table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:16px 0;">
-  <tr><td style="padding:6px 12px;color:#64748b;">Name</td><td style="padding:6px 12px;font-weight:500;">${params.name}</td></tr>
-  <tr><td style="padding:6px 12px;color:#64748b;">Email</td><td style="padding:6px 12px;">${params.email}</td></tr>
-  ${params.phone ? `<tr><td style="padding:6px 12px;color:#64748b;">Phone</td><td style="padding:6px 12px;">${params.phone}</td></tr>` : ''}
+  <tr><td style="padding:6px 12px;color:#64748b;">Name</td><td style="padding:6px 12px;font-weight:500;">${escapeHtml(params.name)}</td></tr>
+  <tr><td style="padding:6px 12px;color:#64748b;">Email</td><td style="padding:6px 12px;">${escapeHtml(params.email)}</td></tr>
+  ${params.phone ? `<tr><td style="padding:6px 12px;color:#64748b;">Phone</td><td style="padding:6px 12px;">${escapeHtml(params.phone)}</td></tr>` : ''}
 </table>`;
 
   const clientEmail = resend.emails.send({
@@ -56,7 +58,7 @@ async function sendWaitlistEmails(params: {
     subject: `You're on the wish list: ${params.retreatTitle}`,
     html: emailLayout("You're on the Wish List", `
       <p style="margin:0 0 12px;color:#334155;">Hi ${firstName},</p>
-      <p style="margin:0 0 16px;color:#334155;">You've joined the wish list for <strong>${params.retreatTitle}</strong>. We'll email you as soon as dates and booking details are announced.</p>`),
+      <p style="margin:0 0 16px;color:#334155;">You've joined the wish list for <strong>${escapeHtml(params.retreatTitle)}</strong>. We'll email you as soon as dates and booking details are announced.</p>`),
   });
 
   const adminEmail = resend.emails.send({
@@ -64,7 +66,7 @@ async function sendWaitlistEmails(params: {
     to: ADMIN_EMAIL,
     subject: `[Admin] New waitlist signup: ${params.retreatTitle}`,
     html: emailLayout('New Retreat Waitlist Signup', `
-      <p style="margin:0 0 16px;color:#334155;">A new signup joined the wish list for <strong>${params.retreatTitle}</strong>.</p>
+      <p style="margin:0 0 16px;color:#334155;">A new signup joined the wish list for <strong>${escapeHtml(params.retreatTitle)}</strong>.</p>
       ${detailsTable}`),
   });
 
@@ -88,6 +90,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Store the number in the same E.164 shape as every other form, so
+    // waitlist entries can be matched against clients and each other.
+    let normalizedPhone: string | null = null;
+    if (phone) {
+      normalizedPhone = normalizePhone(phone);
+      if (!normalizedPhone) {
+        return NextResponse.json(
+          { error: 'Please enter a valid mobile number including the country code.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const supabase = getServiceSupabase();
 
     const { error } = await supabase.from('retreat_waitlist').insert({
@@ -95,7 +110,7 @@ export async function POST(request: NextRequest) {
       retreat_title: retreatTitle,
       name,
       email,
-      phone: phone || null,
+      phone: normalizedPhone,
     });
 
     if (error) {
@@ -109,7 +124,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to join the wish list.' }, { status: 500 });
     }
 
-    sendWaitlistEmails({ retreatTitle, name, email, phone: phone || null }).catch((err) =>
+    await sendWaitlistEmails({ retreatTitle, name, email, phone: normalizedPhone }).catch((err) =>
       console.error('[RetreatWaitlist] Notification error:', err)
     );
 

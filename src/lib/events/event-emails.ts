@@ -15,6 +15,24 @@ export const EVENT_EMAIL_FROM =
 
 const FROM_ADDRESS = EVENT_EMAIL_FROM;
 
+/**
+ * Escape a value before it goes into an email template.
+ *
+ * Names, emails and phone numbers come straight off public forms. Dropped in
+ * raw they break the layout at best, and at worst let a stranger write markup
+ * into the admin notification — an internal-looking email whose body they
+ * partly control. Every interpolated value gets this.
+ */
+export function escapeHtml(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function eventEmailLayout(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html>

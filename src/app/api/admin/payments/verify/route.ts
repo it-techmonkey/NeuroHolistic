@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
 
       // Send verification email
       if (program.client_email) {
-        sendPaymentVerifiedEmail({
+        await sendPaymentVerifiedEmail({
           email: program.client_email,
           clientName: program.client_name || 'Client',
           programType: program.program_type || 'private',
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
 
       // Send rejection email
       if (program.client_email) {
-        sendPaymentRejectedEmail({
+        await sendPaymentRejectedEmail({
           email: program.client_email,
           clientName: program.client_name || 'Client',
           programType: program.program_type || 'private',

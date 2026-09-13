@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { findAuthUserByEmail } from '@/lib/auth/find-user';
 
 function generateTempPassword(length = 16): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -35,8 +36,7 @@ export async function POST(request: NextRequest) {
 
     let targetUserId = userId;
     if (!targetUserId && email) {
-      const { data: usersList } = await serviceSupabase.auth.admin.listUsers();
-      const found = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      const found = await findAuthUserByEmail(serviceSupabase, email);
       if (!found) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }

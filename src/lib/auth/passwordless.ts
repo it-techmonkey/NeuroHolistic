@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { normalizeEmail } from './email';
+import { findAuthUserByEmail } from '@/lib/auth/find-user';
 
 /**
  * Create a user WITHOUT password (passwordless/unverified)
@@ -48,13 +49,7 @@ export async function createPasswordlessUser(email: string): Promise<string> {
         console.log('[Auth] User exists in auth, creating user record...');
 
         // Get the user ID from auth
-        const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-
-        if (listError) {
-          throw new Error('Failed to find existing user: ' + listError.message);
-        }
-
-        const existingAuthUser = users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+        const existingAuthUser = await findAuthUserByEmail(supabase, normalizedEmail);
         if (!existingAuthUser) {
           throw new Error('User not found in auth system');
         }

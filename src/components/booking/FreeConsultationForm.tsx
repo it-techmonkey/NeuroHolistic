@@ -218,7 +218,6 @@ export default function FreeConsultationForm({
             password: formData.password,
             phone: formData.phone,
             country: formData.country,
-            role: 'client',
           }),
         });
 

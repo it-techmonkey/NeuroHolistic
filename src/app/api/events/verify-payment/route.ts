@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { getZiinaPaymentIntent } from '@/lib/payments/ziina';
+import { sendPaidEventConfirmation } from '@/lib/events/paid-confirmation';
 
 /**
  * Fallback endpoint: verify an event payment intent was completed and
@@ -61,10 +62,31 @@ export async function POST(request: NextRequest) {
     .eq('event_id', eventId)
     .ilike('email', email);
 
+  const updatedMetadata = { ...metadata, ziinaStatus: 'completed', fallbackProcessed: true };
+
   await supabase
     .from('payments')
-    .update({ status: 'paid', metadata: { ...metadata, ziinaStatus: 'completed', fallbackProcessed: true } })
+    .update({ status: 'paid', metadata: updatedMetadata })
     .eq('id', payment.id);
+
+  // This endpoint exists precisely for the case where the webhook has not
+  // landed, so it has to do the webhook's job too. It previously only flipped
+  // the status, which left the registrant paid but with no confirmation and
+  // no Meet link. `sendPaidEventConfirmation` is idempotent, so a webhook
+  // arriving afterwards will not send a second copy.
+  await sendPaidEventConfirmation({
+    supabase,
+    paymentId: payment.id,
+    paymentMetadata: updatedMetadata,
+    eventId,
+    eventTitle: metadata.eventTitle || 'NeuroHolistic Event',
+    name: metadata.name || 'Guest',
+    email,
+    phone: metadata.phone || null,
+    amountAed: metadata.amountAed || payment.amount,
+    selectedDateLabel: metadata.selectedDateLabelEn || null,
+    source: 'fallback',
+  });
 
   return NextResponse.json({ success: true, message: 'Event payment verified' });
 }

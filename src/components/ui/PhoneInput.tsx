@@ -48,6 +48,8 @@ export default function PhoneInput({
   const parsed = useMemo(() => splitPhone(value), [value]);
   const [iso, setIso] = useState(parsed.iso || DEFAULT_COUNTRY_ISO);
   const [national, setNational] = useState(parsed.nationalNumber);
+  // Nobody should be told their number is wrong while they are still typing it.
+  const [touched, setTouched] = useState(false);
 
   const country = COUNTRY_CODES.find((c) => c.iso === iso) ?? COUNTRY_CODES[0];
 
@@ -62,7 +64,7 @@ export default function PhoneInput({
   }, [value]);
   const fieldClass = inputClassName ?? BASE_FIELD;
   const isArabic = locale === "ar";
-  const invalid = required && national.length > 0 && !isValidPhone(composePhone(country.dial, national));
+  const invalid = required && touched && national.length > 0 && !isValidPhone(composePhone(country.dial, national));
 
   const emit = (nextIso: string, nextNational: string) => {
     const nextCountry = COUNTRY_CODES.find((c) => c.iso === nextIso) ?? COUNTRY_CODES[0];
@@ -74,8 +76,9 @@ export default function PhoneInput({
       {/*
         Sizing lives on these two wrappers, never on the controls themselves.
         Callers pass their own look through `inputClassName`, and several of
-        those strings start with `w-full` — which would beat a `w-[132px]` on
-        the same element, since Tailwind emits `.w-full` after `.w-\[132px\]`.
+        those strings start with `w-full`, which would beat a fixed arbitrary
+        width set on the same element — Tailwind emits `.w-full` after the
+        arbitrary width utilities, so the caller's class wins the cascade.
         That collapsed the row on narrow screens and pushed the number field
         off-screen. Keeping width out of the caller's reach makes that
         impossible. `min-w-0` lets the number field shrink past an <input>'s
@@ -118,6 +121,7 @@ export default function PhoneInput({
               setNational(next);
               emit(iso, next);
             }}
+            onBlur={() => setTouched(true)}
             className={`${fieldClass} w-full`}
           />
         </div>
