@@ -50,25 +50,6 @@ export default function Hero() {
   const [videoBroken, setVideoBroken] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cycleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sectionRef = useRef<HTMLElement>(null);
-
-  // Nothing here is guaranteed to line up with the actual visible screen: the
-  // fixed navbar's spacer stacks under this section's own min-h-dvh (so the
-  // hero can overshoot the first screen before any scroll happens), and a
-  // short landscape phone can force the text taller still. `position: fixed`
-  // sidesteps all of that — it is always relative to the true viewport, no
-  // exceptions — and this observer keeps the buttons from floating over
-  // whatever section comes after the hero once it's scrolled past.
-  const [heroInView, setHeroInView] = useState(true);
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => setHeroInView(entry.isIntersecting), {
-      threshold: 0.2,
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const showVideoEnabled = !prefersReducedMotion && !videoBroken;
 
@@ -108,6 +89,45 @@ export default function Hero() {
     goToContent();
   }, [goToContent]);
 
+  // Swipe replaces the arrow buttons on phones. Touch events only ever fire
+  // from an actual touchscreen, so this is free to sit on every device
+  // without a media-query gate of its own — a mouse never generates them.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const SWIPE_THRESHOLD_PX = 50;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      if (!showVideoEnabled || !start) return;
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+
+      // A normal vertical scroll through the hero starts with a touch too.
+      // Requiring the motion to be both past a minimum distance and clearly
+      // more horizontal than vertical is what keeps scrolling from being
+      // mistaken for a swipe.
+      if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX || Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+      // Same direction the video already slides in: left continues forward
+      // to the photo hero, right goes back to the video — matching what the
+      // (desktop-only) arrows do.
+      if (deltaX < 0) {
+        goToContent();
+      } else {
+        goToVideo();
+      }
+    },
+    [showVideoEnabled, goToContent, goToVideo]
+  );
+
   // Fires once the slide animation itself finishes — whether that slide was
   // triggered automatically or by an arrow click. Used (rather than timing
   // off `onEnded`) so the hero is guaranteed to sit fully still and visible
@@ -146,10 +166,11 @@ export default function Hero() {
 
   return (
     <motion.section
-      ref={sectionRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       className="relative flex min-h-dvh w-full items-center overflow-hidden bg-[#050608]"
     >
       <div className="absolute inset-0">
@@ -250,33 +271,38 @@ export default function Hero() {
         already on screen still does something useful — Left replays the
         video from the start, Right gives the photo hero another full
         display window — rather than doing nothing.
-      */}
-      {/*
-        Deliberately centered at the bottom on every screen size, rather than
-        the more usual bottom-right corner — the site's WhatsApp bubble
-        (FloatingWhatsAppButton) lives fixed in that corner on every page, and
-        a right-aligned pair here would sit on top of it from tablet width up.
 
-        `position: fixed` rather than anchored to this section, because this
-        section's own rendered height is not reliably the viewport's: Navbar
-        renders `fixed` over a spacer div (Navbar.tsx) that this section's
-        min-h-dvh sits below, so the two stack and the section overshoots the
-        first screen by the spacer's height before any scroll happens. A
-        short viewport — a phone turned sideways — can additionally force the
-        hero's own text taller than min-h-dvh, pushing it further still.
-        Fixed positioning is always relative to the true viewport regardless
-        of any of that. The `heroInView` gate (an IntersectionObserver on the
-        section, below) is what stops it from being fixed permanently —
-        without it these would float over every section on the page once the
-        visitor scrolled past the hero.
+        `absolute`, not `fixed`: these belong to the hero, not the screen.
+        Fixed positioning was tried first and rejected — it stays glued to
+        the viewport as you scroll, so instead of leaving with the rest of
+        the hero it hung there and had to be hidden by watching scroll
+        position, which is exactly the "follows past the hero" behaviour
+        that was the problem. `absolute` needs none of that: being
+        positioned relative to this section, it scrolls away together with
+        the hero by definition, at the same moment as everything else in it.
+
+        Desktop and up only (`hidden sm:flex`) — phones get a swipe gesture
+        instead (handleTouchStart/handleTouchEnd above), which sidesteps the
+        collision a visible left button had with the hero's own left-aligned
+        headline on narrow screens.
+
+        Positioned on the edges, not bottom-center — placed there on
+        request, and it has the useful side effect of keeping clear of the
+        WhatsApp bubble that's fixed in the bottom-right corner on every
+        page, without needing to think about it.
+
+        Two independent buttons rather than one shared row: a single element
+        spanning the full width at this height would still catch clicks
+        across that whole strip even fully transparent, including over
+        content in the middle that has nothing to do with this control.
       */}
-      {showVideoEnabled && heroInView && (
-        <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center gap-3 sm:bottom-8">
+      {showVideoEnabled && (
+        <>
           <button
             type="button"
             onClick={goToVideo}
             aria-label={videoVisible ? "Replay video" : "Show video"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D3AB79] sm:h-12 sm:w-12"
+            className="absolute left-6 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D3AB79] sm:flex md:left-10"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2} />
           </button>
@@ -284,11 +310,11 @@ export default function Hero() {
             type="button"
             onClick={goToContent}
             aria-label={videoVisible ? "Skip to hero" : "Show hero"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D3AB79] sm:h-12 sm:w-12"
+            className="absolute right-6 top-1/2 z-30 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D3AB79] sm:flex md:right-10"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2} />
           </button>
-        </div>
+        </>
       )}
     </motion.section>
   );
