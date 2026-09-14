@@ -19,7 +19,7 @@ export interface AuthUser {
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -39,6 +39,27 @@ export async function createClient() {
       },
     }
   );
+
+  // middleware.ts skips /api/* entirely, so an expired-but-refreshable
+  // access token that a page load would have silently renewed is never
+  // renewed before an API route reads it — the caller's own auth.getUser()
+  // then sees an expired JWT and reports someone with a perfectly valid
+  // session as logged out. Mirror middleware's own recovery here so every
+  // caller of createClient() gets it for free.
+  //
+  // getSession() reads the cookie locally rather than calling Supabase, so
+  // this costs nothing when the token is still valid — only an
+  // already-expired token pays for the refreshSession() network call. In a
+  // Route Handler the refreshed cookies are written back via setAll above;
+  // in a Server Component that write is a no-op (same as it always was),
+  // but the in-memory client returned here still carries the refreshed
+  // session for this request.
+  const { data: { session } } = await client.auth.getSession();
+  if (session?.expires_at && session.expires_at * 1000 < Date.now()) {
+    await client.auth.refreshSession();
+  }
+
+  return client;
 }
 
 export async function createServiceClient(
