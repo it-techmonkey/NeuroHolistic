@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { normalizePhone } from '@/lib/phone';
 import { ensureEventMeetings, findEvent, firstSessionMeetLink, type EventMeeting } from '@/lib/events/event-meetings';
-import { sessionScheduleHtml, sendEventEmail, EVENT_EMAIL_FROM, escapeHtml } from '@/lib/events/event-emails';
+import { sessionScheduleHtml, sendEventEmail, escapeHtml } from '@/lib/events/event-emails';
 import { registrationConfirmedEmail } from '@/lib/events/quantum-leap-emails';
+import { getEventPrice } from '@/lib/events/event-pricing';
 
 const BRAND_COLOR = '#2B2F55';
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
-const FROM_ADDRESS = EVENT_EMAIL_FROM;
 
 function emailLayout(title: string, body: string): string {
   return `<!DOCTYPE html>
@@ -40,30 +39,19 @@ async function notifyAdminOfRegistration(params: {
   email: string;
   phone: string | null;
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn('[EventRegister] RESEND_API_KEY not set, skipping admin notification');
-    return;
-  }
-
   const detailsTable = `<table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:16px 0;">
   <tr><td style="padding:6px 12px;color:#64748b;">Name</td><td style="padding:6px 12px;font-weight:500;">${escapeHtml(params.name)}</td></tr>
   <tr><td style="padding:6px 12px;color:#64748b;">Email</td><td style="padding:6px 12px;">${escapeHtml(params.email)}</td></tr>
   ${params.phone ? `<tr><td style="padding:6px 12px;color:#64748b;">Phone</td><td style="padding:6px 12px;">${escapeHtml(params.phone)}</td></tr>` : ''}
 </table>`;
 
-  try {
-    await new Resend(apiKey).emails.send({
-      from: FROM_ADDRESS,
-      to: ADMIN_EMAIL,
-      subject: `[Admin] New event registration: ${params.eventTitle}`,
-      html: emailLayout('New Event Registration', `
+  await sendEventEmail({
+    to: ADMIN_EMAIL,
+    subject: `[Admin] New event registration: ${params.eventTitle}`,
+    html: emailLayout('New Event Registration', `
       <p style="margin:0 0 16px;color:#334155;">A new registrant signed up for <strong>${escapeHtml(params.eventTitle)}</strong>.</p>
       ${detailsTable}`),
-    });
-  } catch (err) {
-    console.error('[EventRegister] Admin notification failed:', err);
-  }
+  });
 }
 
 /** Generic client confirmation, used for events without a client-approved onboarding sequence. */
@@ -73,28 +61,17 @@ async function sendGenericConfirmation(params: {
   email: string;
   scheduleHtml: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn('[EventRegister] RESEND_API_KEY not set, skipping confirmation email');
-    return;
-  }
-
   const firstName = params.name.trim().split(' ')[0] || 'there';
 
-  try {
-    await new Resend(apiKey).emails.send({
-      from: FROM_ADDRESS,
-      to: params.email,
-      subject: `You're registered: ${params.eventTitle}`,
-      html: emailLayout('Registration Confirmed', `
+  await sendEventEmail({
+    to: params.email,
+    subject: `You're registered: ${params.eventTitle}`,
+    html: emailLayout('Registration Confirmed', `
       <p style="margin:0 0 12px;color:#334155;">Hi ${escapeHtml(firstName)},</p>
       <p style="margin:0 0 16px;color:#334155;">You're registered for <strong>${escapeHtml(params.eventTitle)}</strong>.</p>
       ${params.scheduleHtml || `<p style="margin:0 0 16px;color:#334155;">We&rsquo;ll send the joining details to this email closer to the event date.</p>`}
       <p style="margin:16px 0 0;color:#64748b;font-size:13px;">We'll also email you a reminder before each session.</p>`),
-    });
-  } catch (err) {
-    console.error('[EventRegister] Confirmation email failed:', err);
-  }
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -105,6 +82,17 @@ export async function POST(request: NextRequest) {
     if (!eventId || !eventTitle || !name || !email) {
       return NextResponse.json(
         { error: 'Missing required fields: eventId, eventTitle, name, email' },
+        { status: 400 }
+      );
+    }
+
+    // This route registers for free. Without this check, posting a paid
+    // event's id here recorded the person as "free", emailed them the Meet
+    // link immediately, and enrolled them in every reminder — full access to
+    // a paid event without paying. Paid events must go through checkout.
+    if (getEventPrice(eventId) || findEvent(eventId)?.isPaid) {
+      return NextResponse.json(
+        { error: 'This is a paid event. Please register through the payment page.' },
         { status: 400 }
       );
     }

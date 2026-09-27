@@ -56,7 +56,10 @@ export async function reconcileEventPayments(
   const { data: pending, error } = await supabase
     .from('payments')
     .select('id, amount, status, payment_reference, metadata, created_at')
-    .eq('status', 'pending')
+    // "paid" is included on purpose: a payment can be marked paid and then
+    // have its confirmation email fail, which releases the send for retry.
+    // Looking only at "pending" would never see it again.
+    .in('status', ['pending', 'paid'])
     .eq('metadata->>kind', 'event')
     .not('payment_reference', 'is', null)
     .gte('created_at', new Date(now - LOOKBACK_MS).toISOString())
@@ -76,6 +79,16 @@ export async function reconcileEventPayments(
       payment.metadata && typeof payment.metadata === 'object' && !Array.isArray(payment.metadata)
         ? (payment.metadata as Record<string, any>)
         : {};
+
+    if (payment.status === 'paid') {
+      if (metadata.confirmationSentAt) continue;
+
+      // Already verified paid — only the confirmation is outstanding, so
+      // there is nothing to ask Ziina.
+      result.checked += 1;
+      await confirm(payment, metadata, metadata, result);
+      continue;
+    }
 
     result.checked += 1;
 
@@ -116,12 +129,24 @@ export async function reconcileEventPayments(
       continue;
     }
 
+    const updatedMetadata = { ...metadata, ziinaStatus: status, reconciledAt: new Date().toISOString() };
+    await confirm(payment, metadata, updatedMetadata, result);
+  }
+
+  return result;
+
+  async function confirm(
+    payment: { id: string; amount: number; payment_reference: string | null },
+    metadata: Record<string, any>,
+    updatedMetadata: Record<string, any>,
+    out: ReconciliationResult
+  ) {
     const eventId = metadata.eventId;
     const email = metadata.email;
     if (!eventId || !email) {
-      result.errors += 1;
-      result.details.push(`${payment.payment_reference}: missing eventId or email in metadata`);
-      continue;
+      out.errors += 1;
+      out.details.push(`${payment.payment_reference}: missing eventId or email in metadata`);
+      return;
     }
 
     try {
@@ -131,14 +156,12 @@ export async function reconcileEventPayments(
         .eq('event_id', eventId)
         .ilike('email', email);
 
-      const updatedMetadata = { ...metadata, ziinaStatus: status, reconciledAt: new Date().toISOString() };
-
       await supabase
         .from('payments')
         .update({ status: 'paid', metadata: updatedMetadata })
         .eq('id', payment.id);
 
-      await sendPaidEventConfirmation({
+      const delivered = await sendPaidEventConfirmation({
         supabase,
         paymentId: payment.id,
         paymentMetadata: updatedMetadata,
@@ -152,15 +175,18 @@ export async function reconcileEventPayments(
         source: 'fallback',
       });
 
-      result.confirmed += 1;
-      result.details.push(`${email}: confirmed`);
+      if (delivered) {
+        out.confirmed += 1;
+        out.details.push(`${email}: confirmed`);
+      } else {
+        out.errors += 1;
+        out.details.push(`${email}: paid, but the confirmation email was not delivered — will retry next run`);
+      }
     } catch (err) {
-      result.errors += 1;
-      result.details.push(
+      out.errors += 1;
+      out.details.push(
         `${payment.payment_reference}: confirmation failed — ${err instanceof Error ? err.message : 'unknown'}`
       );
     }
   }
-
-  return result;
 }
