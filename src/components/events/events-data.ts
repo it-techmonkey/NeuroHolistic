@@ -312,7 +312,7 @@ export const MOCK_EVENTS: EventItem[] = [
               "Private Participant Community",
               "Live Guidance with Dr. Fawzia Yassmina",
               "Location: Online, Live",
-              "Price: AED 1,000 / USD 274",
+              "Price: AED 1,000 + 5% VAT (AED 1,050 total) / USD 286",
             ],
           },
           {
@@ -344,7 +344,7 @@ export const MOCK_EVENTS: EventItem[] = [
         ],
         closingLine:
           "LIBERATE. EXPAND. ELEVATE. ALIGN. EMBODY. — NeuroHolistic Consciousness Quantum Leap™, October 9 to 31, 2026 | Live Online",
-        price: "AED 1,000 / USD 274",
+        price: "AED 1,000 + 5% VAT (AED 1,050 total) / USD 286",
         ctaLabel: "Book Now",
         date: "October 9 – 31, 2026",
         time: "6:00 PM – 10:00 PM",
@@ -443,7 +443,7 @@ export const MOCK_EVENTS: EventItem[] = [
               "مجتمع خاص بالمشاركين",
               "مع د. فوزية ياسمينة",
               "المكان: مباشرة عبر الإنترنت",
-              "السعر: 1,000 درهم إماراتي / 274 دولاراً أمريكياً",
+              "السعر: 1,000 درهم إماراتي + 5% ضريبة القيمة المضافة (الإجمالي 1,050 درهم) / 286 دولاراً أمريكياً",
             ],
           },
           {
@@ -475,7 +475,7 @@ export const MOCK_EVENTS: EventItem[] = [
         ],
         closingLine:
           "تحرّر. اتّسع. ارتقِ. انسجم. جسّد. — قفزة نوعية في الوعي عبر منهج النيوهوليستك™، من 9 إلى 31 أكتوبر 2026 | مباشرة عبر الإنترنت",
-        price: "1,000 درهم إماراتي / 274 دولاراً أمريكياً",
+        price: "1,000 درهم إماراتي + 5% ضريبة القيمة المضافة (الإجمالي 1,050 درهم) / 286 دولاراً أمريكياً",
         ctaLabel: "احجز الآن",
         date: "من 9 إلى 31 أكتوبر 2026",
         time: "من 6:00 إلى 10:00 مساءً",

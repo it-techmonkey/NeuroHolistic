@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { isValidPhone, PHONE_ERROR } from "@/lib/phone";
 import type { EventSessionDate } from "./types";
+import { PENDING_PAYMENT_KEY } from "./payment-storage";
 
 interface Labels {
   namePlaceholder: string;
@@ -108,6 +109,17 @@ export default function EventPaymentButton({ eventId, eventTitle, ctaLabel, loca
         setStatus("error");
         setErrorMessage(res.status === 409 ? L.alreadyPaid : data.error || L.genericError);
         return;
+      }
+
+      // Ziina's return URL carries no payment reference, so the success page
+      // has no other way to know which payment to confirm. Without this the
+      // confirmation depends entirely on the webhook — which is exactly how
+      // paying registrants ended up with no email and no joining link.
+      try {
+        sessionStorage.setItem(PENDING_PAYMENT_KEY, data.paymentIntentId);
+      } catch {
+        // Private browsing can refuse storage; the reconciliation sweep is
+        // the backstop that still catches this payment.
       }
 
       window.location.href = data.paymentLink;

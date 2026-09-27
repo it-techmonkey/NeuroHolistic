@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { sendCuratedScheduledEmails, sendGenericSessionReminders } from '@/lib/events/event-reminders';
+import { reconcileEventPayments } from '@/lib/events/payment-reconciliation';
 
 /**
  * Daily cron entry point. The actual logic lives in
@@ -35,6 +36,12 @@ export async function GET(req: NextRequest) {
   const supabase = getServiceSupabase();
   const now = Date.now();
 
+  // Run before the reminders, not after: a payment that Ziina completed but
+  // that never got confirmed here leaves the registrant looking unpaid, and
+  // reconciling first means they are already in good standing by the time
+  // this run decides who to email.
+  const reconciliation = await reconcileEventPayments(supabase, now);
+
   const [curated, generic] = await Promise.all([
     sendCuratedScheduledEmails(supabase, now),
     sendGenericSessionReminders(supabase, now),
@@ -42,6 +49,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
+    reconciliation,
     curated,
     generic,
     sent: curated.sent + generic.sent,
