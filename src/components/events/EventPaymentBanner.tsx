@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { PENDING_PAYMENT_KEY } from "./payment-storage";
 
 type Tone = "success" | "pending" | "warning";
+
+const VERIFY_ATTEMPTS = 8;
+const VERIFY_INTERVAL_MS = 2500;
 type Phase = "verifying" | "confirmed" | "processing" | "cancelled" | "failed";
 
 const TEXT: Record<Phase, { en: string; ar: string }> = {
@@ -71,28 +74,43 @@ export default function EventPaymentBanner({ locale }: { locale: "en" | "ar" }) 
     let cancelled = false;
 
     (async () => {
-      try {
-        const res = await fetch("/api/events/verify-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentIntentId: intentId }),
-        });
-        const data = await res.json().catch(() => ({}));
+      // Ziina can redirect back a few seconds before it marks the payment
+      // completed. Checking once would read that as "not paid" and leave the
+      // customer waiting for the daily reconciliation sweep, so keep asking
+      // for a short while before giving up.
+      for (let attempt = 0; attempt < VERIFY_ATTEMPTS; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, VERIFY_INTERVAL_MS));
         if (cancelled) return;
 
-        if (res.ok && data.success) {
-          setPhase("confirmed");
-          try {
-            sessionStorage.removeItem(PENDING_PAYMENT_KEY);
-          } catch {
-            // Nothing to clean up if storage is unavailable.
+        try {
+          const res = await fetch("/api/events/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentIntentId: intentId }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (cancelled) return;
+
+          if (res.ok && data.success) {
+            setPhase("confirmed");
+            try {
+              sessionStorage.removeItem(PENDING_PAYMENT_KEY);
+            } catch {
+              // Nothing to clean up if storage is unavailable.
+            }
+            return;
           }
-        } else {
-          setPhase("processing");
+
+          if (data.status === "failed" || data.status === "canceled" || data.status === "cancelled") {
+            setPhase("failed");
+            return;
+          }
+        } catch {
+          // Network blip — try again on the next attempt.
         }
-      } catch {
-        if (!cancelled) setPhase("processing");
       }
+
+      if (!cancelled) setPhase("processing");
     })();
 
     return () => {
