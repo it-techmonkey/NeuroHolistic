@@ -1,7 +1,6 @@
-import { Resend } from 'resend';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureEventMeetings, findEvent, firstSessionMeetLink } from './event-meetings';
-import { sessionScheduleHtml, sendEventEmail, eventEmailLayout, EVENT_EMAIL_FROM, escapeHtml } from './event-emails';
+import { sessionScheduleHtml, sendEventEmail, eventEmailLayout, escapeHtml } from './event-emails';
 import { registrationConfirmedEmail } from './quantum-leap-emails';
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@neuroholistic.com';
@@ -33,31 +32,40 @@ export interface PaidEventConfirmationParams {
  * marked paid, and never receive a joining link.
  *
  * Safe to call twice: the first successful run stamps
- * `metadata.confirmationSentAt`, and later calls return early. Callers should
- * await it — the work must finish before the serverless function returns or
- * the platform is free to freeze it mid-send.
+ * `metadata.confirmationSentAt`, and later calls return early. A send that
+ * fails removes the stamp again so a later retry can try once more. Callers
+ * should await it — the work must finish before the serverless function
+ * returns or the platform is free to freeze it mid-send.
+ *
+ * Returns true once the registrant's confirmation is known to be out (now or
+ * by an earlier run), false if it could not be delivered this time.
  */
-export async function sendPaidEventConfirmation(params: PaidEventConfirmationParams): Promise<void> {
+export async function sendPaidEventConfirmation(params: PaidEventConfirmationParams): Promise<boolean> {
   const { supabase, paymentId, paymentMetadata, eventId, eventTitle, name, email, source } = params;
 
   if (paymentMetadata.confirmationSentAt) {
     console.log(`[PaidConfirmation:${source}] Already sent for payment ${paymentId}, skipping.`);
-    return;
+    return true;
   }
 
-  // Claim the send before doing it. A Ziina retry landing while the first
-  // attempt is still running would otherwise produce a duplicate email.
+  // Claim the send before doing it. Several paths can now reach this for the
+  // same payment at nearly the same moment (the webhook, the return page, the
+  // reconciliation sweep), and only the one that wins the claim may send.
   const claimedAt = new Date().toISOString();
-  const { error: claimError } = await supabase
+  const { data: claimed, error: claimError } = await supabase
     .from('payments')
     .update({ metadata: { ...paymentMetadata, confirmationSentAt: claimedAt } })
     .eq('id', paymentId)
-    .is('metadata->>confirmationSentAt', null);
+    .is('metadata->>confirmationSentAt', null)
+    .select('id');
 
   if (claimError) {
     console.error(`[PaidConfirmation:${source}] Could not claim the send:`, claimError);
     // Fall through and send anyway — a duplicate confirmation is a far better
     // outcome than a paying registrant receiving nothing at all.
+  } else if (!claimed || claimed.length === 0) {
+    console.log(`[PaidConfirmation:${source}] Another run already claimed payment ${paymentId}, skipping.`);
+    return true;
   }
 
   // Meet provisioning must never stop the confirmation going out; the
@@ -71,6 +79,7 @@ export async function sendPaidEventConfirmation(params: PaidEventConfirmationPar
 
   const eventDef = findEvent(eventId);
 
+  let delivered = false;
   try {
     // Events with a client-approved onboarding sequence (currently the
     // Quantum Leap cohort) get their exact literal copy; everything else
@@ -82,9 +91,9 @@ export async function sendPaidEventConfirmation(params: PaidEventConfirmationPar
         locale: 'en',
         firstSessionMeetLink: firstSessionMeetLink(eventDef, meetings),
       });
-      await sendEventEmail({ to: email, subject, html, replyTo: eventDef.replyToEmail });
+      delivered = await sendEventEmail({ to: email, subject, html, replyTo: eventDef.replyToEmail });
     } else {
-      await sendGenericPaidConfirmation({
+      delivered = await sendGenericPaidConfirmation({
         eventTitle,
         name,
         email,
@@ -94,6 +103,18 @@ export async function sendPaidEventConfirmation(params: PaidEventConfirmationPar
     }
   } catch (error) {
     console.error(`[PaidConfirmation:${source}] Registrant confirmation failed:`, error);
+  }
+
+  if (!delivered) {
+    // Give the claim back. Left in place, the stamp would read as "sent"
+    // forever and every retry path — including the reconciliation sweep —
+    // would skip this registrant, who paid and still has nothing.
+    await supabase
+      .from('payments')
+      .update({ metadata: paymentMetadata })
+      .eq('id', paymentId);
+    console.error(`[PaidConfirmation:${source}] Confirmation to ${email} not delivered; released for retry.`);
+    return false;
   }
 
   try {
@@ -108,6 +129,8 @@ export async function sendPaidEventConfirmation(params: PaidEventConfirmationPar
   } catch (error) {
     console.error(`[PaidConfirmation:${source}] Admin notification failed:`, error);
   }
+
+  return true;
 }
 
 async function notifyAdminOfPaidRegistration(params: {
@@ -132,8 +155,7 @@ async function notifyAdminOfPaidRegistration(params: {
   <tr><td style="padding:6px 12px;color:#64748b;">Amount paid</td><td style="padding:6px 12px;">AED ${escapeHtml(params.amountAed)}</td></tr>
 </table>`;
 
-  await new Resend(process.env.RESEND_API_KEY).emails.send({
-    from: EVENT_EMAIL_FROM,
+  await sendEventEmail({
     to: ADMIN_EMAIL,
     subject: `[Admin] Paid event registration: ${params.eventTitle}`,
     html: eventEmailLayout('New Paid Event Registration', `
@@ -149,16 +171,13 @@ async function sendGenericPaidConfirmation(params: {
   email: string;
   selectedDateLabel: string | null;
   scheduleHtml: string;
-}) {
-  if (!process.env.RESEND_API_KEY) return;
-
+}): Promise<boolean> {
   const firstName = params.name.trim().split(' ')[0] || 'there';
   const dateSentence = params.selectedDateLabel
     ? ` Your selected session date is <strong>${escapeHtml(params.selectedDateLabel)}</strong>.`
     : '';
 
-  await new Resend(process.env.RESEND_API_KEY).emails.send({
-    from: EVENT_EMAIL_FROM,
+  return sendEventEmail({
     to: params.email,
     subject: `Payment confirmed: ${params.eventTitle}`,
     html: eventEmailLayout('Registration & Payment Confirmed', `

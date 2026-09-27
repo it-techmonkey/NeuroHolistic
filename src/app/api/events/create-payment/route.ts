@@ -84,6 +84,11 @@ export async function POST(request: NextRequest) {
     eventId,
     eventTitle,
     amountAed: price.amountAed,
+    // Kept separately so the charged total can be reconciled against the
+    // client's VAT accounting without re-deriving it from a rate that may
+    // change later.
+    baseAed: price.baseAed,
+    vatAed: price.vatAed,
     amountFils,
     currency: 'AED',
     name,

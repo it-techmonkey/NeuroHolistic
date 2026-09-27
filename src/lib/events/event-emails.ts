@@ -146,13 +146,20 @@ export async function sendEventEmail({ to, subject, html, replyTo }: SendArgs): 
   }
 
   try {
-    await new Resend(apiKey).emails.send({
+    // Resend reports a rejected send (unverified domain, bad address, rate
+    // limit) through the returned `error`, not by throwing. Awaiting the call
+    // and assuming success reported every failed email as delivered.
+    const { error } = await new Resend(apiKey).emails.send({
       from: FROM_ADDRESS,
       to,
       subject,
       html,
       ...(replyTo ? { replyTo } : {}),
     });
+    if (error) {
+      console.error('[EventEmail] Resend rejected email to', to, error);
+      return false;
+    }
     return true;
   } catch (error) {
     console.error('[EventEmail] Send failed:', error);
