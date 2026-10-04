@@ -93,7 +93,7 @@ export default function UpcomingEventsSection({ events }: { events: EventItem[] 
                 animate={{ opacity: 1 }}
                 className="py-20 text-center font-mono text-[13px] text-[#94A3B8]"
               >
-                {E.noResults}
+                {events.length === 0 ? E.noEvents : E.noResults}
               </motion.p>
             )}
           </AnimatePresence>

@@ -393,6 +393,7 @@ export const ur = {
     filterRetreats: "رٹریٹس",
     filterLiveOnline: "لائیو آن لائن",
     noResults: "موجودہ فلٹرز سے کوئی نتیجہ نہیں ملا۔",
+    noEvents: "فی الحال کوئی آنے والا ایونٹ نہیں ہے۔ براہ کرم جلد دوبارہ دیکھیں۔",
     registerNow: "ابھی رجسٹر کریں",
     dateLocationLabel: "تاریخ // مقام",
     periods: {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MOCK_EVENTS } from "@/components/events/events-data";
+import { VISIBLE_EVENTS } from "@/components/events/events-data";
 import { useContentLocale } from "@/components/retreats/locale";
 import { useLang } from "@/lib/translations/LanguageContext";
 
@@ -15,7 +15,7 @@ import { useLang } from "@/lib/translations/LanguageContext";
 export default function AcademyUpcomingEvents() {
   const locale = useContentLocale();
   const { isArabic } = useLang();
-  const events = MOCK_EVENTS.filter((e) => e.showOnAcademyPage);
+  const events = VISIBLE_EVENTS.filter((e) => e.showOnAcademyPage);
 
   if (events.length === 0) return null;
 

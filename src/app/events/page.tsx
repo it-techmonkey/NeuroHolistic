@@ -1,7 +1,7 @@
 import EventsHero from "@/components/EventsHero";
 import UpcomingEventsSection from "@/components/UpcomingEventsSection";
 import EventsNewsletter from "@/components/EventsNewsletter";
-import { MOCK_EVENTS } from "@/components/events/events-data";
+import { VISIBLE_EVENTS } from "@/components/events/events-data";
 
 export const metadata = {
   title: "Events & Workshops | NeuroHolistic",
@@ -13,7 +13,7 @@ export default function EventsPage() {
   return (
     <div className="w-full">
       <EventsHero />
-      <UpcomingEventsSection events={MOCK_EVENTS} />
+      <UpcomingEventsSection events={VISIBLE_EVENTS} />
       <EventsNewsletter />
     </div>
   );

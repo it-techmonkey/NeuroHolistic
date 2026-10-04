@@ -40,6 +40,16 @@ export async function POST(request: NextRequest) {
 
   // Server-side source of truth for session dates — never trust a label from the client.
   const eventConfig = MOCK_EVENTS.find((e) => (e.slug ?? e.id) === eventId);
+
+  // The public page is gone while an event is hidden, but this endpoint is
+  // still reachable directly — and from a tab opened before the event was
+  // hidden — so new checkouts have to be refused here too.
+  if (eventConfig?.hidden) {
+    return NextResponse.json(
+      { error: 'Registration for this event is not open at the moment.' },
+      { status: 400 }
+    );
+  }
   const sessionDates = eventConfig?.sessionDates ?? [];
 
   if (sessionDates.length > 1) {
