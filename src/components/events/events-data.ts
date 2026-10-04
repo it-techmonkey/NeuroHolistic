@@ -8,6 +8,9 @@ export const MOCK_EVENTS: EventItem[] = [
     image: "/images/events/quantum-leap-2026.jpeg",
     slug: "neuroholistic-consciousness-quantum-leap",
     isPaid: true,
+    // Temporarily hidden from the public site at the client's request.
+    // Remove this line to show the event again.
+    hidden: true,
     hostTherapistEmail: "fawzia.yassmina@neuroholisticinstitute.com",
     replyToEmail: "fawzia.yassmina@neuroholisticinstitute.com",
     // TODO: client to provide the real WhatsApp community invite link before
@@ -485,3 +488,12 @@ export const MOCK_EVENTS: EventItem[] = [
     },
   },
 ];
+
+/**
+ * What the public site is allowed to show. Anything customer-facing — the
+ * listing, the Academy page, the event's own page, new checkouts — reads this.
+ * Server-side work for people already registered (reminders, Meet links,
+ * payment confirmation, the admin dashboard) deliberately keeps using
+ * MOCK_EVENTS, so hiding an event never cuts off its existing registrants.
+ */
+export const VISIBLE_EVENTS: EventItem[] = MOCK_EVENTS.filter((event) => !event.hidden);

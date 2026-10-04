@@ -411,6 +411,7 @@ export const ar = {
     filterRetreats: "الرحلات",
     filterLiveOnline: "الجلسات الحية",
     noResults: "[ لا توجد نتائج ضمن الفلاتر الحالية ]",
+    noEvents: "[ لا توجد فعاليات قادمة حالياً — يرجى العودة قريباً ]",
     registerNow: "اقرأ المزيد",
     dateLocationLabel: "التاريخ // الموقع",
     periods: {

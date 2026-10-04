@@ -137,6 +137,14 @@ export interface EventItem {
   /** When true, this event is also featured on the /academy page. */
   showOnAcademyPage?: boolean;
   /**
+   * Takes the event off the public site — the listing, the Academy page, its
+   * own page, and new checkouts — without removing it. Everything behind the
+   * scenes keeps working for people already registered: their reminder
+   * emails, Meet links, payment confirmation, and the admin dashboard.
+   * Delete the flag (or set it to false) to publish the event again.
+   */
+  hidden?: boolean;
+  /**
    * Reply-to for every automated email about this event. Emails are still
    * sent from the platform's verified address (BOOKING_EMAIL_FROM); replies
    * land in this inbox.
